@@ -22,4 +22,7 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 
-references/
+# References corpus: track the prose index and CLAUDE.md files, not the ~370 MB of documents.
+references/**/*.pdf
+references/**/*.html
+references/**/*.pamphlet
