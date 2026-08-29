@@ -7,8 +7,8 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**55 files — 43 PDFs, 6 Axiom literate sources, 20 HTML captures.** (Counts overlap: see per-section
-tables.) HTML entries are single-file `curl` captures of the live page on the date noted in
+**55 files (~394 MB) — 29 PDFs, 6 Axiom literate `.pamphlet` sources, 20 HTML captures.** HTML
+entries are single-file `curl` captures of the live page on the date noted in
 [`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text.
 
 ---
@@ -25,7 +25,7 @@ tables.) HTML entries are single-file `curl` captures of the live page on the da
 | [`petkovsek_wilf_zeilberger1996_a_eq_b.pdf`](./papers/textbooks/petkovsek_wilf_zeilberger1996_a_eq_b.pdf) | ***A=B***<br>*Marko Petkovšek, Herbert S. Wilf, Doron Zeilberger (1996)* | UPenn / Rutgers Open Access | 217 | 1.19 MB |
 | [`zippel1993_effective_polynomial_computation.pdf`](./papers/textbooks/zippel1993_effective_polynomial_computation.pdf) | ***Effective Polynomial Computation***<br>*Richard Zippel (1993)* | Libgen MD5: `cd77941d8297c50b7b37e361ff419f84` | 363 | 8.23 MB |
 | [`davenport_siret_tournier1993_computer_algebra_2nd_ed.pdf`](./papers/textbooks/davenport_siret_tournier1993_computer_algebra_2nd_ed.pdf) | ***Computer Algebra: Systems and Algorithms for Algebraic Computation*** (2nd ed.)<br>*James H. Davenport, Yvon Siret, Évelyne Tournier (1993)* | Libgen MD5: `84f0d17ebb48c1d7211e90a9ff7bdf7e` | 313 | 1.07 MB |
-| [`jenks_sutor1992_axiom.pdf`](./papers/textbooks/jenks_sutor1992_axiom.pdf) | ***AXIOM: The Scientific Computation System*** (Axiom Book Vol. 0)<br>*Richard D. Jenks, Robert S. Sutor (1992)* | Axiom / FriCAS Project | 812 | 5.01 MB |
+| [`fricas2026_system_for_computer_mathematics.pdf`](./papers/textbooks/fricas2026_system_for_computer_mathematics.pdf) | ***The FriCAS System for Computer Mathematics***<br>the FriCAS project's regenerated adaptation of *AXIOM: The Scientific Computation System* (Axiom Book Vol. 0), *Jenks & Sutor (1992)*, whose sources were BSD-relicensed in 2002. Generated **2026-03-06**. **Not the Springer edition** — cite it as FriCAS, not as Jenks & Sutor 1992. | FriCAS project (`fricas.github.io`) | 812 | 5.01 MB |
 
 ### Axiom literate volumes (bibliography §5)
 
@@ -49,8 +49,8 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | File | Document & Authors | Source / Identifier | Pages | Size |
 | :--- | :--- | :--- | :--- | :--- |
 | [`baader_nipkow1998_term_rewriting_and_all_that.pdf`](./papers/term-rewriting/baader_nipkow1998_term_rewriting_and_all_that.pdf) | ***Term Rewriting and All That***<br>*Franz Baader, Tobias Nipkow (1998)* | Libgen MD5: `670e57c6f705f33f49b540c8009e4b93` | 313 | 4.72 MB |
-| [`terese2003_term_rewriting_systems.pdf`](./papers/term-rewriting/terese2003_term_rewriting_systems.pdf) | ***Term Rewriting Systems*** (Cambridge Tracts in Theoretical CS 55)<br>*Terese (Marc Bezem, Jan Willem Klop, Roel de Vrijer, eds., 2003)* | Libgen MD5: `2365bb42b3b6b0a37af19fafe1b238f7` | 908 | 181.07 MB |
-| [`klop1992_term_rewriting_systems.pdf`](./papers/term-rewriting/klop1992_term_rewriting_systems.pdf) | **Term Rewriting Systems**<br>*Jan Willem Klop (1992)* | CWI Technical Report `CS-R9053` | 10 | 313.7 KB |
+| [`terese2003_term_rewriting_systems.pdf`](./papers/term-rewriting/terese2003_term_rewriting_systems.pdf) | ***Term Rewriting Systems*** (Cambridge Tracts in Theoretical CS 55)<br>*Terese (Marc Bezem, Jan Willem Klop, Roel de Vrijer, eds., 2003)*<br>**Image-only scan — no text layer.** `pdftotext` returns nothing on every page; it cannot be grepped or excerpted as text. | Libgen MD5: `2365bb42b3b6b0a37af19fafe1b238f7` | 908 | 181.07 MB |
+| [`klop1990_church_rosser_to_knuth_bendix.pdf`](./papers/term-rewriting/klop1990_church_rosser_to_knuth_bendix.pdf) | **Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond**<br>*Jan Willem Klop (1990)* | ICALP '90, Springer LNCS 443 — free from CWI: [`ir.cwi.nl/pub/2667`](https://ir.cwi.nl/pub/2667/2667D.pdf) | 20 | 4.15 MB |
 | [`abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf`](./papers/term-rewriting/abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf) | ***Handbook of Logic in Computer Science, Vol. 2*** (incl. Klop, *Term Rewriting Systems*, pp. 1–116)<br>*S. Abramsky, Dov M. Gabbay, T. S. E. Maibaum, eds. (1992)* | Libgen MD5: `d3059b05b47ca64724ab84e75ce38aed` | 582 | 70.57 MB |
 | [`klint_vanderstorm_vinju2009_rascal.pdf`](./papers/term-rewriting/klint_vanderstorm_vinju2009_rascal.pdf) | **RASCAL: A Domain Specific Language for Source Code Analysis and Manipulation**<br>*Paul Klint, Tijs van der Storm, Jurgen Vinju (2009)* | SCAM '09 / DOI: [`10.1109/SCAM.2009.28`](https://doi.org/10.1109/SCAM.2009.28) — author copy, `homepages.cwi.nl/~storm` | 10 | 161.2 KB |
 
@@ -60,7 +60,7 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 
 | File | Document & Authors | Source / Identifier | Pages | Size |
 | :--- | :--- | :--- | :--- | :--- |
-| [`richardson1968_some_unsolvable_problems.pdf`](./papers/foundations/richardson1968_some_unsolvable_problems.pdf) | **Some Unsolvable Problems Involving Elementary Functions of a Real Variable**<br>*Daniel Richardson (1968)* | Sci-Hub / DOI: [`10.2307/2271358`](https://doi.org/10.2307/2271358) | 8 | 579.5 KB |
+| [`richardson1968_some_undecidable_problems.pdf`](./papers/foundations/richardson1968_some_undecidable_problems.pdf) | **Some Undecidable Problems Involving Elementary Functions of a Real Variable**<br>*Daniel Richardson (1968)*<br>*J. Symbolic Logic* 33(4):514–520. Note the title: "Undecidable", not "Unsolvable" — the miscitation is widespread. | Sci-Hub / DOI: [`10.2307/2271358`](https://doi.org/10.2307/2271358) | 8 | 579.5 KB |
 | [`swierstra2008_data_types_a_la_carte.pdf`](./papers/foundations/swierstra2008_data_types_a_la_carte.pdf) | **Data types à la carte**<br>*Wouter Swierstra (2008)* | Sci-Hub / DOI: [`10.1017/S0956796808006758`](https://doi.org/10.1017/S0956796808006758) | 15 | 511.5 KB |
 | [`bahr_hvitved2011_compositional_data_types.pdf`](./papers/foundations/bahr_hvitved2011_compositional_data_types.pdf) | **Compositional Data Types**<br>*Patrick Bahr, Tom Hvitved (2011)* | Sci-Hub / DOI: [`10.1145/2036918.2036930`](https://doi.org/10.1145/2036918.2036930) | 12 | 474.8 KB |
 
@@ -72,8 +72,8 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | :--- | :--- | :--- | :--- | :--- |
 | [`krebber2017_ac_matching_thesis.pdf`](./papers/pattern-matching/krebber2017_ac_matching_thesis.pdf) | **Non-linear Associative-Commutative Many-to-One Pattern Matching with Sequence Variables** (MSc Thesis)<br>*Manuel Krebber (2017)* | arXiv: [`1705.00907`](https://arxiv.org/abs/1705.00907) | 67 | 864.8 KB |
 | [`krebber2017_matchpy.pdf`](./papers/pattern-matching/krebber2017_matchpy.pdf) | **MatchPy: A Pattern Matching Library**<br>*Manuel Krebber, Henrik Barthels, Paolo Bientinesi (2017)* | arXiv: [`1710.06915`](https://arxiv.org/abs/1710.06915) | 8 | 324.9 KB |
-| [`barthels2017_linear_algebra_rewrite_rules.pdf`](./papers/pattern-matching/barthels2017_linear_algebra_rewrite_rules.pdf) | **Automating the Generation of Efficient Linear Algebra Algorithms using Rewrite Rules**<br>*Henrik Barthels, Manuel Krebber, Paolo Bientinesi (2017)* | arXiv: [`1710.00077`](https://arxiv.org/abs/1710.00077) | 9 | 335.3 KB |
-| [`bachmair1995_ac_discrimination_nets.pdf`](./papers/pattern-matching/bachmair1995_ac_discrimination_nets.pdf) | **Experiments with Associative-Commutative Discrimination Nets**<br>*Leo Bachmair, Ta Chen, C. R. Ramakrishnan, I. V. Ramakrishnan (1995)* | IJCAI '95 Proceedings | 6 | 185.1 KB |
+| [`krebber2017_efficient_pattern_matching_python.pdf`](./papers/pattern-matching/krebber2017_efficient_pattern_matching_python.pdf) | **Efficient Pattern Matching in Python**<br>*Manuel Krebber, Henrik Barthels, Paolo Bientinesi (2017)* | arXiv: [`1710.00077`](https://arxiv.org/abs/1710.00077) | 9 | 335.3 KB |
+| [`bachmair1995_ac_discrimination_nets.pdf`](./papers/pattern-matching/bachmair1995_ac_discrimination_nets.pdf) | **Experiments with Associative-Commutative Discrimination Nets**<br>*Leo Bachmair, Ta Chen, I. V. Ramakrishnan, Siva Anantharaman, Jacques Chabin (1995)* | IJCAI '95, pp. 348–354: [`ijcai.org/Proceedings/95-1/Papers/046.pdf`](https://www.ijcai.org/Proceedings/95-1/Papers/046.pdf) | 7 | 248.1 KB |
 | [`cole_wolfram1981_smp.pdf`](./papers/pattern-matching/cole_wolfram1981_smp.pdf) | **SMP: A Symbolic Manipulation Program**<br>*Christopher A. Cole, Stephen Wolfram (1981)* | Sci-Hub / DOI: [`10.1145/800206.806365`](https://doi.org/10.1145/800206.806365) | 3 | 269.7 KB |
 | [`greif1985_smp_pattern_matcher.pdf`](./papers/pattern-matching/greif1985_smp_pattern_matcher.pdf) | **The SMP Pattern-Matcher**<br>*Jerry Greif (1985)* | Sci-Hub / DOI: [`10.1007/3-540-15984-3_281`](https://doi.org/10.1007/3-540-15984-3_281) | 12 | 884.5 KB |
 
@@ -151,6 +151,34 @@ rather than archiving them here. Where such an entry cites an actual paper, that
 | riptutorial, *Wolfram Language — Evaluation Order* | §6 | The site's Wolfram Language content is gone — `riptutorial.com/wolfram-language` now serves a generic landing page, `/topic/2549/evaluation-order` serves unrelated iOS content, and the Wayback Machine holds no snapshot of either URL. The material it summarized is covered in full by `wolfram_ref_evaluation_of_expressions.html`. |
 | Axiom volumes as PDFs | §5 | `axiom-developer.org` does not resolve and no prebuilt volume PDFs were found; the upstream `.pamphlet` literate sources are stored instead. |
 | Brun, *Building a CAS in Go*, parts 2+ | §9 | Only Part 1 is discoverable; no later installments found on Medium or in search. |
+| Klop, *Term Rewriting Systems*, CWI report `CS-R9053` | §2 | Not located. The file previously stored under this name was **the wrong document** (see below). Klop's full survey is present as the pp. 1–116 chapter of `abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf`, and his shorter ICALP '90 survey is now stored in its place. |
+| Bachmair, Chen & Ramakrishnan, *Associative-Commutative Discrimination Nets*, TAPSOFT '93 | §3 | The 1993 paper that introduces the data structure is paywalled (Springer LNCS). The 1995 IJCAI measurement paper by the same group **is** held, and is the practical one. |
+| Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | §1, §5 | The Springer edition (ISBN 3-540-97855-0 / 0-387-97855-0) was not obtained. The FriCAS project's modern regeneration of the same book is stored instead and is freely licensed. |
+
+---
+
+### Corrections, 2026-08-29
+
+A validation pass against `../notes/cas-haskell.md` found four entries in this index describing a
+document other than the file actually stored. Recording what changed, so the corrections are not
+silently re-introduced:
+
+| Was indexed as | The file actually was | Resolution |
+| :--- | :--- | :--- |
+| Klop, *Term Rewriting Systems*, CWI `CS-R9053` (10 pp.) | van Schuppen, *Adaptive Stochastic Filtering Problems: The Continuous Time Case*, CWI/Mathematisch Centrum `BW 167/82` (1982) — zero occurrences of "rewrit" | Replaced with Klop's ICALP '90 survey from `ir.cwi.nl`; `CS-R9053` moved to **Not obtained** |
+| Bachmair et al., *Experiments with AC Discrimination Nets*, IJCAI '95 (6 pp.) | Jian Zhang & Hantao Zhang, *SEM: a System for Enumerating Models*, IJCAI '95 — zero occurrences of "discrimination" or "Bachmair" | Replaced with the real paper from `ijcai.org` (7 pp., pp. 348–354) |
+| Barthels, Krebber & Bientinesi, *Automating the Generation of Efficient Linear Algebra Algorithms using Rewrite Rules* | Krebber, Barthels & Bientinesi, *Efficient Pattern Matching in Python* (arXiv:1710.00077v1) — a MatchPy paper | Renamed to `krebber2017_efficient_pattern_matching_python.pdf` and re-described |
+| Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | *The FriCAS System for Computer Mathematics*, generated 2026-03-06 | Renamed to `fricas2026_system_for_computer_mathematics.pdf`; the Springer edition moved to **Not obtained** |
+
+Also corrected in the same pass: `richardson1968_some_unsolvable_problems.pdf` →
+`richardson1968_some_undecidable_problems.pdf` (the paper's title is "Undecidable"), and the Terese
+scan is now flagged as having no text layer.
+
+**Thin captures.** The Wolfram `ref/` HTML captures for `DownValues`, `UpValues`, `SubValues` and
+`Attributes` render to roughly 13 KB of text each, almost all navigation chrome; only the one-line
+definitions survived, and the "Details" sections did not. The substantive Wolfram capture is
+`wolfram_ref_evaluation_of_expressions.html` (~114 KB of text), which does carry the full standard
+evaluation procedure and the complete attribute table.
 
 ---
 
