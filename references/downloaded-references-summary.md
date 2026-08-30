@@ -7,7 +7,9 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**59 files (~396 MB) — 31 PDFs, 6 Axiom literate `.pamphlet` sources, 22 HTML captures.** HTML
+**65 documents (~422 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 22 HTML captures — plus 2 OCR sidecars.**
+
+Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page on the date noted in
 [`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text.
 
@@ -23,9 +25,12 @@ entries are single-file `curl` captures of the live page on the date noted in
 | [`vonzurgathen_gerhard2013_modern_computer_algebra.pdf`](./papers/textbooks/vonzurgathen_gerhard2013_modern_computer_algebra.pdf) | ***Modern Computer Algebra*** (3rd ed.)<br>*Joachim von zur Gathen, Jürgen Gerhard (2013)* | Libgen MD5: `265536cedb43347e70dfc6a523371578` | 813 | 24.83 MB |
 | [`bronstein2005_symbolic_integration_1.pdf`](./papers/textbooks/bronstein2005_symbolic_integration_1.pdf) | ***Symbolic Integration I: Transcendental Functions*** (2nd ed.)<br>*Manuel Bronstein (2005)* | Springer / DOI: [`10.1007/b138171`](https://doi.org/10.1007/b138171) | 331 | 15.15 MB |
 | [`petkovsek_wilf_zeilberger1996_a_eq_b.pdf`](./papers/textbooks/petkovsek_wilf_zeilberger1996_a_eq_b.pdf) | ***A=B***<br>*Marko Petkovšek, Herbert S. Wilf, Doron Zeilberger (1996)* | UPenn / Rutgers Open Access | 217 | 1.19 MB |
+| [`karr1981_summation_in_finite_terms.pdf`](./papers/textbooks/karr1981_summation_in_finite_terms.pdf) | **Summation in Finite Terms**<br>*Michael Karr (1981)*<br>Difference-field (ΠΣ) summation — the discrete analogue of Risch, and the half of symbolic summation *A=B* omits. | *JACM* 28(2):305–350 / DOI: [`10.1145/322248.322255`](https://doi.org/10.1145/322248.322255) — user-supplied | 46 | 1.4 MB |
+| [`karr1985_theory_of_summation_in_finite_terms.pdf`](./papers/textbooks/karr1985_theory_of_summation_in_finite_terms.pdf) | **Theory of Summation in Finite Terms**<br>*Michael Karr (1985)*<br>The follow-up. **Poor OCR — it systematically drops the letter `h`** ("Teory", "algoritm", "matematical"), so grep accordingly. | *JSC* 1(3):303–315 / DOI: [`10.1016/S0747-7171(85)80038-9`](https://doi.org/10.1016/S0747-7171(85)80038-9) — user-supplied | 13 | 589 KB |
 | [`schneider2007_symbolic_summation_assists_combinatorics.pdf`](./papers/textbooks/schneider2007_symbolic_summation_assists_combinatorics.pdf) | **Symbolic Summation Assists Combinatorics**<br>*Carsten Schneider (2007)*<br>The **Sigma** package and difference-field summation — the continuation of Karr, and the part of symbolic summation *A=B* does not cover. | *Séminaire Lotharingien de Combinatoire* 56, Article B56b — free from RISC: [`www3.risc.jku.at`](https://www3.risc.jku.at/research/combinat/software/Sigma/pub/SLC06.pdf) | 36 | 471 KB |
 | [`zippel1993_effective_polynomial_computation.pdf`](./papers/textbooks/zippel1993_effective_polynomial_computation.pdf) | ***Effective Polynomial Computation***<br>*Richard Zippel (1993)* | Libgen MD5: `cd77941d8297c50b7b37e361ff419f84` | 363 | 8.23 MB |
 | [`davenport_siret_tournier1993_computer_algebra_2nd_ed.pdf`](./papers/textbooks/davenport_siret_tournier1993_computer_algebra_2nd_ed.pdf) | ***Computer Algebra: Systems and Algorithms for Algebraic Computation*** (2nd ed.)<br>*James H. Davenport, Yvon Siret, Évelyne Tournier (1993)* | Libgen MD5: `84f0d17ebb48c1d7211e90a9ff7bdf7e` | 313 | 1.07 MB |
+| [`jenks_sutor1992_axiom.pdf`](./papers/textbooks/jenks_sutor1992_axiom.pdf) | ***AXIOM: The Scientific Computation System*** (Axiom Book Vol. 0)<br>*Richard D. Jenks, Robert S. Sutor (1992)*<br>The genuine Springer edition: "© Springer Science+Business Media New York 1992", ISBN 978-1-4612-7729-3 / 978-1-4612-2940-7 (eBook). Full text layer. | Springer — user-supplied | 765 | 20.4 MB |
 | [`fricas2026_system_for_computer_mathematics.pdf`](./papers/textbooks/fricas2026_system_for_computer_mathematics.pdf) | ***The FriCAS System for Computer Mathematics***<br>the FriCAS project's regenerated adaptation of *AXIOM: The Scientific Computation System* (Axiom Book Vol. 0), *Jenks & Sutor (1992)*, whose sources were BSD-relicensed in 2002. Generated **2026-03-06**. **Not the Springer edition** — cite it as FriCAS, not as Jenks & Sutor 1992. | FriCAS project (`fricas.github.io`) | 812 | 5.01 MB |
 
 ### Axiom literate volumes (bibliography §5)
@@ -75,7 +80,10 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`krebber2017_ac_matching_thesis.pdf`](./papers/pattern-matching/krebber2017_ac_matching_thesis.pdf) | **Non-linear Associative-Commutative Many-to-One Pattern Matching with Sequence Variables** (MSc Thesis)<br>*Manuel Krebber (2017)* | arXiv: [`1705.00907`](https://arxiv.org/abs/1705.00907) | 67 | 864.8 KB |
 | [`krebber2017_matchpy.pdf`](./papers/pattern-matching/krebber2017_matchpy.pdf) | **MatchPy: A Pattern Matching Library**<br>*Manuel Krebber, Henrik Barthels, Paolo Bientinesi (2017)* | arXiv: [`1710.06915`](https://arxiv.org/abs/1710.06915) | 8 | 324.9 KB |
 | [`krebber2017_efficient_pattern_matching_python.pdf`](./papers/pattern-matching/krebber2017_efficient_pattern_matching_python.pdf) | **Efficient Pattern Matching in Python**<br>*Manuel Krebber, Henrik Barthels, Paolo Bientinesi (2017)* | arXiv: [`1710.00077`](https://arxiv.org/abs/1710.00077) | 9 | 335.3 KB |
+| [`bachmair1993_ac_discrimination_nets.pdf`](./papers/pattern-matching/bachmair1993_ac_discrimination_nets.pdf) | **Associative-Commutative Discrimination Nets**<br>*Leo Bachmair, Ta Chen, I. V. Ramakrishnan (1993)*<br>The paper that **introduces** the data structure. **Image-only — OCR sidecar `.txt` alongside.** | TAPSOFT '93, Springer LNCS 668, pp. 61–74 / DOI: [`10.1007/3-540-56610-4_56`](https://doi.org/10.1007/3-540-56610-4_56) — user-supplied | 14 | 758 KB |
 | [`bachmair1995_ac_discrimination_nets.pdf`](./papers/pattern-matching/bachmair1995_ac_discrimination_nets.pdf) | **Experiments with Associative-Commutative Discrimination Nets**<br>*Leo Bachmair, Ta Chen, I. V. Ramakrishnan, Siva Anantharaman, Jacques Chabin (1995)* | IJCAI '95, pp. 348–354: [`ijcai.org/Proceedings/95-1/Papers/046.pdf`](https://www.ijcai.org/Proceedings/95-1/Papers/046.pdf) | 7 | 248.1 KB |
+| [`benanav1987_complexity_of_matching_problems.pdf`](./papers/pattern-matching/benanav1987_complexity_of_matching_problems.pdf) | **Complexity of Matching Problems**<br>*Dan Benanav, Deepak Kapur, Paliath Narendran (1987)*<br>**The source for *both* AC-matching complexity claims** — NP-completeness, *and* the O(\|s\|·\|t\|³) bound for linear patterns. | *JSC* 3(1):203–216 / DOI: [`10.1016/S0747-7171(87)80027-5`](https://doi.org/10.1016/S0747-7171(87)80027-5) — user-supplied | 14 | 633 KB |
+| [`eker1995_associative_commutative_matching.pdf`](./papers/pattern-matching/eker1995_associative_commutative_matching.pdf) | **Associative-Commutative Matching Via Bipartite Graph Matching**<br>*S. M. Eker (1995)*<br>A practical AC-matching algorithm for the general case — the Maude lineage. Not a complexity result; it cites Benanav for those. **Image-only apart from an Oxford download watermark — OCR sidecar `.txt` alongside.** | *The Computer Journal* 38(5):381–399 / DOI: [`10.1093/comjnl/38.5.381`](https://doi.org/10.1093/comjnl/38.5.381) — user-supplied | 19 | 2.4 MB |
 | [`cole_wolfram1981_smp.pdf`](./papers/pattern-matching/cole_wolfram1981_smp.pdf) | **SMP: A Symbolic Manipulation Program**<br>*Christopher A. Cole, Stephen Wolfram (1981)* | Sci-Hub / DOI: [`10.1145/800206.806365`](https://doi.org/10.1145/800206.806365) | 3 | 269.7 KB |
 | [`greif1985_smp_pattern_matcher.pdf`](./papers/pattern-matching/greif1985_smp_pattern_matcher.pdf) | **The SMP Pattern-Matcher**<br>*Jerry Greif (1985)* | Sci-Hub / DOI: [`10.1007/3-540-15984-3_281`](https://doi.org/10.1007/3-540-15984-3_281) | 12 | 884.5 KB |
 
@@ -150,17 +158,15 @@ rather than archiving them here. Where such an entry cites an actual paper, that
 
 ### Not obtained
 
+Nine sources were once listed here. Six were subsequently supplied and are now held (Klop's survey,
+then Karr ×2, Benanav, Eker, Bachmair '93 and the Springer Jenks & Sutor — see the corrections log
+below). The three that remain are not paywalled but genuinely gone or nonexistent.
+
 | Source | Bibliography § | Why |
 | :--- | :--- | :--- |
 | riptutorial, *Wolfram Language — Evaluation Order* | §6 | The site's Wolfram Language content is gone — `riptutorial.com/wolfram-language` now serves a generic landing page, `/topic/2549/evaluation-order` serves unrelated iOS content, and the Wayback Machine holds no snapshot of either URL. The material it summarized is covered in full by `wolfram_ref_evaluation_of_expressions.html`. |
 | Axiom volumes as PDFs | §5 | `axiom-developer.org` does not resolve and no prebuilt volume PDFs were found; the upstream `.pamphlet` literate sources are stored instead. |
 | Brun, *Building a CAS in Go*, parts 2+ | §9 | Only Part 1 is discoverable; no later installments found on Medium or in search. |
-| Bachmair, Chen & Ramakrishnan, *Associative-Commutative Discrimination Nets*, TAPSOFT '93 | §3 | The 1993 paper that introduces the data structure is paywalled (Springer LNCS). The 1995 IJCAI measurement paper by the same group **is** held, and is the practical one. |
-| Karr, *Summation in Finite Terms*, *JACM* 28(2) (1981) | §1 | ACM Digital Library paywall; `doi.org/10.1145/322248.322255` resolves but returns 403 to non-browser clients. Cited as the origin of difference-field summation. Schneider's Sigma paper (held) covers the same ground more approachably. |
-| Karr, *Theory of Summation in Finite Terms*, *JSC* 1(3) (1985) | §1 | Elsevier paywall (`10.1016/S0747-7171(85)80038-9`). The follow-up to the above. |
-| Benanav, Kapur & Narendran, *Complexity of Matching Problems*, *JSC* 3(1) (1987) | §4 | Elsevier paywall (`10.1016/S0747-7171(87)80027-5`). Semantic Scholar reports it as hybrid open access, but the DOI returns 403 to non-browser clients. **This is the citation behind the "AC matching is NP-complete" claim**; Krebber's thesis (held) quotes the result. |
-| Eker, *Associative-Commutative Matching via Bipartite Graph Matching*, *Computer Journal* 38(5) (1995) | §4 | Oxford Academic paywall; Semantic Scholar reports no open-access copy. **This is the citation behind the polynomial bound for linear AC matching**; Krebber's thesis (held) uses the same bipartite-matching construction. |
-| Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | §1, §5 | The Springer edition (ISBN 3-540-97855-0 / 0-387-97855-0) was not obtained. The FriCAS project's modern regeneration of the same book is stored instead and is freely licensed. |
 
 ---
 
