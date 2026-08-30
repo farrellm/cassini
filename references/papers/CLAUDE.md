@@ -7,7 +7,7 @@ Eight topical directories. See [`../CLAUDE.md`](../CLAUDE.md) for conventions an
 
 | If you need to know… | Open |
 | :--- | :--- |
-| How does the evaluator sequence Hold / Flat / Orderless / Listable, and what re-evaluates to a fixed point? | `wolfram-language/wolfram_ref_evaluation.html` — "The Standard Evaluation Sequence", all 13 steps in order |
+| How does the evaluator sequence Hold / Flat / Orderless / Listable, and what re-evaluates to a fixed point? | `wolfram-language/wolfram_ref_evaluation.html` — "The Standard Evaluation Sequence" — 12 steps as the page numbers them, transcribed as 13 in `wolfram-language/CLAUDE.md` |
 | Where do OwnValues, DownValues, UpValues, and SubValues attach, and how do I model the rule tables? | `wolfram-language/` |
 | How do I make automatic simplification produce a canonical form? | `textbooks/` (**Cohen Vol. 2 ch. 3** — the algorithm is in Vol. 2, not Vol. 1) |
 | How do I implement polynomial GCD, factorization, Hensel lifting, Gröbner bases, integration? | `textbooks/` (Geddes, then von zur Gathen & Gerhard, then Bronstein) |
