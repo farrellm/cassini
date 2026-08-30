@@ -52,3 +52,8 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
    Source column is how to re-fetch it.
 4. Provenance: several textbook PDFs came from Libgen and several papers from Sci-Hub. The
    bibliography's "Availability at a Glance" section marks which titles are in print and purchasable.
+5. **The per-file annotations here repeat claims that also live in `../notes/`.** When a claim about
+   a source is corrected in either place, fix every copy in the same change — the annotation in this
+   directory tree, the bibliography entry, the prose in `../notes/cas-haskell.md`, and the row in
+   `downloaded-references-summary.md`. Corrections that landed in the notes and not here have had to
+   be found again twice. See `../notes/CLAUDE.md` rule 4 for the grep that closes it out.

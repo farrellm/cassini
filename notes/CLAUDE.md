@@ -28,9 +28,23 @@ The documents these cite live in [`../references/`](../references/) — see that
    in that file's "Not obtained" table with the route tried and the reason
    (`../references/CLAUDE.md` rule 2). Adding a citation and leaving the corpus untouched is how
    five sources ended up cited but unaccounted for.
-4. **The two notes must agree.** `cas-haskell.md` names sources in prose; every one of them needs an
-   entry in the bibliography, and shared facts — editions, chapter ranges, attributions, titles —
-   must match. Fixing one and not the other is the most common way these drift.
+4. **A corrected claim must be fixed everywhere it appears, in the same change.** Most facts about a
+   source are written down three times: in `cas-haskell.md` as prose, in the bibliography as an
+   annotation, and again in the `../references/**/CLAUDE.md` file for the directory holding it — and
+   sometimes a fourth time in `../references/downloaded-references-summary.md`. Correcting one copy
+   and leaving the others is the single most repeated mistake in this repo's history: the
+   "early SMP code still runs in Mathematica" misreading and the Symbolica AC-matching
+   mis-sourcing were each fixed in the notes and then found again, unchanged, in a directory file
+   two commits later. Before considering a correction done, grep the whole repo for a distinctive
+   phrase from the *old* claim and confirm it returns nothing:
+
+   ```sh
+   grep -rn "the wrong phrasing" --include='*.md' notes/ references/
+   ```
+
+   The same applies in the other direction: every source named in `cas-haskell.md` needs a
+   bibliography entry, and shared facts — editions, chapter ranges, attributions, titles — must
+   match across all copies.
 5. **Record corpus defects on the entry, not only in the index.** If the held copy is an image-only
    scan, has lossy OCR, or is a different edition from the citation, say so in the annotation. A
    reader works from the bibliography, and a defect they discover by grepping and finding nothing
