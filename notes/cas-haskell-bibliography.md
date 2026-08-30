@@ -26,6 +26,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 
 **Karr, Michael.** "Summation in Finite Terms." *Journal of the ACM* 28, no. 2 (1981): 305–350. DOI: 10.1145/322248.322255.
 > The difference-field ("ΠΣ-field") theory of symbolic summation — the discrete analogue of Risch's integration algorithm, and **the gap in *A=B***, which covers Gosper/Zeilberger/WZ but not this. Read it when indefinite nested sums and products come up. See also his **"Theory of Summation in Finite Terms," *Journal of Symbolic Computation* 1, no. 3 (1985): 303–315, DOI: 10.1016/S0747-7171(85)80038-9.** *Optional; needed only for the summation requirement.*
+> **Corpus caveat:** the 1985 paper's copy in `references/` has a text layer, but its OCR systematically drops the letter `h` — "Teory of Summation", "matematical", "algoritm", "te" for "the". Searches for `the` or `theorem` return nothing and look like honest misses. The 1981 paper is clean.
 
 **Schneider, Carsten.** "Symbolic Summation Assists Combinatorics." *Séminaire Lotharingien de Combinatoire* 56 (2007), Article B56b. Free from RISC (`www3.risc.jku.at`).
 > The modern continuation of Karr: the **Sigma** Mathematica package, built on Karr's algorithm with extensions for non-trivial multi-sum problems. The practical entry point to difference-field summation, and easier going than Karr's papers. *Optional; free.*
@@ -50,7 +51,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 > The comprehensive advanced reference, 908 pp. *Optional — only if you need confluence/termination theory beyond Baader & Nipkow.* (The copy in `references/` is an image-only scan with no text layer; it cannot be grepped.)
 
 **Klop, Jan Willem.** "Term Rewriting Systems." In *Handbook of Logic in Computer Science*, Vol. 2, ed. Abramsky, Gabbay & Maibaum (Oxford University Press, 1992), pp. 1–116. Circulated by CWI as report `CS-R9053`.
-> The classic full survey of rewriting theory: abstract reduction systems (with Knuth–Bendix completion and (E-)unification), orthogonal TRSs and reduction strategies, strong sequentiality, and conditional TRSs. ~112 pp. **Get it as the standalone PDF, not from the Handbook** — the Handbook scan is images only and cannot be searched, whereas the standalone has a full text layer. Two labelling notes: the text carries no report number of its own, and it cites work through 1991, so it is the Handbook-chapter text rather than strictly the 1990-numbered preprint. *Optional; free.*
+> The classic full survey of rewriting theory: abstract reduction systems (with Knuth–Bendix completion and (E-)unification), orthogonal TRSs and reduction strategies, strong sequentiality, and conditional TRSs. ~112 pp. **Get it as the standalone PDF, not from the Handbook** — the Handbook scan is images only and cannot be searched, whereas the standalone has a full text layer. Two labelling notes: the text carries no report number of its own, and it cites work through 1991, so it is the Handbook-chapter text rather than strictly the 1990-numbered preprint. **Not freely obtainable** — the copy held here was supplied, and `CS-R9053` could not be located free; the ICALP'90 survey below is the free way into the same material. *Optional.*
 
 **Klop, Jan Willem.** "Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond." *ICALP '90*, Springer LNCS 443. Free from CWI's repository (`ir.cwi.nl/pub/2667`).
 > The 20-page version: abstract rewriting, Combinatory Logic, orthogonal systems, strategies, critical pair completion, extended rewriting formats. The cheap way into the same material. *Optional; free.*
@@ -74,11 +75,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 **Greif, Jerry.** "The SMP Pattern-Matcher." *EUROCAL '85*, Springer LNCS 204.
 > The earliest published description of how this family of pattern matchers was designed. Archived on Wolfram's content servers.
 
-**Bachmair, Leo, Ta Chen, and I. V. Ramakrishnan.** "Associative-Commutative Discrimination Nets." *TAPSOFT '93: Theory and Practice of Software Development* (CAAP/FASE, Orsay), Springer LNCS 668, 1993, pp. 61–74. DOI: 10.1007/3-540-56610-4_56.
-> Introduces the data structure: an AC-discrimination net that "is a natural generalization of the standard discrimination net in the sense that if no AC-symbols are present in the pattern, it specializes to the standard discrimination net." Useful third-party confirmation of the complexity attribution above — it states that one-to-one AC matching "can be solved in polynomial time if patterns are restricted to linear terms", credits Benanav et al. for it, and notes that "the essential component of the one-to-one AC-matching algorithm described by Benanav, Kapur, and Narendran is the application of maximum bipartite graph matching." Also cites Verma & Ramakrishnan for the result that AC matching and maximum bipartite graph matching are mutually reducible.
-
-**Bachmair, Leo, Ta Chen, I. V. Ramakrishnan, Siva Anantharaman, and Jacques Chabin.** "Experiments with Associative-Commutative Discrimination Nets." *IJCAI '95*, pp. 348–354. Free from `ijcai.org`.
-> The measurement paper for the above. Read both before optimizing your matcher — not before writing it.
+*(The AC-discrimination-net papers by Bachmair et al., previously listed here, now sit with the rest of the matching literature in §4.)*
 
 ---
 
@@ -95,6 +92,14 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 
 **Eker, Steven M.** "Associative-Commutative Matching via Bipartite Graph Matching." *The Computer Journal* 38, no. 5 (May 1995): 381–399. DOI: 10.1093/comjnl/38.5.381.
 > **A practical algorithm, not a complexity result.** Builds "a hierarchy of bipartite graph matching problems which encodes all the possible solutions of subproblems", then solves the resulting semi-pure AC systems exhaustively, with refinements that "considerably cut down the search space" — aimed at running efficiently on non-pathological instances of the *general*, non-linear problem. Eker credits Benanav for both bounds. Written at INRIA Lorraine; Eker then moved to SRI, and this is the lineage Maude's AC matcher is built on. Krebber's many-to-one matcher uses the same bipartite construction at commutative states. *The paper to read for how to make AC matching fast; cite Benanav, not this, for the complexity.*
+> **Corpus caveat:** the copy in `references/` is image-only and carries a generated `.txt` OCR sidecar beside it. Worse, it *reports* extractable text on every page — but the only text is an Oxford download watermark repeated, 860 characters across 19 pages. A naive text-layer check passes it; grep the sidecar instead.
+
+**Bachmair, Leo, Ta Chen, and I. V. Ramakrishnan.** "Associative-Commutative Discrimination Nets." *TAPSOFT '93: Theory and Practice of Software Development* (CAAP/FASE, Orsay), Springer LNCS 668, 1993, pp. 61–74. DOI: 10.1007/3-540-56610-4_56.
+> Introduces the data structure: an AC-discrimination net that "is a natural generalization of the standard discrimination net in the sense that if no AC-symbols are present in the pattern, it specializes to the standard discrimination net." Useful third-party confirmation of the complexity attribution above — it states that one-to-one AC matching "can be solved in polynomial time if patterns are restricted to linear terms", credits Benanav et al. for it, and notes that "the essential component of the one-to-one AC-matching algorithm described by Benanav, Kapur, and Narendran is the application of maximum bipartite graph matching." Also cites Verma & Ramakrishnan for the result that AC matching and maximum bipartite graph matching are mutually reducible.
+> **Corpus caveat:** the copy in `references/` is image-only, with a generated `.txt` OCR sidecar beside it. Grep the sidecar.
+
+**Bachmair, Leo, Ta Chen, I. V. Ramakrishnan, Siva Anantharaman, and Jacques Chabin.** "Experiments with Associative-Commutative Discrimination Nets." *IJCAI '95*, pp. 348–354. Free from `ijcai.org`.
+> The measurement paper for the above. Read both before optimizing your matcher — not before writing it.
 
 ---
 
@@ -288,12 +293,27 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Axiom literate `.pamphlet` volumes (`github.com/daly/axiom/books`)
 - SymPy architecture paper (PeerJ CS, open access)
 - Wolfram's historical essays
-- Klop, *Term Rewriting Systems* (the Handbook chapter / CWI `CS-R9053`), and his shorter ICALP'90 survey (`ir.cwi.nl/pub/2667`)
+- Klop, "Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond" — the ICALP'90 survey, free from CWI (`ir.cwi.nl/pub/2667`)
 - Bachmair et al., "Experiments with AC Discrimination Nets" (`ijcai.org`)
 - Fateman, "A Review of Mathematica"
 - Schneider, "Symbolic Summation Assists Combinatorics" (RISC) — the readable way into difference-field summation
 - Klint, van der Storm & Vinju, the Rascal paper (author copy, `homepages.cwi.nl`)
-- Penner, "ASTs with Fix and Free" (`chrispenner.ca`)
+- Penner, "ASTs with Fix and Free" (`chrispenner.ca`) and Milewski, "F-Algebras" (`bartoszmilewski.com`)
+
+**Paywalled journal/conference papers — held here, but not freely re-obtainable.** All six were
+supplied rather than fetched; re-obtaining them needs institutional access. Where a free substitute
+exists it is named:
+
+- Karr, "Summation in Finite Terms" (*JACM* 28(2), 1981) and "Theory of Summation in Finite Terms"
+  (*JSC* 1(3), 1985) — ACM and Elsevier. *Substitute: Schneider's Sigma paper, free, above.*
+- Benanav, Kapur & Narendran, "Complexity of Matching Problems" (*JSC* 3(1), 1987) — Elsevier.
+  Reported as hybrid open access by Semantic Scholar, so it may be free-to-read in a browser.
+- Eker, "AC Matching via Bipartite Graph Matching" (*Computer Journal* 38(5), 1995) — Oxford
+  Academic; reported as closed.
+- Bachmair, Chen & Ramakrishnan, "Associative-Commutative Discrimination Nets" (TAPSOFT '93) —
+  Springer LNCS. *The 1995 IJCAI companion is free, above, and is the more practical of the two.*
+- Klop, "Term Rewriting Systems" (*Handbook of Logic in CS* Vol. 2 / CWI `CS-R9053`) — the report
+  number could not be located free. *Substitute: the ICALP'90 survey, free, above.*
 
 **In print / purchase:**
 - Cohen Vols. 1–2 (Routledge/CRC reprints)
@@ -316,7 +336,21 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 Every entry above has been checked, either against the local corpus in `references/` or against the live primary source. **Two things remain genuinely open**, and are tagged `[unverified]` where they appear: Zippel's original Kluwer hardback ISBN (the copy held is the Springer softcover reprint, ISBN 978-1-4613-6398-9), and whether `numeric-prelude` relies on multi-parameter type classes.
 
-Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry. Two corpus caveats are worth carrying into any future check: the Terese and Abramsky scans are **image-only with no text layer**, so they cannot be grepped and extracting a page range from them silently yields nothing; and several Wolfram `ref/` captures preserved little beyond their one-line definitions.
+Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
+
+**Readability, not availability, is now the live risk.** Four held documents cannot simply be grepped, and one of them fails silently:
+
+| File | Problem | Mitigation |
+| :--- | :--- | :--- |
+| Terese (2003) | Image-only, 908 pp | **None.** Open in a viewer. |
+| Abramsky, *Handbook* Vol. 2 | Image-only, 582 pp | Use the standalone Klop chapter for pp. 1–116; the rest needs a viewer. |
+| Bachmair et al. (TAPSOFT '93) | Image-only | `.txt` OCR sidecar beside it |
+| Eker (1995) | Image-only *except* a repeated download watermark | `.txt` OCR sidecar beside it |
+| Karr (1985) | Has a text layer, but the OCR **drops every `h`** | None — search around it |
+
+Two traps worth carrying into any future audit. **Eker passes a naive text-layer check** — it reports text on every page, but the only text is an Oxford watermark, 860 characters across 19 pages; check the *variety* of extracted text, not its presence. And **Karr 1985 fails silently** — `grep theorem` returns nothing and looks like an honest miss. Several Wolfram `ref/` captures likewise preserved little beyond their one-line definitions; `ref/Attributes` in particular does not contain the attribute list.
+
+See [`../references/missing-documents.md`](../references/missing-documents.md) for the three sources still not held, the routes tried, and the command that regenerates the OCR sidecars.
 
 Two figures in this bibliography are **vendor- or maintainer-reported benchmarks**, not independently verified: Symbolica's Rubi corpus timings and rule count, and the `poly` package's speedup claim. The Rubi rule count discrepancy (6600–6700 per Rubi's own site vs. 7,000+ per Symbolica) is noted where it appears.
 
