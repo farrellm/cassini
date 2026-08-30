@@ -23,7 +23,7 @@ Vol. 1.
 | `zippel1993_effective_polynomial_computation.pdf` | Where asymptotically optimal polynomial algorithms are the wrong practical choice; by the originator of sparse modular ("Zippel") interpolation. Optional, valuable at Stage 2. |
 | `davenport_siret_tournier1993_computer_algebra_2nd_ed.pdf` | Gentler systems-oriented survey. Conceptual overview, not an implementation cookbook. Optional. |
 | `jenks_sutor1992_axiom.pdf` | **The genuine Springer 1992 edition** (765 pp., full text layer) — the design document for a strongly-typed CAS, categories and domains (Ring, Field, …) as first-class types. The closest existing analogue to a type-driven Haskell CAS; essential background for the typed-vs-untyped decision. |
-| `fricas2026_system_for_computer_mathematics.pdf` | The FriCAS project's regenerated adaptation of the same book — the design document for a strongly-typed CAS, with categories and domains (Ring, Field, …) as first-class types. The closest existing analogue to a type-driven Haskell CAS; essential background for the typed-vs-untyped decision. **Cite it as FriCAS, not as Jenks & Sutor 1992** — the Springer edition is not held. |
+| `fricas2026_system_for_computer_mathematics.pdf` | The FriCAS project's regenerated adaptation of the same book — the design document for a strongly-typed CAS, with categories and domains (Ring, Field, …) as first-class types. The closest existing analogue to a type-driven Haskell CAS; essential background for the typed-vs-untyped decision. **Cite it as FriCAS, not as Jenks & Sutor 1992** — for that, use `jenks_sutor1992_axiom.pdf` above, which is held. |
 
 ## Axiom literate volumes
 
