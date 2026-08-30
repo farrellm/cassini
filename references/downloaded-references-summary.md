@@ -7,11 +7,13 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**65 documents (~422 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 22 HTML captures — plus 2 OCR sidecars.**
+**73 documents (~423 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 30 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page on the date noted in
-[`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text.
+[`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text. The
+original 22 were fetched **2026-08-29**; the eight README/package/licence captures added to anchor
+verbatim quotes were fetched **2026-08-30**.
 
 ---
 
@@ -69,6 +71,7 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | :--- | :--- | :--- | :--- | :--- |
 | [`richardson1968_some_undecidable_problems.pdf`](./papers/foundations/richardson1968_some_undecidable_problems.pdf) | **Some Undecidable Problems Involving Elementary Functions of a Real Variable**<br>*Daniel Richardson (1968)*<br>*J. Symbolic Logic* 33(4):514–520. Note the title: "Undecidable", not "Unsolvable" — the miscitation is widespread. | Sci-Hub / DOI: [`10.2307/2271358`](https://doi.org/10.2307/2271358) | 8 | 579.5 KB |
 | [`swierstra2008_data_types_a_la_carte.pdf`](./papers/foundations/swierstra2008_data_types_a_la_carte.pdf) | **Data types à la carte**<br>*Wouter Swierstra (2008)* | Sci-Hub / DOI: [`10.1017/S0956796808006758`](https://doi.org/10.1017/S0956796808006758) | 15 | 511.5 KB |
+| [`wadler2008_data_types_a_la_carte_blog.html`](./papers/foundations/wadler2008_data_types_a_la_carte_blog.html) | **Data Types a la Carte** (blog post, 28.2.08)<br>*Philip Wadler*<br>The source of the "presents the best solution to the Expression Problem that I've seen in Haskell (well, Haskell with `-fglasgow-exts`)" verdict — which is here, **not** in Swierstra's paper. Fetched 2026-08-30. | [`wadler.blogspot.com`](https://wadler.blogspot.com/2008/02/data-types-la-carte.html) | — | 112.8 KB |
 | [`bahr_hvitved2011_compositional_data_types.pdf`](./papers/foundations/bahr_hvitved2011_compositional_data_types.pdf) | **Compositional Data Types**<br>*Patrick Bahr, Tom Hvitved (2011)* | Sci-Hub / DOI: [`10.1145/2036918.2036930`](https://doi.org/10.1145/2036918.2036930) | 12 | 474.8 KB |
 
 ---
@@ -100,6 +103,9 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`rich_rubi_vision.html`](./papers/cas-architecture/rich_rubi_vision.html) | *Organizing Math as a Rule-based Decision Tree* (Rubi "Vision")<br>*Albert Rich* | [`rulebasedintegration.org/vision.html`](https://rulebasedintegration.org/vision.html) | — | 14.3 KB |
 | [`symbolica_2_2_symbolic_integration.html`](./papers/cas-architecture/symbolica_2_2_symbolic_integration.html) | *Symbolica 2.2: symbolic integration* — the source of the Rubi-port and benchmark figures quoted in §5 | [`symbolica.io/posts/symbolic_integration/`](https://symbolica.io/posts/symbolic_integration/) | — | 103.2 KB |
 | [`symbolica_pattern_matching.html`](./papers/cas-architecture/symbolica_pattern_matching.html) | *Algorithms through the lens of symbolic pattern matching* | [`symbolica.io/posts/pattern_matching/`](https://symbolica.io/posts/pattern_matching/) | — | 74.2 KB |
+| [`symbolica_license.html`](./papers/cas-architecture/symbolica_license.html) | *Pricing and plans* — the source for the licence terms quoted in §5: the employment trigger, and the **Free** tier's "[o]ne core and instance per device" cap. Fetched 2026-08-30. | [`symbolica.io/license/`](https://symbolica.io/license/) | — | 50.0 KB |
+| [`expreduce_readme.html`](./papers/cas-architecture/expreduce_readme.html) | Expreduce's GitHub README — the source for "This software is experimental quality and is not currently intended for serious use." Fetched 2026-08-30. | [`github.com/corywalker/expreduce`](https://github.com/corywalker/expreduce) | — | 308.6 KB |
+| [`symja_readme.html`](./papers/cas-architecture/symja_readme.html) | Symja's GitHub README — confirms "the Rubi symbolic integration rules are used to implement the `Integrate` function" and, as the notes say, **names no Rubi version**. Fetched 2026-08-30. | [`github.com/axkr/symja_android_library`](https://github.com/axkr/symja_android_library) | — | 376.2 KB |
 
 ---
 
@@ -114,6 +120,9 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`penner2018_asts_with_fix_and_free.html`](./papers/haskell/penner2018_asts_with_fix_and_free.html) | *ASTs with Fix and Free* — Chris Penner (2018-02-24). The practical how-to for parameterizing an AST's recursive slots and folding it with `Fix`/`Free`. | [`chrispenner.ca`](https://chrispenner.ca/posts/asts-with-fix-and-free) | — | 86.2 KB |
 | [`milewski2017_f_algebras.html`](./papers/haskell/milewski2017_f_algebras.html) | *F-Algebras* — Bartosz Milewski (2017-02-28), part 24 of *Category Theory for Programmers*. The theory under `Fix`/`cata`: initial algebras and catamorphisms. | [`bartoszmilewski.com`](https://bartoszmilewski.com/2017/02/28/f-algebras/) | — | 154.6 KB |
 | [`olah2012_hasksymb.html`](./papers/haskell/olah2012_hasksymb.html) | *HaskSymb: An Experiment in Haskell Symbolic Algebra*<br>*Christopher Olah (2012-06-01)* | [`christopherolah.wordpress.com`](https://christopherolah.wordpress.com/2012/06/01/hasksymb-an-experiment-in-haskell-symbolic-algebra/) — **note:** the bibliography dates this 2012-11; the post is dated June 2012 | — | 81.9 KB |
+| [`olah_hasksymb_readme.html`](./papers/haskell/olah_hasksymb_readme.html) | HaskSymb's GitHub README — **the design retrospective the blog post does not contain**: "The *big* issue I'm facing is appropriate types for symbolic expressions. In particular, how do I handle variables in types?" and "My bad solution for now has been to just not have type-level variable representation, which kind of bothers me." Fetched 2026-08-30. | [`github.com/colah/HaskSymb`](https://github.com/colah/HaskSymb) | — | 265.0 KB |
+| [`poly_hackage.html`](./papers/haskell/poly_hackage.html) | The `poly` Hackage page — source for the maintainer-reported "poly is at least 20x-40x faster than the `polynomial` library", with the per-operation benchmark table behind it. Fetched 2026-08-30. | [`hackage.haskell.org/package/poly`](https://hackage.haskell.org/package/poly) | — | 29.2 KB |
+| [`dumb_cas_hackage.html`](./papers/haskell/dumb_cas_hackage.html) | The `dumb-cas` Hackage page — source for "combine the flexibility of a Lisp with the conciseness of a Regex engine". Fetched 2026-08-30. | [`hackage.haskell.org/package/dumb-cas`](https://hackage.haskell.org/package/dumb-cas) | — | 18.2 KB |
 
 ---
 
@@ -126,6 +135,7 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`wolfram_ref_attributes.html`](./papers/wolfram-language/wolfram_ref_attributes.html) | `Attributes` — the symbol reference page. **Thin capture: it does *not* contain the attribute list** — only the `Attributes[symbol]` signatures plus bare section labels; the "Details" section did not capture. The full attribute table is in `wolfram_ref_evaluation_of_expressions.html`. | [`.../ref/Attributes.html`](https://reference.wolfram.com/language/ref/Attributes.html) | 212.8 KB |
 | [`wolfram_guide_attributes.html`](./papers/wolfram-language/wolfram_guide_attributes.html) | *Attributes* — the guide page; a list of links to attribute-related functions, no prose | [`.../guide/Attributes.html`](https://reference.wolfram.com/language/guide/Attributes.html) | 188.0 KB |
 | [`wolfram_ref_associating_definitions.html`](./papers/wolfram-language/wolfram_ref_associating_definitions.html) | *Transformation Rules and Definitions* — the UpValues/DownValues rule-storage model in context | [`.../tutorial/AssociatingDefinitionsWithDifferentSymbols.html`](https://reference.wolfram.com/language/tutorial/AssociatingDefinitionsWithDifferentSymbols.html) | 496.8 KB |
+| [`wolfram_ref_ownvalues.html`](./papers/wolfram-language/wolfram_ref_ownvalues.html) | `OwnValues` reference page. Thin in the same way as its three siblings (~13 KB of text): "`OwnValues[x]` gives a list of transformation rules corresponding to all ownvalues defined for the symbol `x`", and little else. Fetched 2026-08-30. | [`.../ref/OwnValues.html`](https://reference.wolfram.com/language/ref/OwnValues.html) | 232.0 KB |
 | [`wolfram_ref_downvalues.html`](./papers/wolfram-language/wolfram_ref_downvalues.html) | `DownValues` reference page | [`.../ref/DownValues.html`](https://reference.wolfram.com/language/ref/DownValues.html) | 229.7 KB |
 | [`wolfram_ref_upvalues.html`](./papers/wolfram-language/wolfram_ref_upvalues.html) | `UpValues` reference page | [`.../ref/UpValues.html`](https://reference.wolfram.com/language/ref/UpValues.html) | 248.2 KB |
 | [`wolfram_ref_subvalues.html`](./papers/wolfram-language/wolfram_ref_subvalues.html) | `SubValues` reference page | [`.../ref/SubValues.html`](https://reference.wolfram.com/language/ref/SubValues.html) | 234.2 KB |
@@ -155,6 +165,15 @@ GiNaC, SymEngine, Maxima, Reduce, FriCAS, Symbolica, Maude, OBJ, Stratego, Rasca
 §7 names *Hackage packages*. Those are source repositories, not documents; clone or browse them
 rather than archiving them here. Where such an entry cites an actual paper, that paper is present
 (SymPy, GiNaC, Rascal, Fateman/MockMMA).
+
+**But the waiver covers citing a system, not quoting its page.** Where the notes quote a README,
+package page or licence *verbatim*, the page is captured here so the quote has an anchor — that is
+what `expreduce_readme.html`, `symja_readme.html`, `symbolica_license.html`,
+`olah_hasksymb_readme.html`, `poly_hackage.html` and `dumb_cas_hackage.html` are for. Two further
+captures close the same kind of gap outside §5/§7: `wadler2008_data_types_a_la_carte_blog.html` (a
+blog post, which the waiver never reached) and `wolfram_ref_ownvalues.html` (cited in §6 alongside
+its three siblings, but previously the only one not held). Adding a verbatim quote from a live page
+means capturing that page in the same change.
 
 ### Not obtained
 
