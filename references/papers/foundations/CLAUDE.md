@@ -9,10 +9,10 @@ expression type (bibliography §3).
 | `swierstra2008_data_types_a_la_carte.pdf` | ASTs as coproducts of functors with `Fix` and a `(:<:)` subtyping class — the reference answer to the expression problem in Haskell. **Read for context, not for adoption:** the project decided the core `Expr` stays untyped and uniform (everything is `f[args]`), which sidesteps the expression problem entirely. |
 | `bahr_hvitved2011_compositional_data_types.pdf` | The productionized descendant of à la carte. Same caveat. |
 
-## Gap tracked here
+## Scope
 
-This is the landing spot for decidability and zero-testing material as the project needs it. Known
-missing, per `../../../notes/cas-haskell.md`: **Karr's algorithm** for symbolic summation in
-difference fields (not covered by *A=B*) and Schneider's Sigma work. Fetch those when summation
-beyond Gosper/Zeilberger becomes real, and add them to
-`../../downloaded-references-summary.md`.
+This is the landing spot for decidability and zero-testing material as the project needs it.
+
+The summation gap once tracked here is **closed**: Karr's two papers and Schneider's Sigma article
+are held, and live with the rest of the summation material in `../textbooks/` alongside *A=B*. The
+remaining gaps for the whole corpus are listed in `../../missing-documents.md`.

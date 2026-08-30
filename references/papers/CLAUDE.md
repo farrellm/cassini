@@ -37,10 +37,19 @@ The staged plan lives in `../../notes/cas-haskell.md`. In file terms:
 
 ## Sizes
 
-Two files are image-only scans with **no text layer** — `pdftotext` returns nothing and extracting a
-page range silently yields an empty file: `terese2003_*` (181 MB, 908 pp.) and `abramsky1992_*`
-(71 MB, 582 pp.). For the Klop chapter in the latter, use
-`term-rewriting/klop1992_term_rewriting_systems.pdf` instead.
+Four files are image-only scans with **no text layer** — `pdftotext` returns nothing and extracting
+a page range silently yields an empty file:
+
+- `term-rewriting/terese2003_*` (181 MB, 908 pp.) — no mitigation; open it in a viewer.
+- `term-rewriting/abramsky1992_*` (71 MB, 582 pp.) — for the Klop chapter use
+  `term-rewriting/klop1992_term_rewriting_systems.pdf` instead.
+- `pattern-matching/bachmair1993_*` and `pattern-matching/eker1995_*` — both carry a generated
+  `.txt` OCR sidecar beside them; grep the sidecar.
+
+**Two traps.** `eker1995_*` *reports* text on every page, so a naive text-layer check passes it — but
+the only text is a repeated download watermark, 860 characters across 19 pages; check the variety of
+extracted text, not its presence. And `textbooks/karr1985_*` has a real text layer whose OCR drops
+every `h`, so `grep theorem` returns nothing and looks like an honest miss.
 
 Other large files: `axiom_bookvol10-5_numerics.pamphlet` (30 MB),
 `vonzurgathen_gerhard2013_*` (25 MB, 813 pp.). Extract the page range you need

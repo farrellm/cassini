@@ -16,12 +16,12 @@ what was tried, and which files are present but unreadable (image-only scans, lo
 
 | Directory | Contents |
 | :--- | :--- |
-| `papers/textbooks/` | The CAS canon — Cohen I/II, Geddes, von zur Gathen & Gerhard, Bronstein, A=B, Zippel, Davenport, plus Axiom Vol. 0 and the literate volumes |
+| `papers/textbooks/` | The CAS canon — Cohen I/II, Geddes, von zur Gathen & Gerhard, Bronstein, A=B, Zippel, Davenport; the three summation papers (Karr ×2, Schneider) that fill A=B's gap; and Axiom Vol. 0 in both the Springer 1992 edition and the FriCAS regeneration, plus the literate volumes |
 | `papers/term-rewriting/` | Baader & Nipkow, Terese, Klop, the Abramsky handbook, the Rascal paper |
 | `papers/foundations/` | Richardson's undecidability result; Swierstra and Bahr on composing data types |
-| `papers/pattern-matching/` | Krebber's thesis and MatchPy, AC discrimination nets, the two SMP papers |
+| `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers |
 | `papers/cas-architecture/` | SymPy, GiNaC, Fateman on Mathematica/MockMMA, the Rubi and Symbolica writeups, a CAS-scoping thesis |
-| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude, Olah's HaskSymb |
+| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation — the behavioral spec to implement against |
 | `papers/web-articles/` | Blog posts and course sites: opinion and build-logs, not specifications |
 
