@@ -7,7 +7,7 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**55 files (~394 MB) — 29 PDFs, 6 Axiom literate `.pamphlet` sources, 20 HTML captures.** HTML
+**56 files (~395 MB) — 30 PDFs, 6 Axiom literate `.pamphlet` sources, 20 HTML captures.** HTML
 entries are single-file `curl` captures of the live page on the date noted in
 [`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text.
 
@@ -50,8 +50,9 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | :--- | :--- | :--- | :--- | :--- |
 | [`baader_nipkow1998_term_rewriting_and_all_that.pdf`](./papers/term-rewriting/baader_nipkow1998_term_rewriting_and_all_that.pdf) | ***Term Rewriting and All That***<br>*Franz Baader, Tobias Nipkow (1998)* | Libgen MD5: `670e57c6f705f33f49b540c8009e4b93` | 313 | 4.72 MB |
 | [`terese2003_term_rewriting_systems.pdf`](./papers/term-rewriting/terese2003_term_rewriting_systems.pdf) | ***Term Rewriting Systems*** (Cambridge Tracts in Theoretical CS 55)<br>*Terese (Marc Bezem, Jan Willem Klop, Roel de Vrijer, eds., 2003)*<br>**Image-only scan — no text layer.** `pdftotext` returns nothing on every page; it cannot be grepped or excerpted as text. | Libgen MD5: `2365bb42b3b6b0a37af19fafe1b238f7` | 908 | 181.07 MB |
-| [`klop1990_church_rosser_to_knuth_bendix.pdf`](./papers/term-rewriting/klop1990_church_rosser_to_knuth_bendix.pdf) | **Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond**<br>*Jan Willem Klop (1990)* | ICALP '90, Springer LNCS 443 — free from CWI: [`ir.cwi.nl/pub/2667`](https://ir.cwi.nl/pub/2667/2667D.pdf) | 20 | 4.15 MB |
-| [`abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf`](./papers/term-rewriting/abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf) | ***Handbook of Logic in Computer Science, Vol. 2*** (incl. Klop, *Term Rewriting Systems*, pp. 1–116)<br>*S. Abramsky, Dov M. Gabbay, T. S. E. Maibaum, eds. (1992)* | Libgen MD5: `d3059b05b47ca64724ab84e75ce38aed` | 582 | 70.57 MB |
+| [`klop1992_term_rewriting_systems.pdf`](./papers/term-rewriting/klop1992_term_rewriting_systems.pdf) | **Term Rewriting Systems**<br>*Jan Willem Klop (1992)*<br>The chapter from *Handbook of Logic in Computer Science* Vol. 2 (its bibliography cites that volume as "this volume"), circulated by CWI as report `CS-R9053`. **Full text layer** — use this, not the Handbook scan below. Two labelling notes: the text carries no report number of its own, and it cites work through 1991, so it is the Handbook-chapter text rather than strictly the 1990-numbered preprint. | User-supplied | 112 | 700 KB |
+| [`klop1990_church_rosser_to_knuth_bendix.pdf`](./papers/term-rewriting/klop1990_church_rosser_to_knuth_bendix.pdf) | **Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond**<br>*Jan Willem Klop (1990)*<br>A separate, shorter survey — the quick way in. | ICALP '90, Springer LNCS 443 — free from CWI: [`ir.cwi.nl/pub/2667`](https://ir.cwi.nl/pub/2667/2667D.pdf) | 20 | 4.15 MB |
+| [`abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf`](./papers/term-rewriting/abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf) | ***Handbook of Logic in Computer Science, Vol. 2*** (incl. Klop, *Term Rewriting Systems*, pp. 1–116)<br>*S. Abramsky, Dov M. Gabbay, T. S. E. Maibaum, eds. (1992)*<br>**Image-only scan — no text layer** (0 of 10 sampled pages carry text). For the Klop chapter use `klop1992_term_rewriting_systems.pdf` above, which is the same text, searchable, at 1/100th the size. | Libgen MD5: `d3059b05b47ca64724ab84e75ce38aed` | 582 | 70.57 MB |
 | [`klint_vanderstorm_vinju2009_rascal.pdf`](./papers/term-rewriting/klint_vanderstorm_vinju2009_rascal.pdf) | **RASCAL: A Domain Specific Language for Source Code Analysis and Manipulation**<br>*Paul Klint, Tijs van der Storm, Jurgen Vinju (2009)* | SCAM '09 / DOI: [`10.1109/SCAM.2009.28`](https://doi.org/10.1109/SCAM.2009.28) — author copy, `homepages.cwi.nl/~storm` | 10 | 161.2 KB |
 
 ---
@@ -110,9 +111,9 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | File | Document | Source | Size |
 | :--- | :--- | :--- | :--- |
 | [`wolfram_ref_evaluation_of_expressions.html`](./papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html) | *Evaluation of Expressions* — the full tutorial chapter, incl. the standard evaluation procedure and the Attributes section (~26k words) | [`reference.wolfram.com/.../tutorial/EvaluationOfExpressions.html`](https://reference.wolfram.com/language/tutorial/EvaluationOfExpressions.html) | 851.9 KB |
-| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — the guide page | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
-| [`wolfram_ref_attributes.html`](./papers/wolfram-language/wolfram_ref_attributes.html) | `Attributes` — the symbol reference page (full attribute list) | [`.../ref/Attributes.html`](https://reference.wolfram.com/language/ref/Attributes.html) | 212.8 KB |
-| [`wolfram_guide_attributes.html`](./papers/wolfram-language/wolfram_guide_attributes.html) | *Attributes* — the guide page | [`.../guide/Attributes.html`](https://reference.wolfram.com/language/guide/Attributes.html) | 188.0 KB |
+| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — **the page carrying "The Standard Evaluation Sequence", the complete 13-step ordered algorithm.** Short, and the most important file here for Stage 1. | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
+| [`wolfram_ref_attributes.html`](./papers/wolfram-language/wolfram_ref_attributes.html) | `Attributes` — the symbol reference page. **Thin capture: it does *not* contain the attribute list** — only the `Attributes[symbol]` signatures plus bare section labels; the "Details" section did not capture. The full attribute table is in `wolfram_ref_evaluation_of_expressions.html`. | [`.../ref/Attributes.html`](https://reference.wolfram.com/language/ref/Attributes.html) | 212.8 KB |
+| [`wolfram_guide_attributes.html`](./papers/wolfram-language/wolfram_guide_attributes.html) | *Attributes* — the guide page; a list of links to attribute-related functions, no prose | [`.../guide/Attributes.html`](https://reference.wolfram.com/language/guide/Attributes.html) | 188.0 KB |
 | [`wolfram_ref_associating_definitions.html`](./papers/wolfram-language/wolfram_ref_associating_definitions.html) | *Transformation Rules and Definitions* — the UpValues/DownValues rule-storage model in context | [`.../tutorial/AssociatingDefinitionsWithDifferentSymbols.html`](https://reference.wolfram.com/language/tutorial/AssociatingDefinitionsWithDifferentSymbols.html) | 496.8 KB |
 | [`wolfram_ref_downvalues.html`](./papers/wolfram-language/wolfram_ref_downvalues.html) | `DownValues` reference page | [`.../ref/DownValues.html`](https://reference.wolfram.com/language/ref/DownValues.html) | 229.7 KB |
 | [`wolfram_ref_upvalues.html`](./papers/wolfram-language/wolfram_ref_upvalues.html) | `UpValues` reference page | [`.../ref/UpValues.html`](https://reference.wolfram.com/language/ref/UpValues.html) | 248.2 KB |
@@ -129,7 +130,7 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`wolfram2013_before_mathematica.html`](./papers/web-articles/wolfram2013_before_mathematica.html) | *There Was a Time before Mathematica…* — Stephen Wolfram (2013) | [`writings.stephenwolfram.com`](https://writings.stephenwolfram.com/2013/06/there-was-a-time-before-mathematica/) | 137.3 KB |
 | [`wolfram2021_third_of_a_century.html`](./papers/web-articles/wolfram2021_third_of_a_century.html) | *Celebrating a Third of a Century of Mathematica, and Looking Forward* — Stephen Wolfram (2021) | [`writings.stephenwolfram.com`](https://writings.stephenwolfram.com/2021/10/celebrating-a-third-of-a-century-of-mathematica-and-looking-forward/) | 93.3 KB |
 | [`brun2022_building_a_cas_in_go_part1.html`](./papers/web-articles/brun2022_building_a_cas_in_go_part1.html) | *Building a Computer Algebra System in Go, Part 1: Multivariate Expressions and Differentiation* — Victor Brun (2022) | Better Programming / Medium, via Wayback (live URL is Cloudflare-gated). **Part 1 only — no later parts found.** | 252.9 KB |
-| [`vonzurgathen_gerhard_cosec_companion.html`](./papers/web-articles/vonzurgathen_gerhard_cosec_companion.html) | *Modern Computer Algebra* companion site (errata & course material index) | [`cosec.bit.uni-bonn.de/science/mca/`](https://cosec.bit.uni-bonn.de/science/mca/) | 7.4 KB |
+| [`vonzurgathen_gerhard_cosec_companion.html`](./papers/web-articles/vonzurgathen_gerhard_cosec_companion.html) | *Modern Computer Algebra* companion site — a book landing page with "Addenda and corrigenda"; the source confirming the extent (808 pages, 40 tables, 560 exercises) and the edition ISBNs (1st 1999 `0521641764`, 2nd 2003 `978-0521826464`) | [`cosec.bit.uni-bonn.de/science/mca/`](https://cosec.bit.uni-bonn.de/science/mca/) | 7.4 KB |
 
 ---
 
@@ -151,7 +152,6 @@ rather than archiving them here. Where such an entry cites an actual paper, that
 | riptutorial, *Wolfram Language — Evaluation Order* | §6 | The site's Wolfram Language content is gone — `riptutorial.com/wolfram-language` now serves a generic landing page, `/topic/2549/evaluation-order` serves unrelated iOS content, and the Wayback Machine holds no snapshot of either URL. The material it summarized is covered in full by `wolfram_ref_evaluation_of_expressions.html`. |
 | Axiom volumes as PDFs | §5 | `axiom-developer.org` does not resolve and no prebuilt volume PDFs were found; the upstream `.pamphlet` literate sources are stored instead. |
 | Brun, *Building a CAS in Go*, parts 2+ | §9 | Only Part 1 is discoverable; no later installments found on Medium or in search. |
-| Klop, *Term Rewriting Systems*, CWI report `CS-R9053` | §2 | Not located. The file previously stored under this name was **the wrong document** (see below). Klop's full survey is present as the pp. 1–116 chapter of `abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf`, and his shorter ICALP '90 survey is now stored in its place. |
 | Bachmair, Chen & Ramakrishnan, *Associative-Commutative Discrimination Nets*, TAPSOFT '93 | §3 | The 1993 paper that introduces the data structure is paywalled (Springer LNCS). The 1995 IJCAI measurement paper by the same group **is** held, and is the practical one. |
 | Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | §1, §5 | The Springer edition (ISBN 3-540-97855-0 / 0-387-97855-0) was not obtained. The FriCAS project's modern regeneration of the same book is stored instead and is freely licensed. |
 
@@ -165,7 +165,7 @@ silently re-introduced:
 
 | Was indexed as | The file actually was | Resolution |
 | :--- | :--- | :--- |
-| Klop, *Term Rewriting Systems*, CWI `CS-R9053` (10 pp.) | van Schuppen, *Adaptive Stochastic Filtering Problems: The Continuous Time Case*, CWI/Mathematisch Centrum `BW 167/82` (1982) — zero occurrences of "rewrit" | Replaced with Klop's ICALP '90 survey from `ir.cwi.nl`; `CS-R9053` moved to **Not obtained** |
+| Klop, *Term Rewriting Systems*, CWI `CS-R9053` (10 pp.) | van Schuppen, *Adaptive Stochastic Filtering Problems: The Continuous Time Case*, CWI/Mathematisch Centrum `BW 167/82` (1982) — zero occurrences of "rewrit" | **Resolved 2026-08-30**: the correct document was supplied and is now stored under the original filename (112 pp., full text layer). Klop's ICALP '90 survey, fetched as an interim substitute, is kept as an additional shorter survey. |
 | Bachmair et al., *Experiments with AC Discrimination Nets*, IJCAI '95 (6 pp.) | Jian Zhang & Hantao Zhang, *SEM: a System for Enumerating Models*, IJCAI '95 — zero occurrences of "discrimination" or "Bachmair" | Replaced with the real paper from `ijcai.org` (7 pp., pp. 348–354) |
 | Barthels, Krebber & Bientinesi, *Automating the Generation of Efficient Linear Algebra Algorithms using Rewrite Rules* | Krebber, Barthels & Bientinesi, *Efficient Pattern Matching in Python* (arXiv:1710.00077v1) — a MatchPy paper | Renamed to `krebber2017_efficient_pattern_matching_python.pdf` and re-described |
 | Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | *The FriCAS System for Computer Mathematics*, generated 2026-03-06 | Renamed to `fricas2026_system_for_computer_mathematics.pdf`; the Springer edition moved to **Not obtained** |
@@ -176,9 +176,31 @@ scan is now flagged as having no text layer.
 
 **Thin captures.** The Wolfram `ref/` HTML captures for `DownValues`, `UpValues`, `SubValues` and
 `Attributes` render to roughly 13 KB of text each, almost all navigation chrome; only the one-line
-definitions survived, and the "Details" sections did not. The substantive Wolfram capture is
-`wolfram_ref_evaluation_of_expressions.html` (~114 KB of text), which does carry the full standard
-evaluation procedure and the complete attribute table.
+definitions survived, and the "Details" sections did not. In particular `wolfram_ref_attributes.html`
+does **not** contain the attribute list, despite what this index previously claimed. The substantive
+captures are `wolfram_ref_evaluation_of_expressions.html` (~114 KB of text — the full attribute table
+and worked traces) and `wolfram_ref_associating_definitions.html` (~55 KB — the rule-storage model in
+context).
+
+### Second audit pass, 2026-08-30
+
+Every file was then checked: 29 PDFs for identity, page count and text-layer health (10 sampled pages
+each), 20 HTML captures for title identity and content, 6 pamphlets for `\VolumeName`. **No further
+wrong documents** — every PDF matches its filename and page count, every HTML title matches its
+claimed page, every pamphlet matches its volume. New findings recorded above:
+
+- `wolfram_ref_evaluation.html`, indexed only as "the guide page", in fact carries **"The Standard
+  Evaluation Sequence"** — the complete ordered 13-step algorithm. It had not been opened during the
+  first pass, and `notes/cas-haskell.md` was briefly "corrected" *away* from the right answer as a
+  result. Re-indexed as the primary evaluator spec.
+- `abramsky1992_*` is image-only, like Terese. It had been offered as the way to read Klop's chapter.
+- `wolfram_ref_attributes.html` does not carry the attribute list (above).
+- The cosec companion capture is the source for von zur Gathen & Gerhard's page count and edition
+  ISBNs, which fixes a second-edition year miscited as 2002 (it is 2003) in the notes.
+
+Four captures are thin but *complete* for what they are — `numeric_prelude_haskellwiki.html` (4.7 KB
+of text), `olah2012_hasksymb.html` (2.0 KB), `wltools_language_spec.html` (4.7 KB) and the cosec
+companion (2.0 KB) are all genuinely short pages, not truncated fetches.
 
 ---
 

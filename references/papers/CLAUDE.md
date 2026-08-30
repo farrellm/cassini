@@ -7,7 +7,7 @@ Eight topical directories. See [`../CLAUDE.md`](../CLAUDE.md) for conventions an
 
 | If you need to know… | Open |
 | :--- | :--- |
-| How does the evaluator sequence Hold / Flat / Orderless / Listable, and what re-evaluates to a fixed point? | `wolfram-language/` |
+| How does the evaluator sequence Hold / Flat / Orderless / Listable, and what re-evaluates to a fixed point? | `wolfram-language/wolfram_ref_evaluation.html` — "The Standard Evaluation Sequence", all 13 steps in order |
 | Where do OwnValues, DownValues, UpValues, and SubValues attach, and how do I model the rule tables? | `wolfram-language/` |
 | How do I make automatic simplification produce a canonical form? | `textbooks/` (**Cohen Vol. 2 ch. 3** — the algorithm is in Vol. 2, not Vol. 1) |
 | How do I implement polynomial GCD, factorization, Hensel lifting, Gröbner bases, integration? | `textbooks/` (Geddes, then von zur Gathen & Gerhard, then Bronstein) |
@@ -37,8 +37,11 @@ The staged plan lives in `../../notes/cas-haskell.md`. In file terms:
 
 ## Sizes
 
-Several files are very large scans: `terese2003_*` (181 MB, 908 pp., **and image-only — no text
-layer, so `pdftotext` returns nothing**),
-`abramsky1992_*` (71 MB, 582 pp.), `axiom_bookvol10-5_numerics.pamphlet` (30 MB),
+Two files are image-only scans with **no text layer** — `pdftotext` returns nothing and extracting a
+page range silently yields an empty file: `terese2003_*` (181 MB, 908 pp.) and `abramsky1992_*`
+(71 MB, 582 pp.). For the Klop chapter in the latter, use
+`term-rewriting/klop1992_term_rewriting_systems.pdf` instead.
+
+Other large files: `axiom_bookvol10-5_numerics.pamphlet` (30 MB),
 `vonzurgathen_gerhard2013_*` (25 MB, 813 pp.). Extract the page range you need
 (`pdftotext -f N -l M`) rather than opening them whole.
