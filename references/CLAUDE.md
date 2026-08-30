@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **59 files, ~396 MB.**
+The local document corpus for the CAS-in-Haskell project. **65 documents, ~422 MB**, plus 2 OCR sidecars.
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -8,6 +8,8 @@ reading list, the difficulty ratings, and the staged build plan. Come here for *
 
 [`downloaded-references-summary.md`](./downloaded-references-summary.md) is the index: every file,
 its citation, its provenance URL, page count, and size. **It is the authority on what exists here.**
+[`missing-documents.md`](./missing-documents.md) is the counterpart: what is cited but *not* held,
+what was tried, and which files are present but unreadable (image-only scans, lossy OCR).
 
 ## Layout
 
