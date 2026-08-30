@@ -7,7 +7,7 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**56 files (~395 MB) — 30 PDFs, 6 Axiom literate `.pamphlet` sources, 20 HTML captures.** HTML
+**59 files (~396 MB) — 31 PDFs, 6 Axiom literate `.pamphlet` sources, 22 HTML captures.** HTML
 entries are single-file `curl` captures of the live page on the date noted in
 [`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text.
 
@@ -23,6 +23,7 @@ entries are single-file `curl` captures of the live page on the date noted in
 | [`vonzurgathen_gerhard2013_modern_computer_algebra.pdf`](./papers/textbooks/vonzurgathen_gerhard2013_modern_computer_algebra.pdf) | ***Modern Computer Algebra*** (3rd ed.)<br>*Joachim von zur Gathen, Jürgen Gerhard (2013)* | Libgen MD5: `265536cedb43347e70dfc6a523371578` | 813 | 24.83 MB |
 | [`bronstein2005_symbolic_integration_1.pdf`](./papers/textbooks/bronstein2005_symbolic_integration_1.pdf) | ***Symbolic Integration I: Transcendental Functions*** (2nd ed.)<br>*Manuel Bronstein (2005)* | Springer / DOI: [`10.1007/b138171`](https://doi.org/10.1007/b138171) | 331 | 15.15 MB |
 | [`petkovsek_wilf_zeilberger1996_a_eq_b.pdf`](./papers/textbooks/petkovsek_wilf_zeilberger1996_a_eq_b.pdf) | ***A=B***<br>*Marko Petkovšek, Herbert S. Wilf, Doron Zeilberger (1996)* | UPenn / Rutgers Open Access | 217 | 1.19 MB |
+| [`schneider2007_symbolic_summation_assists_combinatorics.pdf`](./papers/textbooks/schneider2007_symbolic_summation_assists_combinatorics.pdf) | **Symbolic Summation Assists Combinatorics**<br>*Carsten Schneider (2007)*<br>The **Sigma** package and difference-field summation — the continuation of Karr, and the part of symbolic summation *A=B* does not cover. | *Séminaire Lotharingien de Combinatoire* 56, Article B56b — free from RISC: [`www3.risc.jku.at`](https://www3.risc.jku.at/research/combinat/software/Sigma/pub/SLC06.pdf) | 36 | 471 KB |
 | [`zippel1993_effective_polynomial_computation.pdf`](./papers/textbooks/zippel1993_effective_polynomial_computation.pdf) | ***Effective Polynomial Computation***<br>*Richard Zippel (1993)* | Libgen MD5: `cd77941d8297c50b7b37e361ff419f84` | 363 | 8.23 MB |
 | [`davenport_siret_tournier1993_computer_algebra_2nd_ed.pdf`](./papers/textbooks/davenport_siret_tournier1993_computer_algebra_2nd_ed.pdf) | ***Computer Algebra: Systems and Algorithms for Algebraic Computation*** (2nd ed.)<br>*James H. Davenport, Yvon Siret, Évelyne Tournier (1993)* | Libgen MD5: `84f0d17ebb48c1d7211e90a9ff7bdf7e` | 313 | 1.07 MB |
 | [`fricas2026_system_for_computer_mathematics.pdf`](./papers/textbooks/fricas2026_system_for_computer_mathematics.pdf) | ***The FriCAS System for Computer Mathematics***<br>the FriCAS project's regenerated adaptation of *AXIOM: The Scientific Computation System* (Axiom Book Vol. 0), *Jenks & Sutor (1992)*, whose sources were BSD-relicensed in 2002. Generated **2026-03-06**. **Not the Springer edition** — cite it as FriCAS, not as Jenks & Sutor 1992. | FriCAS project (`fricas.github.io`) | 812 | 5.01 MB |
@@ -102,6 +103,8 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`zhu2025_hash_consing.pdf`](./papers/haskell/zhu2025_hash_consing.pdf) | **Efficient Symbolic Computation via Hash Consing**<br>*Bowen Zhu (2025)* | arXiv: [`2509.20534`](https://arxiv.org/abs/2509.20534) | 15 | 657.7 KB |
 | [`numeric_prelude_haskellwiki.html`](./papers/haskell/numeric_prelude_haskellwiki.html) | *Numeric Prelude* — HaskellWiki (the "why `Num` is wrong" statement) | [`wiki.haskell.org/Numeric_Prelude`](https://wiki.haskell.org/Numeric_Prelude) | — | 40.8 KB |
 | [`numeric_prelude_hackage.html`](./papers/haskell/numeric_prelude_hackage.html) | *numeric-prelude* — Hackage package page (module/class hierarchy) | [`hackage.haskell.org/package/numeric-prelude`](https://hackage.haskell.org/package/numeric-prelude) | — | 42.2 KB |
+| [`penner2018_asts_with_fix_and_free.html`](./papers/haskell/penner2018_asts_with_fix_and_free.html) | *ASTs with Fix and Free* — Chris Penner (2018-02-24). The practical how-to for parameterizing an AST's recursive slots and folding it with `Fix`/`Free`. | [`chrispenner.ca`](https://chrispenner.ca/posts/asts-with-fix-and-free) | — | 86.2 KB |
+| [`milewski2017_f_algebras.html`](./papers/haskell/milewski2017_f_algebras.html) | *F-Algebras* — Bartosz Milewski (2017-02-28), part 24 of *Category Theory for Programmers*. The theory under `Fix`/`cata`: initial algebras and catamorphisms. | [`bartoszmilewski.com`](https://bartoszmilewski.com/2017/02/28/f-algebras/) | — | 154.6 KB |
 | [`olah2012_hasksymb.html`](./papers/haskell/olah2012_hasksymb.html) | *HaskSymb: An Experiment in Haskell Symbolic Algebra*<br>*Christopher Olah (2012-06-01)* | [`christopherolah.wordpress.com`](https://christopherolah.wordpress.com/2012/06/01/hasksymb-an-experiment-in-haskell-symbolic-algebra/) — **note:** the bibliography dates this 2012-11; the post is dated June 2012 | — | 81.9 KB |
 
 ---
@@ -153,6 +156,10 @@ rather than archiving them here. Where such an entry cites an actual paper, that
 | Axiom volumes as PDFs | §5 | `axiom-developer.org` does not resolve and no prebuilt volume PDFs were found; the upstream `.pamphlet` literate sources are stored instead. |
 | Brun, *Building a CAS in Go*, parts 2+ | §9 | Only Part 1 is discoverable; no later installments found on Medium or in search. |
 | Bachmair, Chen & Ramakrishnan, *Associative-Commutative Discrimination Nets*, TAPSOFT '93 | §3 | The 1993 paper that introduces the data structure is paywalled (Springer LNCS). The 1995 IJCAI measurement paper by the same group **is** held, and is the practical one. |
+| Karr, *Summation in Finite Terms*, *JACM* 28(2) (1981) | §1 | ACM Digital Library paywall; `doi.org/10.1145/322248.322255` resolves but returns 403 to non-browser clients. Cited as the origin of difference-field summation. Schneider's Sigma paper (held) covers the same ground more approachably. |
+| Karr, *Theory of Summation in Finite Terms*, *JSC* 1(3) (1985) | §1 | Elsevier paywall (`10.1016/S0747-7171(85)80038-9`). The follow-up to the above. |
+| Benanav, Kapur & Narendran, *Complexity of Matching Problems*, *JSC* 3(1) (1987) | §4 | Elsevier paywall (`10.1016/S0747-7171(87)80027-5`). Semantic Scholar reports it as hybrid open access, but the DOI returns 403 to non-browser clients. **This is the citation behind the "AC matching is NP-complete" claim**; Krebber's thesis (held) quotes the result. |
+| Eker, *Associative-Commutative Matching via Bipartite Graph Matching*, *Computer Journal* 38(5) (1995) | §4 | Oxford Academic paywall; Semantic Scholar reports no open-access copy. **This is the citation behind the polynomial bound for linear AC matching**; Krebber's thesis (held) uses the same bipartite-matching construction. |
 | Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | §1, §5 | The Springer edition (ISBN 3-540-97855-0 / 0-387-97855-0) was not obtained. The FriCAS project's modern regeneration of the same book is stored instead and is freely licensed. |
 
 ---
