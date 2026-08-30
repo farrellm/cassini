@@ -5,6 +5,7 @@ The local document corpus for the CAS-in-Haskell project. **65 documents, ~422 M
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
 reading list, the difficulty ratings, and the staged build plan. Come here for *the files*.
+[`../notes/CLAUDE.md`](../notes/CLAUDE.md) carries the rules for editing those two documents.
 
 [`downloaded-references-summary.md`](./downloaded-references-summary.md) is the index: every file,
 its citation, its provenance URL, page count, and size. **It is the authority on what exists here.**
@@ -41,8 +42,11 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
 
 1. **Adding, moving, or deleting a file means updating `downloaded-references-summary.md` and the
    directory's `CLAUDE.md` in the same change.** A stale index is worse than no index.
-2. If a cited source cannot be obtained, record it in the summary's "Not obtained" table with the URL
-   tried and the reason. Never let a gap disappear silently.
+2. **Every citation in the bibliography resolves to something here — a held file, or a row in the
+   summary's "Not obtained" table** with the route tried and the reason. This applies when a source
+   is *added* to the bibliography, not only when a fetch fails: adding a citation without attempting
+   to obtain it is how five sources ended up cited but unaccounted for. Never let a gap disappear
+   silently.
 3. Binaries here are **gitignored** (see `.gitignore`: `references/**/*.{pdf,html,pamphlet}`); only
    the `.md` files are tracked. A fresh clone gets the index but not the corpus — the summary's
    Source column is how to re-fetch it.

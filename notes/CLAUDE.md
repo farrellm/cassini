@@ -1,0 +1,47 @@
+# notes/
+
+The reading-and-building guide for the CAS project, and its bibliography.
+
+| File | What it is |
+| :--- | :--- |
+| [`cas-haskell.md`](./cas-haskell.md) | The opinionated guide: what to read, in what order, and the staged build plan. Prose and judgement. |
+| [`cas-haskell-bibliography.md`](./cas-haskell-bibliography.md) | The full reference list behind it. Citations, annotations, availability. |
+
+The documents these cite live in [`../references/`](../references/) — see that directory's
+`CLAUDE.md` for the corpus rules, and `downloaded-references-summary.md` for what is actually held.
+
+## Rules
+
+1. **Never cite a document you have not opened.** Every substantive error these notes have carried
+   came from this: the evaluation order was "corrected" away from the right answer because
+   `wolfram_ref_evaluation.html` was indexed as a mere guide page and went unread; the linear-AC
+   polynomial bound was attributed to Eker because neither Eker nor Benanav had been read. If a
+   claim rests on a source, open the source — and if it cannot be opened, say so in the annotation
+   rather than asserting the claim.
+2. **Changing an entry means checking the derived sections in the same edit** — "Availability at a
+   Glance" and "Verification Notes" in the bibliography. They summarise the entries above them, so
+   they go stale invisibly; three consecutive commits left each describing the state *before* the
+   commit that preceded it. A new entry needs an availability bucket. A verified `[unverified]` tag
+   needs removing from Verification Notes, not just from the entry.
+3. **Adding a citation means resolving it against the corpus in the same change.** Either the
+   document is obtained and indexed in `../references/downloaded-references-summary.md`, or it goes
+   in that file's "Not obtained" table with the route tried and the reason
+   (`../references/CLAUDE.md` rule 2). Adding a citation and leaving the corpus untouched is how
+   five sources ended up cited but unaccounted for.
+4. **The two notes must agree.** `cas-haskell.md` names sources in prose; every one of them needs an
+   entry in the bibliography, and shared facts — editions, chapter ranges, attributions, titles —
+   must match. Fixing one and not the other is the most common way these drift.
+5. **Record corpus defects on the entry, not only in the index.** If the held copy is an image-only
+   scan, has lossy OCR, or is a different edition from the citation, say so in the annotation. A
+   reader works from the bibliography, and a defect they discover by grepping and finding nothing
+   costs more than one sentence here.
+
+## Editing conventions
+
+- Annotations say what a source is *for* and at which stage, not what it contains in the abstract.
+- Quote the source when the exact wording carries the point, and attribute the quote to the specific
+  page or file it came from — several errors here were paraphrases that drifted.
+- Mark unverifiable details `[unverified]` inline and list them in Verification Notes. Mark
+  vendor- or author-reported benchmarks as such; do not launder them into plain assertions.
+- Distinguish what a source says from what we infer from it. The notes do this explicitly
+  ("our inference, not theirs") and should keep doing it.
