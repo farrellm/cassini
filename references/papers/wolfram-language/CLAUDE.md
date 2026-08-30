@@ -64,7 +64,7 @@ OwnValues is the symbol's own value (`x = 5`), DownValues attach to a symbol as 
 "values for `f[…][…]…`". Don't skip OwnValues; it is what makes plain assignment fall out of the
 same machinery.
 
-`OneIdentity` affects pattern matching (treating `f[a]` as `a`) and is easy to get wrong.
+`OneIdentity` affects pattern matching — "`f[f[a]]`, etc. are equivalent to `a` for pattern matching" — and is easy to get wrong.
 
 `Hold`, `HoldComplete`, `HoldForm`, `ReleaseHold` and `Unevaluated` are **not** evaluator special
 cases — they fall out of attributes plus ordinary definitions (`Unevaluated[expr]` "effectively
