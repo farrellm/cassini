@@ -352,6 +352,6 @@ Two traps worth carrying into any future audit. **Eker passes a naive text-layer
 
 See [`../references/missing-documents.md`](../references/missing-documents.md) for the three sources still not held, the routes tried, and the command that regenerates the OCR sidecars.
 
-Two figures in this bibliography are **vendor- or maintainer-reported benchmarks**, not independently verified: Symbolica's Rubi corpus timings and rule count, and the `poly` package's speedup claim. The Rubi rule count discrepancy (6600–6700 per Rubi's own site vs. 7,000+ per Symbolica) is noted where it appears.
+Two figures in this bibliography are **vendor- or maintainer-reported benchmarks**, not independently verified: Symbolica's Rubi corpus timings and rule count, and the `poly` package's speedup claim. The Rubi rule count discrepancy ("over 6600", and "Rubi 4.15 has 6,662 rules", per Rubi's own site vs. 7,000+ for Rubi 4.17 per Symbolica) is noted where it appears.
 
 The claim that the Wolfram kernel uses hash-consing internally is **inferred, not confirmed** — the kernel is closed source, and reverse-engineering writeups (including the wltools specification project) should be treated as informed inference.
