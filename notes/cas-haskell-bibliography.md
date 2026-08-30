@@ -299,6 +299,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Schneider, "Symbolic Summation Assists Combinatorics" (RISC) — the readable way into difference-field summation
 - Klint, van der Storm & Vinju, the Rascal paper (author copy, `homepages.cwi.nl`)
 - Penner, "ASTs with Fix and Free" (`chrispenner.ca`) and Milewski, "F-Algebras" (`bartoszmilewski.com`)
+- Wadler, "Data Types a la Carte" (blog, 28 Feb 2008, `wadler.blogspot.com`) — the source of the verdict quoted in §3
+- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, and Symbolica's licence page. All captured in `references/` as of 2026-08-30, so the quotes have anchors.
 
 **Paywalled journal/conference papers — held here, but not freely re-obtainable.** All six were
 supplied rather than fetched; re-obtaining them needs institutional access. Where a free substitute
@@ -334,7 +336,11 @@ exists it is named:
 
 ## Verification Notes
 
-Every entry above has been checked, either against the local corpus in `references/` or against the live primary source. **One thing remains genuinely open**, and is tagged `[unverified]` where it appears: Zippel's original Kluwer hardback ISBN (the copy held is the Springer softcover reprint, ISBN 978-1-4613-6398-9). The `numeric-prelude` multi-parameter-type-class question, previously listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names them in its opening sentence.
+Every entry above has been checked against a document held in the local corpus in `references/`. The
+eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
+READMEs, the `poly` and `dumb-cas` package pages, Wadler's blog post, Symbolica's licence, and the
+`OwnValues` reference page — were fetched on 2026-08-30 and indexed, so no quotation here rests on a
+source that cannot be re-read. **One thing remains genuinely open**, and is tagged `[unverified]` where it appears: Zippel's original Kluwer hardback ISBN (the copy held is the Springer softcover reprint, ISBN 978-1-4613-6398-9). The `numeric-prelude` multi-parameter-type-class question, previously listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names them in its opening sentence.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
@@ -348,7 +354,7 @@ Everything previously flagged here as unverified — Terese, Klop, the `numeric-
 | Eker (1995) | Image-only *except* a repeated download watermark | `.txt` OCR sidecar beside it |
 | Karr (1985) | Has a text layer, but the OCR **drops every `h`** | None — search around it |
 
-Two traps worth carrying into any future audit. **Eker passes a naive text-layer check** — it reports text on every page, but the only text is an Oxford watermark, 860 characters across 19 pages; check the *variety* of extracted text, not its presence. And **Karr 1985 fails silently** — `grep theorem` returns nothing and looks like an honest miss. Several Wolfram `ref/` captures likewise preserved little beyond their one-line definitions; `ref/Attributes` in particular does not contain the attribute list.
+Two traps worth carrying into any future audit. **Eker passes a naive text-layer check** — it reports text on every page, but the only text is an Oxford watermark, 860 characters across 19 pages; check the *variety* of extracted text, not its presence. And **Karr 1985 fails silently** — `grep theorem` returns nothing and looks like an honest miss. The four Wolfram `ref/` value pages (`OwnValues`, `DownValues`, `UpValues`, `SubValues`) likewise preserved little beyond their one-line definitions — roughly 13 KB of text each, almost all navigation chrome — and `ref/Attributes` in particular does not contain the attribute list. Use *Transformation Rules and Definitions* for the rule-storage model and *Evaluation of Expressions* for the attribute table.
 
 See [`../references/missing-documents.md`](../references/missing-documents.md) for the three sources still not held, the routes tried, and the command that regenerates the OCR sidecars.
 
