@@ -19,9 +19,11 @@ algorithms are in `../textbooks/`.
 - Symbolica is **source-available but commercially licensed**, and the trigger is *employment*, not
   commerce: "Symbolica is free for hobbyist use. If you use Symbolica as part of your employment,
   whether in academia or in a commercial or non-commercial organization, a license is required." The
-  free tier is one core and instance per device; redistribution needs written permission. So the
-  common "free for non-commercial use" gloss is wrong — a non-commercial employer still needs a
-  licence. Fine to read; check the licence before depending on it.
+  separate **Free** tier — not the Hobbyist one — is what is capped at "[o]ne core and instance per
+  device", "for academic/non-commercial use"; redistribution, "modified or unmodified, requires
+  prior written permission". So the common "free for non-commercial use" gloss is wrong — a
+  non-commercial employer still needs a licence. Fine to read; check the licence before depending on
+  it. Source: `symbolica_license.html`.
 - The systems the bibliography names without citing a paper — Expreduce, Mathics3, Symja, SymEngine,
   Maxima, Reduce, Singular, PARI/GP, FLINT — are source repositories, not documents. Clone and grep
   them. (Axiom/FriCAS is the exception: its book is held in `../textbooks/`, in both the Springer
