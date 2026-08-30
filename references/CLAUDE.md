@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **55 files, ~394 MB.**
+The local document corpus for the CAS-in-Haskell project. **56 files, ~395 MB.**
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated

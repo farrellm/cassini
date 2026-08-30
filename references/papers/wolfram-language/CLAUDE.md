@@ -9,32 +9,44 @@ strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 
 | File | Read it for |
 | :--- | :--- |
-| `wolfram_ref_evaluation_of_expressions.html` | **The main document (~26k words).** The standard evaluation procedure step by step, plus the full Attributes section. Start here. |
-| `wolfram_ref_evaluation.html` | The shorter guide-level overview of the same material. |
-| `wolfram_ref_attributes.html` | The `Attributes` symbol page — the complete list of attribute values with their exact semantics. |
-| `wolfram_guide_attributes.html` | The guide-level index of attribute-related functions. |
+| `wolfram_ref_evaluation.html` | **The algorithm.** Its section "The Standard Evaluation Sequence" is the complete ordered procedure — all 13 steps, transcribed below. Short page, but it is the spec; start here. |
+| `wolfram_ref_evaluation_of_expressions.html` | **The explanations (~26k words).** A coarser six-step summary of the same procedure, the full attribute table, worked evaluation traces, and the prose precedence rules. The companion read, not the algorithm. |
 | `wolfram_ref_associating_definitions.html` | Transformation rules and definitions: where DownValues, UpValues, and SubValues attach, in context and with examples. |
-| `wolfram_ref_downvalues.html` / `_upvalues.html` / `_subvalues.html` | The three symbol reference pages for the rule-storage model. **Thin captures** — roughly 13 KB of text each, almost all navigation chrome; only the one-line definitions survived and the "Details" sections did not. Use `wolfram_ref_evaluation_of_expressions.html` for anything substantive. (`OwnValues` has no capture here; it is a "See Also" sibling on all three.) |
+| `wolfram_ref_downvalues.html` / `_upvalues.html` / `_subvalues.html` | The three symbol reference pages for the rule-storage model. **Thin captures** — roughly 13 KB of text each, almost all navigation chrome; only the one-line definitions survived and the "Details" sections did not. Use `wolfram_ref_associating_definitions.html` (55 KB of real text) for the model in context, and `wolfram_ref_evaluation_of_expressions.html` for precedence. (`OwnValues` has no capture here; it is a "See Also" sibling on all three.) |
+| `wolfram_ref_attributes.html` / `wolfram_guide_attributes.html` | **Do not go here for the attribute list.** Both are thin captures: the ref page has only the `Attributes[symbol]` signatures plus bare section labels (its "Details" did not capture), and the guide page is a list of links. **The full attribute table — `Orderless`, `Flat`, `OneIdentity`, `Listable`, `Constant`, `Protected`, `SequenceHold`, the `Hold*` and `NHold*` families, each with its one-line meaning — is in `wolfram_ref_evaluation_of_expressions.html`.** |
 | `wltools_language_spec.html` | Community reverse-engineering index. **Informed inference, not authoritative** — the kernel is closed source. Never cite it against the official pages. |
 
 ## The evaluation procedure these pages specify
 
-**The documentation's own canonical list**, verbatim from *Evaluation of Expressions*: evaluate the
-head → evaluate each element in turn → apply the transformations associated with **`Orderless`,
-`Listable`, and `Flat`** → apply *any definitions you have given* → apply *any built-in definitions*
-→ evaluate the result. That last step is the **fixed point**.
+**`wolfram_ref_evaluation.html` carries the whole algorithm in order**, under the heading "The
+Standard Evaluation Sequence". Implement it literally. For `h[e1, e2, …]`:
 
-Two precedence rules are stated explicitly, and they are orthogonal — don't collapse them into one
-list. **Upvalues before downvalues** ("the Wolfram System always tries upvalue definitions before
-downvalue ones"), and **user definitions before built-in ones**. For `f[g[x]]` the full order is:
-your definitions on `g` → built-in definitions on `g` → your definitions on `f` → built-in
-definitions on `f`.
+1. If the expression is a raw object (`Integer`, `String`, …), leave it unchanged.
+2. Evaluate the head `h`.
+3. Evaluate each element `eᵢ` in turn.
+4. If `h` has `HoldFirst` / `HoldRest` / `HoldAll` / `HoldAllComplete`, skip evaluation of certain
+   elements.
+5. Unless `h` has `SequenceHold` or `HoldAllComplete`, flatten out all `Sequence` objects among the
+   `eᵢ`.
+6. Unless `h` has `HoldAllComplete`, strip the outermost of any `Unevaluated` wrappers among the `eᵢ`.
+7. If `h` has `Flat`, flatten out all nested expressions with head `h`.
+8. If `h` has `Listable`, thread through any `eᵢ` that are lists.
+9. If `h` has `Orderless`, sort the `eᵢ` into order.
+10. Unless `h` has `HoldAllComplete`, use any applicable rules **you have defined** for `h[f[e1,…],…]`.
+11. Use any **built-in** rules associated with `f` for `h[f[e1,…],…]`.
+12. Use any applicable rules **you have defined** for `h[e1,e2,…]` or `h[…][…]`.
+13. Use any **built-in** rules for `h[e1,e2,…]` or `h[…][…]`.
 
-Everything else an implementer needs — holding arguments under the `Hold*` attributes, stripping
-`Unevaluated`, splicing `Sequence` unless `SequenceHold`, and whether `Flat` runs before `Orderless`
-sorting — is documented **piecewise** under Attributes and Non-Standard Evaluation and is never
-given as an ordered algorithm. Any linearization of it is reconstruction; validate it against a real
-kernel before trusting it.
+Then the **fixed point**: "every time the expression changes, the Wolfram Language effectively starts
+the evaluation sequence over again."
+
+Three easy mistakes the sequence rules out. Attribute order is **`Flat` → `Listable` → `Orderless`**
+(steps 7–9) — flattening must precede the canonical sort, and the coarser bullet list in
+*Evaluation of Expressions* that names them in a different order is a summary, not the order.
+`Sequence` splicing precedes `Unevaluated` stripping (steps 5–6). And rule application is a
+**four-way ladder** (steps 10–13), not two independent axes: user upvalues → built-in upvalues →
+user downvalues → built-in downvalues, so **built-in upvalues beat *user* downvalues**. `SubValues`
+ride along with downvalues in steps 12–13, which is why `h[…][…]` appears there.
 
 Model OwnValues, DownValues, UpValues, and SubValues as four separate rule tables keyed by symbol:
 OwnValues is the symbol's own value (`x = 5`), DownValues attach to a symbol as head
