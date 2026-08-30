@@ -122,7 +122,7 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | File | Document | Source | Size |
 | :--- | :--- | :--- | :--- |
 | [`wolfram_ref_evaluation_of_expressions.html`](./papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html) | *Evaluation of Expressions* — the full tutorial chapter, incl. the standard evaluation procedure and the Attributes section (~26k words) | [`reference.wolfram.com/.../tutorial/EvaluationOfExpressions.html`](https://reference.wolfram.com/language/tutorial/EvaluationOfExpressions.html) | 851.9 KB |
-| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — **the page carrying "The Standard Evaluation Sequence", the complete 13-step ordered algorithm.** Short, and the most important file here for Stage 1. | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
+| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — **the page carrying "The Standard Evaluation Sequence", the complete ordered algorithm — 12 numbered steps as the page gives them.** Short, and the most important file here for Stage 1. | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
 | [`wolfram_ref_attributes.html`](./papers/wolfram-language/wolfram_ref_attributes.html) | `Attributes` — the symbol reference page. **Thin capture: it does *not* contain the attribute list** — only the `Attributes[symbol]` signatures plus bare section labels; the "Details" section did not capture. The full attribute table is in `wolfram_ref_evaluation_of_expressions.html`. | [`.../ref/Attributes.html`](https://reference.wolfram.com/language/ref/Attributes.html) | 212.8 KB |
 | [`wolfram_guide_attributes.html`](./papers/wolfram-language/wolfram_guide_attributes.html) | *Attributes* — the guide page; a list of links to attribute-related functions, no prose | [`.../guide/Attributes.html`](https://reference.wolfram.com/language/guide/Attributes.html) | 188.0 KB |
 | [`wolfram_ref_associating_definitions.html`](./papers/wolfram-language/wolfram_ref_associating_definitions.html) | *Transformation Rules and Definitions* — the UpValues/DownValues rule-storage model in context | [`.../tutorial/AssociatingDefinitionsWithDifferentSymbols.html`](https://reference.wolfram.com/language/tutorial/AssociatingDefinitionsWithDifferentSymbols.html) | 496.8 KB |
@@ -203,7 +203,7 @@ wrong documents** — every PDF matches its filename and page count, every HTML 
 claimed page, every pamphlet matches its volume. New findings recorded above:
 
 - `wolfram_ref_evaluation.html`, indexed only as "the guide page", in fact carries **"The Standard
-  Evaluation Sequence"** — the complete ordered 13-step algorithm. It had not been opened during the
+  Evaluation Sequence"** — the complete ordered algorithm, in 12 numbered steps. It had not been opened during the
   first pass, and `notes/cas-haskell.md` was briefly "corrected" *away* from the right answer as a
   result. Re-indexed as the primary evaluator spec.
 - `abramsky1992_*` is image-only, like Terese. It had been offered as the way to read Klop's chapter.
