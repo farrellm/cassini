@@ -1,7 +1,8 @@
 # textbooks/
 
-The CAS algorithm canon (bibliography §1) plus the Axiom literate volumes (§5). Books only —
-research papers live in the sibling topical directories.
+The CAS algorithm canon (bibliography §1) plus the Axiom literate volumes (§5). Mostly books — the
+exceptions are the three summation papers (Karr ×2, Schneider), which live here rather than in a
+sibling directory so that they sit beside *A=B*, whose gap they fill.
 
 **Reading order** (from `../../../notes/cas-haskell.md`): Cohen Vol. 1 chs. 2–3 → **Cohen Vol. 2
 chs. 2–3** → Geddes → von zur Gathen & Gerhard as needed → Cohen Vol. 2 chs. 5–9 → Bronstein →
