@@ -26,3 +26,5 @@ cabal.project.local~
 references/**/*.pdf
 references/**/*.html
 references/**/*.pamphlet
+# OCR sidecars are derived from the gitignored PDFs above; regenerate, don't track.
+references/**/*.txt

@@ -1,24 +1,27 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **55 files, ~370 MB.**
+The local document corpus for the CAS-in-Haskell project. **65 documents, ~422 MB**, plus 2 OCR sidecars.
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
 reading list, the difficulty ratings, and the staged build plan. Come here for *the files*.
+[`../notes/CLAUDE.md`](../notes/CLAUDE.md) carries the rules for editing those two documents.
 
 [`downloaded-references-summary.md`](./downloaded-references-summary.md) is the index: every file,
 its citation, its provenance URL, page count, and size. **It is the authority on what exists here.**
+[`missing-documents.md`](./missing-documents.md) is the counterpart: what is cited but *not* held,
+what was tried, and which files are present but unreadable (image-only scans, lossy OCR).
 
 ## Layout
 
 | Directory | Contents |
 | :--- | :--- |
-| `papers/textbooks/` | The CAS canon — Cohen I/II, Geddes, von zur Gathen & Gerhard, Bronstein, A=B, Zippel, Davenport, plus Axiom Vol. 0 and the literate volumes |
+| `papers/textbooks/` | The CAS canon — Cohen I/II, Geddes, von zur Gathen & Gerhard, Bronstein, A=B, Zippel, Davenport; the three summation papers (Karr ×2, Schneider) that fill A=B's gap; and Axiom Vol. 0 in both the Springer 1992 edition and the FriCAS regeneration, plus the literate volumes |
 | `papers/term-rewriting/` | Baader & Nipkow, Terese, Klop, the Abramsky handbook, the Rascal paper |
 | `papers/foundations/` | Richardson's undecidability result; Swierstra and Bahr on composing data types |
-| `papers/pattern-matching/` | Krebber's thesis and MatchPy, AC discrimination nets, the two SMP papers |
+| `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers |
 | `papers/cas-architecture/` | SymPy, GiNaC, Fateman on Mathematica/MockMMA, the Rubi and Symbolica writeups, a CAS-scoping thesis |
-| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude, Olah's HaskSymb |
+| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation — the behavioral spec to implement against |
 | `papers/web-articles/` | Blog posts and course sites: opinion and build-logs, not specifications |
 
@@ -39,10 +42,18 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
 
 1. **Adding, moving, or deleting a file means updating `downloaded-references-summary.md` and the
    directory's `CLAUDE.md` in the same change.** A stale index is worse than no index.
-2. If a cited source cannot be obtained, record it in the summary's "Not obtained" table with the URL
-   tried and the reason. Never let a gap disappear silently.
+2. **Every citation in the bibliography resolves to something here — a held file, or a row in the
+   summary's "Not obtained" table** with the route tried and the reason. This applies when a source
+   is *added* to the bibliography, not only when a fetch fails: adding a citation without attempting
+   to obtain it is how five sources ended up cited but unaccounted for. Never let a gap disappear
+   silently.
 3. Binaries here are **gitignored** (see `.gitignore`: `references/**/*.{pdf,html,pamphlet}`); only
    the `.md` files are tracked. A fresh clone gets the index but not the corpus — the summary's
    Source column is how to re-fetch it.
 4. Provenance: several textbook PDFs came from Libgen and several papers from Sci-Hub. The
    bibliography's "Availability at a Glance" section marks which titles are in print and purchasable.
+5. **The per-file annotations here repeat claims that also live in `../notes/`.** When a claim about
+   a source is corrected in either place, fix every copy in the same change — the annotation in this
+   directory tree, the bibliography entry, the prose in `../notes/cas-haskell.md`, and the row in
+   `downloaded-references-summary.md`. Corrections that landed in the notes and not here have had to
+   be found again twice. See `../notes/CLAUDE.md` rule 4 for the grep that closes it out.
