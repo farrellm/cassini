@@ -33,11 +33,12 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
   three joined by `_` (`geddes_czapor_labahn1992_…`). Authorless web sources use a site or product
   prefix instead (`wolfram_ref_…`, `axiom_bookvol…`, `symbolica_…`).
 - PDFs are the published version wherever one exists.
-- `.html` files are single-file `curl` captures of the live page, fetched **2026-08-29**, except the
-  eight README/package/licence captures added **2026-08-30** to anchor verbatim quotes, and the three
-  added later the same day in the third validation round (`symbolica_home`,
-  `symbolica_home_2023_wayback`, `wikipedia_wolfram_language`, `numhask_hackage`). They have no CSS and no images, but the full
-  text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
+- `.html` files are single-file `curl` captures of the live page. The original **22** were fetched
+  **2026-08-29**; the other **14** on **2026-08-30** — ten in the second validation round (the eight
+  README/package/licence captures that anchor verbatim quotes, plus `pickering2014_*` and
+  `sympy_docs_*`), four in the third (`symbolica_home`, `symbolica_home_2023_wayback`,
+  `wikipedia_wolfram_language`, `numhask_hackage`). The summary gives the date per file. They have no
+  CSS and no images, but the full text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
   `pandoc -t plain`, not by eye.
 - `.pamphlet` files are Axiom's literate LaTeX+SPAD sources; plain text, readable directly.
 

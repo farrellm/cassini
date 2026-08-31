@@ -4,10 +4,15 @@ The CAS algorithm canon (bibliography §1) plus the Axiom literate volumes (§5)
 exceptions are the three summation papers (Karr ×2, Schneider), which live here rather than in a
 sibling directory so that they sit beside *A=B*, whose gap they fill.
 
-**Reading order** (from `../../../notes/cas-haskell.md`): Cohen Vol. 1 chs. 2–3 → **Cohen Vol. 2
-chs. 2–3** → Geddes → von zur Gathen & Gerhard as needed → Cohen Vol. 2 chs. 5–9 → Bronstein →
-*A=B*. Note the early jump into Vol. 2: the automatic-simplification algorithm lives there, not in
-Vol. 1.
+**Reading order** (from `../../../notes/cas-haskell.md`), for the books in *this* directory:
+Cohen Vol. 1 chs. 2–3 → **Cohen Vol. 2 chs. 2–3** → Geddes → von zur Gathen & Gerhard as needed →
+Cohen Vol. 2 chs. 5–9 → Bronstein → *A=B*. Note the early jump into Vol. 2: the
+automatic-simplification algorithm lives there, not in Vol. 1.
+
+That is not the whole order. **Baader & Nipkow chs. 1–2 and 5–7 run in parallel with Cohen from the
+start**, and chs. 10–11 arrive between Cohen Vol. 2 chs. 5–9 and Bronstein; it lives next door in
+`../term-rewriting/`. The guide is emphatic that the rewriting theory is read alongside the algebra,
+not after it.
 
 | File | Read it for |
 | :--- | :--- |

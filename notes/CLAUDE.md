@@ -12,12 +12,17 @@ The documents these cite live in [`../references/`](../references/) — see that
 
 ## Rules
 
-1. **Never cite a document you have not opened.** Every substantive error these notes have carried
-   came from this: the evaluation order was "corrected" away from the right answer because
-   `wolfram_ref_evaluation.html` was indexed as a mere guide page and went unread; the linear-AC
-   polynomial bound was attributed to Eker because neither Eker nor Benanav had been read. If a
-   claim rests on a source, open the source — and if it cannot be opened, say so in the annotation
-   rather than asserting the claim.
+1. **Never cite a document you have not opened — and check that it is the document you think.**
+   Most substantive errors these notes have carried came from the first half: the evaluation order
+   was "corrected" away from the right answer because `wolfram_ref_evaluation.html` was indexed as a
+   mere guide page and went unread; the linear-AC polynomial bound was attributed to Eker because
+   neither Eker nor Benanav had been read. If a claim rests on a source, open the source — and if it
+   cannot be opened, say so in the annotation rather than asserting the claim.
+
+   The second half is a separate failure, and grepping cannot catch it. `meurer2017_sympy.pdf` was
+   the PeerJ Preprints *review manuscript*, cited for three rounds as the published article; it
+   contains every passage the notes quote, so every quote check passed. Confirm identity — edition,
+   page count, author count, publisher marks — not just that the words are in there.
 2. **Changing an entry means checking the derived sections in the same edit** — "Availability at a
    Glance" and "Verification Notes" in the bibliography. They summarise the entries above them, so
    they go stale invisibly; three consecutive commits left each describing the state *before* the
@@ -40,6 +45,16 @@ The documents these cite live in [`../references/`](../references/) — see that
 
    ```sh
    grep -rn "the wrong phrasing" --include='*.md' notes/ references/
+   ```
+
+   **Grep the fact, not the phrasing.** A phrase search finds the copies that were worded alike and
+   misses the one that was paraphrased. The Wolfram "the page numbers twelve steps" error survived a
+   correction pass that grepped `numbers \*twelve\*` and `12 numbered steps` and came back clean,
+   because a fifth copy read "12 steps as the page numbers them". Search for the load-bearing token —
+   a number, a name, a filename — and read the hits:
+
+   ```sh
+   grep -rniE "numbers? them|numbered steps|12 steps|twelve" --include='*.md' notes/ references/
    ```
 
    The same applies in the other direction: every source named in `cas-haskell.md` needs a

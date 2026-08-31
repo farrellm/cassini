@@ -10,12 +10,12 @@ its own `CLAUDE.md` with an annotated inventory.
 **82 documents (~429 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 36 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
-entries are single-file `curl` captures of the live page on the date noted in
-[`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text. The
-original 22 were fetched **2026-08-29**; the eight README/package/licence captures added to anchor
-verbatim quotes were fetched **2026-08-30**; the three added in the third validation round
-(`symbolica_home`, `wikipedia_wolfram_language`, `numhask_hackage`) were fetched **2026-08-30** as
-well.
+entries are single-file `curl` captures of the live page, dated per file in the rows below and
+summarised in [`CLAUDE.md`](./CLAUDE.md); they render without CSS but retain the full text. The
+original **22** were fetched **2026-08-29** and the other **14** on **2026-08-30** — ten in the
+second validation round (the eight README/package/licence captures that anchor verbatim quotes, plus
+`pickering2014_*` and `sympy_docs_*`), four in the third (`symbolica_home`,
+`symbolica_home_2023_wayback`, `wikipedia_wolfram_language`, `numhask_hackage`).
 
 ---
 
@@ -120,7 +120,7 @@ cited and were not fetched.
 | [`expreduce_readme.html`](./papers/cas-architecture/expreduce_readme.html) | Expreduce's GitHub README — the source for "This software is experimental quality and is not currently intended for serious use." Fetched 2026-08-30. | [`github.com/corywalker/expreduce`](https://github.com/corywalker/expreduce) | — | 308.6 KB |
 | [`symja_readme.html`](./papers/cas-architecture/symja_readme.html) | Symja's GitHub README — confirms "the Rubi symbolic integration rules are used to implement the `Integrate` function" and, as the notes say, **names no Rubi version**. Fetched 2026-08-30. | [`github.com/axkr/symja_android_library`](https://github.com/axkr/symja_android_library) | — | 376.2 KB |
 | [`symbolica_home.html`](./papers/cas-architecture/symbolica_home.html) | *Symbolica — Modern Computer Algebra* (home page) — fetched to check the "built for large expressions" tagline the notes attributed to Symbolica. **It is not Symbolica's wording**, here or in any Wayback snapshot: the current page says "a high-performance computer algebra library for Python and Rust" that lets you "Manipulate large expressions"; 2023 snapshots say "a blazing fast symbolic manipulation toolkit". Fetched 2026-08-30. | [`symbolica.io`](https://symbolica.io/) | — | 56.1 KB |
-| [`symbolica_home_2023_wayback.html`](./papers/cas-architecture/symbolica_home_2023_wayback.html) | *Symbolica* home page as it stood on **2023-11-10**, held so the negative claim above is checkable rather than asserted: the older tagline was "Symbolica is a blazing fast symbolic manipulation toolkit", not "built for large expressions". | [`web.archive.org/web/20231110100247/https://symbolica.io/`](https://web.archive.org/web/20231110100247/https://symbolica.io/) | — | 43.7 KB |
+| [`symbolica_home_2023_wayback.html`](./papers/cas-architecture/symbolica_home_2023_wayback.html) | *Symbolica* home page as it stood on **2023-11-10**, held so the negative claim above is checkable rather than asserted: the older tagline was "Symbolica is a blazing fast symbolic manipulation toolkit", not "built for large expressions". Fetched 2026-08-30. | [`web.archive.org/web/20231110100247/https://symbolica.io/`](https://web.archive.org/web/20231110100247/https://symbolica.io/) | — | 43.7 KB |
 | [`wikipedia_wolfram_language.html`](./papers/cas-architecture/wikipedia_wolfram_language.html) | *Wolfram Language* — Wikipedia. The source for the MockMMA cease-and-desist story the notes flag as folklore: "Richard Fateman's MockMMA from 1991 is of historical note, both for being the earliest reimplementation and for having received a cease-and-desist from Wolfram" — **and that sentence carries no inline citation**, which is the point. Fetched 2026-08-30. | [`en.wikipedia.org`](https://en.wikipedia.org/wiki/Wolfram_Language) | — | 207.2 KB |
 
 ---
