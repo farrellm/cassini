@@ -125,7 +125,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **SymPy.** Python, BSD. `sympy.org`
 > The most approachable *full* CAS to read. Pure Python with no invented language — the reference paper notes that Python itself is used for both internal implementation and end-user interaction. *Lesson: how to organize a large CAS — assumptions system, `Basic`/`Expr` core, `polys` module — and how automatic-simplification decisions get made.*
-> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (27 authors, 27 pp.) Free. **Quote the published article, not the preprint** — `references/` held the *PeerJ Preprints* review manuscript under this citation until 2026-08-30, and the two are distinguishable on sight: 27 pp. and 27 authors here, 19 pp. and 24 authors there, every page of the manuscript footed "This manuscript is for review purposes only". They also differ by a stray apostrophe in the sentence most often quoted, so check which text a quotation came from. The manuscript is deliberately not held; nothing in these notes should quote it.
+> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (27 authors, 27 pp.) Free. **Quote the published article, not the preprint** — `references/` held the *PeerJ Preprints* review manuscript under this citation until 2026-08-30, and the two are distinguishable on sight: 27 pp. and 27 authors here, 19 pp. and 24 authors there, and a for-review-only footer on every page of the manuscript. They also differ by a stray apostrophe in the sentence most often quoted, so check which text a quotation came from. The manuscript is deliberately not held; nothing in these notes should quote it.
 
 **GiNaC** ("GiNaC is Not a CAS"). C++. `ginac.de`
 > *Lessons:* (1) deliberately abolishes the low-level/high-level language split — relevant to a Haskell-native ambition; (2) reference counting with copy-on-write for structure sharing; (3) numeric tower built on CLN (the paper does not mention GMP); (4) clean polymorphic `ex`/`basic` design with automatic normalization.
@@ -213,7 +213,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 > The canonical statement of **why the standard `Num` class is wrong for a CAS**, in four distinct objections — keep them apart, the last two are not one point: it "defines no semantics for the fundamental operations" (nothing asserts associativity of addition); it has "superfluous superclasses" — `Eq` and `Show` under `Num`, impossible to satisfy non-trivially for e.g. a function-valued ring (`data IntegerFunction a = IF (a -> Integer)`); it carries "a mix of semantic operations and representation specific operations" (`toInteger`, `toRational`, `decodeFloat`); and "the hierarchy is not finely grained enough", so that "operations that are often defined independently are lumped together" — its example being that defining `+` for a `Dollar` or `Vector` type forces `*` on you as well. Splits `Num` into `Additive`, `Ring`, `Field`, `Algebraic`, `Transcendental`, etc. (`Num → Additive, Ring, Absolute`; `Fractional → Field`; `Floating → Algebraic, Transcendental`). Axioms are stated as QuickCheck properties. The wiki candidly documents the gaps: "the code still misses proper linear algebra code," and static checking is still unsolved for "residue classes, matrix computations, infinite precision numbers, fixed point numbers." It does rely on extensions beyond Haskell 98: the wiki's opening sentence names **multi-parameter type classes** specifically.
 
 **`numhask`** (Tony Day). Hackage — the package page is held in `references/`.
-> A cleaner, more recently maintained alternative hierarchy. `RebindableSyntax` is not the distinguishing feature — both package pages prescribe it. Upkeep is: numhask's Hackage release is dated 2026-07-10, numeric-prelude's 2022-05-28.
+> A cleaner, more recently maintained alternative hierarchy. `RebindableSyntax` is not the distinguishing feature — both package pages prescribe it. Upkeep is: numhask's Hackage release is dated 2026-07-10, numeric-prelude's 2022-05-28 — with the caveat, from the same page, that numeric-prelude's metadata was revised 2025-05-19, so the gap is in releases rather than in attention.
 
 **`poly`** (Andrew Lelechenko / Bodigrim). Hackage.
 > Fast `Vector`-backed uni- and multivariate polynomials with Karatsuba multiplication, integrating with the `semirings` `GcdDomain`/`Euclidean` classes. Documented as "at least 20x-40x faster than the [`polynomial`] library" — a self-reported figure, though the published per-operation benchmarks (22–39× on addition, 52–303× on multiplication) are consistent with it.
@@ -348,8 +348,7 @@ of these needs institutional access. Where a free substitute exists it is named:
 Every entry above has been checked against a document held in the local corpus in `references/` or,
 where the entry names a *system* rather than a document — the source repositories and Hackage packages
 of §5, §7 and §8, which the corpus summary covers under "pointers only, by design" — against the live
-primary source. The
-eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
+primary source. The eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
 READMEs, the `poly` and `dumb-cas` package pages, Wadler's blog post, Symbolica's licence, and the
 `OwnValues` reference page — were fetched on 2026-08-30 and indexed. A sweep then tested every quoted
 phrase of five words or more in both documents against a plain-text index of the whole corpus; it added
@@ -381,6 +380,35 @@ was the odd one out until 2026-08-30 — described on its entry but not tagged, 
 file's total; all four now follow one rule. The `numeric-prelude` multi-parameter-type-class question,
 once listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names
 them in its opening sentence.
+
+**A fourth round, 2026-08-31**, re-ran the whole sweep from a text index rebuilt from scratch, on the
+principle that a check inherited from the previous round is not a check. It re-tested every quoted
+phrase in both documents, reopened every structural claim, re-ran the Haskell claims through GHC
+9.12.4, and re-derived every PDF page count and every corpus total mechanically against this index.
+Almost everything held. Four claims did not, and are corrected above:
+
+- **Eker's affiliation.** The entry had the paper written at INRIA Lorraine. Its acknowledgements say
+  the research was done there and the paper "was written at Rutherford Appleton Laboratory"; the
+  byline is INRIA Lorraine and the contact address is already `eker@csl.sri.com`.
+- **Eker's issue month.** Given as May 1995, against a paper stamped "revised July 7 1995". Dropped.
+- **Fateman.** Cited as *JSC* 13(5), 1992 with no caveat, though the held author copy carries no
+  journal metadata at all. The defect was recorded in the corpus index but had never reached the
+  entry — `../references/CLAUDE.md` rule 5.
+- **Wolfram's step 3**, quoted with "of the expression" silently dropped from the middle.
+
+It also closed two gaps of the kind rule 2 names last — a claim *about* a page nobody held. Springer's
+book page for Geddes is now held, and turns out to source both the "first comprehensive textbook"
+line and the "Pascal-like computer language" description used throughout; Symbolica's home page as of
+2025-04-15 is held, so the claim about what 2025 snapshots say is checkable. And four bookkeeping
+statements that had gone stale were corrected: the `[unverified]` count and convention (above); the
+sentence that opens these Verification Notes, which claimed every entry was checked against a *held*
+document and so contradicted this file's own opening paragraph; `missing-documents.md`'s tally of
+deliberately-unresolved quotations; and the free-PDF list, which named every quoted package page
+except `numeric-prelude`'s.
+
+One quotation was removed rather than sourced: this file reproduced the SymPy *preprint's* wording to
+contrast it with the published article, after the third round had deliberately deleted the preprint
+from the corpus. The contrast survives on metadata that does not require it.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 

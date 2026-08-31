@@ -141,3 +141,10 @@ no text layer and no sidecar; Karr 1985 and Klop 1992 have text layers that fail
 SymPy entry was, until the third round, a different document from the one it was cited as — which no
 amount of grepping would have caught, because the preprint contains the passages the notes quote.
 Checking a file's *identity*, not just its searchability, belongs in every audit.
+
+The fourth round adds one more risk to that list, and it belongs to the *tooling* rather than to any
+file. Rebuilding the plain-text index with a plain `pdftotext` sweep silently overwrites the two OCR
+sidecars with the unreadable extractions they exist to replace — 1009 characters of watermark for
+Eker, 14 characters for Bachmair '93 — after which every quotation from those two papers reads as a
+miss. Splice the sidecars in **after** the sweep. It is the same lesson as the Eker trap, arriving
+from the other direction: the tooling will quietly prefer the unreadable copy unless told not to.

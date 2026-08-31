@@ -111,7 +111,7 @@ cited and were not fetched.
 
 | File | Document & Authors | Source / Identifier | Pages | Size |
 | :--- | :--- | :--- | :--- | :--- |
-| [`meurer2017_sympy.pdf`](./papers/cas-architecture/meurer2017_sympy.pdf) | **SymPy: symbolic computing in Python**<br>*Aaron Meurer et al. (2017)*<br>**The published article, 27 authors.** Replaced 2026-08-30: the file previously stored here was the *PeerJ Preprints* review manuscript (19 pp., 24 authors, every page footed "This manuscript is for review purposes only"), indexed as the published paper. The published text also differs from the manuscript by a stray apostrophe in the sentence most often quoted — quote this file, and say so. | PeerJ CS 3:e103 / DOI: [`10.7717/peerj-cs.103`](https://doi.org/10.7717/peerj-cs.103) — via Wayback (`peerj.com` returns 403 to `curl`) | 27 | 296.6 KB |
+| [`meurer2017_sympy.pdf`](./papers/cas-architecture/meurer2017_sympy.pdf) | **SymPy: symbolic computing in Python**<br>*Aaron Meurer et al. (2017)*<br>**The published article, 27 authors.** Replaced 2026-08-30: the file previously stored here was the *PeerJ Preprints* review manuscript (19 pp., 24 authors, with a for-review-only footer on every page), indexed as the published paper. The published text also differs from the manuscript by a stray apostrophe in the sentence most often quoted — quote this file, and say so. | PeerJ CS 3:e103 / DOI: [`10.7717/peerj-cs.103`](https://doi.org/10.7717/peerj-cs.103) — via Wayback (`peerj.com` returns 403 to `curl`) | 27 | 296.6 KB |
 | [`bauer2002_ginac_framework.pdf`](./papers/cas-architecture/bauer2002_ginac_framework.pdf) | **Introduction to the GiNaC Framework for Symbolic Computation within the C++ Programming Language**<br>*Christian Bauer, Alexander Frink, Richard Kreckel (2002)* | Sci-Hub / DOI: [`10.1006/jsco.2001.0494`](https://doi.org/10.1006/jsco.2001.0494) | 12 | 309.4 KB |
 | [`fateman1992_review_of_mathematica.pdf`](./papers/cas-architecture/fateman1992_review_of_mathematica.pdf) | **A Review of Mathematica**<br>*Richard J. Fateman (1992)* <br>Author copy: it carries no journal metadata, only "Received 16 November 1990, revised 16 September 1991", so the *JSC* 13(5), 1992 citation cannot be confirmed from the file itself. | *J. Symbolic Computation* 13(5) — author copy via Wayback (`people.eecs.berkeley.edu` unreachable) | 35 | 314.5 KB |
 | [`lioubartsev2016_pedagogical_cas_thesis.pdf`](./papers/cas-architecture/lioubartsev2016_pedagogical_cas_thesis.pdf) | **Constructing a Computer Algebra System Capable of Generating Pedagogical Step-by-Step Solutions** (MSc Thesis)<br>*Dmitrij Lioubartsev (2016)* | KTH / DiVA: `diva2:945222` | 91 | 1.96 MB |
@@ -270,7 +270,7 @@ through GHC 9.12.4. Four changes to this corpus came out of it:
 
 | Change | Why |
 | :--- | :--- |
-| `meurer2017_sympy.pdf` **replaced** | The stored file was the *PeerJ Preprints* review manuscript (19 pp., 24 authors, "This manuscript is for review purposes only" on every page), indexed and cited as the published article. The published *PeerJ CS* 3:e103 is 27 pp. with 27 authors; the notes' "(24 authors)" was a preprint count. |
+| `meurer2017_sympy.pdf` **replaced** | The stored file was the *PeerJ Preprints* review manuscript (19 pp., 24 authors, with a for-review-only footer on every page), indexed and cited as the published article. The published *PeerJ CS* 3:e103 is 27 pp. with 27 authors; the notes' "(24 authors)" was a preprint count. |
 | `symbolica_home.html` **added** | To resolve the one quotation in the notes that anchored to nothing — "built for large expressions". It resolved to nothing because **Symbolica never wrote it**; see the row above. |
 | `wikipedia_wolfram_language.html` **added** | The MockMMA cease-and-desist claim is an assertion about what this page says and does not cite. Now checkable. |
 | `numhask_hackage.html` **added** | §7's numhask/numeric-prelude comparison had no source on the numhask side. |
@@ -280,6 +280,31 @@ ligatures** (`grep unification` fails on a survey with a section titled *Unifica
 **Geddes' table-of-contents pages are OCR garbage** while its body text is fine. Both are the same
 class as the already-recorded Karr-1985 dropped-`h` problem. The audit rule stands: check the
 *variety* of extracted text, and check that a **failed** grep is a real absence.
+
+
+### Fourth validation round, 2026-08-31
+
+Another full re-run, from a text index rebuilt from scratch — the point being that a check inherited
+from the previous round is not a check. Every quoted phrase in both notes re-tested, every structural
+claim reopened, the Haskell claims re-run through GHC 9.12.4, and **every PDF page count and every
+corpus total in this file re-derived mechanically and diffed against what it claimed**. The counts
+and page numbers were all correct. Two changes to the corpus:
+
+| Change | Why |
+| :--- | :--- |
+| `springer_geddes_book_page.html` **added** | Three files said "the publisher's blurb calls it the first comprehensive textbook on the topic" with no such page held — a claim *about* a document, which rule 2 covers. The blurb is real, and also turns out to be the source of the "Pascal-like" description of Geddes' pseudocode used throughout the notes. Wayback capture; the live Springer page serves `curl` a JavaScript bot challenge. |
+| `symbolica_home_2025_wayback.html` **added** | `papers/cas-architecture/CLAUDE.md` asserted what 2025 snapshots of Symbolica's home page say, with only the current page and the 2023 snapshot held. Exactly the gap the third round was run to close, reintroduced by the file that closed it. |
+
+Four claims that the sources contradict were corrected in the notes (Eker's affiliation and issue
+month, the missing journal metadata on the Fateman author copy, and three words dropped from the
+quotation of Wolfram's step 3), along with four bookkeeping statements that had gone stale.
+
+**A trap for the next audit, and it cost real time this round.** If you rebuild the plain-text index
+with a naive `pdftotext` sweep, it *overwrites* the two OCR sidecars: `eker1995_*` comes back as 1009
+characters of repeated Oxford download watermark and `bachmair1993_*` as 14 characters, and every
+quotation from those two papers then reads as a miss. **Splice the `.txt` sidecars in after the
+sweep, not before.** This is the Eker trap from the other side — extractable text is not readable
+text, and the tooling will quietly prefer the unreadable copy.
 
 ---
 
