@@ -4,7 +4,8 @@ Wolfram's own documentation (bibliography §6). **This is the authoritative beha
 the evaluator is being written against** — when the implementation and these pages disagree, the
 implementation is wrong.
 
-All files are `curl` captures of `reference.wolfram.com`, fetched 2026-08-29. They carry no CSS;
+All files are `curl` captures of `reference.wolfram.com`, fetched 2026-08-29 — except
+`wolfram_ref_ownvalues.html`, added 2026-08-30. They carry no CSS;
 strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 
 | File | Read it for |
