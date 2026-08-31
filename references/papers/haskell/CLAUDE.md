@@ -14,6 +14,7 @@ that §3 groups as foundational are in `../foundations/`.
 | `olah_hasksymb_readme.html` | **The design retrospective — the blog post does not carry it.** Olah found no clean way to put variables into types: "The *big* issue I'm facing is appropriate types for symbolic expressions. In particular, how do I handle variables in types?", and settled for "My bad solution for now has been to just not have type-level variable representation, which kind of bothers me." He wants dependent types and concludes Haskell cannot practically supply them here. The evidence for keeping the core untyped. |
 | `poly_hackage.html` | The `poly` package page: `Vector`-backed uni/multivariate polynomials, Karatsuba multiplication, `semirings`' `GcdDomain`/`Euclidean` classes. Source for "poly is at least 20x-40x faster than the `polynomial` library" — **maintainer-reported**, though the per-operation table on the same page (22–39× addition, 52–303× multiplication) is consistent with it. |
 | `dumb_cas_hackage.html` | The `dumb-cas` package page: untyped symbolic rewriting with the rules *you* supply, "combin[ing] the flexibility of a Lisp with the conciseness of a Regex engine". Minimal, but the nearest thing on Hackage to the target design. |
+| `numhask_hackage.html` | The other half of §7's `numhask`-vs-`numeric-prelude` comparison, which previously had a source on one side only. Tony Day; usage snippet is `{-# LANGUAGE RebindableSyntax #-}` — so `RebindableSyntax` is **not** what separates the two, since numeric-prelude's README prescribes it as well. What does separate them is upkeep: uploaded 2026-07-10, against numeric-prelude's 2022-05-28. |
 | `olah2012_hasksymb.html` | A small untyped rewriting experiment using QuasiQuoters and ViewPatterns. Dated 1 June 2012. **This capture is only the ~250-word demo post** — the design retrospective everyone quotes ("The *big* issue I'm facing is appropriate types for symbolic expressions. In particular, how do I handle variables in types?", and "My bad solution for now has been to just not have type-level variable representation") is in the **repository README** at `github.com/colah/HaskSymb`, not here. That conclusion is the direct evidence behind this project's decision to keep the core `Expr` untyped. |
 
 ## The decision these documents support
@@ -30,6 +31,8 @@ and application nodes compare head-then-arguments. It is a fine *starting* total
 node carries an id and takes `Eq`/`Hashable` from that. Pick one; the cheap derived instances and
 the interned ones are alternatives, not a package.
 
-The libraries themselves (`algebra`, `numhask`, `poly`, `constructive-algebra`,
-`recursion-schemes`, `uniplate`, `sbv`, `symengine`, `dumb-cas`, `computational-algebra`) are Hackage
-packages, not documents; browse them on Hackage rather than archiving them here.
+The libraries themselves (`algebra`, `poly`, `constructive-algebra`, `recursion-schemes`,
+`uniplate`, `sbv`, `symengine`, `dumb-cas`, `computational-algebra`) are Hackage packages, not
+documents; browse them on Hackage rather than archiving them here. The exceptions are the four whose
+pages the notes quote or compare against — `numeric-prelude`, `numhask`, `poly`, `dumb-cas` — which
+are captured above, because a claim about a package page is a claim about a document.
