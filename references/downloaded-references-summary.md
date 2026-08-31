@@ -7,15 +7,17 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**82 documents (~429 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 36 HTML captures — plus 2 OCR sidecars.**
+**84 documents (~429 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 38 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
 summarised in [`CLAUDE.md`](./CLAUDE.md); they render without CSS but retain the full text. The
-original **22** were fetched **2026-08-29** and the other **14** on **2026-08-30** — ten in the
+original **22** were fetched **2026-08-29** and the other **16** on **2026-08-30** — ten in the
 second validation round (the eight README/package/licence captures that anchor verbatim quotes, plus
 `pickering2014_*` and `sympy_docs_*`), four in the third (`symbolica_home`,
-`symbolica_home_2023_wayback`, `wikipedia_wolfram_language`, `numhask_hackage`).
+`symbolica_home_2023_wayback`, `wikipedia_wolfram_language`, `numhask_hackage`), and two in the
+fourth (`springer_geddes_book_page`, `symbolica_home_2025_wayback`). Two of them are Wayback
+captures rather than live fetches, for reasons the rows give.
 
 ---
 
@@ -26,6 +28,7 @@ second validation round (the eight README/package/licence captures that anchor v
 | [`cohen2002_computer_algebra_elementary_algorithms.pdf`](./papers/textbooks/cohen2002_computer_algebra_elementary_algorithms.pdf) | ***Computer Algebra and Symbolic Computation: Elementary Algorithms***<br>*Joel S. Cohen (2002)* | Libgen MD5: `eb0554c9c1b3f9468e8fb4aaee2a433f` | 344 | 2.21 MB |
 | [`cohen2003_computer_algebra_mathematical_methods.pdf`](./papers/textbooks/cohen2003_computer_algebra_mathematical_methods.pdf) | ***Computer Algebra and Symbolic Computation: Mathematical Methods***<br>*Joel S. Cohen (2003)* | Libgen MD5: `52dc1eb488352883d45e03d8a1caff5b` | 470 | 3.13 MB |
 | [`geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf`](./papers/textbooks/geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf) | ***Algorithms for Computer Algebra***<br>*Keith O. Geddes, Stephen R. Czapor, George Labahn (1992)* <br>**The table-of-contents pages are OCR garbage** ("In od ion", "Algo i hm", "Pol nomial Fa"); the body text is sound and every chapter title is findable there. Do not conclude from a failed TOC grep that the file is broken. | Libgen MD5: `c16e1a9f9f9c07baddd12a4922de90b7` | 593 | 7.84 MB |
+| [`springer_geddes_book_page.html`](./papers/textbooks/springer_geddes_book_page.html) | **Springer book page for *Algorithms for Computer Algebra*** — the publisher's blurb, held so that two long-standing claims stop being assertions about a page nobody had: that it "is the first comprehensive textbook to be published on the topic of computational symbolic mathematics" (a publisher's claim, absent from the book itself), and that its algorithms are "presented in a Pascal-like computer language". Also carries the per-chapter page ranges. Fetched 2026-08-30 via Wayback — the live page serves a JavaScript bot challenge to `curl`. | [`web.archive.org/web/20260108044109/https://link.springer.com/book/10.1007/b102438`](https://web.archive.org/web/20260108044109/https://link.springer.com/book/10.1007/b102438) | — | 264.0 KB |
 | [`vonzurgathen_gerhard2013_modern_computer_algebra.pdf`](./papers/textbooks/vonzurgathen_gerhard2013_modern_computer_algebra.pdf) | ***Modern Computer Algebra*** (3rd ed.)<br>*Joachim von zur Gathen, Jürgen Gerhard (2013)* | Libgen MD5: `265536cedb43347e70dfc6a523371578` | 813 | 24.83 MB |
 | [`bronstein2005_symbolic_integration_1.pdf`](./papers/textbooks/bronstein2005_symbolic_integration_1.pdf) | ***Symbolic Integration I: Transcendental Functions*** (2nd ed.)<br>*Manuel Bronstein (2005)* | Springer / DOI: [`10.1007/b138171`](https://doi.org/10.1007/b138171) | 331 | 15.15 MB |
 | [`petkovsek_wilf_zeilberger1996_a_eq_b.pdf`](./papers/textbooks/petkovsek_wilf_zeilberger1996_a_eq_b.pdf) | ***A=B***<br>*Marko Petkovšek, Herbert S. Wilf, Doron Zeilberger (1996)* | UPenn / Rutgers Open Access | 217 | 1.19 MB |
@@ -121,6 +124,7 @@ cited and were not fetched.
 | [`symja_readme.html`](./papers/cas-architecture/symja_readme.html) | Symja's GitHub README — confirms "the Rubi symbolic integration rules are used to implement the `Integrate` function" and, as the notes say, **names no Rubi version**. Fetched 2026-08-30. | [`github.com/axkr/symja_android_library`](https://github.com/axkr/symja_android_library) | — | 376.2 KB |
 | [`symbolica_home.html`](./papers/cas-architecture/symbolica_home.html) | *Symbolica — Modern Computer Algebra* (home page) — fetched to check the "built for large expressions" tagline the notes attributed to Symbolica. **It is not Symbolica's wording**, here or in any Wayback snapshot: the current page says "a high-performance computer algebra library for Python and Rust" that lets you "Manipulate large expressions"; 2023 snapshots say "a blazing fast symbolic manipulation toolkit". Fetched 2026-08-30. | [`symbolica.io`](https://symbolica.io/) | — | 56.1 KB |
 | [`symbolica_home_2023_wayback.html`](./papers/cas-architecture/symbolica_home_2023_wayback.html) | *Symbolica* home page as it stood on **2023-11-10**, held so the negative claim above is checkable rather than asserted: the older tagline was "Symbolica is a blazing fast symbolic manipulation toolkit", not "built for large expressions". Fetched 2026-08-30. | [`web.archive.org/web/20231110100247/https://symbolica.io/`](https://web.archive.org/web/20231110100247/https://symbolica.io/) | — | 43.7 KB |
+| [`symbolica_home_2025_wayback.html`](./papers/cas-architecture/symbolica_home_2025_wayback.html) | *Symbolica* home page as it stood on **2025-04-15**. Added in the fourth round because `papers/cas-architecture/CLAUDE.md` asserted what 2025 snapshots said with nothing held on that side — the same class of gap the third round was run to close. They say "Symbolica is an easy-to-use library for Python and Rust": a third distinct tagline, and a third capture in which "built for large expressions" does not appear. Fetched 2026-08-30. | [`web.archive.org/web/20250415051952/https://symbolica.io/`](https://web.archive.org/web/20250415051952/https://symbolica.io/) | — | 40.9 KB |
 | [`wikipedia_wolfram_language.html`](./papers/cas-architecture/wikipedia_wolfram_language.html) | *Wolfram Language* — Wikipedia. The source for the MockMMA cease-and-desist story the notes flag as folklore: "Richard Fateman's MockMMA from 1991 is of historical note, both for being the earliest reimplementation and for having received a cease-and-desist from Wolfram" — **and that sentence carries no inline citation**, which is the point. Fetched 2026-08-30. | [`en.wikipedia.org`](https://en.wikipedia.org/wiki/Wolfram_Language) | — | 207.2 KB |
 
 ---
