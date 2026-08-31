@@ -7,7 +7,11 @@ are **not** held in this corpus, with what was tried and why the gap stands.
 *exists* here; its "Not obtained" table is the short version. This file adds the routes attempted and
 whether the gap actually costs anything.
 
-Status checked **2026-08-30** (third validation round).
+Status checked **2026-08-31** (fourth validation round). The three standing gaps were re-tested
+this round, not carried forward on trust: `riptutorial.com/wolfram-language` still redirects and
+`/topic/2549/evaluation-order` still serves something else, with the Wayback Machine holding no
+snapshot of either URL; `axiom-developer.org` still fails to resolve (`curl` exit, HTTP `000`). The
+Brun series is unchanged from the third round.
 
 ---
 
