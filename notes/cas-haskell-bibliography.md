@@ -70,10 +70,13 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 > Productionized descendants of "Data types à la carte." *Optional.*
 
 **Cole, Christopher A., and Stephen Wolfram.** "SMP: A Symbolic Manipulation Program." *Proceedings of the 1981 ACM Symposium on Symbolic and Algebraic Computation (SYMSAC '81)*.
-> The earliest primary source on the symbolic-expression + transformation-rule architecture that became Mathematica. Archived as PDF on Wolfram's content servers.
+> The earliest primary source on the symbolic-expression + transformation-rule architecture that became Mathematica. **Paywalled (ACM)** — *not* on Wolfram's content servers, which host the SMP manual instead (below).
 
 **Greif, Jerry.** "The SMP Pattern-Matcher." *EUROCAL '85*, Springer LNCS 204.
-> The earliest published description of how this family of pattern matchers was designed. Archived on Wolfram's content servers.
+> The earliest published description of how this family of pattern matchers was designed. **Paywalled (Springer LNCS)**, likewise not on Wolfram's servers.
+
+**Wolfram, Stephen, with Chris A. Cole et al.** *SMP: A Symbolic Manipulation Program* — Summary (73 pp.), Primer (88 pp.), Reference Manual (238 pp.). California Institute of Technology, 1981. Free from `content.wolfram.com`.
+> SMP's own documentation, and the substantial free primary source on the system — where the two conference papers above are three and twelve pages behind paywalls. The **Primer's §3, *Patterns***, is the one to read: the matcher as it stood before Wolfram separated pattern constructs from names. Held in `references/`.
 
 *(The AC-discrimination-net papers by Bachmair et al., previously listed here, now sit with the rest of the matching literature in §4.)*
 
@@ -292,7 +295,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Zhu et al. on hash consing, arXiv:2509.20534
 - Axiom literate `.pamphlet` volumes (`github.com/daly/axiom/books`)
 - SymPy architecture paper (PeerJ CS, open access)
-- Wolfram's historical essays
+- Wolfram's historical essays, and the **1981 SMP manual** (Summary / Primer / Reference Manual, `content.wolfram.com`)
 - Klop, "Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond" — the ICALP'90 survey, free from CWI (`ir.cwi.nl/pub/2667`)
 - Bachmair et al., "Experiments with AC Discrimination Nets" (`ijcai.org`)
 - Fateman, "A Review of Mathematica"
@@ -304,9 +307,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, and Symbolica's licence and home pages. All captured in `references/` as of 2026-08-30, so the quotes have anchors.
 - Wikipedia's *Wolfram Language* article (§5, for the MockMMA cease-and-desist sentence and its missing citation)
 
-**Paywalled journal/conference papers — held here, but not freely re-obtainable.** All six were
-supplied rather than fetched; re-obtaining them needs institutional access. Where a free substitute
-exists it is named:
+**Paywalled journal/conference papers — held here, but not freely re-obtainable.** Re-obtaining any
+of these needs institutional access. Where a free substitute exists it is named:
 
 - Karr, "Summation in Finite Terms" (*JACM* 28(2), 1981) and "Theory of Summation in Finite Terms"
   (*JSC* 1(3), 1985) — ACM and Elsevier. *Substitute: Schneider's Sigma paper, free, above.*
@@ -318,6 +320,11 @@ exists it is named:
   Springer LNCS. *The 1995 IJCAI companion is free, above, and is the more practical of the two.*
 - Klop, "Term Rewriting Systems" (*Handbook of Logic in CS* Vol. 2 / CWI `CS-R9053`) — the report
   number could not be located free. *Substitute: the ICALP'90 survey, free, above.*
+- Cole & Wolfram, "SMP: A Symbolic Manipulation Program" (SYMSAC '81) — ACM — and Greif, "The SMP
+  Pattern-Matcher" (EUROCAL '85) — Springer LNCS. Both were listed in this bibliography until
+  2026-08-30 as free from Wolfram's content servers; they are not, and appear nowhere on
+  `stephenwolfram.com/publications`. *Substitute: the 1981 SMP manual, free, above — 399 pp. against
+  their 15, and the Primer's §3 covers the pattern matcher directly.*
 
 **In print / purchase:**
 - Cohen Vols. 1–2 (Routledge/CRC reprints)
@@ -354,7 +361,11 @@ nine entries (see the repo history) and closed four more source gaps: Symbolica'
 *Wolfram Language* article, `numhask`'s package page, and the **published** SymPy article, which had
 been standing in as the PeerJ paper while the file held was actually the PeerJ Preprints review
 manuscript. It also found a third phrase in quotation marks that was our own and not a source's —
-Symbolica "built for large expressions", which is in no version of Symbolica's own page.
+Symbolica "built for large expressions", which is in no version of Symbolica's own page. A follow-up
+sweep of the *availability* claims — every "free from X" this bibliography makes, tested live — found
+one more: the two SMP conference papers were described as archived on Wolfram's content servers.
+They are not; the SMP **manual** is, and is now held (three volumes, 399 pp.), while the papers moved
+to the paywalled list where their Sci-Hub provenance always said they belonged.
 
 **Three things remain genuinely open**, each tagged `[unverified]` where it appears, and in every case
 because the copy held is a different printing from the one the ISBN names: Zippel's original Kluwer

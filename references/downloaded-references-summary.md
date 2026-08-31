@@ -7,7 +7,7 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**79 documents (~424 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 36 HTML captures — plus 2 OCR sidecars.**
+**82 documents (~429 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 36 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page on the date noted in
@@ -98,6 +98,9 @@ cited and were not fetched.
 | [`eker1995_associative_commutative_matching.pdf`](./papers/pattern-matching/eker1995_associative_commutative_matching.pdf) | **Associative-Commutative Matching Via Bipartite Graph Matching**<br>*S. M. Eker (1995)*<br>A practical AC-matching algorithm for the general case — the Maude lineage. Not a complexity result; it cites Benanav for those. **Image-only apart from an Oxford download watermark — OCR sidecar `.txt` alongside.** | *The Computer Journal* 38(5):381–399 / DOI: [`10.1093/comjnl/38.5.381`](https://doi.org/10.1093/comjnl/38.5.381) — user-supplied | 19 | 2.4 MB |
 | [`cole_wolfram1981_smp.pdf`](./papers/pattern-matching/cole_wolfram1981_smp.pdf) | **SMP: A Symbolic Manipulation Program**<br>*Christopher A. Cole, Stephen Wolfram (1981)* | Sci-Hub / DOI: [`10.1145/800206.806365`](https://doi.org/10.1145/800206.806365) | 3 | 269.7 KB |
 | [`greif1985_smp_pattern_matcher.pdf`](./papers/pattern-matching/greif1985_smp_pattern_matcher.pdf) | **The SMP Pattern-Matcher**<br>*Jerry Greif (1985)* | Sci-Hub / DOI: [`10.1007/3-540-15984-3_281`](https://doi.org/10.1007/3-540-15984-3_281) | 12 | 884.5 KB |
+| [`wolfram1981_smp_summary.pdf`](./papers/pattern-matching/wolfram1981_smp_summary.pdf) | **SMP — Summary**<br>*Stephen Wolfram with Chris A. Cole et al. (Caltech, 1981)*<br>"An essentially complete but concise description of the standard facilities available in SMP." The primary source for what the language actually looked like before Mathematica. | [`content.wolfram.com/sw-publications/2020/07/smp-summary.pdf`](https://content.wolfram.com/sw-publications/2020/07/smp-summary.pdf) — free | 73 | 564 KB |
+| [`wolfram1981_smp_primer.pdf`](./papers/pattern-matching/wolfram1981_smp_primer.pdf) | **SMP — Primer**<br>*Stephen Wolfram with Chris A. Cole et al. (Caltech, 1981)*<br>The pedagogical introduction; **§3 is *Patterns***, which is the chapter this project is here for. | [`content.wolfram.com/sw-publications/2020/07/smp-primer.pdf`](https://content.wolfram.com/sw-publications/2020/07/smp-primer.pdf) — free | 88 | 356 KB |
+| [`wolfram1981_smp_reference_manual.pdf`](./papers/pattern-matching/wolfram1981_smp_reference_manual.pdf) | **SMP — Reference Manual**<br>*Stephen Wolfram with Chris A. Cole et al. (Caltech, 1981)*<br>Function-by-function reference, for comparing SMP's primitives against the Wolfram Language's. Text layer is thin on reference pages (~100–300 chars) but present throughout. | [`content.wolfram.com/sw-publications/2020/07/smp-reference-manual.pdf`](https://content.wolfram.com/sw-publications/2020/07/smp-reference-manual.pdf) — free | 238 | 3.6 MB |
 
 ---
 
@@ -279,7 +282,11 @@ class as the already-recorded Karr-1985 dropped-`h` problem. The audit rule stan
 ## Provenance caveat
 
 Several textbook PDFs were obtained from Libgen and several papers from Sci-Hub, as recorded in the
-Source column. The bibliography's "Availability at a Glance" section marks which of these titles are
+Source column — including **both SMP conference papers**, which the notes described until 2026-08-30
+as "archived as PDFs on Wolfram's content servers". They are not: Wolfram's servers host the SMP
+*manual* (now held, three volumes above), while Cole & Wolfram's SYMSAC '81 paper and Greif's
+EUROCAL '85 paper are ACM and Springer, behind paywalls, and appear nowhere on
+`stephenwolfram.com/publications`. The bibliography's "Availability at a Glance" section marks which of these titles are
 in print and purchasable — Cohen Vols. 1–2, von zur Gathen & Gerhard, Baader & Nipkow, Bronstein,
 Terese, and Jenks & Sutor. *A=B*, the arXiv papers, the Axiom material, the PeerJ SymPy paper, and
 every HTML capture are freely and legally available from their publishers or authors.
