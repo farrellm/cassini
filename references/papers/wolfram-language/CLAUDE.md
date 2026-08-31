@@ -23,8 +23,8 @@ strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 Standard Evaluation Sequence". Implement it literally. For `h[e1, e2, …]`:
 
 **Numbering.** The page gives *twelve* steps — as bullets, with no numerals, so you count them off
-yourself. The transcription below splits its third ("Evaluate each element `eᵢ` in turn. If `h` is a
-symbol with attributes HoldFirst, …, then skip evaluation of certain elements") into two, because the
+yourself. The transcription below splits its third ("Evaluate each element `eᵢ` of the expression in turn. If `h`
+is a symbol with attributes HoldFirst, …, then skip evaluation of certain elements") into two, because the
 hold check is a separate thing to implement. Steps 1–3 below are the page's 1–3; from step 4 on,
 **the page's position is one lower than ours**. Every step reference in this repo uses our numbering.
 
