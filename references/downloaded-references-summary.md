@@ -7,7 +7,7 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**73 documents (~423 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 30 HTML captures — plus 2 OCR sidecars.**
+**75 documents (~423 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 32 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page on the date noted in
@@ -41,6 +41,12 @@ Axiom is distributed as a literate program. `axiom-developer.org` no longer reso
 PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sources
 (LaTeX + SPAD, plain text, readable directly) from `github.com/daly/axiom/books`.
 
+**This is a deliberate subset, not a partial fetch.** Axiom runs to roughly fifteen numbered volumes;
+the six held are the ones the notes actually cite — Vol. 1 for the user-level tutorial and Vol. 10.x
+for the algebra hierarchy. Vol. 0 is covered by `jenks_sutor1992_axiom.pdf` and the FriCAS
+regeneration above. The remaining volumes (compiler internals, interpreter, build system) are not
+cited and were not fetched.
+
 | File | Volume | Size |
 | :--- | :--- | :--- |
 | [`axiom_bookvol1_tutorial.pamphlet`](./papers/textbooks/axiom_bookvol1_tutorial.pamphlet) | Vol. 1 — Tutorial | 434.2 KB |
@@ -71,6 +77,7 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | :--- | :--- | :--- | :--- | :--- |
 | [`richardson1968_some_undecidable_problems.pdf`](./papers/foundations/richardson1968_some_undecidable_problems.pdf) | **Some Undecidable Problems Involving Elementary Functions of a Real Variable**<br>*Daniel Richardson (1968)*<br>*J. Symbolic Logic* 33(4):514–520. Note the title: "Undecidable", not "Unsolvable" — the miscitation is widespread. | Sci-Hub / DOI: [`10.2307/2271358`](https://doi.org/10.2307/2271358) | 8 | 579.5 KB |
 | [`swierstra2008_data_types_a_la_carte.pdf`](./papers/foundations/swierstra2008_data_types_a_la_carte.pdf) | **Data types à la carte**<br>*Wouter Swierstra (2008)* | Sci-Hub / DOI: [`10.1017/S0956796808006758`](https://doi.org/10.1017/S0956796808006758) | 15 | 511.5 KB |
+| [`pickering2014_a_la_carte_closed_type_families.html`](./papers/foundations/pickering2014_a_la_carte_closed_type_families.html) | **Data Types à la Carte with Closed Type Families** (20 Dec 2014)<br>*Matthew Pickering*<br>The closed-type-family reimplementation of Swierstra's `(:<:)` machinery that §3 names. Fetched 2026-08-30. | [`mpickering.github.io`](https://mpickering.github.io/posts/2014-12-20-closed-type-family-data-types.html) | — | 24.6 KB |
 | [`wadler2008_data_types_a_la_carte_blog.html`](./papers/foundations/wadler2008_data_types_a_la_carte_blog.html) | **Data Types a la Carte** (blog post, 28.2.08)<br>*Philip Wadler*<br>The source of the "presents the best solution to the Expression Problem that I've seen in Haskell (well, Haskell with `-fglasgow-exts`)" verdict — which is here, **not** in Swierstra's paper. Fetched 2026-08-30. | [`wadler.blogspot.com`](https://wadler.blogspot.com/2008/02/data-types-la-carte.html) | — | 112.8 KB |
 | [`bahr_hvitved2011_compositional_data_types.pdf`](./papers/foundations/bahr_hvitved2011_compositional_data_types.pdf) | **Compositional Data Types**<br>*Patrick Bahr, Tom Hvitved (2011)* | Sci-Hub / DOI: [`10.1145/2036918.2036930`](https://doi.org/10.1145/2036918.2036930) | 12 | 474.8 KB |
 
@@ -103,6 +110,7 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`rich_rubi_vision.html`](./papers/cas-architecture/rich_rubi_vision.html) | *Organizing Math as a Rule-based Decision Tree* (Rubi "Vision")<br>*Albert Rich* | [`rulebasedintegration.org/vision.html`](https://rulebasedintegration.org/vision.html) | — | 14.3 KB |
 | [`symbolica_2_2_symbolic_integration.html`](./papers/cas-architecture/symbolica_2_2_symbolic_integration.html) | *Symbolica 2.2: symbolic integration* — the source of the Rubi-port and benchmark figures quoted in §5 | [`symbolica.io/posts/symbolic_integration/`](https://symbolica.io/posts/symbolic_integration/) | — | 103.2 KB |
 | [`symbolica_pattern_matching.html`](./papers/cas-architecture/symbolica_pattern_matching.html) | *Algorithms through the lens of symbolic pattern matching* | [`symbolica.io/posts/pattern_matching/`](https://symbolica.io/posts/pattern_matching/) | — | 74.2 KB |
+| [`sympy_docs_advanced_expression_manipulation.html`](./papers/cas-architecture/sympy_docs_advanced_expression_manipulation.html) | SymPy's *Advanced Expression Manipulation* page — the "SymPy internals docs" §5 points at, made specific: expression trees, `func`/`args`, the `Add(x, x)` → `Mul(2, x)` constructor behaviour, and the `evaluate=False` / `UnevaluatedExpr` escape hatches. Fetched 2026-08-30. | [`docs.sympy.org`](https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html) | — | 137.5 KB |
 | [`symbolica_license.html`](./papers/cas-architecture/symbolica_license.html) | *Pricing and plans* — the source for the licence terms quoted in §5: the employment trigger, and the **Free** tier's "[o]ne core and instance per device" cap. Fetched 2026-08-30. | [`symbolica.io/license/`](https://symbolica.io/license/) | — | 50.0 KB |
 | [`expreduce_readme.html`](./papers/cas-architecture/expreduce_readme.html) | Expreduce's GitHub README — the source for "This software is experimental quality and is not currently intended for serious use." Fetched 2026-08-30. | [`github.com/corywalker/expreduce`](https://github.com/corywalker/expreduce) | — | 308.6 KB |
 | [`symja_readme.html`](./papers/cas-architecture/symja_readme.html) | Symja's GitHub README — confirms "the Rubi symbolic integration rules are used to implement the `Integrate` function" and, as the notes say, **names no Rubi version**. Fetched 2026-08-30. | [`github.com/axkr/symja_android_library`](https://github.com/axkr/symja_android_library) | — | 376.2 KB |

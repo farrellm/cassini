@@ -25,6 +25,14 @@ page. Six of them sat behind the summary's "pointers only, by design" waiver, wh
 software system but not quoting its README; Wadler's post and the `OwnValues` page were never
 covered by anything. All eight are now held.
 
+A follow-up sweep then tested **every** quoted phrase of five words or more in both notes against a
+plain-text index of the whole corpus. It found two more citations that resolved to nothing —
+Pickering's closed-type-family reimplementation (§3) and the unspecific "SymPy internals docs" (§5).
+Both are now held, the latter pinned to the specific page meant (*Advanced Expression Manipulation*).
+It also found two phrases in quotation marks that were the notes' own wording rather than anyone's:
+a compression of the `dumb-cas` description, and the OBJ slogan "programming = equational
+specification + rewriting". Those were unquoted rather than sourced.
+
 That leaves three gaps, none of which is a paywall — the material is gone from the web or was never
 written. **None of them costs anything**, because each is fully superseded by something held here.
 

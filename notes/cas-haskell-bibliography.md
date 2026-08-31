@@ -66,7 +66,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 **Swierstra, Wouter.** "Data types à la carte." *Journal of Functional Programming* 18, no. 4 (2008): 423–436. DOI: 10.1017/S0956796808006758.
 > ASTs as coproducts of functors (`data (f :+: g) e = Inl (f e) | Inr (g e)`) with `Fix` and a subtyping class `(:<:)`. The reference solution to the expression problem in Haskell. Wadler's verdict — on his blog, 28 Feb 2008, *not* in the paper, which cites him only as the problem's namer — was that it "presents the best solution to the Expression Problem that I've seen in Haskell (well, Haskell with `-fglasgow-exts`)." *Read for context; likely unnecessary if your core `Expr` is untyped and uniform.*
 
-**Bahr, Patrick, and Tom Hvitved.** "Compositional Data Types." *Workshop on Generic Programming*, 2011. DOI: 10.1145/2036918.2036930. See also Matthew Pickering's closed-type-family reimplementation.
+**Bahr, Patrick, and Tom Hvitved.** "Compositional Data Types." *Workshop on Generic Programming*, 2011. DOI: 10.1145/2036918.2036930. See also **Pickering, Matthew.** "Data Types à la Carte with Closed Type Families" (20 Dec 2014, `mpickering.github.io`) — a reimplementation of Swierstra's `(:<:)` machinery using closed type families, held in `references/`.
 > Productionized descendants of "Data types à la carte." *Optional.*
 
 **Cole, Christopher A., and Stephen Wolfram.** "SMP: A Symbolic Manipulation Program." *Proceedings of the 1981 ACM Symposium on Symbolic and Algebraic Computation (SYMSAC '81)*.
@@ -249,7 +249,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 > **The system to study for efficient, correct matching modulo associativity/commutativity/identity.** High-performance C++ engine with powerful reflection and metaprogramming.
 
 **OBJ / OBJ3** (Joseph Goguen et al.). Order-sorted equational logic.
-> Maude's ancestor; foundational for "programming = equational specification + rewriting."
+> Maude's ancestor; foundational for the idea of programming *as* equational specification plus rewriting. (Our formulation, not a quotation — no OBJ paper is held here.)
 
 **ELAN, Stratego, Tom.** Strategy languages.
 > Separate rewrite *rules* from the *strategies* controlling their application. Maps onto the distinction between your rule tables and your evaluation control (`ReplaceRepeated`, `//.`, evaluation order, holding), and the control layer is where the difficulty concentrates. (A line about "the strategies rather than the rewrite rules doing the heavy lifting" is often attributed to the Rascal paper; it is **not there** — don't cite it. What Rascal does show is its `visit` construct carrying explicit `top-down`/`bottom-up` strategy annotations.)
@@ -300,6 +300,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Klint, van der Storm & Vinju, the Rascal paper (author copy, `homepages.cwi.nl`)
 - Penner, "ASTs with Fix and Free" (`chrispenner.ca`) and Milewski, "F-Algebras" (`bartoszmilewski.com`)
 - Wadler, "Data Types a la Carte" (blog, 28 Feb 2008, `wadler.blogspot.com`) — the source of the verdict quoted in §3
+- Pickering, "Data Types à la Carte with Closed Type Families" (`mpickering.github.io`) and SymPy's *Advanced Expression Manipulation* page (`docs.sympy.org`)
 - The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, and Symbolica's licence page. All captured in `references/` as of 2026-08-30, so the quotes have anchors.
 
 **Paywalled journal/conference papers — held here, but not freely re-obtainable.** All six were
@@ -340,7 +341,10 @@ Every entry above has been checked against a document held in the local corpus i
 eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
 READMEs, the `poly` and `dumb-cas` package pages, Wadler's blog post, Symbolica's licence, and the
 `OwnValues` reference page — were fetched on 2026-08-30 and indexed, so no quotation here rests on a
-source that cannot be re-read. **One thing remains genuinely open**, and is tagged `[unverified]` where it appears: Zippel's original Kluwer hardback ISBN (the copy held is the Springer softcover reprint, ISBN 978-1-4613-6398-9). The `numeric-prelude` multi-parameter-type-class question, previously listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names them in its opening sentence.
+source that cannot be re-read. A subsequent sweep tested every quoted phrase of five words or more in
+both documents against a plain-text index of the whole corpus; it added Pickering's blog post and
+SymPy's *Advanced Expression Manipulation* page, and unquoted two phrases that turned out to be our
+own wording rather than a source's (a compression of the `dumb-cas` description, and the OBJ slogan). **One thing remains genuinely open**, and is tagged `[unverified]` where it appears: Zippel's original Kluwer hardback ISBN (the copy held is the Springer softcover reprint, ISBN 978-1-4613-6398-9). The `numeric-prelude` multi-parameter-type-class question, previously listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names them in its opening sentence.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
