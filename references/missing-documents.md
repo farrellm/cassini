@@ -18,6 +18,21 @@ been supplied and are now held**: Klop's *Term Rewriting Systems* survey, Karr's
 Benanav/Kapur/Narendran, Eker, Bachmair et al. (TAPSOFT '93), and the genuine Springer edition of
 Jenks & Sutor.
 
+A second pass on 2026-08-30 closed a different class of gap: eight pages that the notes quoted
+*verbatim* but that were never captured — the Expreduce, Symja and HaskSymb READMEs, the `poly` and
+`dumb-cas` package pages, Wadler's blog post, Symbolica's licence, and the `OwnValues` reference
+page. Six of them sat behind the summary's "pointers only, by design" waiver, which covers citing a
+software system but not quoting its README; Wadler's post and the `OwnValues` page were never
+covered by anything. All eight are now held.
+
+A follow-up sweep then tested **every** quoted phrase of five words or more in both notes against a
+plain-text index of the whole corpus. It found two more citations that resolved to nothing —
+Pickering's closed-type-family reimplementation (§3) and the unspecific "SymPy internals docs" (§5).
+Both are now held, the latter pinned to the specific page meant (*Advanced Expression Manipulation*).
+It also found two phrases in quotation marks that were the notes' own wording rather than anyone's:
+a compression of the `dumb-cas` description, and the OBJ slogan "programming = equational
+specification + rewriting". Those were unquoted rather than sourced.
+
 That leaves three gaps, none of which is a paywall — the material is gone from the web or was never
 written. **None of them costs anything**, because each is fully superseded by something held here.
 
@@ -80,6 +95,8 @@ for i in $(ls /tmp/p-*.png | sort -V); do tesseract "$i" - --psm 1 -l eng; print
 ## Summary
 
 Nothing in this corpus is missing because it was overlooked — every gap has a recorded reason, and
-the three that remain are unobtainable rather than unpursued. The live risks are no longer *missing*
+the three that remain are unobtainable rather than unpursued. Every quotation in
+`../notes/cas-haskell.md` and the bibliography now resolves to a document held here; the eight
+live-only sources listed above were the last exceptions. The live risks are no longer *missing*
 documents but *unreadable* ones: Terese has no text layer and no sidecar, and the Karr 1985 OCR is
 lossy in a way that fails silently.
