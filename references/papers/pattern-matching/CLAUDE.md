@@ -34,9 +34,16 @@ This is the layer where a Wolfram-like engine lives or dies, and the CAS textboo
   just using it as a filter."
 - Discrimination nets amortize a fixed pattern set across many subject terms — the CAS situation.
   **Read Krebber's measurements carefully: the break-even is in the number of *subjects*, not the
-  size of the pattern set.** Many-to-one beat one-to-one "with a factor between five and 20" at
-  every pattern-set size he tested; what has to be amortized is the net's one-time construction
-  cost, so the win arrives "for applications that match more than a few hundred subjects." He also
-  warns a net's state count "can grow exponentially with the number of patterns." Write a correct
-  one-to-one matcher first, behind an interface that can be swapped for a net later.
+  size of the pattern set.** On the linear-algebra pattern set many-to-one beat one-to-one "with a
+  factor between five and 20" — "in every case", at every size tested *there* — and on the much
+  larger AST set the speedup reaches roughly 60×. What has to be amortized is the net's one-time
+  construction cost, so the win arrives "for applications that match more than a few hundred
+  subjects." Write a correct one-to-one matcher first, behind an interface that can be swapped for a
+  net later.
+- **His "can grow exponentially with the number of patterns" warning is about the wrong net.** In the
+  thesis it is said of *VSDNs*, in the MatchPy paper of the plain *syntactic* discrimination net —
+  both of which he benchmarks **against** the many-to-one net he builds and recommends, and of that
+  one he reports "the growth of the net seems to be sublinear in practice" (~300 states for the full
+  linear-algebra pattern set, ~5,000 for the far larger AST one). Do not quote it as a reason not to
+  build a many-to-one net.
 - No Haskell library offers Mathematica-grade matching off the shelf. This will be written by hand.
