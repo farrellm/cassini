@@ -4,16 +4,21 @@ The CAS algorithm canon (bibliography §1) plus the Axiom literate volumes (§5)
 exceptions are the three summation papers (Karr ×2, Schneider), which live here rather than in a
 sibling directory so that they sit beside *A=B*, whose gap they fill.
 
-**Reading order** (from `../../../notes/cas-haskell.md`): Cohen Vol. 1 chs. 2–3 → **Cohen Vol. 2
-chs. 2–3** → Geddes → von zur Gathen & Gerhard as needed → Cohen Vol. 2 chs. 5–9 → Bronstein →
-*A=B*. Note the early jump into Vol. 2: the automatic-simplification algorithm lives there, not in
-Vol. 1.
+**Reading order** (from `../../../notes/cas-haskell.md`), for the books in *this* directory:
+Cohen Vol. 1 chs. 2–3 → **Cohen Vol. 2 chs. 2–3** → Geddes → von zur Gathen & Gerhard as needed →
+Cohen Vol. 2 chs. 5–9 → Bronstein → *A=B*. Note the early jump into Vol. 2: the
+automatic-simplification algorithm lives there, not in Vol. 1.
+
+That is not the whole order. **Baader & Nipkow chs. 1–2 and 5–7 run in parallel with Cohen from the
+start**, and chs. 10–11 arrive between Cohen Vol. 2 chs. 5–9 and Bronstein; it lives next door in
+`../term-rewriting/`. The guide is emphatic that the rewriting theory is read alongside the algebra,
+not after it.
 
 | File | Read it for |
 | :--- | :--- |
-| `cohen2002_computer_algebra_elementary_algorithms.pdf` | **Start here**, for expression trees and the *structure* of an automatically simplified expression: ch. 2 (MPL, expression evaluation, where automatic simplification is introduced), ch. 3 (recursive structure; §3.2 expression trees, §3.3 structure-based operators), ch. 6 (polynomials and rational expressions). Algorithms in MPL pseudocode. Prerequisites are calculus through multivariable, linear algebra and ODEs — **not** an abstract-algebra course; those topics are introduced as needed. **The automatic-simplification *algorithm* is not here — it is in Vol. 2 ch. 3.** |
+| `cohen2002_computer_algebra_elementary_algorithms.pdf` | The 2002 A K Peters printing, ISBN 1-56881-158-6 (= ISBN-13 9781568811581 — the same book, despite that number sometimes being listed as a Routledge/CRC reprint). **Start here**, for expression trees and the *structure* of an automatically simplified expression: ch. 2 (MPL, expression evaluation, where automatic simplification is introduced), ch. 3 (recursive structure; §3.2 expression trees, §3.3 structure-based operators), ch. 6 (polynomials and rational expressions). Algorithms in MPL pseudocode. Prerequisites are calculus through multivariable, linear algebra and ODEs — **not** an abstract-algebra course; those topics are introduced as needed. **The automatic-simplification *algorithm* is not here — it is in Vol. 2 ch. 3.** |
 | `cohen2003_computer_algebra_mathematical_methods.pdf` | **Needed at Stage 0/1, not just Stage 3.** Ch. 2 is integer and rational arithmetic; **ch. 3 is *the* automatic-simplification algorithm** (§3.1 the goal, §3.2 the algorithm) — the fiddly core most tutorials skip. Chs. 4–9 then cover single-variable polynomials, decomposition, multivariate polynomials, resultants, side relations and factorization, for Stage 2/3. |
-| `geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf` | The one volume covering the whole pipeline: normal forms, polynomial/rational/power-series arithmetic, CRT, Newton iteration and Hensel construction, GCD, factorization, Gröbner bases, rational-function integration, Risch. Pascal-like pseudocode. The single algorithms reference to own. |
+| `geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf` | The one volume covering the whole pipeline: normal forms, polynomial/rational/power-series arithmetic, CRT, Newton iteration and Hensel construction, GCD, factorization, Gröbner bases, rational-function integration, Risch. Pascal-like pseudocode. The single algorithms reference to own. **Its table-of-contents pages are OCR noise** — "In od ion", "Algo i hm", "Pol nomial Fa" — while the body text is sound and every chapter title is findable there. A failed grep against the TOC is not evidence the file is broken. |
 | `vonzurgathen_gerhard2013_modern_computer_algebra.pdf` | Deep reference, graduate level — modular arithmetic, fast Euclid, Hensel lifting, finite-field factorization, evaluation/interpolation, with proofs and complexity. **Look things up in it; do not read it linearly.** |
 | `bronstein2005_symbolic_integration_1.pdf` | Integration: Hermite reduction, Rothstein–Trager, Lazard–Rioboo–Trager, Risch proper, plus a 2nd-ed. chapter on parallel/Risch–Norman. Ready-to-implement pseudocode. **Volume II never existed** — Bronstein died before finishing it, so integration of algebraic functions is not in any textbook. |
 | `petkovsek_wilf_zeilberger1996_a_eq_b.pdf` | Hypergeometric summation: Gosper, Zeilberger's creative telescoping, WZ, Petkovšek's `Hyper`. Freely released by the authors. **Does not cover Karr's algorithm** — for that see the Schneider paper below. |

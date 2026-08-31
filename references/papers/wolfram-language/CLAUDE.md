@@ -4,12 +4,13 @@ Wolfram's own documentation (bibliography §6). **This is the authoritative beha
 the evaluator is being written against** — when the implementation and these pages disagree, the
 implementation is wrong.
 
-All files are `curl` captures of `reference.wolfram.com`, fetched 2026-08-29. They carry no CSS;
+All files are `curl` captures of `reference.wolfram.com`, fetched 2026-08-29 — except
+`wolfram_ref_ownvalues.html`, added 2026-08-30. They carry no CSS;
 strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 
 | File | Read it for |
 | :--- | :--- |
-| `wolfram_ref_evaluation.html` | **The algorithm.** Its section "The Standard Evaluation Sequence" is the complete ordered procedure — 12 numbered steps on the page, transcribed below as 13 (see the numbering note).  Short page, but it is the spec; start here. |
+| `wolfram_ref_evaluation.html` | **The algorithm.** Its section "The Standard Evaluation Sequence" is the complete ordered procedure — twelve steps on the page, transcribed below as 13 (see the numbering note). The page presents them as a `<ul class="Notes">` bullet list, **not** a numbered one. Short page, but it is the spec; start here. |
 | `wolfram_ref_evaluation_of_expressions.html` | **The explanations (~26k words).** A coarser six-step summary of the same procedure, the full attribute table, worked evaluation traces, and the prose precedence rules. The companion read, not the algorithm. |
 | `wolfram_ref_associating_definitions.html` | Transformation rules and definitions: where DownValues, UpValues, and SubValues attach, in context and with examples. |
 | `wolfram_ref_ownvalues.html` / `_downvalues.html` / `_upvalues.html` / `_subvalues.html` | The four symbol reference pages for the rule-storage model. **Thin captures** — roughly 13 KB of text each, almost all navigation chrome; only the one-line definitions survived and the "Details" sections did not. Use `wolfram_ref_associating_definitions.html` (55 KB of real text) for the model in context, and `wolfram_ref_evaluation_of_expressions.html` for precedence. |
@@ -21,11 +22,11 @@ strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 **`wolfram_ref_evaluation.html` carries the whole algorithm in order**, under the heading "The
 Standard Evaluation Sequence". Implement it literally. For `h[e1, e2, …]`:
 
-**Numbering.** The page numbers *twelve* steps. The transcription below splits its step 3
-("Evaluate each element `eᵢ` in turn. If `h` is a symbol with attributes HoldFirst, …, then skip
-evaluation of certain elements") into two, because the hold check is a separate thing to implement.
-Steps 1–3 below are the page's 1–3; from step 4 on, **the page's number is one lower than ours**.
-Every step reference in this repo uses our numbering.
+**Numbering.** The page gives *twelve* steps — as bullets, with no numerals, so you count them off
+yourself. The transcription below splits its third ("Evaluate each element `eᵢ` in turn. If `h` is a
+symbol with attributes HoldFirst, …, then skip evaluation of certain elements") into two, because the
+hold check is a separate thing to implement. Steps 1–3 below are the page's 1–3; from step 4 on,
+**the page's position is one lower than ours**. Every step reference in this repo uses our numbering.
 
 1. If the expression is a raw object (`Integer`, `String`, …), leave it unchanged.
 2. Evaluate the head `h`.

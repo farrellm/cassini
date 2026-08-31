@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **75 documents, ~423 MB**, plus 2 OCR sidecars.
+The local document corpus for the CAS-in-Haskell project. **82 documents, ~429 MB**, plus 2 OCR sidecars.
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -19,9 +19,9 @@ what was tried, and which files are present but unreadable (image-only scans, lo
 | `papers/textbooks/` | The CAS canon — Cohen I/II, Geddes, von zur Gathen & Gerhard, Bronstein, A=B, Zippel, Davenport; the three summation papers (Karr ×2, Schneider) that fill A=B's gap; and Axiom Vol. 0 in both the Springer 1992 edition and the FriCAS regeneration, plus the literate volumes |
 | `papers/term-rewriting/` | Baader & Nipkow, Terese, Klop, the Abramsky handbook, the Rascal paper |
 | `papers/foundations/` | Richardson's undecidability result; Swierstra and Bahr on composing data types, plus Wadler's blog verdict on the former |
-| `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers |
-| `papers/cas-architecture/` | SymPy, GiNaC, Fateman on Mathematica/MockMMA, the Rubi and Symbolica writeups (incl. Symbolica's licence), a CAS-scoping thesis, the Expreduce and Symja READMEs |
-| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly` and `dumb-cas` package pages |
+| `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers and three volumes of the 1981 SMP manual |
+| `papers/cas-architecture/` | SymPy, GiNaC, Fateman on Mathematica/MockMMA, the Rubi and Symbolica writeups (incl. Symbolica's licence and home page), a CAS-scoping thesis, the Expreduce and Symja READMEs, and Wikipedia's *Wolfram Language* article |
+| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly` and `dumb-cas` package pages |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation — the behavioral spec to implement against |
 | `papers/web-articles/` | Blog posts and course sites: opinion and build-logs, not specifications |
 
@@ -33,9 +33,12 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
   three joined by `_` (`geddes_czapor_labahn1992_…`). Authorless web sources use a site or product
   prefix instead (`wolfram_ref_…`, `axiom_bookvol…`, `symbolica_…`).
 - PDFs are the published version wherever one exists.
-- `.html` files are single-file `curl` captures of the live page, fetched **2026-08-29**, except the
-  eight README/package/licence captures added **2026-08-30** to anchor verbatim quotes. They have
-  no CSS and no images, but the full text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
+- `.html` files are single-file `curl` captures of the live page. The original **22** were fetched
+  **2026-08-29**; the other **14** on **2026-08-30** — ten in the second validation round (the eight
+  README/package/licence captures that anchor verbatim quotes, plus `pickering2014_*` and
+  `sympy_docs_*`), four in the third (`symbolica_home`, `symbolica_home_2023_wayback`,
+  `wikipedia_wolfram_language`, `numhask_hackage`). The summary gives the date per file. They have no
+  CSS and no images, but the full text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
   `pandoc -t plain`, not by eye.
 - `.pamphlet` files are Axiom's literate LaTeX+SPAD sources; plain text, readable directly.
 
@@ -49,7 +52,10 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
    to obtain it is how five sources ended up cited but unaccounted for. Never let a gap disappear
    silently. The "pointers only, by design" waiver for software repositories and Hackage packages
    covers *citing* a system; it does **not** cover quoting its README, package page or licence
-   verbatim. A verbatim quote needs a capture, in the same change that adds the quote.
+   verbatim. A verbatim quote needs a capture, in the same change that adds the quote. Nor does it
+   cover a claim *about* a page — "its README names no version", "the article says this without a
+   citation", "numhask is the more recently maintained of the two". Those are assertions about a
+   document's contents and go stale the same way a quote does; capture the page.
 3. Binaries here are **gitignored** (see `.gitignore`: `references/**/*.{pdf,html,pamphlet}`); only
    the `.md` files are tracked. A fresh clone gets the index but not the corpus — the summary's
    Source column is how to re-fetch it.

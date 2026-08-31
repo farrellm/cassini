@@ -6,10 +6,10 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 
 ## 1. Computer Algebra Algorithms — Textbooks, and the Papers That Fill Their Gaps
 
-**Cohen, Joel S.** *Computer Algebra and Symbolic Computation: Elementary Algorithms.* A K Peters, 2002. ISBN 1-56881-158-6. Reprinted by Routledge/CRC, ISBN 9781568811581.
+**Cohen, Joel S.** *Computer Algebra and Symbolic Computation: Elementary Algorithms.* A K Peters, 2002. ISBN 1-56881-158-6. Reprinted by Routledge/CRC. (9781568811581, often given as the reprint's ISBN, is simply the ISBN-13 of 1-56881-158-6 — the same 2002 printing, not a reissue.)
 > Expressions as trees; structure-based operators; the *structure* of an automatically simplified expression (ch. 2 introduces automatic simplification under Expression Evaluation; ch. 3 covers Recursive Structure, incl. §3.2 Expression Structure and Trees and §3.3 Structure-Based Operators). Algorithms in "Mathematical Pseudo-Language" (MPL) with Maple, Mathematica, and MuPAD companions. Prerequisites per Cohen's preface: freshman–sophomore calculus through multivariable, elementary linear algebra, applied ODEs, a recommended discrete-mathematics course, and some programming experience — abstract-algebra topics are "introduced as needed," not assumed. **Note: the automatic-simplification *algorithm* is in Vol. 2, not here.** *Essential — Stage 0/1.*
 
-**Cohen, Joel S.** *Computer Algebra and Symbolic Computation: Mathematical Methods.* A K Peters, 2003. ISBN 1-56881-159-4; Routledge/CRC reprint ISBN 9780367659479.
+**Cohen, Joel S.** *Computer Algebra and Symbolic Computation: Mathematical Methods.* A K Peters, 2003. ISBN 1-56881-159-4; Routledge/CRC reprint ISBN 9780367659479 **[unverified]** — the copy held is the 2003 A K Peters printing.
 > **The volume with the automatic-simplification algorithm** — ch. 3, §3.1 *The Goal of Automatic Simplification* and §3.2 *An Automatic Simplification Algorithm* — plus ch. 2 on integer and rational arithmetic. Then polynomial decomposition, multivariate polynomials, resultants, side relations, and factorization (chs. 4–9) from the same implementer's angle. *Essential — Stage 0/1 for chs. 2–3, Stage 2/3 for the rest.*
 
 **von zur Gathen, Joachim, and Jürgen Gerhard.** *Modern Computer Algebra.* 3rd ed. Cambridge University Press, 2013. 808 pp. ISBN 9781107039032.
@@ -44,7 +44,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 
 ## 2. Textbooks — Term Rewriting
 
-**Baader, Franz, and Tobias Nipkow.** *Term Rewriting and All That.* Cambridge University Press, 1998. Paperback ISBN 0-521-77920-0 / 9780521779203; hardback 0-521-45520-0.
+**Baader, Franz, and Tobias Nipkow.** *Term Rewriting and All That.* Cambridge University Press, 1998. Hardback ISBN 0-521-45520-0 (the printing held, and the one that ISBN is verified against); paperback 0-521-77920-0 / 9780521779203 **[unverified]**.
 > The book for the evaluator layer. Chapter map: 1 Motivating Examples, 2 Abstract Reduction Systems, 3 Universal Algebra, 4 Equational Problems (congruence closure, syntactic unification), 5 Termination, 6 Confluence (critical pairs, orthogonality), 7 Completion (Knuth–Bendix, Huet), 8 Gröbner Bases and Buchberger's Algorithm, 9 Combination Problems, 10 Equational Unification (commutative; associative-commutative), 11 Extensions (rewriting modulo equational theories, conditional rewriting, reduction strategies). **Read chs. 1–2 and 5–7 first — chs. 1–4 alone contain no termination, confluence or completion** — then 10–11 when the AC matcher lands. Main algorithms given informally *and* as Standard ML (with an ML primer in Appendix 2); the *efficient* unification and congruence-closure programs are in Pascal. Over 170 exercises. *Essential — read in parallel with Cohen.*
 
 **Terese** (Marc Bezem, Jan Willem Klop, Roel de Vrijer, eds.). *Term Rewriting Systems.* Cambridge Tracts in Theoretical Computer Science 55. Cambridge University Press, 2003.
@@ -70,10 +70,13 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 > Productionized descendants of "Data types à la carte." *Optional.*
 
 **Cole, Christopher A., and Stephen Wolfram.** "SMP: A Symbolic Manipulation Program." *Proceedings of the 1981 ACM Symposium on Symbolic and Algebraic Computation (SYMSAC '81)*.
-> The earliest primary source on the symbolic-expression + transformation-rule architecture that became Mathematica. Archived as PDF on Wolfram's content servers.
+> The earliest primary source on the symbolic-expression + transformation-rule architecture that became Mathematica. **Paywalled (ACM)** — *not* on Wolfram's content servers, which host the SMP manual instead (below).
 
 **Greif, Jerry.** "The SMP Pattern-Matcher." *EUROCAL '85*, Springer LNCS 204.
-> The earliest published description of how this family of pattern matchers was designed. Archived on Wolfram's content servers.
+> The earliest published description of how this family of pattern matchers was designed. **Paywalled (Springer LNCS)**, likewise not on Wolfram's servers.
+
+**Wolfram, Stephen, with Chris A. Cole et al.** *SMP: A Symbolic Manipulation Program* — Summary (73 pp.), Primer (88 pp.), Reference Manual (238 pp.). California Institute of Technology, 1981. Free from `content.wolfram.com`.
+> SMP's own documentation, and the substantial free primary source on the system — where the two conference papers above are three and twelve pages behind paywalls. The **Primer's §3, *Patterns***, is the one to read: the matcher as it stood before Wolfram separated pattern constructs from names. Held in `references/`.
 
 *(The AC-discrimination-net papers by Bachmair et al., previously listed here, now sit with the rest of the matching literature in §4.)*
 
@@ -85,7 +88,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 > The most complete single document on the combined feature set you need: AC matching + sequence variables + non-linear patterns + many-to-one via discrimination nets. *Essential for Stage 1 matcher design.* Free.
 
 **Krebber, Manuel, Henrik Barthels, and Paolo Bientinesi.** "MatchPy: A Pattern Matching Library." arXiv:1710.06915. (SciPy 2017.) And, by the same authors, **"Efficient Pattern Matching in Python," arXiv:1710.00077** — the companion on the algorithms and their measured performance. Both free.
-> The readable modern treatment of Mathematica-style matching: syntactic plus associative and/or commutative functions, sequence variables (the `BlankSequence`/`BlankNullSequence` analogue), constraints, many-to-one discrimination nets. Open-source Python implementation. Key facts: general AC matching is **NP-hard** and worst-case exponential — the underlying result is Benanav, Kapur & Narendran (below), which Krebber cites for AC matching being NP-complete. Discrimination nets conventionally treat patterns as linear and check repeated-variable equivalence "in an extra step," but note that **MatchPy itself departs from this**, performing "the full non-linear matching directly at a commutative symbol state instead of just using it as a filter." **Both complexity results belong to Benanav (below), not to two different papers** — see that entry. Free.
+> The readable modern treatment of Mathematica-style matching: syntactic plus associative and/or commutative functions, sequence variables (the `BlankSequence`/`BlankNullSequence` analogue), constraints, many-to-one discrimination nets. Open-source Python implementation. Key facts: general AC matching is **NP-hard** and worst-case exponential — the underlying result is Benanav, Kapur & Narendran (below), which Krebber cites for AC matching being NP-complete. Discrimination nets conventionally treat patterns as linear and check repeated-variable equivalence "in an extra step," but note that **MatchPy itself departs from this**, performing "the full non-linear matching directly at a commutative symbol state instead of just using it as a filter." **Both complexity results belong to Benanav (below), not to two different papers** — see that entry. One more thing not to over-read: Krebber's warning that a net's "number of states can grow exponentially with the number of patterns" is about the *syntactic* (variadic) discrimination nets he benchmarks against, not the many-to-one net he builds — that one he measures growing sublinearly in practice. Free.
 
 **Benanav, Dan, Deepak Kapur, and Paliath Narendran.** "Complexity of Matching Problems." *Journal of Symbolic Computation* 3, no. 1 (Feb. 1987): 203–216. DOI: 10.1016/S0747-7171(87)80027-5.
 > **The citation for *both* AC-matching complexity claims** — a point routinely got wrong, including in earlier drafts of these notes. The abstract proves that "the associative-commutative matching problem is shown to be NP-complete", *and* that "if every variable appears at most once in a term being matched, then the associative-commutative matching problem is shown to have an upper-bound of O(|s|·|t|³)" — i.e. the polynomial bound for **linear** patterns is here too, not in Eker. Their algorithm already uses maximum bipartite graph matching. Both Eker and Bachmair et al. cite this paper for both results.
@@ -113,16 +116,16 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **Mathics / Mathics3.** Python, GPL v3. `github.com/Mathics3/mathics-core`
 > A fuller open Wolfram Language kernel: parser building Expressions, evaluator, WL built-ins, delegating heavy math to SymPy and mpmath. *Lesson: realistic module layout for a batteries-included WL kernel.*
 
-**Symja.** Java; GPL v3 since 2.0.0 (parser/core modules LGPL). Formerly MathEclipse. `github.com/axkr/symja_android_library`
+**Symja.** Java; GPL v3 throughout, with the `parser`, `external` and `core` Maven modules relicensed LGPL from version 2.0.0 — the carve-out is what starts there, not the GPL. Formerly MathEclipse. `github.com/axkr/symja_android_library`
 > A long-lived WL reimplementation; mature parser, large function library. Its README confirms it implements `Integrate` from the Rubi ruleset but names no version; per Symbolica's writeup it is "the only other complete port," based on **Rubi 4.16**. *Lesson: grep for specific algorithm implementations.*
 
 **MockMMA** (Richard Fateman, 1991). Lisp.
-> The earliest WL reimplementation. The widely repeated cease-and-desist story appears in Wikipedia's Wolfram Language article **with no citation** — treat it as folklore until sourced. *Historical.*
+> The earliest WL reimplementation. The widely repeated cease-and-desist story traces to a single sentence in Wikipedia's *Wolfram Language* article — "Richard Fateman's MockMMA from 1991 is of historical note, both for being the earliest reimplementation and for having received a cease-and-desist from Wolfram" — which carries **no citation**; the adjacent footnote belongs to the sentence after it. Treat it as folklore until sourced. (Capture held in `references/`, 2026-08-30.) *Historical.*
 > - **Fateman, Richard J.** "A Review of Mathematica." *Journal of Symbolic Computation* 13, no. 5 (1992). A separate document, and the one actually worth reading: not implementation notes but a sharp design critique of the language, evaluator and pattern matcher, from someone who had built a competing system.
 
 **SymPy.** Python, BSD. `sympy.org`
 > The most approachable *full* CAS to read. Pure Python with no invented language — the reference paper notes that Python itself is used for both internal implementation and end-user interaction. *Lesson: how to organize a large CAS — assumptions system, `Basic`/`Expr` core, `polys` module — and how automatic-simplification decisions get made.*
-> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (24 authors.) Free.
+> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (27 authors, 27 pp.) Free. **Quote the published article, not the preprint** — `references/` held the *PeerJ Preprints* review manuscript under this citation until 2026-08-30 (19 pp., 24 authors), and the two differ in the sentence most often quoted: published "Unlike many CAS's", preprint "Unlike many CASs".
 
 **GiNaC** ("GiNaC is Not a CAS"). C++. `ginac.de`
 > *Lessons:* (1) deliberately abolishes the low-level/high-level language split — relevant to a Haskell-native ambition; (2) reference counting with copy-on-write for structure sharing; (3) numeric tower built on CLN (the paper does not mention GMP); (4) clean polymorphic `ex`/`basic` design with automatic normalization.
@@ -141,7 +144,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 > Distributed as a **literate program in ~15 numbered volumes**, freely available as `.pamphlet` LaTeX+SPAD sources — no prebuilt volume PDFs survive: Vol. 0 (Jenks & Sutor), Vol. 10.x covering algebra implementation, theory, categories, domains, and packages. FriCAS maintains a modern regeneration of Vol. 0 as *The FriCAS System for Computer Mathematics*. The volumes explain the *why* of a rigorous typed algebra hierarchy. *Essential background for the typed-vs-untyped decision.*
 
 **Symbolica.** Rust, with Python/C++ bindings. `symbolica.io`
-> Modern, source-available, high-performance CAS "built for large expressions." Its pattern matcher, in Symbolica's words, "supports commutative and associative matching, and has wildcards (variables ending in underscores) that can match to any subexpression" — that sentence is from the *Symbolica 2.2* integration writeup; the separate *pattern matching* post demonstrates the same capability as `is_symmetric=True` on a symbol, without using the word "commutative". Per Symbolica's own writeup it provides "the only complete port of the latest Rubi 4.17 integration system outside the Wolfram Language, preserving its 7,000+ ordered rules and passing the complete 72,944-problem Rubi corpus" (MIT-licensed `symbolica-integrate` crate), processing that corpus "in 18 minutes of wall time, on a Ryzen 9 5900X parallelized over 8 cores" (57 ms median per problem). **These are vendor-reported figures.** *Lesson: rule-based integration as a pragmatic complement to Risch, and how to make AC matching fast.*
+> Modern, source-available, high-performance CAS — in its own words "a high-performance computer algebra library for Python and Rust" for manipulating "large expressions" at speed. (**"Built for large expressions" is not Symbolica's wording** and never was: not on the home page now, and not in the 2023 snapshot, which said "a blazing fast symbolic manipulation toolkit". Earlier drafts of these notes quoted it; both captures are now held so the point stays checkable.) Its pattern matcher, in Symbolica's words, "supports commutative and associative matching, and has wildcards (variables ending in underscores) that can match to any subexpression" — that sentence is from the *Symbolica 2.2* integration writeup; the separate *pattern matching* post demonstrates the same capability as `is_symmetric=True` on a symbol, without using the word "commutative". Per Symbolica's own writeup it provides "the only complete port of the latest Rubi 4.17 integration system outside the Wolfram Language, preserving its 7,000+ ordered rules and passing the complete 72,944-problem Rubi corpus" (MIT-licensed `symbolica-integrate` crate), processing that corpus "in 18 minutes of wall time, on a Ryzen 9 5900X parallelized over 8 cores" (57 ms median per problem). **These are vendor-reported figures.** *Lesson: rule-based integration as a pragmatic complement to Risch, and how to make AC matching fast.*
 > **License caveat:** source-available but commercially licensed, and the trigger is employment rather than commerce — "Symbolica is free for hobbyist use. If you use Symbolica as part of your employment, whether in academia or in a commercial or non-commercial organization, a license is required." The separate **Free** tier — not the Hobbyist one — is the one capped at "[o]ne core and instance per device", "for academic/non-commercial use". Redistribution, "modified or unmodified, requires prior written permission". Fine to read; check the license before depending on it.
 
 **Rubi** (Albert Rich). `rulebasedintegration.org`
@@ -160,7 +163,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 ## 6. Wolfram Language Primary Sources
 
 **Wolfram Research.** "Evaluation." Tech note, Wolfram Language & System Documentation Center, `reference.wolfram.com/language/tutorial/Evaluation.html`. Free.
-> **The authoritative behavioral spec, and the single most important page for Stage 1.** Its section "The Standard Evaluation Sequence" gives the whole algorithm in order, for `h[e1, e2, …]`: (1) raw objects (`Integer`, `String`, …) are left unchanged; (2) evaluate the head `h`; (3) evaluate each element `eᵢ` in turn; (4) `HoldFirst`/`HoldRest`/`HoldAll`/`HoldAllComplete` skip evaluation of certain elements; (5) unless `SequenceHold` or `HoldAllComplete`, flatten `Sequence` objects; (6) unless `HoldAllComplete`, strip outermost `Unevaluated` wrappers; (7) `Flat` flattens nested same-head expressions; (8) `Listable` threads over lists; (9) `Orderless` sorts; (10) user-defined rules for `h[f[e1,…],…]`; (11) built-in rules associated with `f`; (12) user-defined rules for `h[e1,e2,…]` or `h[…][…]`; (13) built-in rules for the same. Then the fixed point: "every time the expression changes, the Wolfram Language effectively starts the evaluation sequence over again." Note that steps 7–9 fix the attribute order as **Flat → Listable → Orderless**, that step 5 precedes step 6, and that steps 10–13 are a four-way ladder — so built-in upvalues beat *user* downvalues. (Numbering caveat: the page itself numbers *twelve* steps; the thirteen above split its step 3 into element evaluation and the hold check, so from step 4 on, the source's number is one lower. Its step 11 also reads `h[f[e1,e2,…],…]` where step 12 reads `h[e1,e2,…]` — an inconsistency on Wolfram's side; the latter is right.)
+> **The authoritative behavioral spec, and the single most important page for Stage 1.** Its section "The Standard Evaluation Sequence" gives the whole algorithm in order, for `h[e1, e2, …]`: (1) raw objects (`Integer`, `String`, …) are left unchanged; (2) evaluate the head `h`; (3) evaluate each element `eᵢ` in turn; (4) `HoldFirst`/`HoldRest`/`HoldAll`/`HoldAllComplete` skip evaluation of certain elements; (5) unless `SequenceHold` or `HoldAllComplete`, flatten `Sequence` objects; (6) unless `HoldAllComplete`, strip outermost `Unevaluated` wrappers; (7) `Flat` flattens nested same-head expressions; (8) `Listable` threads over lists; (9) `Orderless` sorts; (10) user-defined rules for `h[f[e1,…],…]`; (11) built-in rules associated with `f`; (12) user-defined rules for `h[e1,e2,…]` or `h[…][…]`; (13) built-in rules for the same. Then the fixed point: "every time the expression changes, the Wolfram Language effectively starts the evaluation sequence over again." Note that steps 7–9 fix the attribute order as **Flat → Listable → Orderless**, that step 5 precedes step 6, and that steps 10–13 are a four-way ladder — so built-in upvalues beat *user* downvalues. (Numbering caveat: the page itself gives *twelve* steps, and gives them as a bullet list rather than a numbered one — count them off. The thirteen above split its third into element evaluation and the hold check, so from step 4 on, the source's position is one lower. Its step 11 also reads `h[f[e1,e2,…],…]` where step 12 reads `h[e1,e2,…]` — an inconsistency on Wolfram's side; the latter is right.)
 
 **Wolfram Research.** "Evaluation of Expressions." Tech note, `reference.wolfram.com`. Free.
 > The longer companion: a coarser six-step summary of the same procedure, the full attribute table, worked evaluation traces, and the prose precedence rule — "the Wolfram System always tries upvalue definitions before downvalue ones," with the complete `f[g[x]]` order spelled out. Use this one for the explanations and examples, and "Evaluation" above for the algorithm.
@@ -207,10 +210,10 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 > Fine-grained algebraic hierarchy: magmas → semigroups → groups → rings → modules → algebras, with additive/multiplicative distinctions. What Ishii's CAS builds on. *Recommended as your coefficient tower.*
 
 **`numeric-prelude`** (Dylan Thurston, Henning Thielemann, Mikael Johansson). Hackage — **the README is where the argument lives**; the HaskellWiki "Numeric Prelude" page adds the structure list and the *Future plans* section.
-> The canonical statement of **why the standard `Num` class is wrong for a CAS**: it "defines no semantics for the fundamental operations" (nothing asserts associativity of addition); it forces `Eq` and `Show` as superclasses, which is impossible to satisfy non-trivially for e.g. a function-valued ring (`data IntegerFunction a = IF (a -> Integer)`); and it lumps semantic operations together with representation-specific ones (`toInteger`, `decodeFloat`) while being "not fine-grained enough." Splits `Num` into `Additive`, `Ring`, `Field`, `Algebraic`, `Transcendental`, etc. (`Num → Additive, Ring, Absolute`; `Fractional → Field`; `Floating → Algebraic, Transcendental`). Axioms are stated as QuickCheck properties. The wiki candidly documents the gaps: "the code still misses proper linear algebra code," and static checking is still unsolved for "residue classes, matrix computations, infinite precision numbers, fixed point numbers." It does rely on extensions beyond Haskell 98: the wiki's opening sentence names **multi-parameter type classes** specifically.
+> The canonical statement of **why the standard `Num` class is wrong for a CAS**, in four distinct objections — keep them apart, the last two are not one point: it "defines no semantics for the fundamental operations" (nothing asserts associativity of addition); it has "superfluous superclasses" — `Eq` and `Show` under `Num`, impossible to satisfy non-trivially for e.g. a function-valued ring (`data IntegerFunction a = IF (a -> Integer)`); it carries "a mix of semantic operations and representation specific operations" (`toInteger`, `toRational`, `decodeFloat`); and "the hierarchy is not finely grained enough", so that "operations that are often defined independently are lumped together" — its example being that defining `+` for a `Dollar` or `Vector` type forces `*` on you as well. Splits `Num` into `Additive`, `Ring`, `Field`, `Algebraic`, `Transcendental`, etc. (`Num → Additive, Ring, Absolute`; `Fractional → Field`; `Floating → Algebraic, Transcendental`). Axioms are stated as QuickCheck properties. The wiki candidly documents the gaps: "the code still misses proper linear algebra code," and static checking is still unsolved for "residue classes, matrix computations, infinite precision numbers, fixed point numbers." It does rely on extensions beyond Haskell 98: the wiki's opening sentence names **multi-parameter type classes** specifically.
 
-**`numhask`** (Tony Day). Hackage.
-> A cleaner, more recently maintained alternative hierarchy. Note that `RebindableSyntax` is not the distinguishing feature — numeric-prelude's own README prescribes it too.
+**`numhask`** (Tony Day). Hackage — the package page is held in `references/`.
+> A cleaner, more recently maintained alternative hierarchy. `RebindableSyntax` is not the distinguishing feature — both package pages prescribe it. Upkeep is: numhask's Hackage release is dated 2026-07-10, numeric-prelude's 2022-05-28.
 
 **`poly`** (Andrew Lelechenko / Bodigrim). Hackage.
 > Fast `Vector`-backed uni- and multivariate polynomials with Karatsuba multiplication, integrating with the `semirings` `GcdDomain`/`Euclidean` classes. Documented as "at least 20x-40x faster than the [`polynomial`] library" — a self-reported figure, though the published per-operation benchmarks (22–39× on addition, 52–303× on multiplication) are consistent with it.
@@ -292,7 +295,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Zhu et al. on hash consing, arXiv:2509.20534
 - Axiom literate `.pamphlet` volumes (`github.com/daly/axiom/books`)
 - SymPy architecture paper (PeerJ CS, open access)
-- Wolfram's historical essays
+- Wolfram's historical essays, and the **1981 SMP manual** (Summary / Primer / Reference Manual, `content.wolfram.com`)
 - Klop, "Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond" — the ICALP'90 survey, free from CWI (`ir.cwi.nl/pub/2667`)
 - Bachmair et al., "Experiments with AC Discrimination Nets" (`ijcai.org`)
 - Fateman, "A Review of Mathematica"
@@ -301,11 +304,11 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Penner, "ASTs with Fix and Free" (`chrispenner.ca`) and Milewski, "F-Algebras" (`bartoszmilewski.com`)
 - Wadler, "Data Types a la Carte" (blog, 28 Feb 2008, `wadler.blogspot.com`) — the source of the verdict quoted in §3
 - Pickering, "Data Types à la Carte with Closed Type Families" (`mpickering.github.io`) and SymPy's *Advanced Expression Manipulation* page (`docs.sympy.org`)
-- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, and Symbolica's licence page. All captured in `references/` as of 2026-08-30, so the quotes have anchors.
+- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, and Symbolica's licence and home pages. All captured in `references/` as of 2026-08-30, so the quotes have anchors.
+- Wikipedia's *Wolfram Language* article (§5, for the MockMMA cease-and-desist sentence and its missing citation)
 
-**Paywalled journal/conference papers — held here, but not freely re-obtainable.** All six were
-supplied rather than fetched; re-obtaining them needs institutional access. Where a free substitute
-exists it is named:
+**Paywalled journal/conference papers — held here, but not freely re-obtainable.** Re-obtaining any
+of these needs institutional access. Where a free substitute exists it is named:
 
 - Karr, "Summation in Finite Terms" (*JACM* 28(2), 1981) and "Theory of Summation in Finite Terms"
   (*JSC* 1(3), 1985) — ACM and Elsevier. *Substitute: Schneider's Sigma paper, free, above.*
@@ -317,6 +320,11 @@ exists it is named:
   Springer LNCS. *The 1995 IJCAI companion is free, above, and is the more practical of the two.*
 - Klop, "Term Rewriting Systems" (*Handbook of Logic in CS* Vol. 2 / CWI `CS-R9053`) — the report
   number could not be located free. *Substitute: the ICALP'90 survey, free, above.*
+- Cole & Wolfram, "SMP: A Symbolic Manipulation Program" (SYMSAC '81) — ACM — and Greif, "The SMP
+  Pattern-Matcher" (EUROCAL '85) — Springer LNCS. Both were listed in this bibliography until
+  2026-08-30 as free from Wolfram's content servers; they are not, and appear nowhere on
+  `stephenwolfram.com/publications`. *Substitute: the 1981 SMP manual, free, above — 399 pp. against
+  their 15, and the Primer's §3 covers the pattern matcher directly.*
 
 **In print / purchase:**
 - Cohen Vols. 1–2 (Routledge/CRC reprints)
@@ -340,11 +348,33 @@ exists it is named:
 Every entry above has been checked against a document held in the local corpus in `references/`. The
 eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
 READMEs, the `poly` and `dumb-cas` package pages, Wadler's blog post, Symbolica's licence, and the
-`OwnValues` reference page — were fetched on 2026-08-30 and indexed, so no quotation here rests on a
-source that cannot be re-read. A subsequent sweep tested every quoted phrase of five words or more in
-both documents against a plain-text index of the whole corpus; it added Pickering's blog post and
-SymPy's *Advanced Expression Manipulation* page, and unquoted two phrases that turned out to be our
-own wording rather than a source's (a compression of the `dumb-cas` description, and the OBJ slogan). **One thing remains genuinely open**, and is tagged `[unverified]` where it appears: Zippel's original Kluwer hardback ISBN (the copy held is the Springer softcover reprint, ISBN 978-1-4613-6398-9). The `numeric-prelude` multi-parameter-type-class question, previously listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names them in its opening sentence.
+`OwnValues` reference page — were fetched on 2026-08-30 and indexed. A sweep then tested every quoted
+phrase of five words or more in both documents against a plain-text index of the whole corpus; it added
+Pickering's blog post and SymPy's *Advanced Expression Manipulation* page, and unquoted two phrases that
+turned out to be our own wording rather than a source's (a compression of the `dumb-cas` description,
+and the OBJ slogan).
+
+**A third pass, later on 2026-08-30, re-ran all of that from scratch rather than trusting the first
+two**, and also opened the primary source behind every structural claim — chapter maps, edition
+histories, tables of contents, abstracts — and ran the Haskell claims through GHC 9.12.4. It corrected
+nine entries (see the repo history) and closed four more source gaps: Symbolica's home page, Wikipedia's
+*Wolfram Language* article, `numhask`'s package page, and the **published** SymPy article, which had
+been standing in as the PeerJ paper while the file held was actually the PeerJ Preprints review
+manuscript. It also found a third phrase in quotation marks that was our own and not a source's —
+Symbolica "built for large expressions", which is in no version of Symbolica's own page. A follow-up
+sweep of the *availability* claims — every "free from X" this bibliography makes, tested live — found
+one more: the two SMP conference papers were described as archived on Wolfram's content servers.
+They are not; the SMP **manual** is, and is now held (three volumes, 399 pp.), while the papers moved
+to the paywalled list where their Sci-Hub provenance always said they belonged.
+
+**Three things remain genuinely open**, each tagged `[unverified]` where it appears, and in every case
+because the copy held is a different printing from the one the ISBN names: Zippel's original Kluwer
+hardback ISBN (held: the Springer softcover reprint, 978-1-4613-6398-9); Baader & Nipkow's paperback
+ISBN 0-521-77920-0 (held: the hardback, 0-521-45520-0, which does check out); and Cohen *Methods*'
+Routledge/CRC reprint ISBN 9780367659479 (held: the 2003 A K Peters printing). Jenks & Sutor is the same
+situation but is recorded on the entry itself. The `numeric-prelude` multi-parameter-type-class question,
+once listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names
+them in its opening sentence.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
@@ -357,8 +387,10 @@ Everything previously flagged here as unverified — Terese, Klop, the `numeric-
 | Bachmair et al. (TAPSOFT '93) | Image-only | `.txt` OCR sidecar beside it |
 | Eker (1995) | Image-only *except* a repeated download watermark | `.txt` OCR sidecar beside it |
 | Karr (1985) | Has a text layer, but the OCR **drops every `h`** | None — search around it |
+| Klop (1992) | Has a text layer, but it **drops `fi`/`ffi` ligatures** — "uni cation", "speci cations" | None — search `uni cation`, or either side of the ligature |
+| Geddes et al. (1992) | Body text is sound; the **table-of-contents pages are OCR noise** ("In od ion", "Algo i hm") | Grep the body for chapter titles, not the TOC |
 
-Two traps worth carrying into any future audit. **Eker passes a naive text-layer check** — it reports text on every page, but the only text is an Oxford watermark, 860 characters across 19 pages; check the *variety* of extracted text, not its presence. And **Karr 1985 fails silently** — `grep theorem` returns nothing and looks like an honest miss. The four Wolfram `ref/` value pages (`OwnValues`, `DownValues`, `UpValues`, `SubValues`) likewise preserved little beyond their one-line definitions — roughly 13 KB of text each, almost all navigation chrome — and `ref/Attributes` in particular does not contain the attribute list. Use *Transformation Rules and Definitions* for the rule-storage model and *Evaluation of Expressions* for the attribute table.
+Three traps worth carrying into any future audit. **Eker passes a naive text-layer check** — it reports text on every page, but the only text is an Oxford watermark, 860 characters across 19 pages; check the *variety* of extracted text, not its presence. **Karr 1985 and Klop 1992 fail silently** — `grep theorem` on the first and `grep unification` on the second both return nothing and look like honest misses. And a **failed** grep is never by itself evidence of absence: treat it as a question about the file before treating it as an answer about the text. The four Wolfram `ref/` value pages (`OwnValues`, `DownValues`, `UpValues`, `SubValues`) likewise preserved little beyond their one-line definitions — roughly 13 KB of text each, almost all navigation chrome — and `ref/Attributes` in particular does not contain the attribute list. Use *Transformation Rules and Definitions* for the rule-storage model and *Evaluation of Expressions* for the attribute table.
 
 See [`../references/missing-documents.md`](../references/missing-documents.md) for the three sources still not held, the routes tried, and the command that regenerates the OCR sidecars.
 
