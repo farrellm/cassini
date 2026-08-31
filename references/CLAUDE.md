@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **79 documents, ~424 MB**, plus 2 OCR sidecars.
+The local document corpus for the CAS-in-Haskell project. **82 documents, ~429 MB**, plus 2 OCR sidecars.
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -19,7 +19,7 @@ what was tried, and which files are present but unreadable (image-only scans, lo
 | `papers/textbooks/` | The CAS canon — Cohen I/II, Geddes, von zur Gathen & Gerhard, Bronstein, A=B, Zippel, Davenport; the three summation papers (Karr ×2, Schneider) that fill A=B's gap; and Axiom Vol. 0 in both the Springer 1992 edition and the FriCAS regeneration, plus the literate volumes |
 | `papers/term-rewriting/` | Baader & Nipkow, Terese, Klop, the Abramsky handbook, the Rascal paper |
 | `papers/foundations/` | Richardson's undecidability result; Swierstra and Bahr on composing data types, plus Wadler's blog verdict on the former |
-| `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers |
+| `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers and three volumes of the 1981 SMP manual |
 | `papers/cas-architecture/` | SymPy, GiNaC, Fateman on Mathematica/MockMMA, the Rubi and Symbolica writeups (incl. Symbolica's licence and home page), a CAS-scoping thesis, the Expreduce and Symja READMEs, and Wikipedia's *Wolfram Language* article |
 | `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly` and `dumb-cas` package pages |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation — the behavioral spec to implement against |
