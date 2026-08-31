@@ -7,11 +7,13 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**65 documents (~422 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 22 HTML captures — plus 2 OCR sidecars.**
+**75 documents (~423 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 32 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page on the date noted in
-[`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text.
+[`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text. The
+original 22 were fetched **2026-08-29**; the eight README/package/licence captures added to anchor
+verbatim quotes were fetched **2026-08-30**.
 
 ---
 
@@ -38,6 +40,12 @@ entries are single-file `curl` captures of the live page on the date noted in
 Axiom is distributed as a literate program. `axiom-developer.org` no longer resolves and no prebuilt
 PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sources
 (LaTeX + SPAD, plain text, readable directly) from `github.com/daly/axiom/books`.
+
+**This is a deliberate subset, not a partial fetch.** Axiom runs to roughly fifteen numbered volumes;
+the six held are the ones the notes actually cite — Vol. 1 for the user-level tutorial and Vol. 10.x
+for the algebra hierarchy. Vol. 0 is covered by `jenks_sutor1992_axiom.pdf` and the FriCAS
+regeneration above. The remaining volumes (compiler internals, interpreter, build system) are not
+cited and were not fetched.
 
 | File | Volume | Size |
 | :--- | :--- | :--- |
@@ -69,6 +77,8 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | :--- | :--- | :--- | :--- | :--- |
 | [`richardson1968_some_undecidable_problems.pdf`](./papers/foundations/richardson1968_some_undecidable_problems.pdf) | **Some Undecidable Problems Involving Elementary Functions of a Real Variable**<br>*Daniel Richardson (1968)*<br>*J. Symbolic Logic* 33(4):514–520. Note the title: "Undecidable", not "Unsolvable" — the miscitation is widespread. | Sci-Hub / DOI: [`10.2307/2271358`](https://doi.org/10.2307/2271358) | 8 | 579.5 KB |
 | [`swierstra2008_data_types_a_la_carte.pdf`](./papers/foundations/swierstra2008_data_types_a_la_carte.pdf) | **Data types à la carte**<br>*Wouter Swierstra (2008)* | Sci-Hub / DOI: [`10.1017/S0956796808006758`](https://doi.org/10.1017/S0956796808006758) | 15 | 511.5 KB |
+| [`pickering2014_a_la_carte_closed_type_families.html`](./papers/foundations/pickering2014_a_la_carte_closed_type_families.html) | **Data Types à la Carte with Closed Type Families** (20 Dec 2014)<br>*Matthew Pickering*<br>The closed-type-family reimplementation of Swierstra's `(:<:)` machinery that §3 names. Fetched 2026-08-30. | [`mpickering.github.io`](https://mpickering.github.io/posts/2014-12-20-closed-type-family-data-types.html) | — | 24.6 KB |
+| [`wadler2008_data_types_a_la_carte_blog.html`](./papers/foundations/wadler2008_data_types_a_la_carte_blog.html) | **Data Types a la Carte** (blog post, 28.2.08)<br>*Philip Wadler*<br>The source of the "presents the best solution to the Expression Problem that I've seen in Haskell (well, Haskell with `-fglasgow-exts`)" verdict — which is here, **not** in Swierstra's paper. Fetched 2026-08-30. | [`wadler.blogspot.com`](https://wadler.blogspot.com/2008/02/data-types-la-carte.html) | — | 112.8 KB |
 | [`bahr_hvitved2011_compositional_data_types.pdf`](./papers/foundations/bahr_hvitved2011_compositional_data_types.pdf) | **Compositional Data Types**<br>*Patrick Bahr, Tom Hvitved (2011)* | Sci-Hub / DOI: [`10.1145/2036918.2036930`](https://doi.org/10.1145/2036918.2036930) | 12 | 474.8 KB |
 
 ---
@@ -100,6 +110,10 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`rich_rubi_vision.html`](./papers/cas-architecture/rich_rubi_vision.html) | *Organizing Math as a Rule-based Decision Tree* (Rubi "Vision")<br>*Albert Rich* | [`rulebasedintegration.org/vision.html`](https://rulebasedintegration.org/vision.html) | — | 14.3 KB |
 | [`symbolica_2_2_symbolic_integration.html`](./papers/cas-architecture/symbolica_2_2_symbolic_integration.html) | *Symbolica 2.2: symbolic integration* — the source of the Rubi-port and benchmark figures quoted in §5 | [`symbolica.io/posts/symbolic_integration/`](https://symbolica.io/posts/symbolic_integration/) | — | 103.2 KB |
 | [`symbolica_pattern_matching.html`](./papers/cas-architecture/symbolica_pattern_matching.html) | *Algorithms through the lens of symbolic pattern matching* | [`symbolica.io/posts/pattern_matching/`](https://symbolica.io/posts/pattern_matching/) | — | 74.2 KB |
+| [`sympy_docs_advanced_expression_manipulation.html`](./papers/cas-architecture/sympy_docs_advanced_expression_manipulation.html) | SymPy's *Advanced Expression Manipulation* page — the "SymPy internals docs" §5 points at, made specific: expression trees, `func`/`args`, the `Add(x, x)` → `Mul(2, x)` constructor behaviour, and the `evaluate=False` / `UnevaluatedExpr` escape hatches. Fetched 2026-08-30. | [`docs.sympy.org`](https://docs.sympy.org/latest/tutorials/intro-tutorial/manipulation.html) | — | 137.5 KB |
+| [`symbolica_license.html`](./papers/cas-architecture/symbolica_license.html) | *Pricing and plans* — the source for the licence terms quoted in §5: the employment trigger, and the **Free** tier's "[o]ne core and instance per device" cap. Fetched 2026-08-30. | [`symbolica.io/license/`](https://symbolica.io/license/) | — | 50.0 KB |
+| [`expreduce_readme.html`](./papers/cas-architecture/expreduce_readme.html) | Expreduce's GitHub README — the source for "This software is experimental quality and is not currently intended for serious use." Fetched 2026-08-30. | [`github.com/corywalker/expreduce`](https://github.com/corywalker/expreduce) | — | 308.6 KB |
+| [`symja_readme.html`](./papers/cas-architecture/symja_readme.html) | Symja's GitHub README — confirms "the Rubi symbolic integration rules are used to implement the `Integrate` function" and, as the notes say, **names no Rubi version**. Fetched 2026-08-30. | [`github.com/axkr/symja_android_library`](https://github.com/axkr/symja_android_library) | — | 376.2 KB |
 
 ---
 
@@ -114,6 +128,9 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | [`penner2018_asts_with_fix_and_free.html`](./papers/haskell/penner2018_asts_with_fix_and_free.html) | *ASTs with Fix and Free* — Chris Penner (2018-02-24). The practical how-to for parameterizing an AST's recursive slots and folding it with `Fix`/`Free`. | [`chrispenner.ca`](https://chrispenner.ca/posts/asts-with-fix-and-free) | — | 86.2 KB |
 | [`milewski2017_f_algebras.html`](./papers/haskell/milewski2017_f_algebras.html) | *F-Algebras* — Bartosz Milewski (2017-02-28), part 24 of *Category Theory for Programmers*. The theory under `Fix`/`cata`: initial algebras and catamorphisms. | [`bartoszmilewski.com`](https://bartoszmilewski.com/2017/02/28/f-algebras/) | — | 154.6 KB |
 | [`olah2012_hasksymb.html`](./papers/haskell/olah2012_hasksymb.html) | *HaskSymb: An Experiment in Haskell Symbolic Algebra*<br>*Christopher Olah (2012-06-01)* | [`christopherolah.wordpress.com`](https://christopherolah.wordpress.com/2012/06/01/hasksymb-an-experiment-in-haskell-symbolic-algebra/) — **note:** the bibliography dates this 2012-11; the post is dated June 2012 | — | 81.9 KB |
+| [`olah_hasksymb_readme.html`](./papers/haskell/olah_hasksymb_readme.html) | HaskSymb's GitHub README — **the design retrospective the blog post does not contain**: "The *big* issue I'm facing is appropriate types for symbolic expressions. In particular, how do I handle variables in types?" and "My bad solution for now has been to just not have type-level variable representation, which kind of bothers me." Fetched 2026-08-30. | [`github.com/colah/HaskSymb`](https://github.com/colah/HaskSymb) | — | 265.0 KB |
+| [`poly_hackage.html`](./papers/haskell/poly_hackage.html) | The `poly` Hackage page — source for the maintainer-reported "poly is at least 20x-40x faster than the `polynomial` library", with the per-operation benchmark table behind it. Fetched 2026-08-30. | [`hackage.haskell.org/package/poly`](https://hackage.haskell.org/package/poly) | — | 29.2 KB |
+| [`dumb_cas_hackage.html`](./papers/haskell/dumb_cas_hackage.html) | The `dumb-cas` Hackage page — source for "combine the flexibility of a Lisp with the conciseness of a Regex engine". Fetched 2026-08-30. | [`hackage.haskell.org/package/dumb-cas`](https://hackage.haskell.org/package/dumb-cas) | — | 18.2 KB |
 
 ---
 
@@ -122,10 +139,11 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 | File | Document | Source | Size |
 | :--- | :--- | :--- | :--- |
 | [`wolfram_ref_evaluation_of_expressions.html`](./papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html) | *Evaluation of Expressions* — the full tutorial chapter, incl. the standard evaluation procedure and the Attributes section (~26k words) | [`reference.wolfram.com/.../tutorial/EvaluationOfExpressions.html`](https://reference.wolfram.com/language/tutorial/EvaluationOfExpressions.html) | 851.9 KB |
-| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — **the page carrying "The Standard Evaluation Sequence", the complete 13-step ordered algorithm.** Short, and the most important file here for Stage 1. | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
+| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — **the page carrying "The Standard Evaluation Sequence", the complete ordered algorithm — 12 numbered steps as the page gives them.** Short, and the most important file here for Stage 1. | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
 | [`wolfram_ref_attributes.html`](./papers/wolfram-language/wolfram_ref_attributes.html) | `Attributes` — the symbol reference page. **Thin capture: it does *not* contain the attribute list** — only the `Attributes[symbol]` signatures plus bare section labels; the "Details" section did not capture. The full attribute table is in `wolfram_ref_evaluation_of_expressions.html`. | [`.../ref/Attributes.html`](https://reference.wolfram.com/language/ref/Attributes.html) | 212.8 KB |
 | [`wolfram_guide_attributes.html`](./papers/wolfram-language/wolfram_guide_attributes.html) | *Attributes* — the guide page; a list of links to attribute-related functions, no prose | [`.../guide/Attributes.html`](https://reference.wolfram.com/language/guide/Attributes.html) | 188.0 KB |
 | [`wolfram_ref_associating_definitions.html`](./papers/wolfram-language/wolfram_ref_associating_definitions.html) | *Transformation Rules and Definitions* — the UpValues/DownValues rule-storage model in context | [`.../tutorial/AssociatingDefinitionsWithDifferentSymbols.html`](https://reference.wolfram.com/language/tutorial/AssociatingDefinitionsWithDifferentSymbols.html) | 496.8 KB |
+| [`wolfram_ref_ownvalues.html`](./papers/wolfram-language/wolfram_ref_ownvalues.html) | `OwnValues` reference page. Thin in the same way as its three siblings (~13 KB of text): "`OwnValues[x]` gives a list of transformation rules corresponding to all ownvalues defined for the symbol `x`", and little else. Fetched 2026-08-30. | [`.../ref/OwnValues.html`](https://reference.wolfram.com/language/ref/OwnValues.html) | 232.0 KB |
 | [`wolfram_ref_downvalues.html`](./papers/wolfram-language/wolfram_ref_downvalues.html) | `DownValues` reference page | [`.../ref/DownValues.html`](https://reference.wolfram.com/language/ref/DownValues.html) | 229.7 KB |
 | [`wolfram_ref_upvalues.html`](./papers/wolfram-language/wolfram_ref_upvalues.html) | `UpValues` reference page | [`.../ref/UpValues.html`](https://reference.wolfram.com/language/ref/UpValues.html) | 248.2 KB |
 | [`wolfram_ref_subvalues.html`](./papers/wolfram-language/wolfram_ref_subvalues.html) | `SubValues` reference page | [`.../ref/SubValues.html`](https://reference.wolfram.com/language/ref/SubValues.html) | 234.2 KB |
@@ -156,6 +174,15 @@ GiNaC, SymEngine, Maxima, Reduce, FriCAS, Symbolica, Maude, OBJ, Stratego, Rasca
 rather than archiving them here. Where such an entry cites an actual paper, that paper is present
 (SymPy, GiNaC, Rascal, Fateman/MockMMA).
 
+**But the waiver covers citing a system, not quoting its page.** Where the notes quote a README,
+package page or licence *verbatim*, the page is captured here so the quote has an anchor — that is
+what `expreduce_readme.html`, `symja_readme.html`, `symbolica_license.html`,
+`olah_hasksymb_readme.html`, `poly_hackage.html` and `dumb_cas_hackage.html` are for. Two further
+captures close the same kind of gap outside §5/§7: `wadler2008_data_types_a_la_carte_blog.html` (a
+blog post, which the waiver never reached) and `wolfram_ref_ownvalues.html` (cited in §6 alongside
+its three siblings, but previously the only one not held). Adding a verbatim quote from a live page
+means capturing that page in the same change.
+
 ### Not obtained
 
 Nine sources were once listed here. Six were subsequently supplied and are now held (Klop's survey,
@@ -181,7 +208,7 @@ silently re-introduced:
 | Klop, *Term Rewriting Systems*, CWI `CS-R9053` (10 pp.) | van Schuppen, *Adaptive Stochastic Filtering Problems: The Continuous Time Case*, CWI/Mathematisch Centrum `BW 167/82` (1982) — zero occurrences of "rewrit" | **Resolved 2026-08-30**: the correct document was supplied and is now stored under the original filename (112 pp., full text layer). Klop's ICALP '90 survey, fetched as an interim substitute, is kept as an additional shorter survey. |
 | Bachmair et al., *Experiments with AC Discrimination Nets*, IJCAI '95 (6 pp.) | Jian Zhang & Hantao Zhang, *SEM: a System for Enumerating Models*, IJCAI '95 — zero occurrences of "discrimination" or "Bachmair" | Replaced with the real paper from `ijcai.org` (7 pp., pp. 348–354) |
 | Barthels, Krebber & Bientinesi, *Automating the Generation of Efficient Linear Algebra Algorithms using Rewrite Rules* | Krebber, Barthels & Bientinesi, *Efficient Pattern Matching in Python* (arXiv:1710.00077v1) — a MatchPy paper | Renamed to `krebber2017_efficient_pattern_matching_python.pdf` and re-described |
-| Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | *The FriCAS System for Computer Mathematics*, generated 2026-03-06 | Renamed to `fricas2026_system_for_computer_mathematics.pdf`; the Springer edition moved to **Not obtained** |
+| Jenks & Sutor, *AXIOM: The Scientific Computation System*, Springer 1992 | *The FriCAS System for Computer Mathematics*, generated 2026-03-06 | Renamed to `fricas2026_system_for_computer_mathematics.pdf`. The Springer edition was briefly moved to **Not obtained**, then supplied; both are now held as separate files. |
 
 Also corrected in the same pass: `richardson1968_some_unsolvable_problems.pdf` →
 `richardson1968_some_undecidable_problems.pdf` (the paper's title is "Undecidable"), and the Terese
@@ -203,7 +230,7 @@ wrong documents** — every PDF matches its filename and page count, every HTML 
 claimed page, every pamphlet matches its volume. New findings recorded above:
 
 - `wolfram_ref_evaluation.html`, indexed only as "the guide page", in fact carries **"The Standard
-  Evaluation Sequence"** — the complete ordered 13-step algorithm. It had not been opened during the
+  Evaluation Sequence"** — the complete ordered algorithm, in 12 numbered steps. It had not been opened during the
   first pass, and `notes/cas-haskell.md` was briefly "corrected" *away* from the right answer as a
   result. Re-indexed as the primary evaluator spec.
 - `abramsky1992_*` is image-only, like Terese. It had been offered as the way to read Klop's chapter.

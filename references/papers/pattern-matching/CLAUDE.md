@@ -26,13 +26,17 @@ This is the layer where a Wolfram-like engine lives or dies, and the CAS textboo
 - **Both results are Benanav, Kapur & Narendran (1987), held here.** Their abstract proves the
   NP-completeness *and* the linear bound, and their algorithm already used maximum bipartite graph
   matching. Do not attribute the polynomial bound to Eker — Eker himself credits Benanav, as does
-  Bachmair '93. Neither result is in the MatchPy papers.
+  Bachmair '93. Neither result *originates* in the MatchPy papers — they cite Benanav ([BKN87]/[22])
+  for NP-completeness and do not give the polynomial bound at all.
 - Discrimination nets conventionally handle repeated variables in two stages: treat the patterns as
   linear, then check variable-replacement equivalence in an extra step. **MatchPy departs from
   this**, performing "the full non-linear matching directly at a commutative symbol state instead of
   just using it as a filter."
 - Discrimination nets amortize a fixed pattern set across many subject terms — the CAS situation.
-  But Krebber's measurements show the win arriving only with large pattern sets, and warn a net's
-  state count "can grow exponentially with the number of patterns." Write a correct one-to-one
-  matcher first, behind an interface that can be swapped for a net later.
+  **Read Krebber's measurements carefully: the break-even is in the number of *subjects*, not the
+  size of the pattern set.** Many-to-one beat one-to-one "with a factor between five and 20" at
+  every pattern-set size he tested; what has to be amortized is the net's one-time construction
+  cost, so the win arrives "for applications that match more than a few hundred subjects." He also
+  warns a net's state count "can grow exponentially with the number of patterns." Write a correct
+  one-to-one matcher first, behind an interface that can be swapped for a net later.
 - No Haskell library offers Mathematica-grade matching off the shelf. This will be written by hand.
