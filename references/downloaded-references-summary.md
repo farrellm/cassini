@@ -7,13 +7,15 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**75 documents (~423 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 32 HTML captures — plus 2 OCR sidecars.**
+**78 documents (~424 MB) — 37 PDFs, 6 Axiom literate `.pamphlet` sources, 35 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page on the date noted in
 [`papers/CLAUDE.md`](./papers/CLAUDE.md); they render without CSS but retain the full text. The
 original 22 were fetched **2026-08-29**; the eight README/package/licence captures added to anchor
-verbatim quotes were fetched **2026-08-30**.
+verbatim quotes were fetched **2026-08-30**; the three added in the third validation round
+(`symbolica_home`, `wikipedia_wolfram_language`, `numhask_hackage`) were fetched **2026-08-30** as
+well.
 
 ---
 
@@ -23,7 +25,7 @@ verbatim quotes were fetched **2026-08-30**.
 | :--- | :--- | :--- | :--- | :--- |
 | [`cohen2002_computer_algebra_elementary_algorithms.pdf`](./papers/textbooks/cohen2002_computer_algebra_elementary_algorithms.pdf) | ***Computer Algebra and Symbolic Computation: Elementary Algorithms***<br>*Joel S. Cohen (2002)* | Libgen MD5: `eb0554c9c1b3f9468e8fb4aaee2a433f` | 344 | 2.21 MB |
 | [`cohen2003_computer_algebra_mathematical_methods.pdf`](./papers/textbooks/cohen2003_computer_algebra_mathematical_methods.pdf) | ***Computer Algebra and Symbolic Computation: Mathematical Methods***<br>*Joel S. Cohen (2003)* | Libgen MD5: `52dc1eb488352883d45e03d8a1caff5b` | 470 | 3.13 MB |
-| [`geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf`](./papers/textbooks/geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf) | ***Algorithms for Computer Algebra***<br>*Keith O. Geddes, Stephen R. Czapor, George Labahn (1992)* | Libgen MD5: `c16e1a9f9f9c07baddd12a4922de90b7` | 593 | 7.84 MB |
+| [`geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf`](./papers/textbooks/geddes_czapor_labahn1992_algorithms_for_computer_algebra.pdf) | ***Algorithms for Computer Algebra***<br>*Keith O. Geddes, Stephen R. Czapor, George Labahn (1992)* <br>**The table-of-contents pages are OCR garbage** ("In od ion", "Algo i hm", "Pol nomial Fa"); the body text is sound and every chapter title is findable there. Do not conclude from a failed TOC grep that the file is broken. | Libgen MD5: `c16e1a9f9f9c07baddd12a4922de90b7` | 593 | 7.84 MB |
 | [`vonzurgathen_gerhard2013_modern_computer_algebra.pdf`](./papers/textbooks/vonzurgathen_gerhard2013_modern_computer_algebra.pdf) | ***Modern Computer Algebra*** (3rd ed.)<br>*Joachim von zur Gathen, Jürgen Gerhard (2013)* | Libgen MD5: `265536cedb43347e70dfc6a523371578` | 813 | 24.83 MB |
 | [`bronstein2005_symbolic_integration_1.pdf`](./papers/textbooks/bronstein2005_symbolic_integration_1.pdf) | ***Symbolic Integration I: Transcendental Functions*** (2nd ed.)<br>*Manuel Bronstein (2005)* | Springer / DOI: [`10.1007/b138171`](https://doi.org/10.1007/b138171) | 331 | 15.15 MB |
 | [`petkovsek_wilf_zeilberger1996_a_eq_b.pdf`](./papers/textbooks/petkovsek_wilf_zeilberger1996_a_eq_b.pdf) | ***A=B***<br>*Marko Petkovšek, Herbert S. Wilf, Doron Zeilberger (1996)* | UPenn / Rutgers Open Access | 217 | 1.19 MB |
@@ -64,7 +66,7 @@ cited and were not fetched.
 | :--- | :--- | :--- | :--- | :--- |
 | [`baader_nipkow1998_term_rewriting_and_all_that.pdf`](./papers/term-rewriting/baader_nipkow1998_term_rewriting_and_all_that.pdf) | ***Term Rewriting and All That***<br>*Franz Baader, Tobias Nipkow (1998)* | Libgen MD5: `670e57c6f705f33f49b540c8009e4b93` | 313 | 4.72 MB |
 | [`terese2003_term_rewriting_systems.pdf`](./papers/term-rewriting/terese2003_term_rewriting_systems.pdf) | ***Term Rewriting Systems*** (Cambridge Tracts in Theoretical CS 55)<br>*Terese (Marc Bezem, Jan Willem Klop, Roel de Vrijer, eds., 2003)*<br>**Image-only scan — no text layer.** `pdftotext` returns nothing on every page; it cannot be grepped or excerpted as text. | Libgen MD5: `2365bb42b3b6b0a37af19fafe1b238f7` | 908 | 181.07 MB |
-| [`klop1992_term_rewriting_systems.pdf`](./papers/term-rewriting/klop1992_term_rewriting_systems.pdf) | **Term Rewriting Systems**<br>*Jan Willem Klop (1992)*<br>The chapter from *Handbook of Logic in Computer Science* Vol. 2 (its bibliography cites that volume as "this volume"), circulated by CWI as report `CS-R9053`. **Full text layer** — use this, not the Handbook scan below. Two labelling notes: the text carries no report number of its own, and it cites work through 1991, so it is the Handbook-chapter text rather than strictly the 1990-numbered preprint. | User-supplied | 112 | 700 KB |
+| [`klop1992_term_rewriting_systems.pdf`](./papers/term-rewriting/klop1992_term_rewriting_systems.pdf) | **Term Rewriting Systems**<br>*Jan Willem Klop (1992)*<br>The chapter from *Handbook of Logic in Computer Science* Vol. 2 (its bibliography cites that volume as "this volume"), circulated by CWI as report `CS-R9053`. **Full text layer, but it drops `fi`/`ffi` ligatures** — "uni cation", "speci cations", "classi cation" — so `grep unification` returns nothing on a survey whose §1.6 is *Unification*. Search for `uni cation`, or for a fragment either side of the ligature. Still the copy to use, not the Handbook scan below. Two labelling notes: the text carries no report number of its own, and it cites work through 1991, so it is the Handbook-chapter text rather than strictly the 1990-numbered preprint. | User-supplied | 112 | 700 KB |
 | [`klop1990_church_rosser_to_knuth_bendix.pdf`](./papers/term-rewriting/klop1990_church_rosser_to_knuth_bendix.pdf) | **Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond**<br>*Jan Willem Klop (1990)*<br>A separate, shorter survey — the quick way in. | ICALP '90, Springer LNCS 443 — free from CWI: [`ir.cwi.nl/pub/2667`](https://ir.cwi.nl/pub/2667/2667D.pdf) | 20 | 4.15 MB |
 | [`abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf`](./papers/term-rewriting/abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf) | ***Handbook of Logic in Computer Science, Vol. 2*** (incl. Klop, *Term Rewriting Systems*, pp. 1–116)<br>*S. Abramsky, Dov M. Gabbay, T. S. E. Maibaum, eds. (1992)*<br>**Image-only scan — no text layer** (0 of 10 sampled pages carry text). For the Klop chapter use `klop1992_term_rewriting_systems.pdf` above, which is the same text, searchable, at 1/100th the size. | Libgen MD5: `d3059b05b47ca64724ab84e75ce38aed` | 582 | 70.57 MB |
 | [`klint_vanderstorm_vinju2009_rascal.pdf`](./papers/term-rewriting/klint_vanderstorm_vinju2009_rascal.pdf) | **RASCAL: A Domain Specific Language for Source Code Analysis and Manipulation**<br>*Paul Klint, Tijs van der Storm, Jurgen Vinju (2009)* | SCAM '09 / DOI: [`10.1109/SCAM.2009.28`](https://doi.org/10.1109/SCAM.2009.28) — author copy, `homepages.cwi.nl/~storm` | 10 | 161.2 KB |
@@ -103,9 +105,9 @@ cited and were not fetched.
 
 | File | Document & Authors | Source / Identifier | Pages | Size |
 | :--- | :--- | :--- | :--- | :--- |
-| [`meurer2017_sympy.pdf`](./papers/cas-architecture/meurer2017_sympy.pdf) | **SymPy: symbolic computing in Python**<br>*Aaron Meurer et al. (2017)* | PeerJ CS / DOI: [`10.7717/peerj-cs.103`](https://doi.org/10.7717/peerj-cs.103) | 19 | 853.8 KB |
+| [`meurer2017_sympy.pdf`](./papers/cas-architecture/meurer2017_sympy.pdf) | **SymPy: symbolic computing in Python**<br>*Aaron Meurer et al. (2017)*<br>**The published article, 27 authors.** Replaced 2026-08-30: the file previously stored here was the *PeerJ Preprints* review manuscript (19 pp., 24 authors, every page footed "This manuscript is for review purposes only"), indexed as the published paper. The published text also reads "Unlike many CAS's" where the preprint read "CASs". | PeerJ CS 3:e103 / DOI: [`10.7717/peerj-cs.103`](https://doi.org/10.7717/peerj-cs.103) — via Wayback (`peerj.com` returns 403 to `curl`) | 27 | 296.6 KB |
 | [`bauer2002_ginac_framework.pdf`](./papers/cas-architecture/bauer2002_ginac_framework.pdf) | **Introduction to the GiNaC Framework for Symbolic Computation within the C++ Programming Language**<br>*Christian Bauer, Alexander Frink, Richard Kreckel (2002)* | Sci-Hub / DOI: [`10.1006/jsco.2001.0494`](https://doi.org/10.1006/jsco.2001.0494) | 12 | 309.4 KB |
-| [`fateman1992_review_of_mathematica.pdf`](./papers/cas-architecture/fateman1992_review_of_mathematica.pdf) | **A Review of Mathematica**<br>*Richard J. Fateman (1992)* | *J. Symbolic Computation* 13(5) — author copy via Wayback (`people.eecs.berkeley.edu` unreachable) | 35 | 314.5 KB |
+| [`fateman1992_review_of_mathematica.pdf`](./papers/cas-architecture/fateman1992_review_of_mathematica.pdf) | **A Review of Mathematica**<br>*Richard J. Fateman (1992)* <br>Author copy: it carries no journal metadata, only "Received 16 November 1990, revised 16 September 1991", so the *JSC* 13(5), 1992 citation cannot be confirmed from the file itself. | *J. Symbolic Computation* 13(5) — author copy via Wayback (`people.eecs.berkeley.edu` unreachable) | 35 | 314.5 KB |
 | [`lioubartsev2016_pedagogical_cas_thesis.pdf`](./papers/cas-architecture/lioubartsev2016_pedagogical_cas_thesis.pdf) | **Constructing a Computer Algebra System Capable of Generating Pedagogical Step-by-Step Solutions** (MSc Thesis)<br>*Dmitrij Lioubartsev (2016)* | KTH / DiVA: `diva2:945222` | 91 | 1.96 MB |
 | [`rich_rubi_vision.html`](./papers/cas-architecture/rich_rubi_vision.html) | *Organizing Math as a Rule-based Decision Tree* (Rubi "Vision")<br>*Albert Rich* | [`rulebasedintegration.org/vision.html`](https://rulebasedintegration.org/vision.html) | — | 14.3 KB |
 | [`symbolica_2_2_symbolic_integration.html`](./papers/cas-architecture/symbolica_2_2_symbolic_integration.html) | *Symbolica 2.2: symbolic integration* — the source of the Rubi-port and benchmark figures quoted in §5 | [`symbolica.io/posts/symbolic_integration/`](https://symbolica.io/posts/symbolic_integration/) | — | 103.2 KB |
@@ -114,6 +116,8 @@ cited and were not fetched.
 | [`symbolica_license.html`](./papers/cas-architecture/symbolica_license.html) | *Pricing and plans* — the source for the licence terms quoted in §5: the employment trigger, and the **Free** tier's "[o]ne core and instance per device" cap. Fetched 2026-08-30. | [`symbolica.io/license/`](https://symbolica.io/license/) | — | 50.0 KB |
 | [`expreduce_readme.html`](./papers/cas-architecture/expreduce_readme.html) | Expreduce's GitHub README — the source for "This software is experimental quality and is not currently intended for serious use." Fetched 2026-08-30. | [`github.com/corywalker/expreduce`](https://github.com/corywalker/expreduce) | — | 308.6 KB |
 | [`symja_readme.html`](./papers/cas-architecture/symja_readme.html) | Symja's GitHub README — confirms "the Rubi symbolic integration rules are used to implement the `Integrate` function" and, as the notes say, **names no Rubi version**. Fetched 2026-08-30. | [`github.com/axkr/symja_android_library`](https://github.com/axkr/symja_android_library) | — | 376.2 KB |
+| [`symbolica_home.html`](./papers/cas-architecture/symbolica_home.html) | *Symbolica — Modern Computer Algebra* (home page) — fetched to check the "built for large expressions" tagline the notes attributed to Symbolica. **It is not Symbolica's wording**, here or in any Wayback snapshot: the current page says "a high-performance computer algebra library for Python and Rust" that lets you "Manipulate large expressions"; 2023 snapshots say "a blazing fast symbolic manipulation toolkit". Fetched 2026-08-30. | [`symbolica.io`](https://symbolica.io/) | — | 56.1 KB |
+| [`wikipedia_wolfram_language.html`](./papers/cas-architecture/wikipedia_wolfram_language.html) | *Wolfram Language* — Wikipedia. The source for the MockMMA cease-and-desist story the notes flag as folklore: "Richard Fateman's MockMMA from 1991 is of historical note, both for being the earliest reimplementation and for having received a cease-and-desist from Wolfram" — **and that sentence carries no inline citation**, which is the point. Fetched 2026-08-30. | [`en.wikipedia.org`](https://en.wikipedia.org/wiki/Wolfram_Language) | — | 207.2 KB |
 
 ---
 
@@ -131,6 +135,7 @@ cited and were not fetched.
 | [`olah_hasksymb_readme.html`](./papers/haskell/olah_hasksymb_readme.html) | HaskSymb's GitHub README — **the design retrospective the blog post does not contain**: "The *big* issue I'm facing is appropriate types for symbolic expressions. In particular, how do I handle variables in types?" and "My bad solution for now has been to just not have type-level variable representation, which kind of bothers me." Fetched 2026-08-30. | [`github.com/colah/HaskSymb`](https://github.com/colah/HaskSymb) | — | 265.0 KB |
 | [`poly_hackage.html`](./papers/haskell/poly_hackage.html) | The `poly` Hackage page — source for the maintainer-reported "poly is at least 20x-40x faster than the `polynomial` library", with the per-operation benchmark table behind it. Fetched 2026-08-30. | [`hackage.haskell.org/package/poly`](https://hackage.haskell.org/package/poly) | — | 29.2 KB |
 | [`dumb_cas_hackage.html`](./papers/haskell/dumb_cas_hackage.html) | The `dumb-cas` Hackage page — source for "combine the flexibility of a Lisp with the conciseness of a Regex engine". Fetched 2026-08-30. | [`hackage.haskell.org/package/dumb-cas`](https://hackage.haskell.org/package/dumb-cas) | — | 18.2 KB |
+| [`numhask_hackage.html`](./papers/haskell/numhask_hackage.html) | The `numhask` Hackage page — the anchor for §7's comparison against `numeric-prelude`, previously made with no source held. Confirms Tony Day as author, the `RebindableSyntax` usage snippet (so it is *not* what distinguishes the two), and the upload date **2026-07-10** against numeric-prelude's 2022-05-28. Fetched 2026-08-30. | [`hackage.haskell.org/package/numhask`](https://hackage.haskell.org/package/numhask) | — | 27.0 KB |
 
 ---
 
@@ -139,7 +144,7 @@ cited and were not fetched.
 | File | Document | Source | Size |
 | :--- | :--- | :--- | :--- |
 | [`wolfram_ref_evaluation_of_expressions.html`](./papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html) | *Evaluation of Expressions* — the full tutorial chapter, incl. the standard evaluation procedure and the Attributes section (~26k words) | [`reference.wolfram.com/.../tutorial/EvaluationOfExpressions.html`](https://reference.wolfram.com/language/tutorial/EvaluationOfExpressions.html) | 851.9 KB |
-| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — **the page carrying "The Standard Evaluation Sequence", the complete ordered algorithm — 12 numbered steps as the page gives them.** Short, and the most important file here for Stage 1. | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
+| [`wolfram_ref_evaluation.html`](./papers/wolfram-language/wolfram_ref_evaluation.html) | *Evaluation* — **the page carrying "The Standard Evaluation Sequence", the complete ordered algorithm — twelve steps as the page gives them.** They are a `<ul class="Notes">` bullet list, *not* a numbered one, so the notes' "the source's number is ours minus one" means counted position, not a printed numeral. Short, and the most important file here for Stage 1. | [`.../tutorial/Evaluation.html`](https://reference.wolfram.com/language/tutorial/Evaluation.html) | 183.8 KB |
 | [`wolfram_ref_attributes.html`](./papers/wolfram-language/wolfram_ref_attributes.html) | `Attributes` — the symbol reference page. **Thin capture: it does *not* contain the attribute list** — only the `Attributes[symbol]` signatures plus bare section labels; the "Details" section did not capture. The full attribute table is in `wolfram_ref_evaluation_of_expressions.html`. | [`.../ref/Attributes.html`](https://reference.wolfram.com/language/ref/Attributes.html) | 212.8 KB |
 | [`wolfram_guide_attributes.html`](./papers/wolfram-language/wolfram_guide_attributes.html) | *Attributes* — the guide page; a list of links to attribute-related functions, no prose | [`.../guide/Attributes.html`](https://reference.wolfram.com/language/guide/Attributes.html) | 188.0 KB |
 | [`wolfram_ref_associating_definitions.html`](./papers/wolfram-language/wolfram_ref_associating_definitions.html) | *Transformation Rules and Definitions* — the UpValues/DownValues rule-storage model in context | [`.../tutorial/AssociatingDefinitionsWithDifferentSymbols.html`](https://reference.wolfram.com/language/tutorial/AssociatingDefinitionsWithDifferentSymbols.html) | 496.8 KB |
@@ -182,6 +187,12 @@ captures close the same kind of gap outside §5/§7: `wadler2008_data_types_a_la
 blog post, which the waiver never reached) and `wolfram_ref_ownvalues.html` (cited in §6 alongside
 its three siblings, but previously the only one not held). Adding a verbatim quote from a live page
 means capturing that page in the same change.
+
+**The waiver does not cover a comparative claim either.** `numhask_hackage.html` was added because §7
+compared `numhask` with `numeric-prelude` on maintenance and hierarchy size with only the
+`numeric-prelude` side held. `symbolica_home.html` and `wikipedia_wolfram_language.html` were added
+for the same reason in §5: one quoted phrase and one claim about what a named page does and does not
+say. If the notes assert something *about a document*, that document belongs here.
 
 ### Not obtained
 
@@ -230,7 +241,7 @@ wrong documents** — every PDF matches its filename and page count, every HTML 
 claimed page, every pamphlet matches its volume. New findings recorded above:
 
 - `wolfram_ref_evaluation.html`, indexed only as "the guide page", in fact carries **"The Standard
-  Evaluation Sequence"** — the complete ordered algorithm, in 12 numbered steps. It had not been opened during the
+  Evaluation Sequence"** — the complete ordered algorithm, in twelve steps. It had not been opened during the
   first pass, and `notes/cas-haskell.md` was briefly "corrected" *away* from the right answer as a
   result. Re-indexed as the primary evaluator spec.
 - `abramsky1992_*` is image-only, like Terese. It had been offered as the way to read Klop's chapter.
@@ -241,6 +252,26 @@ claimed page, every pamphlet matches its volume. New findings recorded above:
 Four captures are thin but *complete* for what they are — `numeric_prelude_haskellwiki.html` (4.7 KB
 of text), `olah2012_hasksymb.html` (2.0 KB), `wltools_language_spec.html` (4.7 KB) and the cosec
 companion (2.0 KB) are all genuinely short pages, not truncated fetches.
+
+
+### Third validation round, 2026-08-30
+
+A full re-verification of `../notes/cas-haskell.md` against the corpus — every quoted phrase re-tested,
+every structural claim (chapter maps, editions, TOCs, abstracts) opened, and the Haskell claims run
+through GHC 9.12.4. Four changes to this corpus came out of it:
+
+| Change | Why |
+| :--- | :--- |
+| `meurer2017_sympy.pdf` **replaced** | The stored file was the *PeerJ Preprints* review manuscript (19 pp., 24 authors, "This manuscript is for review purposes only" on every page), indexed and cited as the published article. The published *PeerJ CS* 3:e103 is 27 pp. with 27 authors; the notes' "(24 authors)" was a preprint count. |
+| `symbolica_home.html` **added** | To resolve the one quotation in the notes that anchored to nothing — "built for large expressions". It resolved to nothing because **Symbolica never wrote it**; see the row above. |
+| `wikipedia_wolfram_language.html` **added** | The MockMMA cease-and-desist claim is an assertion about what this page says and does not cite. Now checkable. |
+| `numhask_hackage.html` **added** | §7's numhask/numeric-prelude comparison had no source on the numhask side. |
+
+Two silent-grep traps were found and are now recorded on their entries: **Klop 1992 drops `fi`/`ffi`
+ligatures** (`grep unification` fails on a survey with a section titled *Unification*), and
+**Geddes' table-of-contents pages are OCR garbage** while its body text is fine. Both are the same
+class as the already-recorded Karr-1985 dropped-`h` problem. The audit rule stands: check the
+*variety* of extracted text, and check that a **failed** grep is a real absence.
 
 ---
 
