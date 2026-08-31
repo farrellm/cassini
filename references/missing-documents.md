@@ -42,7 +42,7 @@ nobody had opened, rather than quotes resting on a document nobody had fetched:
 | Symbolica home page | §5 | The notes quoted it as "built for large expressions" | Held — and the quote was **wrong**: that is nobody's wording, here or in the 2023 snapshot (also held), which says "a blazing fast symbolic manipulation toolkit". The phrase was the notes' own paraphrase and has been unquoted. |
 | Wikipedia, *Wolfram Language* | §5 | The MockMMA cease-and-desist treatment is an assertion about what that page says **and does not cite** | Held; the assertion checks out — the sentence carries no inline reference. |
 | `numhask` package page | §7 | §7 compared numhask against numeric-prelude on upkeep and hierarchy size with only one side held | Held; the comparison is now dated (2026-07-10 vs 2022-05-28) rather than asserted. |
-| SymPy, *PeerJ CS* 3:e103 | §5 | Not missing so much as **substituted**: the file held under this citation was the PeerJ Preprints review manuscript, 19 pp. and 24 authors | The published article (27 pp., 27 authors) is now held. The quoted sentence differs: published "Unlike many CAS's", preprint "Unlike many CASs". |
+| SymPy, *PeerJ CS* 3:e103 | §5 | Not missing so much as **substituted**: the file held under this citation was the PeerJ Preprints review manuscript, 19 pp. and 24 authors | The published article (27 pp., 27 authors) is now held. The two texts differ by a stray apostrophe in the sentence most often quoted, so a quotation has to name which text it came from; the manuscript is deliberately not held, and nothing quotes it any more. |
 
 The lesson generalises, and is now `../references/CLAUDE.md` rule 2: the "pointers only" waiver covers
 *citing* a system, not quoting its page — and not making a claim about what its page says either.
@@ -119,9 +119,18 @@ for i in $(ls /tmp/p-*.png | sort -V); do tesseract "$i" - --psm 1 -l eng; print
 
 Nothing in this corpus is missing because it was overlooked — every gap has a recorded reason, and
 the three that remain are unobtainable rather than unpursued. Every quotation in
-`../notes/cas-haskell.md` and the bibliography resolves to a document held here, with one deliberate
-exception: the notes quote Symbolica's "built for large expressions" only in order to say it is not
-Symbolica's wording, and both captures that establish that are held.
+`../notes/cas-haskell.md` and the bibliography resolves to a document held here, with **two deliberate
+exceptions**, both of them phrases quoted in order to say they are *not* the source's:
+
+- Symbolica's "built for large expressions", which is nobody's wording — the current home page and the
+  2023 snapshot that establish this are both held.
+- "the strategies rather than the rewrite rules doing the heavy lifting", widely attributed to the
+  Rascal paper and not in it — the paper is held, which is how the absence was established.
+
+A third such quotation existed until the fourth round: the bibliography reproduced the SymPy
+*preprint's* wording to contrast it with the published article, after the preprint itself had been
+deleted from the corpus in round three. The quotation is gone; the contrast is now drawn on the
+metadata that is checkable without it (27 pp./27 authors against 19 pp./24 authors).
 
 The live risks are no longer *missing* documents but *unreadable* and *misidentified* ones. Terese has
 no text layer and no sidecar; Karr 1985 and Klop 1992 have text layers that fail silently; and the
