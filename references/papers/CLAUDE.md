@@ -7,7 +7,7 @@ Eight topical directories. See [`../CLAUDE.md`](../CLAUDE.md) for conventions an
 
 | If you need to know… | Open |
 | :--- | :--- |
-| How does the evaluator sequence Hold / Flat / Orderless / Listable, and what re-evaluates to a fixed point? | `wolfram-language/wolfram_ref_evaluation.html` — "The Standard Evaluation Sequence" — 12 steps as the page numbers them, transcribed as 13 in `wolfram-language/CLAUDE.md` |
+| How does the evaluator sequence Hold / Flat / Orderless / Listable, and what re-evaluates to a fixed point? | `wolfram-language/wolfram_ref_evaluation.html` — "The Standard Evaluation Sequence" — twelve steps as the page gives them (a bullet list, not a numbered one), transcribed as 13 in `wolfram-language/CLAUDE.md` |
 | Where do OwnValues, DownValues, UpValues, and SubValues attach, and how do I model the rule tables? | `wolfram-language/` |
 | How do I make automatic simplification produce a canonical form? | `textbooks/` (**Cohen Vol. 2 ch. 3** — the algorithm is in Vol. 2, not Vol. 1) |
 | How do I implement polynomial GCD, factorization, Hensel lifting, Gröbner bases, integration? | `textbooks/` (Geddes, then von zur Gathen & Gerhard, then Bronstein) |
@@ -46,10 +46,17 @@ a page range silently yields an empty file:
 - `pattern-matching/bachmair1993_*` and `pattern-matching/eker1995_*` — both carry a generated
   `.txt` OCR sidecar beside them; grep the sidecar.
 
-**Two traps.** `eker1995_*` *reports* text on every page, so a naive text-layer check passes it — but
-the only text is a repeated download watermark, 860 characters across 19 pages; check the variety of
-extracted text, not its presence. And `textbooks/karr1985_*` has a real text layer whose OCR drops
-every `h`, so `grep theorem` returns nothing and looks like an honest miss.
+**Traps — files with a text layer that still fail you.** `eker1995_*` *reports* text on every page, so
+a naive text-layer check passes it — but the only text is a repeated download watermark, 860
+characters across 19 pages; check the variety of extracted text, not its presence.
+`textbooks/karr1985_*` has a real text layer whose OCR drops every `h`, so `grep theorem` returns
+nothing and looks like an honest miss. `term-rewriting/klop1992_*` drops `fi`/`ffi` ligatures the same
+way, so `grep unification` fails on a survey whose §1.6 is *Unification*. And
+`textbooks/geddes_czapor_labahn1992_*` has sound body text but OCR-garbage table-of-contents pages
+("In od ion", "Algo i hm") — grep the body for chapter titles, not the TOC.
+
+The rule all four teach: **a failed grep is a question about the file, not an answer about the
+text.**
 
 Other large files: `axiom_bookvol10-5_numerics.pamphlet` (30 MB),
 `vonzurgathen_gerhard2013_*` (25 MB, 813 pp.). Extract the page range you need
