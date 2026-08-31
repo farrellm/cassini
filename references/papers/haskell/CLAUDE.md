@@ -6,7 +6,7 @@ that §3 groups as foundational are in `../foundations/`.
 | File | Read it for |
 | :--- | :--- |
 | `ishii2018_purely_functional_cas_haskell.pdf` | **The reference for typed algebra in Haskell.** Encodes polynomial arity, monomial ordering, and coefficient ring as type-level parameters, so ℚ[x,y,z] and ℚ[w,x,y] cannot be added by mistake. Implements Gröbner bases with F4, F5, and Hilbert-driven algorithms; builds on Kmett's `algebra`. Positioned against DoCon "with more emphasis on safety and correctness." **Caveat the paper states plainly: the types check arity and identity, not the ring axioms — those are QuickCheck properties, not proofs.** |
-| `zhu2025_hash_consing.pdf` | Zhu, Sabharwal, Tan, Ma, Edelman & Rackauckas (MIT / JuliaHub) — an implementation report on adding hash-consing to JuliaSymbolics via a global **weak-reference** table (up to 3.2× faster, 2× less memory), with a short related-work section that is the useful survey. It is more negative than usually reported: SymPy and SymEngine use a set rather than the DAG; FriCAS and REDUCE get Lisp symbol interning but no proper hash-consing; **GiNaC "does use a form of reference counting," and of GiNaC and Symbolica alike it says "it is trivial to construct programs using either package that demonstrate identical subexpressions with different memory locations" — i.e. neither hash-conses.** Do not cite it as saying Symbolica interns. It also cautions that the claim Wolfram hash-conses internally is inferred from a blog post, not confirmed. **Implication for this project (our inference, not the paper's): the mechanism needs immutable terms plus a GC that collects through weak references — exactly Haskell's model.** Read before fixing the `Expr` representation. |
+| `zhu2025_hash_consing.pdf` | Zhu, Sabharwal, Tan, Ma, Edelman & Rackauckas (MIT / JuliaHub) — an implementation report on adding hash-consing to JuliaSymbolics via a global **weak-reference** table (up to 3.2× faster, 2× less memory), with a short related-work section that is the useful survey. It is more negative than usually reported: the *common subexpression elimination code* in SymPy and SymEngine stores identical subexpressions "in a set data structure, instead of by leveraging the DAG structure" (that qualifier is the paper's — it is a claim about their CSE passes, not their expression representation); FriCAS and REDUCE get Lisp symbol interning but no proper hash-consing; **GiNaC "does use a form of reference counting," and of GiNaC and Symbolica alike it says "it is trivial to construct programs using either package that demonstrate identical subexpressions with different memory locations" — i.e. neither hash-conses.** Do not cite it as saying Symbolica interns. It also cautions that the claim Wolfram hash-conses internally is inferred from a blog post, not confirmed. **Implication for this project (our inference, not the paper's): the mechanism needs immutable terms plus a GC that collects through weak references — exactly Haskell's model.** Read before fixing the `Expr` representation. |
 | `numeric_prelude_hackage.html` | **The argument lives here, not on the wiki.** The canonical statement of why the standard `Num` class is wrong for a CAS — it "defines no semantics for the fundamental operations"; `Eq`/`Show` are "superfluous superclasses" a function-valued ring (`data IntegerFunction a = IF (a -> Integer)`) cannot satisfy; `toInteger`/`decodeFloat` mix representation with semantics; the hierarchy is "not finely-grained enough". Also carries the migration table: `Num → Additive, Ring, Absolute`; `Fractional → Field`; `Floating → Algebraic, Transcendental`. |
 | `numeric_prelude_haskellwiki.html` | **Not the argument** — none of the four objections above appear in this capture. What it adds is the statement, in its opening sentence, that the hierarchy "makes use of type features beyond Haskell 98, e.g. multi-parameter type classes"; the list of supported algebraic structures and object types; and a candid *Future plans* section: "the code still misses proper linear algebra code", with static checking unsolved for "residue classes, matrix computations, infinite precision numbers, fixed point numbers". |
 | `penner2018_asts_with_fix_and_free.html` | The practical how-to for `Fix` and `Free` over an AST: parameterize the recursive slots, derive `Functor`, fold with `cata`. Read before wiring up `recursion-schemes` over `Expr`. |
@@ -18,10 +18,17 @@ that §3 groups as foundational are in `../foundations/`.
 
 ## The decision these documents support
 
-Untyped uniform `Expr` for the rewriting core — free `Eq`/`Ord` for canonical ordering under
-`Orderless` and for memoization, uniform traversal via `uniplate` or `recursion-schemes`, immutable
-and hash-consed. Type-level machinery is reserved for the polynomial/ring sub-libraries, where Ishii
-shows it buys real safety.
+Untyped uniform `Expr` for the rewriting core — uniform traversal via `uniplate` or
+`recursion-schemes`, immutable, hash-consed. Type-level machinery is reserved for the
+polynomial/ring sub-libraries, where Ishii shows it buys real safety.
+
+Two things not to over-read in that sentence. **Derived `Ord` is not Mathematica's canonical order** —
+it compares by constructor position, so a `Rational` and an `Integer` node never compare numerically
+and application nodes compare head-then-arguments. It is a fine *starting* total order for
+`Orderless`, but a real canonical-order function replaces it. And **hash-consing displaces derived
+`Eq`**: the point of interning is that structural equality becomes a tag comparison, so an interned
+node carries an id and takes `Eq`/`Hashable` from that. Pick one; the cheap derived instances and
+the interned ones are alternatives, not a package.
 
 The libraries themselves (`algebra`, `numhask`, `poly`, `constructive-algebra`,
 `recursion-schemes`, `uniplate`, `sbv`, `symengine`, `dumb-cas`, `computational-algebra`) are Hackage
