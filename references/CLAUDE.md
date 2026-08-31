@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **78 documents, ~424 MB**, plus 2 OCR sidecars.
+The local document corpus for the CAS-in-Haskell project. **79 documents, ~424 MB**, plus 2 OCR sidecars.
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -36,7 +36,7 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
 - `.html` files are single-file `curl` captures of the live page, fetched **2026-08-29**, except the
   eight README/package/licence captures added **2026-08-30** to anchor verbatim quotes, and the three
   added later the same day in the third validation round (`symbolica_home`,
-  `wikipedia_wolfram_language`, `numhask_hackage`). They have no CSS and no images, but the full
+  `symbolica_home_2023_wayback`, `wikipedia_wolfram_language`, `numhask_hackage`). They have no CSS and no images, but the full
   text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
   `pandoc -t plain`, not by eye.
 - `.pamphlet` files are Axiom's literate LaTeX+SPAD sources; plain text, readable directly.
