@@ -37,7 +37,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 **Davenport, James H., Yvon Siret, and Évelyne Tournier.** *Computer Algebra: Systems and Algorithms for Algebraic Computation.* 2nd ed. Academic Press, 1993. Preface by Daniel Lazard.
 > Gentler, systems-oriented survey. Good conceptual overview; less of an implementation cookbook. *Optional.*
 
-**Jenks, Richard D., and Robert S. Sutor.** *AXIOM: The Scientific Computation System.* Springer, 1992. Original ISBNs 3-540-97855-0 (Berlin) / 0-387-97855-0 (New York); the Springer Science+Business Media reprint held here is ISBN 978-1-4612-7729-3 (print) / 978-1-4612-2940-7 (eBook), 765 pp.
+**Jenks, Richard D., and Robert S. Sutor.** *AXIOM: The Scientific Computation System.* Springer, 1992. Original ISBNs 3-540-97855-0 (Berlin) / 0-387-97855-0 (New York) **[unverified]**; the Springer Science+Business Media reprint held here is ISBN 978-1-4612-7729-3 (print) / 978-1-4612-2940-7 (eBook), 765 pp.
 > The design document for the strongly-typed CAS — categories and domains (Ring, Field, …) as first-class types. Now Volume 0 of the open Axiom literate-program series. *Essential reading for a Haskell implementer* because Axiom's typed algebra hierarchy is the closest existing analogue to a type-driven Haskell CAS. See §5 for the free literate volumes.
 
 ---
@@ -125,7 +125,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **SymPy.** Python, BSD. `sympy.org`
 > The most approachable *full* CAS to read. Pure Python with no invented language — the reference paper notes that Python itself is used for both internal implementation and end-user interaction. *Lesson: how to organize a large CAS — assumptions system, `Basic`/`Expr` core, `polys` module — and how automatic-simplification decisions get made.*
-> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (27 authors, 27 pp.) Free. **Quote the published article, not the preprint** — `references/` held the *PeerJ Preprints* review manuscript under this citation until 2026-08-30 (19 pp., 24 authors), and the two differ in the sentence most often quoted: published "Unlike many CAS's", preprint "Unlike many CASs".
+> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (27 authors, 27 pp.) Free. **Quote the published article, not the preprint** — `references/` held the *PeerJ Preprints* review manuscript under this citation until 2026-08-30, and the two are distinguishable on sight: 27 pp. and 27 authors here, 19 pp. and 24 authors there, every page of the manuscript footed "This manuscript is for review purposes only". They also differ by a stray apostrophe in the sentence most often quoted, so check which text a quotation came from. The manuscript is deliberately not held; nothing in these notes should quote it.
 
 **GiNaC** ("GiNaC is Not a CAS"). C++. `ginac.de`
 > *Lessons:* (1) deliberately abolishes the low-level/high-level language split — relevant to a Haskell-native ambition; (2) reference counting with copy-on-write for structure sharing; (3) numeric tower built on CLN (the paper does not mention GMP); (4) clean polymorphic `ex`/`basic` design with automatic normalization.
@@ -304,7 +304,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Penner, "ASTs with Fix and Free" (`chrispenner.ca`) and Milewski, "F-Algebras" (`bartoszmilewski.com`)
 - Wadler, "Data Types a la Carte" (blog, 28 Feb 2008, `wadler.blogspot.com`) — the source of the verdict quoted in §3
 - Pickering, "Data Types à la Carte with Closed Type Families" (`mpickering.github.io`) and SymPy's *Advanced Expression Manipulation* page (`docs.sympy.org`)
-- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, and Symbolica's licence and home pages. All captured in `references/` as of 2026-08-30, so the quotes have anchors.
+- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, `numeric-prelude` (both the Hackage README, which carries the four objections to `Num`, and the HaskellWiki page), and Symbolica's licence and home pages. All captured in `references/`, the `numeric-prelude` pair on 2026-08-29 and the rest on 2026-08-30, so the quotes have anchors.
 - Wikipedia's *Wolfram Language* article (§5, for the MockMMA cease-and-desist sentence and its missing citation)
 
 **Paywalled journal/conference papers — held here, but not freely re-obtainable.** Re-obtaining any
@@ -345,7 +345,10 @@ of these needs institutional access. Where a free substitute exists it is named:
 
 ## Verification Notes
 
-Every entry above has been checked against a document held in the local corpus in `references/`. The
+Every entry above has been checked against a document held in the local corpus in `references/` or,
+where the entry names a *system* rather than a document — the source repositories and Hackage packages
+of §5, §7 and §8, which the corpus summary covers under "pointers only, by design" — against the live
+primary source. The
 eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
 READMEs, the `poly` and `dumb-cas` package pages, Wadler's blog post, Symbolica's licence, and the
 `OwnValues` reference page — were fetched on 2026-08-30 and indexed. A sweep then tested every quoted
@@ -367,12 +370,15 @@ one more: the two SMP conference papers were described as archived on Wolfram's 
 They are not; the SMP **manual** is, and is now held (three volumes, 399 pp.), while the papers moved
 to the paywalled list where their Sci-Hub provenance always said they belonged.
 
-**Three things remain genuinely open**, each tagged `[unverified]` where it appears, and in every case
-because the copy held is a different printing from the one the ISBN names: Zippel's original Kluwer
-hardback ISBN (held: the Springer softcover reprint, 978-1-4613-6398-9); Baader & Nipkow's paperback
-ISBN 0-521-77920-0 (held: the hardback, 0-521-45520-0, which does check out); and Cohen *Methods*'
-Routledge/CRC reprint ISBN 9780367659479 (held: the 2003 A K Peters printing). Jenks & Sutor is the same
-situation but is recorded on the entry itself. The `numeric-prelude` multi-parameter-type-class question,
+**Four ISBNs remain genuinely open**, each tagged `[unverified]` wherever it appears — in this file and
+in `cas-haskell.md` alike — and in every case because the copy held is a different printing from the one
+the ISBN names: Zippel's original Kluwer hardback ISBN (held: the Springer softcover reprint,
+978-1-4613-6398-9); Baader & Nipkow's paperback ISBN 0-521-77920-0 (held: the hardback, 0-521-45520-0,
+which does check out); Cohen *Methods*' Routledge/CRC reprint ISBN 9780367659479 (held: the 2003 A K
+Peters printing); and Jenks & Sutor's original Springer ISBNs 3-540-97855-0 / 0-387-97855-0 (held: the
+Springer Science+Business Media printing, 978-1-4612-7729-3, which the file does confirm). Jenks & Sutor
+was the odd one out until 2026-08-30 — described on its entry but not tagged, and counted in neither
+file's total; all four now follow one rule. The `numeric-prelude` multi-parameter-type-class question,
 once listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names
 them in its opening sentence.
 
