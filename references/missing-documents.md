@@ -187,6 +187,20 @@ the term's only occurrence anywhere in the corpus is Greif's reference list, cit
 *MACSYMA's General Simplifier: Philosophy and Operation*. The term is real; the quotation marks were
 not earning anything, and both files now read the same way.
 
+The **seventh round** (2026-09-01) found a fourth misidentified copy, and it is the one the round-six
+sweep was built to catch and could not. `petkovsek_wilf_zeilberger1996_a_eq_b.pdf` is the authors'
+free electronic edition — internal title `PwzForPC.DVI`, Acrobat Distiller 3.0, created 27 April 1997,
+217 pp. — and not the A K Peters 1996 printing the bibliography cites. It contains no publisher
+imprint, no ISBN, no copyright page, and no occurrence of "1996" or "A K Peters" anywhere. It is
+byte-identical (md5 `02eff372…`) to what Wilf's UPenn page serves today, which confirms the
+*availability* claim exactly while leaving the *publisher and year* unconfirmed by the file.
+
+**Why round six's identity sweep missed it.** That sweep scanned all 40 PDFs for self-declared status
+markers — "pre-print", "accepted manuscript", "submitted", "draft". A=B declares nothing about
+itself; it is simply a different edition of the same text, and no marker exists to find. What caught
+it was checking the citation's *fields* — publisher and year — against the file, one field at a time.
+A file that lies about nothing can still not be the thing you cited. Check fields, not markers.
+
 The live risks are no longer *missing* documents but *unreadable* and *misidentified* ones. Terese has
 no text layer and no sidecar; Karr 1985 and Klop 1992 have text layers that fail silently; and the
 SymPy entry was, until the third round, a different document from the one it was cited as — which no

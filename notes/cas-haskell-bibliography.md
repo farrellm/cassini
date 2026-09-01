@@ -22,7 +22,8 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 > The standard integration reference: Hermite reduction, Rothstein–Trager, Lazard–Rioboo–Trager, and the Risch algorithm proper. 2nd ed. adds a chapter on parallel/Risch–Norman integration. Ready-to-implement pseudocode. **Volume II (algebraic functions) was never completed — Bronstein died before finishing it**, so the algebraic case remains scattered across research papers. *Essential at Stage 3.*
 
 **Petkovšek, Marko, Herbert S. Wilf, and Doron Zeilberger.** *A=B.* A K Peters, 1996. Foreword by Donald E. Knuth.
-> Algorithmic hypergeometric summation: Gosper's algorithm, Zeilberger's creative telescoping, the WZ method, Petkovšek's `Hyper`. **Freely and legally available as a PDF** — the authors released it; mirrored on Wilf's UPenn page and Zeilberger's at Rutgers. Does *not* cover Karr's algorithm. *Essential for summation; free.*
+> Algorithmic hypergeometric summation: Gosper's algorithm, Zeilberger's creative telescoping, the WZ method, Petkovšek's `Hyper`. Knuth's foreword is signed *Stanford University, 20 May 1995*. **Freely and legally available as a PDF** — the authors released it; mirrored on Wilf's UPenn page and Zeilberger's at Rutgers. Does *not* cover Karr's algorithm. *Essential for summation; free.*
+> **Corpus caveat:** the copy held is that free PDF, and it is **not the A K Peters printing this entry cites**. It is the authors' electronic edition — internal title `PwzForPC.DVI`, Acrobat Distiller 3.0, created 27 April 1997, 217 pp. — and contains no publisher imprint, no ISBN, no copyright page and no occurrence of "1996" or "A K Peters" anywhere. It is byte-identical (md5 `02eff372…`) to what `www2.math.upenn.edu/~wilf/AeqB.pdf` serves today, so the availability claim is confirmed exactly; the *publisher and year* are not. Fourth instance of the held-copy-is-a-different-artifact pattern, after SymPy, Fateman and Ishii.
 
 **Karr, Michael.** "Summation in Finite Terms." *Journal of the ACM* 28, no. 2 (1981): 305–350. DOI: 10.1145/322248.322255.
 > The difference-field ("ΠΣ-field") theory of symbolic summation — the discrete analogue of Risch's integration algorithm, and **the gap in *A=B***, which covers Gosper/Zeilberger/WZ but not this. Read it when indefinite nested sums and products come up. See also his **"Theory of Summation in Finite Terms," *Journal of Symbolic Computation* 1, no. 3 (1985): 303–315, DOI: 10.1016/S0747-7171(85)80038-9.** *Optional; needed only for the summation requirement.*
@@ -462,6 +463,34 @@ hold:
   reading, but the MatchPy *paper* separately reports a "speedup of up to 60" for a different
   measurement — the syntactic discrimination net on LinAlg — so the two are now kept apart explicitly,
   before a later round "corrects" one into the other.
+
+**A seventh round, 2026-09-01**, re-ran the quotation sweep against a rebuilt index — this time
+searching a *despaced* copy of every document alongside the plain one, so round six's letter-spacing
+defect could not hide a hit — and then swept four categories still untouched: the **algorithm
+attributions** in the staged plan, every **publication year**, every **publisher**, and every
+**edition statement**.
+
+Almost everything held, and several claims are now grounded rather than assumed. vzGG credits the
+sparse-interpolation idea to Zippel (1979) and the modular GCD approach to Brown (1971) and Collins
+(1971), so both Stage 2 attributions are sound. Bronstein's chapter 2 is titled *Integration of
+Rational Functions* and contains §2.2 Hermite Reduction, §2.4 Rothstein–Trager and §2.5
+Lazard–Rioboo–Trager, with chapter 5 covering the transcendental case — exactly the split Stage 3
+prescribes. A=B contains Gosper, creative telescoping, WZ and `Hyper`; Baader & Nipkow chapter 7
+contains Huet; Karr's copy confirms *JACM* 28(2), April 1981, pp. 305–350. Every publication year,
+publisher and edition statement checks out against the held printing, with two expected exceptions
+(Terese is image-only; the IJCAI '95 paper prints no year) — and one real one.
+
+- **The A=B copy held is not the edition cited.** It is the authors' free electronic edition of 27
+  April 1997, with no publisher, no ISBN, no copyright page and no "1996" in it. The A K Peters 1996
+  printing is a different artifact. Recorded on the entry above. This is the fourth instance of the
+  pattern — SymPy, Fateman, Ishii, now A=B — and the first that round six's marker sweep structurally
+  could not find, because the file makes no claim about its own status. Checking a citation's *fields*
+  against the file is what caught it; scanning for markers is not enough.
+
+One residual, unchanged from round six: **"Terese is in print" could not be confirmed.** Cambridge's
+site returns 500 to `curl` and Open Library carries no availability data. The claim is plausible and
+low-stakes, but it has now failed verification twice and is recorded here rather than left as though
+it had been checked.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
