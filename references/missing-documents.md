@@ -111,6 +111,11 @@ Files that are held and correctly indexed, but that a grep-based workflow cannot
 | `pattern-matching/eker1995_associative_commutative_matching.pdf` | 19 pp | Image-only apart from an Oxford download watermark, **OCR sidecar `.txt` alongside** (77 KB, good quality). |
 | `term-rewriting/klop1992_term_rewriting_systems.pdf` | 112 pp | Has a text layer, but it **drops `fi`/`ffi` ligatures**: "uni cation", "speci cations", "classi cation". Search `uni cation`, or either side of the ligature. |
 | `textbooks/geddes_czapor_labahn1992_…pdf` | 593 pp | Body text is sound; the **table-of-contents pages are OCR noise** ("In od ion", "Algo i hm"). Grep the body for chapter titles. |
+| `textbooks/karr1981_summation_in_finite_terms.pdf` | 46 pp | **Partial letter-spacing** — scattered prose extracts as "p a p e r", "c o n c e r n e d w i t h". Greps *under-count* rather than fail: `theorem` shows 76 of 100. Recorded here as **clean** until round 6. |
+| `pattern-matching/bachmair1995_ac_discrimination_nets.pdf` | 7 pp | **Letter-spaced byline** — `grep Anantharaman` / `grep Chabin` return zero on a paper both co-wrote. |
+| `textbooks/bronstein2005_symbolic_integration_1.pdf` | 331 pp | Mild letter-spacing (~360 prose runs); `Rothstein` shows 53 of 54. Body otherwise sound. |
+| `pattern-matching/benanav1987_complexity_of_matching_problems.pdf` | 14 pp | Letter-spacing hides whole words — `important` and `programming` both return **zero**. The abstract, which carries both quoted complexity results, extracts cleanly. |
+
 **A trap worth knowing about.** Eker's PDF reports extractable text on *every* page, so a naive
 text-layer check passes it — but the only text is the download watermark repeated, 860 characters
 across 19 pages. When auditing the corpus, check the *variety* of extracted text, not just its
@@ -118,8 +123,8 @@ presence.
 
 **A quality caveat, not a gap.** `textbooks/karr1985_theory_of_summation_in_finite_terms.pdf` has a
 text layer, but its OCR systematically drops the letter `h` — "Teory of Summation", "matematical",
-"algoritm", "te" for "the". Searches for `the` or `theorem` silently fail. The 1981 Karr paper is
-clean. Klop 1992 fails the same way on `fi`/`ffi`, and it was found only because a structural claim
+"algoritm", "te" for "the". Searches for `the` or `theorem` silently fail. The 1981 paper is **not** clean either —
+see the letter-spacing rows above; it was described that way here until the sixth round. Klop 1992 fails the same way on `fi`/`ffi`, and it was found only because a structural claim
 about the survey's contents was being checked and `grep unification` came back empty on a survey with
 a section titled *Unification*.
 
@@ -127,6 +132,26 @@ a section titled *Unification*.
 about the text. Before recording that a source does not say something, confirm the file can say it:
 extract a page and read it. Every silent-failure entry in this table was found that way, and the
 Eker trap is the same rule from the other side — extractable text is not readable text.
+
+**And the sixth round's corollary: a *successful* grep is not an answer either.** Every defect above
+this one announces itself by returning nothing. Letter-spacing does not — it returns most of the hits and
+hides the rest, so the result looks like a finished search. `grep theorem` on Karr 1981 reports 76 hits;
+there are 100. Nothing about the 76 suggests the other 24. This is why the file sat here recorded as
+"clean" through five validation rounds: every check run against it succeeded. Counting matters, not just
+presence — when a count is load-bearing, despace first:
+
+```sh
+despace() { python3 -c "import re,sys; sys.stdout.write(re.sub(r'(?<![A-Za-z])((?:[A-Za-z] ){2,}[A-Za-z])(?![A-Za-z])', lambda m: m.group(1).replace(' ',''), sys.stdin.read()))"; }
+
+pdftotext FILE.pdf - | despace | grep -oiE '\btheorem\b' | wc -l   # 100
+pdftotext FILE.pdf -           | grep -oiE '\btheorem\b' | wc -l   #  76
+```
+
+Two ways to get this wrong, both hit while writing this entry. A `sed` loop is the obvious reach and
+does **not** work: once it joins the first pair the left-hand side is two characters, the single-letter
+pattern stops matching, and the run is left half-collapsed. And `grep -c` counts matching *lines*, not
+occurrences — it reports 11 here — so an occurrence count needs `grep -o … | wc -l`. Collapse each run
+whole, and count occurrences, or the probe silently reproduces the very error it is meant to detect.
 
 ### Regenerating the sidecars
 

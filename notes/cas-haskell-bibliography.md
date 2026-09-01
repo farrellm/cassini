@@ -26,7 +26,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 
 **Karr, Michael.** "Summation in Finite Terms." *Journal of the ACM* 28, no. 2 (1981): 305–350. DOI: 10.1145/322248.322255.
 > The difference-field ("ΠΣ-field") theory of symbolic summation — the discrete analogue of Risch's integration algorithm, and **the gap in *A=B***, which covers Gosper/Zeilberger/WZ but not this. Read it when indefinite nested sums and products come up. See also his **"Theory of Summation in Finite Terms," *Journal of Symbolic Computation* 1, no. 3 (1985): 303–315, DOI: 10.1016/S0747-7171(85)80038-9.** *Optional; needed only for the summation requirement.*
-> **Corpus caveat:** the 1985 paper's copy in `references/` has a text layer, but its OCR systematically drops the letter `h` — "Teory of Summation", "matematical", "algoritm", "te" for "the". Searches for `the` or `theorem` return nothing and look like honest misses. The 1981 paper is clean.
+> **Corpus caveat:** the 1985 paper's copy in `references/` has a text layer, but its OCR systematically drops the letter `h` — "Teory of Summation", "matematical", "algoritm", "te" for "the". Searches for `the` or `theorem` return nothing and look like honest misses. **The 1981 paper is not clean either** — it was described that way here until the sixth round. Its defect is different and subtler: scattered runs of prose extract letter-spaced ("p a p e r", "c o n c e r n e d w i t h"), so a grep succeeds while *under-counting*. `theorem` returns 76 hits against 100 actually present. Nothing looks wrong, which is the danger.
 
 **Schneider, Carsten.** "Symbolic Summation Assists Combinatorics." *Séminaire Lotharingien de Combinatoire* 56 (2007), Article B56b. Free from RISC (`www3.risc.jku.at`).
 > The modern continuation of Karr: the **Sigma** Mathematica package, built on Karr's algorithm with extensions for non-trivial multi-sum problems. The practical entry point to difference-field summation, and easier going than Karr's papers. *Optional; free.*
@@ -197,6 +197,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **Ishii, Hiromi.** "A Purely Functional Computer Algebra System Embedded in Haskell." arXiv:1807.01456. Published in *Computer Algebra in Scientific Computing (CASC 2018)*, Springer LNCS 11077, pp. 288–303. DOI: 10.1007/978-3-319-99639-4_20.
 > **The reference for typed algebra in Haskell.** Encodes polynomial arity, monomial ordering, and coefficient ring as type-level parameters so elements of ℚ[x,y,z] and ℚ[w,x,y] can't be added by mistake. Implements Gröbner bases with F4, F5, and Hilbert-driven algorithms. Positioned explicitly against DoCon "with more emphasis on safety and correctness." *Caveat: the type system checks arity and identity, not ring axioms — those are verified by QuickCheck property tests, not proof.* Free on arXiv.
+> **Corpus caveat:** the copy held is the **arXiv pre-print** (`arXiv:1807.01456v2`, 16 pp.), which says so on its own last page — "This is a pre-print of an article published in 'Computer Algebra in Scientific Computing' (2018)" — and carries only the *book*-level DOI `10.1007/978-3-319-99639-4`. The LNCS volume number, the page range and the chapter DOI `…_20` in the citation above appear nowhere in the file; they are verified against Crossref, which confirms the title, "Lecture Notes in Computer Science", pages 288–303, 2018, and the CASC editors (Gerdt, Koepf, Seiler, Vorozhtsov). Same shape as the Fateman and SymPy findings: quote the text freely, but do not treat the published-venue details as confirmed by the held file.
 
 **Zhu, Bowen, Aayush Sabharwal, Songchen Tan, Yingbo Ma, Alan Edelman, and Christopher Rackauckas.** "Efficient Symbolic Computation via Hash Consing." arXiv:2509.20534 (MIT / JuliaHub).
 > An implementation report on adding hash-consing to JuliaSymbolics via a global **weak-reference** table (up to 3.2× faster, 2× less memory), not a survey — but its short related-work section is the useful map, and it is more negative than usually reported. the **common subexpression elimination code** in SymPy and SymEngine is "implemented by storing identical subexpressions in a set data structure, instead of by leveraging the DAG structure" — a claim about their CSE passes, not their expression representation; FriCAS and REDUCE get Lisp symbol interning but no proper hash-consing; **GiNaC "does use a form of reference counting," and of GiNaC and Symbolica alike it says "it is trivial to construct programs using either package that demonstrate identical subexpressions with different memory locations"** — i.e. neither hash-conses. On closed source it notes only that a Wolfram-internals page contains descriptions that "suggest hash-consing is used internally," with "no description of the performance effects." **Implication for you (our inference, not theirs): the mechanism needs immutable terms plus a GC that collects through weak references — precisely Haskell's model.** Free.
@@ -431,6 +432,36 @@ the **recommendations**. One is wrong, and it is corrected above.
   occurrence anywhere in the corpus is Greif's reference list, citing Fateman's 1979 *MACSYMA's General
   Simplifier: Philosophy and Operation*. It is now unquoted in both, like the OBJ slogan before it. And
   a stray double period in `cas-haskell.md`'s `Expr` paragraph.
+
+**A sixth round, 2026-08-31**, rebuilt the index again and re-ran the quotation sweep (107 quotes in
+`cas-haskell.md`, all resolving), then audited three categories the previous five had not swept
+mechanically: **bibliographic identifiers** (every ISBN, DOI, arXiv id and volume/page range),
+**held-copy identity across all 40 PDFs**, and **author lists**. All eleven ISBNs check out against
+the printings held. Every source named in `cas-haskell.md` has an entry here. Three things did not
+hold:
+
+- **The Ishii copy held is the arXiv pre-print, and the citation's published-venue details are not in
+  it.** The file says so itself — "This is a pre-print of an article published in 'Computer Algebra in
+  Scientific Computing' (2018)" — and carries only the *book* DOI `10.1007/978-3-319-99639-4`. LNCS
+  11077, pp. 288–303 and the chapter DOI `…_20` appear nowhere in it. They are correct — Crossref
+  confirms the title, the LNCS series, pages 288–303, 2018 and the CASC editors — but they were being
+  presented as if the held file established them. This is the third instance of one pattern: SymPy
+  (round 3, preprint substituted for the article), Fateman (round 4, author copy with no journal
+  metadata), Ishii (here). An identity check on every held PDF is now part of the sweep, not an
+  incident response.
+- **Letter-spacing is a third silent-grep failure mode, and the first that fails while *succeeding*.**
+  Karr 1981 — recorded in these notes as "the clean one" through five rounds — extracts scattered prose
+  as "p a p e r", "c o n c e r n e d w i t h": `grep theorem` returns 76 of 100. Benanav returns zero for
+  `important` and `programming`. The IJCAI '95 discrimination-net paper letter-spaces its byline, so
+  `grep Anantharaman` and `grep Chabin` return zero on a paper both co-wrote. Every previously recorded
+  defect announces itself by returning nothing; this one returns most of the hits and hides the rest,
+  which is why five rounds of checks all passed against it. Recorded on each entry and in
+  `../references/missing-documents.md`, with a despacing probe that is tested rather than plausible.
+- **The "roughly 60×" AST speedup is a chart reading.** Krebber's thesis prose says only that the AST
+  speedup is "even greater" than LinAlg's five-to-twenty; 60 comes from Figure 5.4a's axis. It is a fair
+  reading, but the MatchPy *paper* separately reports a "speedup of up to 60" for a different
+  measurement — the syntactic discrimination net on LinAlg — so the two are now kept apart explicitly,
+  before a later round "corrects" one into the other.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
