@@ -7,7 +7,7 @@ are **not** held in this corpus, with what was tried and why the gap stands.
 *exists* here; its "Not obtained" table is the short version. This file adds the routes attempted and
 whether the gap actually costs anything.
 
-Status checked **2026-08-31** (fourth validation round). The three standing gaps were re-tested
+Status checked **2026-08-31** (fifth validation round). The three standing gaps were re-tested
 this round, not carried forward on trust: `riptutorial.com/wolfram-language` still redirects and
 `/topic/2549/evaluation-order` still serves something else, with the Wayback Machine holding no
 snapshot of either URL; `axiom-developer.org` still fails to resolve (`curl` exit, HTTP `000`). The
@@ -51,6 +51,27 @@ nobody had opened, rather than quotes resting on a document nobody had fetched:
 The lesson generalises, and is now `../references/CLAUDE.md` rule 2: the "pointers only" waiver covers
 *citing* a system, not quoting its page — and not making a claim about what its page says either.
 
+The **fourth round** closed two more of exactly that kind — Springer's book page for Geddes and
+Symbolica's 2025 home page, both of them pages the notes made claims *about*.
+
+A **fifth round** (2026-08-31) turned the same sweep on the *recommendations* rather than the
+citations, and found one more gap of the third round's kind — a claim resting on a page nobody had
+opened. The notes described `sbv` as showing "how to overload `Num`/`Ord` for symbolic values
+(`.==`, `.>`)". The `Data.SBV` haddock page says the reverse of the `Ord` half: `SBV a` takes the
+standard `Num`, but "we can't use Haskell's `Eq` class since Haskell insists on returning `Bool`" and
+"we cannot implement Haskell's `Ord` class since there is no way to return an `Ordering` value from a
+symbolic comparison" — hence the mirrored `EqSymbolic`/`OrdSymbolic` classes that `.==` and `.>`
+belong to. The page is now held and the claim is corrected in both notes.
+
+| Source | § | Why it was missing | Now |
+| :--- | :--- | :--- | :--- |
+| `sbv`, *Data.SBV* haddock | §7 | §7 asserted which type classes `sbv` overloads — a claim about the package's documented API, which the "pointers only" waiver does not cover | Held; the assertion was **wrong** on `Eq`/`Ord`, and both notes are corrected. |
+
+The lesson this one adds: a wrong claim about an unheld page does not have to *look* wrong. This one
+read as an ordinary one-line library summary for four rounds, and survived every quotation sweep
+precisely because it quoted nothing. Sweeping for unanchored quotations does not find unanchored
+assertions; those have to be found by asking, entry by entry, what document would settle it.
+
 That leaves three gaps, none of which is a paywall — the material is gone from the web or was never
 written. **None of them costs anything**, because each is fully superseded by something held here.
 
@@ -90,7 +111,6 @@ Files that are held and correctly indexed, but that a grep-based workflow cannot
 | `pattern-matching/eker1995_associative_commutative_matching.pdf` | 19 pp | Image-only apart from an Oxford download watermark, **OCR sidecar `.txt` alongside** (77 KB, good quality). |
 | `term-rewriting/klop1992_term_rewriting_systems.pdf` | 112 pp | Has a text layer, but it **drops `fi`/`ffi` ligatures**: "uni cation", "speci cations", "classi cation". Search `uni cation`, or either side of the ligature. |
 | `textbooks/geddes_czapor_labahn1992_…pdf` | 593 pp | Body text is sound; the **table-of-contents pages are OCR noise** ("In od ion", "Algo i hm"). Grep the body for chapter titles. |
-
 **A trap worth knowing about.** Eker's PDF reports extractable text on *every* page, so a naive
 text-layer check passes it — but the only text is the download watermark repeated, 860 characters
 across 19 pages. When auditing the corpus, check the *variety* of extracted text, not just its
@@ -135,6 +155,12 @@ A third such quotation existed until the fourth round: the bibliography reproduc
 *preprint's* wording to contrast it with the published article, after the preprint itself had been
 deleted from the corpus in round three. The quotation is gone; the contrast is now drawn on the
 metadata that is checkable without it (27 pp./27 authors against 19 pp./24 authors).
+
+The fifth round unquoted one more phrase of the `dumb-cas`/OBJ kind — Maxima's "general simplifier",
+which `cas-haskell.md` carried in quotation marks and the bibliography did not. It has no anchor here:
+the term's only occurrence anywhere in the corpus is Greif's reference list, citing Fateman's 1979
+*MACSYMA's General Simplifier: Philosophy and Operation*. The term is real; the quotation marks were
+not earning anything, and both files now read the same way.
 
 The live risks are no longer *missing* documents but *unreadable* and *misidentified* ones. Terese has
 no text layer and no sidecar; Karr 1985 and Klop 1992 have text layers that fail silently; and the

@@ -229,8 +229,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **`uniplate`** (Neil Mitchell). Hackage.
 > Generic traversal/rewriting over your expression type. The pragmatic choice for a uniform untyped `Expr`.
 
-**`sbv`** (Levent Erkök). Hackage.
-> How to overload `Num`/`Ord` for symbolic values (`.==`, `.>`) and offload to an SMT solver like Z3. Useful for zero-testing side conditions; *not* a rewriting engine.
+**`sbv`** (Levent Erkök). Hackage — the `Data.SBV` haddock page is held in `references/`.
+> **Which numeric classes a symbolic type can reuse, and which it cannot** — the question a CAS `Expr` hits immediately. `SBV a` belongs to the "standard classes `Num`, `Bits`", but *not* to `Eq` or `Ord`: those return `Bool` and `Ordering`, and a symbolic comparison cannot. The page says so twice — "we can't use Haskell's `Eq` class since Haskell insists on returning `Bool`" and "we cannot implement Haskell's `Ord` class since there is no way to return an `Ordering` value from a symbolic comparison" — and supplies "custom versions of `Eq` (`EqSymbolic`) and `Ord` (`OrdSymbolic`)" whose `.==` and `.>` return `SBool`. **Do not describe this as overloading `Num`/`Ord`**; the `Ord` half is the opposite, and the split is the lesson. Also offloads to an SMT solver like Z3, useful for zero-testing side conditions; *not* a rewriting engine.
 
 **`symengine`.** Hackage.
 > Thin FFI bindings to the SymEngine C++ core, if you want a fast external backend.
@@ -304,7 +304,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Penner, "ASTs with Fix and Free" (`chrispenner.ca`) and Milewski, "F-Algebras" (`bartoszmilewski.com`)
 - Wadler, "Data Types a la Carte" (blog, 28 Feb 2008, `wadler.blogspot.com`) — the source of the verdict quoted in §3
 - Pickering, "Data Types à la Carte with Closed Type Families" (`mpickering.github.io`) and SymPy's *Advanced Expression Manipulation* page (`docs.sympy.org`)
-- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, `numeric-prelude` (both the Hackage README, which carries the four objections to `Num`, and the HaskellWiki page), and Symbolica's licence and home pages. All captured in `references/`, the `numeric-prelude` pair on 2026-08-29 and the rest on 2026-08-30, so the quotes have anchors.
+- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, `sbv` (the `Data.SBV` haddock page), `numeric-prelude` (both the Hackage README, which carries the four objections to `Num`, and the HaskellWiki page), and Symbolica's licence and home pages. All captured in `references/` — the `numeric-prelude` pair on 2026-08-29, `sbv` on 2026-08-31, and the rest on 2026-08-30 — so the quotes have anchors.
 - Wikipedia's *Wolfram Language* article (§5, for the MockMMA cease-and-desist sentence and its missing citation)
 
 **Paywalled journal/conference papers — held here, but not freely re-obtainable.** Re-obtaining any
@@ -409,6 +409,28 @@ except `numeric-prelude`'s.
 One quotation was removed rather than sourced: this file reproduced the SymPy *preprint's* wording to
 contrast it with the published article, after the third round had deliberately deleted the preprint
 from the corpus. The contrast survives on metadata that does not require it.
+
+**A fifth round, 2026-08-31**, rebuilt the text index from scratch again — splicing the two OCR
+sidecars back in after the `pdftotext` sweep, as the fourth round's warning says to — and re-tested
+every quoted phrase in both documents, every chapter map and edition history, every PDF page count
+against the index, and the Haskell claims against GHC 9.12.4. All 40 page counts matched their rows,
+and every quotation resolved. This round's focus was the half the previous four had touched least:
+the **recommendations**. One is wrong, and it is corrected above.
+
+- **`sbv` does not demonstrate overloading `Num`/`Ord`.** Both files described it as showing "how to
+  overload `Num`/`Ord` for symbolic values (`.==`, `.>`)". `SBV a` does take the standard `Num`, but
+  `Eq` and `Ord` are exactly the classes it *cannot* reuse — "we can't use Haskell's `Eq` class since
+  Haskell insists on returning `Bool`", "there is no way to return an `Ordering` value from a symbolic
+  comparison" — which is why `EqSymbolic`/`OrdSymbolic` exist and where `.==` and `.>` come from. The
+  entry had it backwards on the half that carries the lesson: a CAS `Expr` hits the same wall, and
+  reusing `Num` while forking `Eq`/`Ord` is the shape of the answer. The `Data.SBV` haddock page is now
+  held — it was a claim about a page nobody had opened, the same failure mode as the fourth round's
+  Geddes and Symbolica gaps, and it went unexamined because the entry read as a plausible summary.
+- Two smaller repairs, neither changing a conclusion: Maxima's "general simplifier" was in quotation
+  marks in `cas-haskell.md` and unquoted here, with no corpus anchor for a verbatim quote — the only
+  occurrence anywhere in the corpus is Greif's reference list, citing Fateman's 1979 *MACSYMA's General
+  Simplifier: Philosophy and Operation*. It is now unquoted in both, like the OBJ slogan before it. And
+  a stray double period in `cas-haskell.md`'s `Expr` paragraph.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
