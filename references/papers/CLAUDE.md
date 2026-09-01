@@ -47,16 +47,36 @@ a page range silently yields an empty file:
   `.txt` OCR sidecar beside them; grep the sidecar.
 
 **Traps — files with a text layer that still fail you.** `eker1995_*` *reports* text on every page, so
-a naive text-layer check passes it — but the only text is a repeated download watermark, 860
-characters across 19 pages; check the variety of extracted text, not its presence.
-`textbooks/karr1985_*` has a real text layer whose OCR drops every `h`, so `grep theorem` returns
-nothing and looks like an honest miss. `term-rewriting/klop1992_*` drops `fi`/`ffi` ligatures the same
-way, so `grep unification` fails on a survey whose §1.6 is *Unification*. And
-`textbooks/geddes_czapor_labahn1992_*` has sound body text but OCR-garbage table-of-contents pages
-("In od ion", "Algo i hm") — grep the body for chapter titles, not the TOC.
+a naive text-layer check passes it — but the only text is a repeated download watermark: 1009
+characters of raw `pdftotext` output across 19 pages, 860 once whitespace is stripped. Check the
+variety of extracted text, not its presence. `textbooks/karr1985_*` has a real text layer whose OCR
+drops every `h`, so `grep theorem` returns nothing and looks like an honest miss.
+`term-rewriting/klop1992_*` drops `fi`/`ffi` ligatures the same way, so `grep unification` fails on a
+survey whose §1.6 is *Unification*. And `textbooks/geddes_czapor_labahn1992_*` has sound body text but
+OCR-garbage table-of-contents pages ("In od ion", "Algo i hm") — grep the body for chapter titles,
+not the TOC.
 
-The rule all four teach: **a failed grep is a question about the file, not an answer about the
+The rule those four teach: **a failed grep is a question about the file, not an answer about the
 text.**
+
+**And a fifth trap, which fails the opposite way.** Several files extract scattered runs of prose
+letter-spaced — "p a p e r", "i m p o r t a n t" — so a grep returns *most* of the hits and hides the
+rest. Nothing looks wrong, which is why this one survived five validation rounds:
+
+- `textbooks/karr1981_*` — `grep theorem` returns **76** of **100**. Recorded across this repo as
+  "the clean one" until the sixth round; it is not.
+- `pattern-matching/benanav1987_*` — `important` and `programming` both return **zero**.
+- `pattern-matching/bachmair1995_*` — the byline is letter-spaced, so `grep Anantharaman` and
+  `grep Chabin` return zero on a paper both co-wrote.
+- `textbooks/bronstein2005_*` — mild; `Rothstein` returns 53 of 54.
+
+So the rule has a second half: **a *successful* grep is not an answer either.** When a count is
+load-bearing, despace first, and test the despacer against a known answer before trusting it:
+
+```sh
+despace() { python3 -c "import re,sys; sys.stdout.write(re.sub(r'(?<![A-Za-z])((?:[A-Za-z] ){2,}[A-Za-z])(?![A-Za-z])', lambda m: m.group(1).replace(' ',''), sys.stdin.read()))"; }
+pdftotext FILE.pdf - | despace | grep -oiE '\btheorem\b' | wc -l
+```
 
 Other large files: `axiom_bookvol10-5_numerics.pamphlet` (30 MB),
 `vonzurgathen_gerhard2013_*` (25 MB, 813 pp.). Extract the page range you need
