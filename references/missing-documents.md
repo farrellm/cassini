@@ -138,8 +138,8 @@ Files that are held and correctly indexed, but that a grep-based workflow cannot
 | `pattern-matching/benanav1987_complexity_of_matching_problems.pdf` | 14 pp | Letter-spacing hides whole words — `important` and `programming` both return **zero**. The abstract, which carries both quoted complexity results, extracts cleanly. |
 
 **A trap worth knowing about.** Eker's PDF reports extractable text on *every* page, so a naive
-text-layer check passes it — but the only text is the download watermark repeated, 860 characters
-across 19 pages. When auditing the corpus, check the *variety* of extracted text, not just its
+text-layer check passes it — but the only text is the download watermark repeated — 860 characters
+across 19 pages once whitespace is stripped, 1009 as raw `pdftotext` output. When auditing the corpus, check the *variety* of extracted text, not just its
 presence.
 
 **A quality caveat, not a gap.** `textbooks/karr1985_theory_of_summation_in_finite_terms.pdf` has a
@@ -232,7 +232,7 @@ Checking a file's *identity*, not just its searchability, belongs in every audit
 
 The fourth round adds one more risk to that list, and it belongs to the *tooling* rather than to any
 file. Rebuilding the plain-text index with a plain `pdftotext` sweep silently overwrites the two OCR
-sidecars with the unreadable extractions they exist to replace — 1009 characters of watermark for
+sidecars with the unreadable extractions they exist to replace — 1009 raw characters of watermark for
 Eker, 14 characters for Bachmair '93 — after which every quotation from those two papers reads as a
 miss. Splice the sidecars in **after** the sweep. It is the same lesson as the Eker trap, arriving
 from the other direction: the tooling will quietly prefer the unreadable copy unless told not to.
