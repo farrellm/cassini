@@ -7,7 +7,7 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**85 documents (~436 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 39 HTML captures — plus 2 OCR sidecars.**
+**87 documents (~436 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 41 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
@@ -144,6 +144,8 @@ cited and were not fetched.
 | [`poly_hackage.html`](./papers/haskell/poly_hackage.html) | The `poly` Hackage page — source for the maintainer-reported "poly is at least 20x-40x faster than the `polynomial` library", with the per-operation benchmark table behind it. Fetched 2026-08-30. | [`hackage.haskell.org/package/poly`](https://hackage.haskell.org/package/poly) | — | 29.2 KB |
 | [`dumb_cas_hackage.html`](./papers/haskell/dumb_cas_hackage.html) | The `dumb-cas` Hackage page — source for "combine the flexibility of a Lisp with the conciseness of a Regex engine". Fetched 2026-08-30. | [`hackage.haskell.org/package/dumb-cas`](https://hackage.haskell.org/package/dumb-cas) | — | 18.2 KB |
 | [`sbv_docs_data_sbv.html`](./papers/haskell/sbv_docs_data_sbv.html) | The `Data.SBV` haddock page — the source for which numeric classes a symbolic type can reuse: `SBV a` takes the "standard classes `Num`, `Bits`" but gets "custom versions of `Eq` (`EqSymbolic`) and `Ord` (`OrdSymbolic`)", because "we can't use Haskell's `Eq` class since Haskell insists on returning `Bool`" and "there is no way to return an `Ordering` value from a symbolic comparison". Added in the fifth round, where the notes were found describing this as overloading `Num`/`Ord`. Fetched 2026-08-31. | [`hackage.haskell.org/package/sbv/docs/Data-SBV.html`](https://hackage.haskell.org/package/sbv/docs/Data-SBV.html) | — | 6.7 MB |
+| [`algebra_hackage.html`](./papers/haskell/algebra_hackage.html) | The `algebra` Hackage page — "Constructive abstract algebra". The source for what Kmett's hierarchy actually contains: an additive/multiplicative split, `Monoidal`/`Group`, `Rig`/`Rng`/`Ring`, `Module`, `Algebra`/`Coalgebra`, and the `Numeric.Domain.*` tower. **It has no `Magma` and prescribes `RebindableSyntax` nowhere** — both were asserted in the notes until the eighth round. Fetched 2026-09-01. | [`hackage.haskell.org/package/algebra`](https://hackage.haskell.org/package/algebra) | — | 31.1 KB |
+| [`constructive_algebra_hackage.html`](./papers/haskell/constructive_algebra_hackage.html) | The `constructive-algebra` Hackage page — the anchor for "Classical structures are implemented without Noetherian assumptions", and for the Bezout-instead-of-principal-ideal-domain design the notes describe. Fetched 2026-09-01. | [`hackage.haskell.org/package/constructive-algebra`](https://hackage.haskell.org/package/constructive-algebra) | — | 18.9 KB |
 | [`numhask_hackage.html`](./papers/haskell/numhask_hackage.html) | The `numhask` Hackage page — the anchor for §7's comparison against `numeric-prelude`, previously made with no source held. Confirms Tony Day as author, the `RebindableSyntax` usage snippet (so it is *not* what distinguishes the two), and the upload date **2026-07-10** against numeric-prelude's 2022-05-28. Fetched 2026-08-30. | [`hackage.haskell.org/package/numhask`](https://hackage.haskell.org/package/numhask) | — | 27.0 KB |
 
 ---
@@ -191,7 +193,7 @@ rather than archiving them here. Where such an entry cites an actual paper, that
 **But the waiver covers citing a system, not quoting its page.** Where the notes quote a README,
 package page or licence *verbatim*, the page is captured here so the quote has an anchor — that is
 what `expreduce_readme.html`, `symja_readme.html`, `symbolica_license.html`,
-`olah_hasksymb_readme.html`, `poly_hackage.html`, `dumb_cas_hackage.html` and `sbv_docs_data_sbv.html` are for. Two further
+`olah_hasksymb_readme.html`, `poly_hackage.html`, `dumb_cas_hackage.html`, `sbv_docs_data_sbv.html`, `algebra_hackage.html` and `constructive_algebra_hackage.html` are for. Two further
 captures close the same kind of gap outside §5/§7: `wadler2008_data_types_a_la_carte_blog.html` (a
 blog post, which the waiver never reached) and `wolfram_ref_ownvalues.html` (cited in §6 alongside
 its three siblings, but previously the only one not held). Adding a verbatim quote from a live page

@@ -72,6 +72,27 @@ read as an ordinary one-line library summary for four rounds, and survived every
 precisely because it quoted nothing. Sweeping for unanchored quotations does not find unanchored
 assertions; those have to be found by asking, entry by entry, what document would settle it.
 
+An **eighth round** (2026-09-01) answered a narrower question — *is anything missing?* — and the
+bookkeeping came back clean: 85 index rows against 85 files, and all three standing gaps re-tested
+rather than carried forward. riptutorial's two URLs return 200 but serve a generic landing page and
+an iOS in-app-purchase tutorial respectively, with the Wayback availability API and CDX index both
+empty for them; `axiom-developer.org` still does not resolve; and the held Brun capture names "Part 1"
+while promising no sequel. But the same sweep found two more package pages carrying claims and not
+held — the third time this class has produced a wrong claim, after `sbv` and the `numhask` comparison.
+
+| Source | § | Why it was missing | Now |
+| :--- | :--- | :--- | :--- |
+| `algebra` package page | §7 | §7 described Kmett's hierarchy as "magmas → semigroups → groups → rings → modules → algebras" and said its page prescribes `RebindableSyntax` | Held; **both were wrong**. The full documentation index has **no `Magma`**, and `RebindableSyntax` appears nowhere on the page, in `Numeric.Algebra`, or in the README. The magma-rooted hierarchy is `numhask`'s; the `RebindableSyntax` point belongs to the numhask/numeric-prelude comparison. |
+| `constructive-algebra` package page | §7 | §7 asserted "coherent rings without Noetherian assumptions" — a claim about the package's documented design | Held; the claim checks out verbatim: "Classical structures are implemented without Noetherian assumptions." |
+
+Corpus now **87 documents / 41 HTML captures**.
+
+**The pattern, stated plainly.** Every one of these was an assertion *about a package's API* that
+quoted nothing, so no quotation sweep could see it, and each read as an ordinary one-line library
+summary. Three have now been wrong: `sbv` (which classes it overloads), the `numhask` comparison
+(what distinguishes it), and `algebra` (what its hierarchy contains). The rule that catches them is
+not a grep — it is asking, entry by entry, *which document settles this*, and then fetching it.
+
 That leaves three gaps, none of which is a paywall — the material is gone from the web or was never
 written. **None of them costs anything**, because each is fully superseded by something held here.
 
@@ -168,13 +189,15 @@ for i in $(ls /tmp/p-*.png | sort -V); do tesseract "$i" - --psm 1 -l eng; print
 
 Nothing in this corpus is missing because it was overlooked — every gap has a recorded reason, and
 the three that remain are unobtainable rather than unpursued. Every quotation in
-`../notes/cas-haskell.md` and the bibliography resolves to a document held here, with **two deliberate
-exceptions**, both of them phrases quoted in order to say they are *not* the source's:
+`../notes/cas-haskell.md` and the bibliography resolves to a document held here, with **three deliberate
+exceptions**, all of them phrases quoted in order to say they are *not* the source's:
 
 - Symbolica's "built for large expressions", which is nobody's wording — the current home page and the
   2023 snapshot that establish this are both held.
 - "the strategies rather than the rewrite rules doing the heavy lifting", widely attributed to the
   Rascal paper and not in it — the paper is held, which is how the absence was established.
+- "magmas → semigroups", quoted in `cas-haskell.md`'s `algebra` entry to record what that entry used
+  to claim. The `algebra` page is held, and its documentation index returns zero for `Magma`.
 
 A third such quotation existed until the fourth round: the bibliography reproduced the SymPy
 *preprint's* wording to contrast it with the published article, after the preprint itself had been

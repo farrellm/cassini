@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **85 documents, ~436 MB**, plus 2 OCR sidecars.
+The local document corpus for the CAS-in-Haskell project. **87 documents, ~436 MB**, plus 2 OCR sidecars.
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -21,7 +21,7 @@ what was tried, and which files are present but unreadable (image-only scans, lo
 | `papers/foundations/` | Richardson's undecidability result; Swierstra and Bahr on composing data types, plus Wadler's blog verdict on the former |
 | `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers and three volumes of the 1981 SMP manual |
 | `papers/cas-architecture/` | SymPy, GiNaC, Fateman on Mathematica/MockMMA, the Rubi and Symbolica writeups (incl. Symbolica's licence and its home page in three states — current, 2023, 2025), a CAS-scoping thesis, the Expreduce and Symja READMEs, and Wikipedia's *Wolfram Language* article |
-| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly`, `dumb-cas` and `sbv` package pages |
+| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly`, `dumb-cas`, `sbv`, `algebra` and `constructive-algebra` package pages |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation — the behavioral spec to implement against |
 | `papers/web-articles/` | Blog posts and course sites: opinion and build-logs, not specifications |
 
@@ -39,8 +39,9 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
   eight README/package/licence captures that anchor verbatim quotes, plus `pickering2014_*` and
   `sympy_docs_*`), four in the third (`symbolica_home`, `symbolica_home_2023_wayback`,
   `wikipedia_wolfram_language`, `numhask_hackage`), and two in the fourth
-  (`springer_geddes_book_page`, `symbolica_home_2025_wayback`); and **1** on **2026-08-31**, in the fifth
-  (`sbv_docs_data_sbv`). The summary gives the date per file. They have no
+  (`springer_geddes_book_page`, `symbolica_home_2025_wayback`); **1** on **2026-08-31**, in the fifth
+  (`sbv_docs_data_sbv`), and **2** on **2026-09-01**, in the eighth (`algebra_hackage`,
+  `constructive_algebra_hackage`). The summary gives the date per file. They have no
   CSS and no images, but the full text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
   `pandoc -t plain`, not by eye.
 - `.pamphlet` files are Axiom's literate LaTeX+SPAD sources; plain text, readable directly.

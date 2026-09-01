@@ -208,8 +208,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **`computational-algebra`** (Hiromi Ishii). `github.com/konn/computational-algebra`
 > The implementation accompanying the paper above. Depends on his `type-natural` and `ghc-typelits-presburger` (a Presburger arithmetic type-checker plugin) packages.
 
-**`algebra`** (Edward Kmett). Hackage / `github.com/ekmett/algebra`
-> Fine-grained algebraic hierarchy: magmas → semigroups → groups → rings → modules → algebras, with additive/multiplicative distinctions. What Ishii's CAS builds on. *Recommended as your coefficient tower.*
+**`algebra`** (Edward Kmett). Hackage / `github.com/ekmett/algebra` — the package page is held in `references/`.
+> "Constructive abstract algebra", and what Ishii's CAS builds on. The hierarchy, read off its own module and class index: an **additive/multiplicative split** (`Numeric.Additive.*` against the `Multiplicative` class), through `Monoidal` and `Group` to `Rig`/`Rng`/`Ring`, then `Module`, then `Algebra`/`Coalgebra` — plus the `Numeric.Domain.*` tower that a coefficient tower actually needs, whose superclass chain is `Domain` → `IntegralDomain` → `GCDDomain` → `UFD` → `PID` → `Euclidean`. **It has no `Magma` class, and its pages prescribe `RebindableSyntax` nowhere** — both were asserted here until the eighth round; the magma-rooted hierarchy is `numhask`'s, and the `RebindableSyntax` point belongs to the numhask/numeric-prelude comparison. *Recommended as your coefficient tower.*
 
 **`numeric-prelude`** (Dylan Thurston, Henning Thielemann, Mikael Johansson). Hackage — **the README is where the argument lives**; the HaskellWiki "Numeric Prelude" page adds the structure list and the *Future plans* section.
 > The canonical statement of **why the standard `Num` class is wrong for a CAS**, in four distinct objections — keep them apart, the last two are not one point: it "defines no semantics for the fundamental operations" (nothing asserts associativity of addition); it has "superfluous superclasses" — `Eq` and `Show` under `Num`, impossible to satisfy non-trivially for e.g. a function-valued ring (`data IntegerFunction a = IF (a -> Integer)`); it carries "a mix of semantic operations and representation specific operations" (`toInteger`, `toRational`, `decodeFloat`); and "the hierarchy is not finely grained enough", so that "operations that are often defined independently are lumped together" — its example being that defining `+` for a `Dollar` or `Vector` type forces `*` on you as well. Splits `Num` into `Additive`, `Ring`, `Field`, `Algebraic`, `Transcendental`, etc. (`Num → Additive, Ring, Absolute`; `Fractional → Field`; `Floating → Algebraic, Transcendental`). Axioms are stated as QuickCheck properties. The wiki candidly documents the gaps: "the code still misses proper linear algebra code," and static checking is still unsolved for "residue classes, matrix computations, infinite precision numbers, fixed point numbers." It does rely on extensions beyond Haskell 98: the wiki's opening sentence names **multi-parameter type classes** specifically.
@@ -220,8 +220,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **`poly`** (Andrew Lelechenko / Bodigrim). Hackage.
 > Fast `Vector`-backed uni- and multivariate polynomials with Karatsuba multiplication, integrating with the `semirings` `GcdDomain`/`Euclidean` classes. Documented as "at least 20x-40x faster than the [`polynomial`] library" — a self-reported figure, though the published per-operation benchmarks (22–39× on addition, 52–303× on multiplication) are consistent with it.
 
-**`constructive-algebra`** (Anders Mörtberg et al.). Hackage.
-> Small and very readable constructive ring/ideal/matrix code; coherent rings without Noetherian assumptions. Good reading rather than a dependency.
+**`constructive-algebra`** (Anders Mörtberg et al.). Hackage — the package page is held in `references/`.
+> Small and very readable constructive ring/ideal/matrix code. Its page states the design point directly: "Classical structures are implemented without Noetherian assumptions. This means that it is not assumed that all ideals are finitely generated" — so principal ideal domains give way to Bezout domains. Good reading rather than a dependency.
 
 **`recursion-schemes`** (Edward Kmett) and **`data-fix`**. Hackage.
 > `cata`/`ana` over a base functor — the clean way to write folds, evaluators, and substitution over your `Expr`.
@@ -491,6 +491,27 @@ One residual, unchanged from round six: **"Terese is in print" could not be conf
 site returns 500 to `curl` and Open Library carries no availability data. The claim is plausible and
 low-stakes, but it has now failed verification twice and is recorded here rather than left as though
 it had been checked.
+
+**An eighth round, 2026-09-01**, started from the narrow question *is any document missing?* The
+bookkeeping was clean — 85 index rows against 85 files, and the three standing gaps re-tested live
+rather than trusted — but the sweep for claims resting on unheld pages found two more, and one of
+them was wrong in both halves.
+
+- **Kmett's `algebra` has no `Magma` class, and prescribes `RebindableSyntax` nowhere.** §7 described
+  its hierarchy as "magmas → semigroups → groups → rings → modules → algebras" and said its page
+  prescribes `RebindableSyntax`. Its full documentation index returns **zero** for `Magma`;
+  `RebindableSyntax` appears neither on the Hackage page, nor in `Numeric.Algebra`, nor in the README.
+  The magma-rooted hierarchy is `numhask`'s — the package named in the next sentence — and the
+  `RebindableSyntax` point belongs to the numhask/numeric-prelude comparison, where this file already
+  had it right. The entry now describes the hierarchy the package actually has, including the
+  `Numeric.Domain.*` chain `Domain` → `IntegralDomain` → `GCDDomain` → `UFD` → `PID` → `Euclidean`,
+  read off the class declarations rather than assumed.
+- **`constructive-algebra`'s page is now held**, and its claim checks out verbatim.
+
+Both pages are captured, taking the corpus to **87 documents / 41 HTML captures**. This is the third
+time an unanchored assertion about a package's API has turned out wrong — after `sbv` in round five
+and the `numhask` comparison in round three — and all three were invisible to quotation sweeps because
+they quoted nothing.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
