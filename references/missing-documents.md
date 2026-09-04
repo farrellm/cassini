@@ -7,7 +7,11 @@ are **not** held in this corpus, with what was tried and why the gap stands.
 *exists* here; its "Not obtained" table is the short version. This file adds the routes attempted and
 whether the gap actually costs anything.
 
-Status checked **2026-08-30** (third validation round).
+Status checked **2026-08-31** (fifth validation round). The three standing gaps were re-tested
+this round, not carried forward on trust: `riptutorial.com/wolfram-language` still redirects and
+`/topic/2549/evaluation-order` still serves something else, with the Wayback Machine holding no
+snapshot of either URL; `axiom-developer.org` still fails to resolve (`curl` exit, HTTP `000`). The
+Brun series is unchanged from the third round.
 
 ---
 
@@ -42,10 +46,52 @@ nobody had opened, rather than quotes resting on a document nobody had fetched:
 | Symbolica home page | §5 | The notes quoted it as "built for large expressions" | Held — and the quote was **wrong**: that is nobody's wording, here or in the 2023 snapshot (also held), which says "a blazing fast symbolic manipulation toolkit". The phrase was the notes' own paraphrase and has been unquoted. |
 | Wikipedia, *Wolfram Language* | §5 | The MockMMA cease-and-desist treatment is an assertion about what that page says **and does not cite** | Held; the assertion checks out — the sentence carries no inline reference. |
 | `numhask` package page | §7 | §7 compared numhask against numeric-prelude on upkeep and hierarchy size with only one side held | Held; the comparison is now dated (2026-07-10 vs 2022-05-28) rather than asserted. |
-| SymPy, *PeerJ CS* 3:e103 | §5 | Not missing so much as **substituted**: the file held under this citation was the PeerJ Preprints review manuscript, 19 pp. and 24 authors | The published article (27 pp., 27 authors) is now held. The quoted sentence differs: published "Unlike many CAS's", preprint "Unlike many CASs". |
+| SymPy, *PeerJ CS* 3:e103 | §5 | Not missing so much as **substituted**: the file held under this citation was the PeerJ Preprints review manuscript, 19 pp. and 24 authors | The published article (27 pp., 27 authors) is now held. The two texts differ by a stray apostrophe in the sentence most often quoted, so a quotation has to name which text it came from; the manuscript is deliberately not held, and nothing quotes it any more. |
 
 The lesson generalises, and is now `../references/CLAUDE.md` rule 2: the "pointers only" waiver covers
 *citing* a system, not quoting its page — and not making a claim about what its page says either.
+
+The **fourth round** closed two more of exactly that kind — Springer's book page for Geddes and
+Symbolica's 2025 home page, both of them pages the notes made claims *about*.
+
+A **fifth round** (2026-08-31) turned the same sweep on the *recommendations* rather than the
+citations, and found one more gap of the third round's kind — a claim resting on a page nobody had
+opened. The notes described `sbv` as showing "how to overload `Num`/`Ord` for symbolic values
+(`.==`, `.>`)". The `Data.SBV` haddock page says the reverse of the `Ord` half: `SBV a` takes the
+standard `Num`, but "we can't use Haskell's `Eq` class since Haskell insists on returning `Bool`" and
+"we cannot implement Haskell's `Ord` class since there is no way to return an `Ordering` value from a
+symbolic comparison" — hence the mirrored `EqSymbolic`/`OrdSymbolic` classes that `.==` and `.>`
+belong to. The page is now held and the claim is corrected in both notes.
+
+| Source | § | Why it was missing | Now |
+| :--- | :--- | :--- | :--- |
+| `sbv`, *Data.SBV* haddock | §7 | §7 asserted which type classes `sbv` overloads — a claim about the package's documented API, which the "pointers only" waiver does not cover | Held; the assertion was **wrong** on `Eq`/`Ord`, and both notes are corrected. |
+
+The lesson this one adds: a wrong claim about an unheld page does not have to *look* wrong. This one
+read as an ordinary one-line library summary for four rounds, and survived every quotation sweep
+precisely because it quoted nothing. Sweeping for unanchored quotations does not find unanchored
+assertions; those have to be found by asking, entry by entry, what document would settle it.
+
+An **eighth round** (2026-09-01) answered a narrower question — *is anything missing?* — and the
+bookkeeping came back clean: 85 index rows against 85 files, and all three standing gaps re-tested
+rather than carried forward. riptutorial's two URLs return 200 but serve a generic landing page and
+an iOS in-app-purchase tutorial respectively, with the Wayback availability API and CDX index both
+empty for them; `axiom-developer.org` still does not resolve; and the held Brun capture names "Part 1"
+while promising no sequel. But the same sweep found two more package pages carrying claims and not
+held — the third time this class has produced a wrong claim, after `sbv` and the `numhask` comparison.
+
+| Source | § | Why it was missing | Now |
+| :--- | :--- | :--- | :--- |
+| `algebra` package page | §7 | §7 described Kmett's hierarchy as "magmas → semigroups → groups → rings → modules → algebras" and said its page prescribes `RebindableSyntax` | Held; **both were wrong**. The full documentation index has **no `Magma`**, and `RebindableSyntax` appears nowhere on the page, in `Numeric.Algebra`, or in the README. The magma-rooted hierarchy is `numhask`'s; the `RebindableSyntax` point belongs to the numhask/numeric-prelude comparison. |
+| `constructive-algebra` package page | §7 | §7 asserted "coherent rings without Noetherian assumptions" — a claim about the package's documented design | Held; the claim checks out verbatim: "Classical structures are implemented without Noetherian assumptions." |
+
+Corpus now **87 documents / 41 HTML captures**.
+
+**The pattern, stated plainly.** Every one of these was an assertion *about a package's API* that
+quoted nothing, so no quotation sweep could see it, and each read as an ordinary one-line library
+summary. Three have now been wrong: `sbv` (which classes it overloads), the `numhask` comparison
+(what distinguishes it), and `algebra` (what its hierarchy contains). The rule that catches them is
+not a grep — it is asking, entry by entry, *which document settles this*, and then fetching it.
 
 That leaves three gaps, none of which is a paywall — the material is gone from the web or was never
 written. **None of them costs anything**, because each is fully superseded by something held here.
@@ -86,16 +132,20 @@ Files that are held and correctly indexed, but that a grep-based workflow cannot
 | `pattern-matching/eker1995_associative_commutative_matching.pdf` | 19 pp | Image-only apart from an Oxford download watermark, **OCR sidecar `.txt` alongside** (77 KB, good quality). |
 | `term-rewriting/klop1992_term_rewriting_systems.pdf` | 112 pp | Has a text layer, but it **drops `fi`/`ffi` ligatures**: "uni cation", "speci cations", "classi cation". Search `uni cation`, or either side of the ligature. |
 | `textbooks/geddes_czapor_labahn1992_…pdf` | 593 pp | Body text is sound; the **table-of-contents pages are OCR noise** ("In od ion", "Algo i hm"). Grep the body for chapter titles. |
+| `textbooks/karr1981_summation_in_finite_terms.pdf` | 46 pp | **Partial letter-spacing** — scattered prose extracts as "p a p e r", "c o n c e r n e d w i t h". Greps *under-count* rather than fail: `theorem` shows 76 of 100. Recorded here as **clean** until round 6. |
+| `pattern-matching/bachmair1995_ac_discrimination_nets.pdf` | 7 pp | **Letter-spaced byline** — `grep Anantharaman` / `grep Chabin` return zero on a paper both co-wrote. |
+| `textbooks/bronstein2005_symbolic_integration_1.pdf` | 331 pp | Mild letter-spacing (~360 prose runs); `Rothstein` shows 53 of 54. Body otherwise sound. |
+| `pattern-matching/benanav1987_complexity_of_matching_problems.pdf` | 14 pp | Letter-spacing hides whole words — `important` and `programming` both return **zero**. The abstract, which carries both quoted complexity results, extracts cleanly. |
 
 **A trap worth knowing about.** Eker's PDF reports extractable text on *every* page, so a naive
-text-layer check passes it — but the only text is the download watermark repeated, 860 characters
-across 19 pages. When auditing the corpus, check the *variety* of extracted text, not just its
+text-layer check passes it — but the only text is the download watermark repeated — 860 characters
+across 19 pages once whitespace is stripped, 1009 as raw `pdftotext` output. When auditing the corpus, check the *variety* of extracted text, not just its
 presence.
 
 **A quality caveat, not a gap.** `textbooks/karr1985_theory_of_summation_in_finite_terms.pdf` has a
 text layer, but its OCR systematically drops the letter `h` — "Teory of Summation", "matematical",
-"algoritm", "te" for "the". Searches for `the` or `theorem` silently fail. The 1981 Karr paper is
-clean. Klop 1992 fails the same way on `fi`/`ffi`, and it was found only because a structural claim
+"algoritm", "te" for "the". Searches for `the` or `theorem` silently fail. The 1981 paper is **not** clean either —
+see the letter-spacing rows above; it was described that way here until the sixth round. Klop 1992 fails the same way on `fi`/`ffi`, and it was found only because a structural claim
 about the survey's contents was being checked and `grep unification` came back empty on a survey with
 a section titled *Unification*.
 
@@ -103,6 +153,26 @@ a section titled *Unification*.
 about the text. Before recording that a source does not say something, confirm the file can say it:
 extract a page and read it. Every silent-failure entry in this table was found that way, and the
 Eker trap is the same rule from the other side — extractable text is not readable text.
+
+**And the sixth round's corollary: a *successful* grep is not an answer either.** Every defect above
+this one announces itself by returning nothing. Letter-spacing does not — it returns most of the hits and
+hides the rest, so the result looks like a finished search. `grep theorem` on Karr 1981 reports 76 hits;
+there are 100. Nothing about the 76 suggests the other 24. This is why the file sat here recorded as
+"clean" through five validation rounds: every check run against it succeeded. Counting matters, not just
+presence — when a count is load-bearing, despace first:
+
+```sh
+despace() { python3 -c "import re,sys; sys.stdout.write(re.sub(r'(?<![A-Za-z])((?:[A-Za-z] ){2,}[A-Za-z])(?![A-Za-z])', lambda m: m.group(1).replace(' ',''), sys.stdin.read()))"; }
+
+pdftotext FILE.pdf - | despace | grep -oiE '\btheorem\b' | wc -l   # 100
+pdftotext FILE.pdf -           | grep -oiE '\btheorem\b' | wc -l   #  76
+```
+
+Two ways to get this wrong, both hit while writing this entry. A `sed` loop is the obvious reach and
+does **not** work: once it joins the first pair the left-hand side is two characters, the single-letter
+pattern stops matching, and the run is left half-collapsed. And `grep -c` counts matching *lines*, not
+occurrences — it reports 11 here — so an occurrence count needs `grep -o … | wc -l`. Collapse each run
+whole, and count occurrences, or the probe silently reproduces the very error it is meant to detect.
 
 ### Regenerating the sidecars
 
@@ -119,12 +189,50 @@ for i in $(ls /tmp/p-*.png | sort -V); do tesseract "$i" - --psm 1 -l eng; print
 
 Nothing in this corpus is missing because it was overlooked — every gap has a recorded reason, and
 the three that remain are unobtainable rather than unpursued. Every quotation in
-`../notes/cas-haskell.md` and the bibliography resolves to a document held here, with one deliberate
-exception: the notes quote Symbolica's "built for large expressions" only in order to say it is not
-Symbolica's wording, and both captures that establish that are held.
+`../notes/cas-haskell.md` and the bibliography resolves to a document held here, with **three deliberate
+exceptions**, all of them phrases quoted in order to say they are *not* the source's:
+
+- Symbolica's "built for large expressions", which is nobody's wording — the current home page and the
+  2023 snapshot that establish this are both held.
+- "the strategies rather than the rewrite rules doing the heavy lifting", widely attributed to the
+  Rascal paper and not in it — the paper is held, which is how the absence was established.
+- "magmas → semigroups", quoted in `cas-haskell.md`'s `algebra` entry to record what that entry used
+  to claim. The `algebra` page is held, and its documentation index returns zero for `Magma`.
+
+A third such quotation existed until the fourth round: the bibliography reproduced the SymPy
+*preprint's* wording to contrast it with the published article, after the preprint itself had been
+deleted from the corpus in round three. The quotation is gone; the contrast is now drawn on the
+metadata that is checkable without it (27 pp./27 authors against 19 pp./24 authors).
+
+The fifth round unquoted one more phrase of the `dumb-cas`/OBJ kind — Maxima's "general simplifier",
+which `cas-haskell.md` carried in quotation marks and the bibliography did not. It has no anchor here:
+the term's only occurrence anywhere in the corpus is Greif's reference list, citing Fateman's 1979
+*MACSYMA's General Simplifier: Philosophy and Operation*. The term is real; the quotation marks were
+not earning anything, and both files now read the same way.
+
+The **seventh round** (2026-09-01) found a fourth misidentified copy, and it is the one the round-six
+sweep was built to catch and could not. `petkovsek_wilf_zeilberger1996_a_eq_b.pdf` is the authors'
+free electronic edition — internal title `PwzForPC.DVI`, Acrobat Distiller 3.0, created 27 April 1997,
+217 pp. — and not the A K Peters 1996 printing the bibliography cites. It contains no publisher
+imprint, no ISBN, no copyright page, and no occurrence of "1996" or "A K Peters" anywhere. It is
+byte-identical (md5 `02eff372…`) to what Wilf's UPenn page serves today, which confirms the
+*availability* claim exactly while leaving the *publisher and year* unconfirmed by the file.
+
+**Why round six's identity sweep missed it.** That sweep scanned all 40 PDFs for self-declared status
+markers — "pre-print", "accepted manuscript", "submitted", "draft". A=B declares nothing about
+itself; it is simply a different edition of the same text, and no marker exists to find. What caught
+it was checking the citation's *fields* — publisher and year — against the file, one field at a time.
+A file that lies about nothing can still not be the thing you cited. Check fields, not markers.
 
 The live risks are no longer *missing* documents but *unreadable* and *misidentified* ones. Terese has
 no text layer and no sidecar; Karr 1985 and Klop 1992 have text layers that fail silently; and the
 SymPy entry was, until the third round, a different document from the one it was cited as — which no
 amount of grepping would have caught, because the preprint contains the passages the notes quote.
 Checking a file's *identity*, not just its searchability, belongs in every audit.
+
+The fourth round adds one more risk to that list, and it belongs to the *tooling* rather than to any
+file. Rebuilding the plain-text index with a plain `pdftotext` sweep silently overwrites the two OCR
+sidecars with the unreadable extractions they exist to replace — 1009 raw characters of watermark for
+Eker, 14 characters for Bachmair '93 — after which every quotation from those two papers reads as a
+miss. Splice the sidecars in **after** the sweep. It is the same lesson as the Eker trap, arriving
+from the other direction: the tooling will quietly prefer the unreadable copy unless told not to.

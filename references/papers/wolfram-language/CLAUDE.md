@@ -11,7 +11,7 @@ strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 | File | Read it for |
 | :--- | :--- |
 | `wolfram_ref_evaluation.html` | **The algorithm.** Its section "The Standard Evaluation Sequence" is the complete ordered procedure — twelve steps on the page, transcribed below as 13 (see the numbering note). The page presents them as a `<ul class="Notes">` bullet list, **not** a numbered one. Short page, but it is the spec; start here. |
-| `wolfram_ref_evaluation_of_expressions.html` | **The explanations (~26k words).** A coarser six-step summary of the same procedure, the full attribute table, worked evaluation traces, and the prose precedence rules. The companion read, not the algorithm. |
+| `wolfram_ref_evaluation_of_expressions.html` | **The explanations (~19.5k words, ~111 KB of text once scripts and JSON-LD are stripped).** A coarser six-step summary of the same procedure, the full attribute table, worked evaluation traces, and the prose precedence rules. The companion read, not the algorithm. |
 | `wolfram_ref_associating_definitions.html` | Transformation rules and definitions: where DownValues, UpValues, and SubValues attach, in context and with examples. |
 | `wolfram_ref_ownvalues.html` / `_downvalues.html` / `_upvalues.html` / `_subvalues.html` | The four symbol reference pages for the rule-storage model. **Thin captures** — roughly 13 KB of text each, almost all navigation chrome; only the one-line definitions survived and the "Details" sections did not. Use `wolfram_ref_associating_definitions.html` (55 KB of real text) for the model in context, and `wolfram_ref_evaluation_of_expressions.html` for precedence. |
 | `wolfram_ref_attributes.html` / `wolfram_guide_attributes.html` | **Do not go here for the attribute list.** Both are thin captures: the ref page has only the `Attributes[symbol]` signatures plus bare section labels (its "Details" did not capture), and the guide page is a list of links. **The full attribute table — `Orderless`, `Flat`, `OneIdentity`, `Listable`, `Constant`, `Protected`, `SequenceHold`, the `Hold*` and `NHold*` families, each with its one-line meaning — is in `wolfram_ref_evaluation_of_expressions.html`.** |
@@ -23,8 +23,8 @@ strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 Standard Evaluation Sequence". Implement it literally. For `h[e1, e2, …]`:
 
 **Numbering.** The page gives *twelve* steps — as bullets, with no numerals, so you count them off
-yourself. The transcription below splits its third ("Evaluate each element `eᵢ` in turn. If `h` is a
-symbol with attributes HoldFirst, …, then skip evaluation of certain elements") into two, because the
+yourself. The transcription below splits its third ("Evaluate each element `eᵢ` of the expression in turn. If `h`
+is a symbol with attributes HoldFirst, …, then skip evaluation of certain elements") into two, because the
 hold check is a separate thing to implement. Steps 1–3 below are the page's 1–3; from step 4 on,
 **the page's position is one lower than ours**. Every step reference in this repo uses our numbering.
 

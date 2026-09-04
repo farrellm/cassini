@@ -33,11 +33,22 @@ The documents these cite live in [`../references/`](../references/) — see that
    in that file's "Not obtained" table with the route tried and the reason
    (`../references/CLAUDE.md` rule 2). Adding a citation and leaving the corpus untouched is how
    five sources ended up cited but unaccounted for.
-4. **A corrected claim must be fixed everywhere it appears, in the same change.** Most facts about a
-   source are written down three times: in `cas-haskell.md` as prose, in the bibliography as an
-   annotation, and again in the `../references/**/CLAUDE.md` file for the directory holding it — and
-   sometimes a fourth time in `../references/downloaded-references-summary.md`. Correcting one copy
-   and leaving the others is the single most repeated mistake in this repo's history: the
+4. **A corrected claim must be fixed everywhere it appears, in the same change.** A fact about a
+   source is written down in **five or six places**, not the three this rule used to name. The last
+   three corrections in this repo touched six files, five, and six:
+
+   | Where | What lives there |
+   | :--- | :--- |
+   | `cas-haskell.md` | the claim as prose |
+   | `cas-haskell-bibliography.md` | the entry annotation **and** the derived Verification Notes |
+   | `../references/**/CLAUDE.md` | the per-file annotation for the directory holding it |
+   | `../references/downloaded-references-summary.md` | the index row, and any corpus total it moves |
+   | `../references/missing-documents.md` | the defect and misidentification tables |
+   | `../references/CLAUDE.md` | corpus totals, capture dates, the directory blurb |
+
+   `missing-documents.md` is the one this rule omitted for eight rounds while every correction was
+   touching it anyway. Correcting one copy and leaving the others is the single most repeated
+   mistake in this repo's history: the
    "early SMP code still runs in Mathematica" misreading and the Symbolica AC-matching
    mis-sourcing were each fixed in the notes and then found again, unchanged, in a directory file
    two commits later. Before considering a correction done, grep the whole repo for a distinctive
