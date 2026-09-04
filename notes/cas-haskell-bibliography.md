@@ -15,18 +15,19 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 **von zur Gathen, Joachim, and Jürgen Gerhard.** *Modern Computer Algebra.* 3rd ed. Cambridge University Press, 2013. 808 pp. ISBN 9781107039032.
 > The deep reference: modular arithmetic, Chinese remainder, fast Euclidean algorithm, Hensel lifting, finite-field factorization, evaluation/interpolation. Complete proofs and complexity analysis; includes implementation reports. Edition history, commonly miscited: the **3rd** (2013) edition renovated ch. 11, the Fast Euclidean Algorithm (a correctness bug), and fixed ~80 further errors — nothing more. The new material in chs. 3, 15 and 22 (GCD, symbolic integration) came with the **2nd**, 2003 edition (copyright page: "Cambridge University Press 1999, 2003"; the companion site lists "Second edition 2003: ISBN 978-0521826464" and "First edition 1999: ISBN 0521641764"). February 2002 is that edition's preface date, which is where the "2002 edition" miscitation comes from. Companion site: `cosec.bit.uni-bonn.de` — addenda and corrigenda, and the source confirming the extent (808 pages, 40 tables, 560 exercises). Graduate difficulty; use as a lookup reference, not a linear read. *Essential as reference.*
 
-**Geddes, Keith O., Stephen R. Czapor, and George Labahn.** *Algorithms for Computer Algebra.* Kluwer Academic Publishers, 1992. ISBN 0-7923-9259-0.
-> The most complete single volume covering the whole implementer's pipeline: normal forms, polynomial/rational/power-series arithmetic, homomorphisms and CRT, Newton iteration and Hensel construction, polynomial GCD, factorization, solving systems of equations, Gröbner bases, integration of rational functions, and the Risch algorithm. Pascal-like pseudocode. *Essential — the one algorithms reference to own if you buy only one.*
+**Geddes, Keith O., Stephen R. Czapor, and George Labahn.** *Algorithms for Computer Algebra.* Kluwer Academic Publishers, 1992. ISBN 0-7923-9259-0. Springer's book page for it is held in `references/`.
+> The most complete single volume covering the whole implementer's pipeline: normal forms, polynomial/rational/power-series arithmetic, homomorphisms and CRT, Newton iteration and Hensel construction, polynomial GCD, factorization, solving systems of equations, Gröbner bases, integration of rational functions, and the Risch algorithm, “presented in a Pascal-like computer language”. Springer's page is also the source of the often-repeated line that this is “the first comprehensive textbook to be published on the topic of computational symbolic mathematics” — a publisher's claim, not the authors'; the book itself makes no such claim anywhere. *Essential — the one algorithms reference to own if you buy only one.* **Corpus caveat:** the held scan's table-of-contents pages are OCR noise (“In od ion”, “Algo i hm”) while the body text is sound — grep the body for chapter titles, not the TOC.
 
 **Bronstein, Manuel.** *Symbolic Integration I: Transcendental Functions.* 2nd ed. Algorithms and Computation in Mathematics vol. 1. Springer, 2005.
 > The standard integration reference: Hermite reduction, Rothstein–Trager, Lazard–Rioboo–Trager, and the Risch algorithm proper. 2nd ed. adds a chapter on parallel/Risch–Norman integration. Ready-to-implement pseudocode. **Volume II (algebraic functions) was never completed — Bronstein died before finishing it**, so the algebraic case remains scattered across research papers. *Essential at Stage 3.*
 
 **Petkovšek, Marko, Herbert S. Wilf, and Doron Zeilberger.** *A=B.* A K Peters, 1996. Foreword by Donald E. Knuth.
-> Algorithmic hypergeometric summation: Gosper's algorithm, Zeilberger's creative telescoping, the WZ method, Petkovšek's `Hyper`. **Freely and legally available as a PDF** — the authors released it; mirrored on Wilf's UPenn page and Zeilberger's at Rutgers. Does *not* cover Karr's algorithm. *Essential for summation; free.*
+> Algorithmic hypergeometric summation: Gosper's algorithm, Zeilberger's creative telescoping, the WZ method, Petkovšek's `Hyper`. Knuth's foreword is signed *Stanford University, 20 May 1995*. **Freely and legally available as a PDF** — the authors released it; mirrored on Wilf's UPenn page and Zeilberger's at Rutgers. Does *not* cover Karr's algorithm. *Essential for summation; free.*
+> **Corpus caveat:** the copy held is that free PDF, and it is **not the A K Peters printing this entry cites**. It is the authors' electronic edition — internal title `PwzForPC.DVI`, Acrobat Distiller 3.0, created 27 April 1997, 217 pp. — and contains no publisher imprint, no ISBN, no copyright page and no occurrence of "1996" or "A K Peters" anywhere. It is byte-identical (md5 `02eff372…`) to what `www2.math.upenn.edu/~wilf/AeqB.pdf` serves today, so the availability claim is confirmed exactly; the *publisher and year* are not. Fourth instance of the held-copy-is-a-different-artifact pattern, after SymPy, Fateman and Ishii.
 
 **Karr, Michael.** "Summation in Finite Terms." *Journal of the ACM* 28, no. 2 (1981): 305–350. DOI: 10.1145/322248.322255.
 > The difference-field ("ΠΣ-field") theory of symbolic summation — the discrete analogue of Risch's integration algorithm, and **the gap in *A=B***, which covers Gosper/Zeilberger/WZ but not this. Read it when indefinite nested sums and products come up. See also his **"Theory of Summation in Finite Terms," *Journal of Symbolic Computation* 1, no. 3 (1985): 303–315, DOI: 10.1016/S0747-7171(85)80038-9.** *Optional; needed only for the summation requirement.*
-> **Corpus caveat:** the 1985 paper's copy in `references/` has a text layer, but its OCR systematically drops the letter `h` — "Teory of Summation", "matematical", "algoritm", "te" for "the". Searches for `the` or `theorem` return nothing and look like honest misses. The 1981 paper is clean.
+> **Corpus caveat:** the 1985 paper's copy in `references/` has a text layer, but its OCR systematically drops the letter `h` — "Teory of Summation", "matematical", "algoritm", "te" for "the". Searches for `the` or `theorem` return nothing and look like honest misses. **The 1981 paper is not clean either** — it was described that way here until the sixth round. Its defect is different and subtler: scattered runs of prose extract letter-spaced ("p a p e r", "c o n c e r n e d w i t h"), so a grep succeeds while *under-counting*. `theorem` returns 76 hits against 100 actually present. Nothing looks wrong, which is the danger.
 
 **Schneider, Carsten.** "Symbolic Summation Assists Combinatorics." *Séminaire Lotharingien de Combinatoire* 56 (2007), Article B56b. Free from RISC (`www3.risc.jku.at`).
 > The modern continuation of Karr: the **Sigma** Mathematica package, built on Karr's algorithm with extensions for non-trivial multi-sum problems. The practical entry point to difference-field summation, and easier going than Karr's papers. *Optional; free.*
@@ -37,7 +38,7 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 **Davenport, James H., Yvon Siret, and Évelyne Tournier.** *Computer Algebra: Systems and Algorithms for Algebraic Computation.* 2nd ed. Academic Press, 1993. Preface by Daniel Lazard.
 > Gentler, systems-oriented survey. Good conceptual overview; less of an implementation cookbook. *Optional.*
 
-**Jenks, Richard D., and Robert S. Sutor.** *AXIOM: The Scientific Computation System.* Springer, 1992. Original ISBNs 3-540-97855-0 (Berlin) / 0-387-97855-0 (New York); the Springer Science+Business Media reprint held here is ISBN 978-1-4612-7729-3 (print) / 978-1-4612-2940-7 (eBook), 765 pp.
+**Jenks, Richard D., and Robert S. Sutor.** *AXIOM: The Scientific Computation System.* Springer, 1992. Original ISBNs 3-540-97855-0 (Berlin) / 0-387-97855-0 (New York) **[unverified]**; the Springer Science+Business Media reprint held here is ISBN 978-1-4612-7729-3 (print) / 978-1-4612-2940-7 (eBook), 765 pp.
 > The design document for the strongly-typed CAS — categories and domains (Ring, Field, …) as first-class types. Now Volume 0 of the open Axiom literate-program series. *Essential reading for a Haskell implementer* because Axiom's typed algebra hierarchy is the closest existing analogue to a type-driven Haskell CAS. See §5 for the free literate volumes.
 
 ---
@@ -93,8 +94,8 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 **Benanav, Dan, Deepak Kapur, and Paliath Narendran.** "Complexity of Matching Problems." *Journal of Symbolic Computation* 3, no. 1 (Feb. 1987): 203–216. DOI: 10.1016/S0747-7171(87)80027-5.
 > **The citation for *both* AC-matching complexity claims** — a point routinely got wrong, including in earlier drafts of these notes. The abstract proves that "the associative-commutative matching problem is shown to be NP-complete", *and* that "if every variable appears at most once in a term being matched, then the associative-commutative matching problem is shown to have an upper-bound of O(|s|·|t|³)" — i.e. the polynomial bound for **linear** patterns is here too, not in Eker. Their algorithm already uses maximum bipartite graph matching. Both Eker and Bachmair et al. cite this paper for both results.
 
-**Eker, Steven M.** "Associative-Commutative Matching via Bipartite Graph Matching." *The Computer Journal* 38, no. 5 (May 1995): 381–399. DOI: 10.1093/comjnl/38.5.381.
-> **A practical algorithm, not a complexity result.** Builds "a hierarchy of bipartite graph matching problems which encodes all the possible solutions of subproblems", then solves the resulting semi-pure AC systems exhaustively, with refinements that "considerably cut down the search space" — aimed at running efficiently on non-pathological instances of the *general*, non-linear problem. Eker credits Benanav for both bounds. Written at INRIA Lorraine; Eker then moved to SRI, and this is the lineage Maude's AC matcher is built on. Krebber's many-to-one matcher uses the same bipartite construction at commutative states. *The paper to read for how to make AC matching fast; cite Benanav, not this, for the complexity.*
+**Eker, Steven M.** "Associative-Commutative Matching via Bipartite Graph Matching." *The Computer Journal* 38, no. 5 (1995): 381–399. DOI: 10.1093/comjnl/38.5.381.
+> **A practical algorithm, not a complexity result.** Builds "a hierarchy of bipartite graph matching problems which encodes all the possible solutions of subproblems", then solves the resulting semi-pure AC systems exhaustively, with refinements that "considerably cut down the search space" — aimed at running efficiently on non-pathological instances of the *general*, non-linear problem. Eker credits Benanav for both bounds. The byline is INRIA Lorraine, where the acknowledgements say the research was done; the paper itself "was written at Rutherford Appleton Laboratory", and the contact address on it is already `eker@csl.sri.com` — this is the lineage Maude's AC matcher is built on. (No month is given for the issue: the paper is stamped "Received September 16 1993, revised July 7 1995", so the "May 1995" some catalogues carry cannot be right.) Krebber's many-to-one matcher uses the same bipartite construction at commutative states. *The paper to read for how to make AC matching fast; cite Benanav, not this, for the complexity.*
 > **Corpus caveat:** the copy in `references/` is image-only and carries a generated `.txt` OCR sidecar beside it. Worse, it *reports* extractable text on every page — but the only text is an Oxford download watermark repeated, 860 characters across 19 pages. A naive text-layer check passes it; grep the sidecar instead.
 
 **Bachmair, Leo, Ta Chen, and I. V. Ramakrishnan.** "Associative-Commutative Discrimination Nets." *TAPSOFT '93: Theory and Practice of Software Development* (CAAP/FASE, Orsay), Springer LNCS 668, 1993, pp. 61–74. DOI: 10.1007/3-540-56610-4_56.
@@ -121,11 +122,11 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **MockMMA** (Richard Fateman, 1991). Lisp.
 > The earliest WL reimplementation. The widely repeated cease-and-desist story traces to a single sentence in Wikipedia's *Wolfram Language* article — "Richard Fateman's MockMMA from 1991 is of historical note, both for being the earliest reimplementation and for having received a cease-and-desist from Wolfram" — which carries **no citation**; the adjacent footnote belongs to the sentence after it. Treat it as folklore until sourced. (Capture held in `references/`, 2026-08-30.) *Historical.*
-> - **Fateman, Richard J.** "A Review of Mathematica." *Journal of Symbolic Computation* 13, no. 5 (1992). A separate document, and the one actually worth reading: not implementation notes but a sharp design critique of the language, evaluator and pattern matcher, from someone who had built a competing system.
+> - **Fateman, Richard J.** "A Review of Mathematica." *Journal of Symbolic Computation* 13, no. 5 (1992). A separate document, and the one actually worth reading: not implementation notes but a sharp design critique of the language, evaluator and pattern matcher, from someone who had built a competing system. **Corpus caveat:** the copy in `references/` is an author copy carrying no journal metadata at all — only "(Received: 16 November 1990) (Revised: 16 September 1991)" — so the *JSC* 13(5), 1992 citation cannot be confirmed from the file itself. It mentions neither MockMMA nor the cease-and-desist story.
 
 **SymPy.** Python, BSD. `sympy.org`
 > The most approachable *full* CAS to read. Pure Python with no invented language — the reference paper notes that Python itself is used for both internal implementation and end-user interaction. *Lesson: how to organize a large CAS — assumptions system, `Basic`/`Expr` core, `polys` module — and how automatic-simplification decisions get made.*
-> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (27 authors, 27 pp.) Free. **Quote the published article, not the preprint** — `references/` held the *PeerJ Preprints* review manuscript under this citation until 2026-08-30 (19 pp., 24 authors), and the two differ in the sentence most often quoted: published "Unlike many CAS's", preprint "Unlike many CASs".
+> - **Meurer, Aaron, et al.** "SymPy: symbolic computing in Python." *PeerJ Computer Science* 3 (2017): e103. DOI: 10.7717/peerj-cs.103. (27 authors, 27 pp.) Free. **Quote the published article, not the preprint** — `references/` held the *PeerJ Preprints* review manuscript under this citation until 2026-08-30, and the two are distinguishable on sight: 27 pp. and 27 authors here, 19 pp. and 24 authors there, and a for-review-only footer on every page of the manuscript. They also differ by a stray apostrophe in the sentence most often quoted, so check which text a quotation came from. The manuscript is deliberately not held; nothing in these notes should quote it.
 
 **GiNaC** ("GiNaC is Not a CAS"). C++. `ginac.de`
 > *Lessons:* (1) deliberately abolishes the low-level/high-level language split — relevant to a Haskell-native ambition; (2) reference counting with copy-on-write for structure sharing; (3) numeric tower built on CLN (the paper does not mention GMP); (4) clean polymorphic `ex`/`basic` design with automatic normalization.
@@ -197,6 +198,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **Ishii, Hiromi.** "A Purely Functional Computer Algebra System Embedded in Haskell." arXiv:1807.01456. Published in *Computer Algebra in Scientific Computing (CASC 2018)*, Springer LNCS 11077, pp. 288–303. DOI: 10.1007/978-3-319-99639-4_20.
 > **The reference for typed algebra in Haskell.** Encodes polynomial arity, monomial ordering, and coefficient ring as type-level parameters so elements of ℚ[x,y,z] and ℚ[w,x,y] can't be added by mistake. Implements Gröbner bases with F4, F5, and Hilbert-driven algorithms. Positioned explicitly against DoCon "with more emphasis on safety and correctness." *Caveat: the type system checks arity and identity, not ring axioms — those are verified by QuickCheck property tests, not proof.* Free on arXiv.
+> **Corpus caveat:** the copy held is the **arXiv pre-print** (`arXiv:1807.01456v2`, 16 pp.), which says so on its own last page — "This is a pre-print of an article published in 'Computer Algebra in Scientific Computing' (2018)" — and carries only the *book*-level DOI `10.1007/978-3-319-99639-4`. The LNCS volume number, the page range and the chapter DOI `…_20` in the citation above appear nowhere in the file; they are verified against Crossref, which confirms the title, "Lecture Notes in Computer Science", pages 288–303, 2018, and the CASC editors (Gerdt, Koepf, Seiler, Vorozhtsov). Same shape as the Fateman and SymPy findings: quote the text freely, but do not treat the published-venue details as confirmed by the held file.
 
 **Zhu, Bowen, Aayush Sabharwal, Songchen Tan, Yingbo Ma, Alan Edelman, and Christopher Rackauckas.** "Efficient Symbolic Computation via Hash Consing." arXiv:2509.20534 (MIT / JuliaHub).
 > An implementation report on adding hash-consing to JuliaSymbolics via a global **weak-reference** table (up to 3.2× faster, 2× less memory), not a survey — but its short related-work section is the useful map, and it is more negative than usually reported. the **common subexpression elimination code** in SymPy and SymEngine is "implemented by storing identical subexpressions in a set data structure, instead of by leveraging the DAG structure" — a claim about their CSE passes, not their expression representation; FriCAS and REDUCE get Lisp symbol interning but no proper hash-consing; **GiNaC "does use a form of reference counting," and of GiNaC and Symbolica alike it says "it is trivial to construct programs using either package that demonstrate identical subexpressions with different memory locations"** — i.e. neither hash-conses. On closed source it notes only that a Wolfram-internals page contains descriptions that "suggest hash-consing is used internally," with "no description of the performance effects." **Implication for you (our inference, not theirs): the mechanism needs immutable terms plus a GC that collects through weak references — precisely Haskell's model.** Free.
@@ -206,20 +208,20 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **`computational-algebra`** (Hiromi Ishii). `github.com/konn/computational-algebra`
 > The implementation accompanying the paper above. Depends on his `type-natural` and `ghc-typelits-presburger` (a Presburger arithmetic type-checker plugin) packages.
 
-**`algebra`** (Edward Kmett). Hackage / `github.com/ekmett/algebra`
-> Fine-grained algebraic hierarchy: magmas → semigroups → groups → rings → modules → algebras, with additive/multiplicative distinctions. What Ishii's CAS builds on. *Recommended as your coefficient tower.*
+**`algebra`** (Edward Kmett). Hackage / `github.com/ekmett/algebra` — the package page is held in `references/`.
+> "Constructive abstract algebra", and what Ishii's CAS builds on. The hierarchy, read off its own module and class index: an **additive/multiplicative split** (`Numeric.Additive.*` against the `Multiplicative` class), through `Monoidal` and `Group` to `Rig`/`Rng`/`Ring`, then `Module`, then `Algebra`/`Coalgebra` — plus the `Numeric.Domain.*` tower that a coefficient tower actually needs, whose superclass chain is `Domain` → `IntegralDomain` → `GCDDomain` → `UFD` → `PID` → `Euclidean`. **It has no `Magma` class, and its pages prescribe `RebindableSyntax` nowhere** — both were asserted here until the eighth round; the magma-rooted hierarchy is `numhask`'s, and the `RebindableSyntax` point belongs to the numhask/numeric-prelude comparison. *Recommended as your coefficient tower.*
 
 **`numeric-prelude`** (Dylan Thurston, Henning Thielemann, Mikael Johansson). Hackage — **the README is where the argument lives**; the HaskellWiki "Numeric Prelude" page adds the structure list and the *Future plans* section.
 > The canonical statement of **why the standard `Num` class is wrong for a CAS**, in four distinct objections — keep them apart, the last two are not one point: it "defines no semantics for the fundamental operations" (nothing asserts associativity of addition); it has "superfluous superclasses" — `Eq` and `Show` under `Num`, impossible to satisfy non-trivially for e.g. a function-valued ring (`data IntegerFunction a = IF (a -> Integer)`); it carries "a mix of semantic operations and representation specific operations" (`toInteger`, `toRational`, `decodeFloat`); and "the hierarchy is not finely grained enough", so that "operations that are often defined independently are lumped together" — its example being that defining `+` for a `Dollar` or `Vector` type forces `*` on you as well. Splits `Num` into `Additive`, `Ring`, `Field`, `Algebraic`, `Transcendental`, etc. (`Num → Additive, Ring, Absolute`; `Fractional → Field`; `Floating → Algebraic, Transcendental`). Axioms are stated as QuickCheck properties. The wiki candidly documents the gaps: "the code still misses proper linear algebra code," and static checking is still unsolved for "residue classes, matrix computations, infinite precision numbers, fixed point numbers." It does rely on extensions beyond Haskell 98: the wiki's opening sentence names **multi-parameter type classes** specifically.
 
 **`numhask`** (Tony Day). Hackage — the package page is held in `references/`.
-> A cleaner, more recently maintained alternative hierarchy. `RebindableSyntax` is not the distinguishing feature — both package pages prescribe it. Upkeep is: numhask's Hackage release is dated 2026-07-10, numeric-prelude's 2022-05-28.
+> A cleaner, more recently maintained alternative hierarchy. `RebindableSyntax` is not the distinguishing feature — both package pages prescribe it. Upkeep is: numhask's Hackage release is dated 2026-07-10, numeric-prelude's 2022-05-28 — with the caveat, from the same page, that numeric-prelude's metadata was revised 2025-05-19, so the gap is in releases rather than in attention.
 
 **`poly`** (Andrew Lelechenko / Bodigrim). Hackage.
 > Fast `Vector`-backed uni- and multivariate polynomials with Karatsuba multiplication, integrating with the `semirings` `GcdDomain`/`Euclidean` classes. Documented as "at least 20x-40x faster than the [`polynomial`] library" — a self-reported figure, though the published per-operation benchmarks (22–39× on addition, 52–303× on multiplication) are consistent with it.
 
-**`constructive-algebra`** (Anders Mörtberg et al.). Hackage.
-> Small and very readable constructive ring/ideal/matrix code; coherent rings without Noetherian assumptions. Good reading rather than a dependency.
+**`constructive-algebra`** (Anders Mörtberg et al.). Hackage — the package page is held in `references/`.
+> Small and very readable constructive ring/ideal/matrix code. Its page states the design point directly: "Classical structures are implemented without Noetherian assumptions. This means that it is not assumed that all ideals are finitely generated" — so principal ideal domains give way to Bezout domains. Good reading rather than a dependency.
 
 **`recursion-schemes`** (Edward Kmett) and **`data-fix`**. Hackage.
 > `cata`/`ana` over a base functor — the clean way to write folds, evaluators, and substitution over your `Expr`.
@@ -229,8 +231,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **`uniplate`** (Neil Mitchell). Hackage.
 > Generic traversal/rewriting over your expression type. The pragmatic choice for a uniform untyped `Expr`.
 
-**`sbv`** (Levent Erkök). Hackage.
-> How to overload `Num`/`Ord` for symbolic values (`.==`, `.>`) and offload to an SMT solver like Z3. Useful for zero-testing side conditions; *not* a rewriting engine.
+**`sbv`** (Levent Erkök). Hackage — the `Data.SBV` haddock page is held in `references/`.
+> **Which numeric classes a symbolic type can reuse, and which it cannot** — the question a CAS `Expr` hits immediately. `SBV a` belongs to the "standard classes `Num`, `Bits`", but *not* to `Eq` or `Ord`: those return `Bool` and `Ordering`, and a symbolic comparison cannot. The page says so twice — "we can't use Haskell's `Eq` class since Haskell insists on returning `Bool`" and "we cannot implement Haskell's `Ord` class since there is no way to return an `Ordering` value from a symbolic comparison" — and supplies "custom versions of `Eq` (`EqSymbolic`) and `Ord` (`OrdSymbolic`)" whose `.==` and `.>` return `SBool`. **Do not describe this as overloading `Num`/`Ord`**; the `Ord` half is the opposite, and the split is the lesson. Also offloads to an SMT solver like Z3, useful for zero-testing side conditions; *not* a rewriting engine.
 
 **`symengine`.** Hackage.
 > Thin FFI bindings to the SymEngine C++ core, if you want a fast external backend.
@@ -304,7 +306,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Penner, "ASTs with Fix and Free" (`chrispenner.ca`) and Milewski, "F-Algebras" (`bartoszmilewski.com`)
 - Wadler, "Data Types a la Carte" (blog, 28 Feb 2008, `wadler.blogspot.com`) — the source of the verdict quoted in §3
 - Pickering, "Data Types à la Carte with Closed Type Families" (`mpickering.github.io`) and SymPy's *Advanced Expression Manipulation* page (`docs.sympy.org`)
-- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, and Symbolica's licence and home pages. All captured in `references/` as of 2026-08-30, so the quotes have anchors.
+- The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, `sbv` (the `Data.SBV` haddock page), `numeric-prelude` (both the Hackage README, which carries the four objections to `Num`, and the HaskellWiki page), and Symbolica's licence and home pages. All captured in `references/` — the `numeric-prelude` pair on 2026-08-29, `sbv` on 2026-08-31, and the rest on 2026-08-30 — so the quotes have anchors.
 - Wikipedia's *Wolfram Language* article (§5, for the MockMMA cease-and-desist sentence and its missing citation)
 
 **Paywalled journal/conference papers — held here, but not freely re-obtainable.** Re-obtaining any
@@ -345,8 +347,10 @@ of these needs institutional access. Where a free substitute exists it is named:
 
 ## Verification Notes
 
-Every entry above has been checked against a document held in the local corpus in `references/`. The
-eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
+Every entry above has been checked against a document held in the local corpus in `references/` or,
+where the entry names a *system* rather than a document — the source repositories and Hackage packages
+of §5, §7 and §8, which the corpus summary covers under "pointers only, by design" — against the live
+primary source. The eight pages that were previously checked live and not captured — the Expreduce, Symja and HaskSymb
 READMEs, the `poly` and `dumb-cas` package pages, Wadler's blog post, Symbolica's licence, and the
 `OwnValues` reference page — were fetched on 2026-08-30 and indexed. A sweep then tested every quoted
 phrase of five words or more in both documents against a plain-text index of the whole corpus; it added
@@ -367,14 +371,147 @@ one more: the two SMP conference papers were described as archived on Wolfram's 
 They are not; the SMP **manual** is, and is now held (three volumes, 399 pp.), while the papers moved
 to the paywalled list where their Sci-Hub provenance always said they belonged.
 
-**Three things remain genuinely open**, each tagged `[unverified]` where it appears, and in every case
-because the copy held is a different printing from the one the ISBN names: Zippel's original Kluwer
-hardback ISBN (held: the Springer softcover reprint, 978-1-4613-6398-9); Baader & Nipkow's paperback
-ISBN 0-521-77920-0 (held: the hardback, 0-521-45520-0, which does check out); and Cohen *Methods*'
-Routledge/CRC reprint ISBN 9780367659479 (held: the 2003 A K Peters printing). Jenks & Sutor is the same
-situation but is recorded on the entry itself. The `numeric-prelude` multi-parameter-type-class question,
+**Four ISBNs remain genuinely open**, each tagged `[unverified]` wherever it appears — in this file and
+in `cas-haskell.md` alike — and in every case because the copy held is a different printing from the one
+the ISBN names: Zippel's original Kluwer hardback ISBN (held: the Springer softcover reprint,
+978-1-4613-6398-9); Baader & Nipkow's paperback ISBN 0-521-77920-0 (held: the hardback, 0-521-45520-0,
+which does check out); Cohen *Methods*' Routledge/CRC reprint ISBN 9780367659479 (held: the 2003 A K
+Peters printing); and Jenks & Sutor's original Springer ISBNs 3-540-97855-0 / 0-387-97855-0 (held: the
+Springer Science+Business Media printing, 978-1-4612-7729-3, which the file does confirm). Jenks & Sutor
+was the odd one out until 2026-08-30 — described on its entry but not tagged, and counted in neither
+file's total; all four now follow one rule. The `numeric-prelude` multi-parameter-type-class question,
 once listed here, was answered by a page already in the corpus — `numeric_prelude_haskellwiki.html` names
 them in its opening sentence.
+
+**A fourth round, 2026-08-31**, re-ran the whole sweep from a text index rebuilt from scratch, on the
+principle that a check inherited from the previous round is not a check. It re-tested every quoted
+phrase in both documents, reopened every structural claim, re-ran the Haskell claims through GHC
+9.12.4, and re-derived every PDF page count and every corpus total mechanically against this index.
+Almost everything held. Four claims did not, and are corrected above:
+
+- **Eker's affiliation.** The entry had the paper written at INRIA Lorraine. Its acknowledgements say
+  the research was done there and the paper "was written at Rutherford Appleton Laboratory"; the
+  byline is INRIA Lorraine and the contact address is already `eker@csl.sri.com`.
+- **Eker's issue month.** Given as May 1995, against a paper stamped "revised July 7 1995". Dropped.
+- **Fateman.** Cited as *JSC* 13(5), 1992 with no caveat, though the held author copy carries no
+  journal metadata at all. The defect was recorded in the corpus index but had never reached the
+  entry — `../references/CLAUDE.md` rule 5.
+- **Wolfram's step 3**, quoted with "of the expression" silently dropped from the middle.
+
+It also closed two gaps of the kind rule 2 names last — a claim *about* a page nobody held. Springer's
+book page for Geddes is now held, and turns out to source both the "first comprehensive textbook"
+line and the "Pascal-like computer language" description used throughout; Symbolica's home page as of
+2025-04-15 is held, so the claim about what 2025 snapshots say is checkable. And four bookkeeping
+statements that had gone stale were corrected: the `[unverified]` count and convention (above); the
+sentence that opens these Verification Notes, which claimed every entry was checked against a *held*
+document and so contradicted this file's own opening paragraph; `missing-documents.md`'s tally of
+deliberately-unresolved quotations; and the free-PDF list, which named every quoted package page
+except `numeric-prelude`'s.
+
+One quotation was removed rather than sourced: this file reproduced the SymPy *preprint's* wording to
+contrast it with the published article, after the third round had deliberately deleted the preprint
+from the corpus. The contrast survives on metadata that does not require it.
+
+**A fifth round, 2026-08-31**, rebuilt the text index from scratch again — splicing the two OCR
+sidecars back in after the `pdftotext` sweep, as the fourth round's warning says to — and re-tested
+every quoted phrase in both documents, every chapter map and edition history, every PDF page count
+against the index, and the Haskell claims against GHC 9.12.4. All 40 page counts matched their rows,
+and every quotation resolved. This round's focus was the half the previous four had touched least:
+the **recommendations**. One is wrong, and it is corrected above.
+
+- **`sbv` does not demonstrate overloading `Num`/`Ord`.** Both files described it as showing "how to
+  overload `Num`/`Ord` for symbolic values (`.==`, `.>`)". `SBV a` does take the standard `Num`, but
+  `Eq` and `Ord` are exactly the classes it *cannot* reuse — "we can't use Haskell's `Eq` class since
+  Haskell insists on returning `Bool`", "there is no way to return an `Ordering` value from a symbolic
+  comparison" — which is why `EqSymbolic`/`OrdSymbolic` exist and where `.==` and `.>` come from. The
+  entry had it backwards on the half that carries the lesson: a CAS `Expr` hits the same wall, and
+  reusing `Num` while forking `Eq`/`Ord` is the shape of the answer. The `Data.SBV` haddock page is now
+  held — it was a claim about a page nobody had opened, the same failure mode as the fourth round's
+  Geddes and Symbolica gaps, and it went unexamined because the entry read as a plausible summary.
+- Two smaller repairs, neither changing a conclusion: Maxima's "general simplifier" was in quotation
+  marks in `cas-haskell.md` and unquoted here, with no corpus anchor for a verbatim quote — the only
+  occurrence anywhere in the corpus is Greif's reference list, citing Fateman's 1979 *MACSYMA's General
+  Simplifier: Philosophy and Operation*. It is now unquoted in both, like the OBJ slogan before it. And
+  a stray double period in `cas-haskell.md`'s `Expr` paragraph.
+
+**A sixth round, 2026-08-31**, rebuilt the index again and re-ran the quotation sweep (107 quotes in
+`cas-haskell.md`, all resolving), then audited three categories the previous five had not swept
+mechanically: **bibliographic identifiers** (every ISBN, DOI, arXiv id and volume/page range),
+**held-copy identity across all 40 PDFs**, and **author lists**. All eleven ISBNs check out against
+the printings held. Every source named in `cas-haskell.md` has an entry here. Three things did not
+hold:
+
+- **The Ishii copy held is the arXiv pre-print, and the citation's published-venue details are not in
+  it.** The file says so itself — "This is a pre-print of an article published in 'Computer Algebra in
+  Scientific Computing' (2018)" — and carries only the *book* DOI `10.1007/978-3-319-99639-4`. LNCS
+  11077, pp. 288–303 and the chapter DOI `…_20` appear nowhere in it. They are correct — Crossref
+  confirms the title, the LNCS series, pages 288–303, 2018 and the CASC editors — but they were being
+  presented as if the held file established them. This is the third instance of one pattern: SymPy
+  (round 3, preprint substituted for the article), Fateman (round 4, author copy with no journal
+  metadata), Ishii (here). An identity check on every held PDF is now part of the sweep, not an
+  incident response.
+- **Letter-spacing is a third silent-grep failure mode, and the first that fails while *succeeding*.**
+  Karr 1981 — recorded in these notes as "the clean one" through five rounds — extracts scattered prose
+  as "p a p e r", "c o n c e r n e d w i t h": `grep theorem` returns 76 of 100. Benanav returns zero for
+  `important` and `programming`. The IJCAI '95 discrimination-net paper letter-spaces its byline, so
+  `grep Anantharaman` and `grep Chabin` return zero on a paper both co-wrote. Every previously recorded
+  defect announces itself by returning nothing; this one returns most of the hits and hides the rest,
+  which is why five rounds of checks all passed against it. Recorded on each entry and in
+  `../references/missing-documents.md`, with a despacing probe that is tested rather than plausible.
+- **The "roughly 60×" AST speedup is a chart reading.** Krebber's thesis prose says only that the AST
+  speedup is "even greater" than LinAlg's five-to-twenty; 60 comes from Figure 5.4a's axis. It is a fair
+  reading, but the MatchPy *paper* separately reports a "speedup of up to 60" for a different
+  measurement — the syntactic discrimination net on LinAlg — so the two are now kept apart explicitly,
+  before a later round "corrects" one into the other.
+
+**A seventh round, 2026-09-01**, re-ran the quotation sweep against a rebuilt index — this time
+searching a *despaced* copy of every document alongside the plain one, so round six's letter-spacing
+defect could not hide a hit — and then swept four categories still untouched: the **algorithm
+attributions** in the staged plan, every **publication year**, every **publisher**, and every
+**edition statement**.
+
+Almost everything held, and several claims are now grounded rather than assumed. vzGG credits the
+sparse-interpolation idea to Zippel (1979) and the modular GCD approach to Brown (1971) and Collins
+(1971), so both Stage 2 attributions are sound. Bronstein's chapter 2 is titled *Integration of
+Rational Functions* and contains §2.2 Hermite Reduction, §2.4 Rothstein–Trager and §2.5
+Lazard–Rioboo–Trager, with chapter 5 covering the transcendental case — exactly the split Stage 3
+prescribes. A=B contains Gosper, creative telescoping, WZ and `Hyper`; Baader & Nipkow chapter 7
+contains Huet; Karr's copy confirms *JACM* 28(2), April 1981, pp. 305–350. Every publication year,
+publisher and edition statement checks out against the held printing, with two expected exceptions
+(Terese is image-only; the IJCAI '95 paper prints no year) — and one real one.
+
+- **The A=B copy held is not the edition cited.** It is the authors' free electronic edition of 27
+  April 1997, with no publisher, no ISBN, no copyright page and no "1996" in it. The A K Peters 1996
+  printing is a different artifact. Recorded on the entry above. This is the fourth instance of the
+  pattern — SymPy, Fateman, Ishii, now A=B — and the first that round six's marker sweep structurally
+  could not find, because the file makes no claim about its own status. Checking a citation's *fields*
+  against the file is what caught it; scanning for markers is not enough.
+
+One residual, unchanged from round six: **"Terese is in print" could not be confirmed.** Cambridge's
+site returns 500 to `curl` and Open Library carries no availability data. The claim is plausible and
+low-stakes, but it has now failed verification twice and is recorded here rather than left as though
+it had been checked.
+
+**An eighth round, 2026-09-01**, started from the narrow question *is any document missing?* The
+bookkeeping was clean — 85 index rows against 85 files, and the three standing gaps re-tested live
+rather than trusted — but the sweep for claims resting on unheld pages found two more, and one of
+them was wrong in both halves.
+
+- **Kmett's `algebra` has no `Magma` class, and prescribes `RebindableSyntax` nowhere.** §7 described
+  its hierarchy as "magmas → semigroups → groups → rings → modules → algebras" and said its page
+  prescribes `RebindableSyntax`. Its full documentation index returns **zero** for `Magma`;
+  `RebindableSyntax` appears neither on the Hackage page, nor in `Numeric.Algebra`, nor in the README.
+  The magma-rooted hierarchy is `numhask`'s — the package named in the next sentence — and the
+  `RebindableSyntax` point belongs to the numhask/numeric-prelude comparison, where this file already
+  had it right. The entry now describes the hierarchy the package actually has, including the
+  `Numeric.Domain.*` chain `Domain` → `IntegralDomain` → `GCDDomain` → `UFD` → `PID` → `Euclidean`,
+  read off the class declarations rather than assumed.
+- **`constructive-algebra`'s page is now held**, and its claim checks out verbatim.
+
+Both pages are captured, taking the corpus to **87 documents / 41 HTML captures**. This is the third
+time an unanchored assertion about a package's API has turned out wrong — after `sbv` in round five
+and the `numhask` comparison in round three — and all three were invisible to quotation sweeps because
+they quoted nothing.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 

@@ -15,6 +15,9 @@ that §3 groups as foundational are in `../foundations/`.
 | `poly_hackage.html` | The `poly` package page: `Vector`-backed uni/multivariate polynomials, Karatsuba multiplication, `semirings`' `GcdDomain`/`Euclidean` classes. Source for "poly is at least 20x-40x faster than the `polynomial` library" — **maintainer-reported**, though the per-operation table on the same page (22–39× addition, 52–303× multiplication) is consistent with it. |
 | `dumb_cas_hackage.html` | The `dumb-cas` package page: untyped symbolic rewriting with the rules *you* supply, "combin[ing] the flexibility of a Lisp with the conciseness of a Regex engine". Minimal, but the nearest thing on Hackage to the target design. |
 | `numhask_hackage.html` | The other half of §7's `numhask`-vs-`numeric-prelude` comparison, which previously had a source on one side only. Tony Day; usage snippet is `{-# LANGUAGE RebindableSyntax #-}` — so `RebindableSyntax` is **not** what separates the two, since numeric-prelude's README prescribes it as well. What does separate them is upkeep: uploaded 2026-07-10, against numeric-prelude's 2022-05-28. |
+| `sbv_docs_data_sbv.html` | **Which numeric classes a symbolic type can reuse — and which it cannot.** `SBV a` belongs to the "standard classes `Num`, `Bits`", but not to `Eq` or `Ord`: the page says "we can't use Haskell's `Eq` class since Haskell insists on returning `Bool`" and "we cannot implement Haskell's `Ord` class since there is no way to return an `Ordering` value from a symbolic comparison", and supplies "custom versions of `Eq` (`EqSymbolic`) and `Ord` (`OrdSymbolic`)" whose `.==` and `.>` return `SBool`. **Not an example of overloading `Num`/`Ord`** — the notes said that until the fifth round, and the `Ord` half is the opposite. The same wall stands in front of a symbolic `Expr`, which is why this page is worth reading before designing the comparison layer. |
+| `algebra_hackage.html` | **What Kmett's `algebra` hierarchy actually contains**, read off its own module and class index: an additive/multiplicative split (`Numeric.Additive.*` vs the `Multiplicative` class), `Monoidal`/`Group`, `Rig`/`Rng`/`Ring`, `Module`, `Algebra`/`Coalgebra`, and the `Numeric.Domain.*` tower whose superclass chain is `Domain` → `IntegralDomain` → `GCDDomain` → `UFD` → `PID` → `Euclidean`. **No `Magma` class anywhere, and `RebindableSyntax` is prescribed nowhere** — the notes asserted both until the eighth round. The magma-rooted hierarchy is numhask's. |
+| `constructive_algebra_hackage.html` | The anchor for the `constructive-algebra` description: "Classical structures are implemented without Noetherian assumptions. This means that it is not assumed that all ideals are finitely generated" — hence Bezout domains in place of principal ideal domains. |
 | `olah2012_hasksymb.html` | A small untyped rewriting experiment using QuasiQuoters and ViewPatterns. Dated 1 June 2012. **This capture is only the ~250-word demo post** — the design retrospective everyone quotes ("The *big* issue I'm facing is appropriate types for symbolic expressions. In particular, how do I handle variables in types?", and "My bad solution for now has been to just not have type-level variable representation") is in the **repository README** at `github.com/colah/HaskSymb`, not here. That conclusion is the direct evidence behind this project's decision to keep the core `Expr` untyped. |
 
 ## The decision these documents support
@@ -31,8 +34,9 @@ and application nodes compare head-then-arguments. It is a fine *starting* total
 node carries an id and takes `Eq`/`Hashable` from that. Pick one; the cheap derived instances and
 the interned ones are alternatives, not a package.
 
-The libraries themselves (`algebra`, `poly`, `constructive-algebra`, `recursion-schemes`,
-`uniplate`, `sbv`, `symengine`, `dumb-cas`, `computational-algebra`) are Hackage packages, not
-documents; browse them on Hackage rather than archiving them here. The exceptions are the four whose
-pages the notes quote or compare against — `numeric-prelude`, `numhask`, `poly`, `dumb-cas` — which
-are captured above, because a claim about a package page is a claim about a document.
+The libraries themselves (`recursion-schemes`, `uniplate`, `symengine`, `computational-algebra`) are
+Hackage packages, not documents; browse them on Hackage rather than archiving them here. The
+exceptions are the seven whose pages the notes quote or make a claim about — `numeric-prelude`,
+`numhask`, `poly`, `dumb-cas`, `sbv`, `algebra` and `constructive-algebra` — which are captured
+above, because a claim about a package page is a claim about a document. Three of those seven were
+added only after the claim resting on them turned out to be wrong.
