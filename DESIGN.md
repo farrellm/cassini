@@ -290,9 +290,15 @@ common warnings
 makes the layering in §1.2 checkable and the `Internal` convention meaningful.
 
 Extensions beyond GHC2024 are declared per-module, never in `default-extensions`, so that reading a
-module tells you what it needs. The ones this design actually calls for: `PatternSynonyms` and
-`ViewPatterns` (§3.3), `DataKinds`/`TypeFamilies`/`GADTs` (the algebra tower and the `Kernel`
-effect), `OverloadedStrings`, `DerivingStrategies` and `DerivingVia`.
+module tells you what it needs. The ones that actually need declaring, checked by compiling a
+one-line module against bare `-XGHC2024` rather than by reading the release notes:
+`PatternSynonyms` and `ViewPatterns` (§3.3), `TypeFamilies` (the algebra tower),
+`OverloadedStrings`, and `DerivingVia`.
+
+`DataKinds`, `GADTs` and `DerivingStrategies` are **already in GHC2024** and must not be declared —
+`-Wall` does not warn on a redundant `LANGUAGE` pragma, so an unnecessary one is invisible noise that
+implies the module needs something it does not. This is why §4.5.2's `deriving newtype` costs nothing
+and §4.3's `Kernel` GADT carries no pragma.
 
 ### 2.5 Formatting and lint
 
@@ -319,12 +325,15 @@ noticed in review three months later. `.hlint.yaml`:
     # The representation is private to the core.
     - name: Cassini.Core.Expr.Internal
       within: [Cassini.Core.*]
+    # Nondeterminism is private to the matcher's monad (§4.5.2).
+    - name: [Control.Monad.Logic, Control.Monad.Logic.Class]
+      within: [Cassini.Pattern.Match]
 ```
 
 `Cassini.Poly.Convert` appears in the second rule's `within` and its siblings do not: it is the
 bridge, and the only module in `Cassini.Poly.*` allowed to see an `Expr`.
 
-Three things about this config that are not obvious, and were each found by running `hlint` against
+Four things about this config that are not obvious, and were each found by running `hlint` against
 sample modules rather than by reading the manual:
 
 - **`within` is an allow-list and there is no negation.** `within: [-Cassini.Poly.Uni]` is not a
@@ -333,14 +342,20 @@ sample modules rather than by reading the manual:
   is long.
 - **`within` lists union across rules that match the same module.** So `Cassini.Core.Expr.*` must not
   appear in the second rule's `name`: if it did, that rule's `within` would re-permit
-  `Cassini.Core.Expr.Internal` everywhere it lists, silently defeating the third rule. The three
+  `Cassini.Core.Expr.Internal` everywhere it lists, silently defeating the third rule. The four
   rules name disjoint module sets on purpose.
 - **`Foo.*` does not match bare `Foo`.** `Cassini.Builtins` and `Cassini.Builtins.*` are both listed;
   omitting the first is a rule that quietly does not cover the registry module.
+- **And bare `Foo` does not match `Foo.Bar`** — the same fact from the other side, and the reason the
+  fourth rule names `Control.Monad.Logic.Class` as well as `Control.Monad.Logic`. A rule naming only
+  the latter passes a module that imports `MonadLogic` from the former, which is precisely the
+  leak §4.5.2 is trying to prevent. Checked by running it, not by reading the manual.
 
 The check that this config does what it claims belongs in CI beside `hlint` itself: a handful of
 fixture modules asserting that `Cassini.Poly.Uni` importing `Cassini.Core.Expr` is reported and
-`Cassini.Poly.Convert` doing the same is not.
+`Cassini.Poly.Convert` doing the same is not — and, for the fourth rule, that
+`Cassini.Pattern.Commutative` importing `Control.Monad.Logic` is reported while
+`Cassini.Pattern.Match` doing the same is not.
 
 ### 2.7 Documentation
 
@@ -879,42 +894,77 @@ viewPattern :: Expr -> PatternView
 `Subst` is a `Map Symbol Binding` where a binding is either one expression or a sequence, because
 sequence variables bind argument runs rather than single terms.
 
-#### 4.5.2 The matcher monad, and why not `Effectful.NonDet`
+#### 4.5.2 The matcher monad, and why nondeterminism cannot be an effect
 
-**`Effectful.NonDet` cannot be used here, and the reason is not performance.** It is `Maybe`-shaped:
-it obeys left-catch, so `a :<|>: b` runs `b` only if `a` calls `Empty`. That gives first-success
+**No `effectful` handler can enumerate matches, and this is structural rather than a gap awaiting a
+release.** `Eff es` is `Env es -> IO a`; a handler runs its continuation once, and there is no way to
+run one branch, return, and run the next from the same suspension point. `effectful`'s README states
+the limitation and names the remedy:
+
+> The `Eff` monad in `effectful` does not support effect handlers that require suspending or
+> capturing and resuming computations. This limitation prevents the implementation of certain
+> features like a `NonDet` effect handler for collecting results from multiple `Alternative`
+> branches or a `Coroutine` effect. However, existing libraries like `conduit` or `list-t` can be
+> used with `effectful` if these capabilities are needed.
+
+`Effectful.NonDet` is what that limitation forces, not an unambitious choice: it is `Maybe`-shaped,
+obeying left-catch, so `a :<|>: b` runs `b` only if `a` calls `Empty`. That gives first-success
 backtracking. But `ReplaceList`, `//.`, `Cases`, and Krebber's algorithm itself all need *every*
 match enumerated, and a `Maybe`-shaped alternative cannot produce a second one.
 
-So nondeterminism sits outside the effect system, in `LogicT` over `Eff`:
+So nondeterminism sits outside the effect system, in a transformer over `Eff` — the shape the README
+points at. `Eff` is the base monad, not `Identity`, because side conditions must evaluate: `patt /;
+test` requires calling `evaluate` on `test` under the current substitution, and `?f` requires
+applying a function. The matcher genuinely needs kernel access, and a transformer over `Eff` gives it
+without giving up enumeration.
+
+**`MatchT` is a newtype, and deliberately not a synonym.** A
+`type MatchT es = LogicT (Eff es)` would put `logict` in scope in all four matchers of §4.5.3 and
+make `observeAllT` callable from any of them; the containment §9.2 relies on would be a claim about
+programmer restraint. The newtype plus an export list makes it a property of the module graph, and
+the `.hlint.yaml` rule in §2.6 confines `Control.Monad.Logic` to this one module so CI fails on a
+violation:
 
 ```haskell
 -- | Cassini.Pattern.Match
-type MatchT es = LogicT (Eff es)
+newtype MatchT es a = MatchT (LogicT (Eff es) a)
+  deriving newtype (Functor, Applicative, Monad, Alternative, MonadPlus)
 
-match :: (Kernel :> es) => PatternView -> Expr -> Subst -> MatchT es Subst
+-- The three functions the rest of the matcher is allowed to know about.
+liftMatch    :: Eff es a -> MatchT es a          -- MatchT . lift; the kernel call
+observeFirst :: MatchT es a -> Eff es (Maybe a)  -- observeManyT 1, lazily
+observeAll   :: MatchT es a -> Eff es [a]        -- observeAllT
 
-matchOne  :: (Kernel :> es) => Expr -> Expr -> Eff es (Maybe Subst)
-matchOne p s = observeManyT 1 (match (viewPattern p) s mempty) <&> listToMaybe
+match    :: (Kernel :> es) => PatternView -> Expr -> Subst -> MatchT es Subst
 
-matchAll  :: (Kernel :> es) => Expr -> Expr -> Eff es [Subst]
-matchAll p s = observeAllT (match (viewPattern p) s mempty)
+matchOne :: (Kernel :> es) => Expr -> Expr -> Eff es (Maybe Subst)
+matchOne p s = observeFirst (match (viewPattern p) s mempty)
+
+matchAll :: (Kernel :> es) => Expr -> Expr -> Eff es [Subst]
+matchAll p s = observeAll (match (viewPattern p) s mempty)
 ```
 
-One implementation, two observation functions. `LogicT`'s laziness means `matchOne` genuinely stops
-at the first success rather than computing all and taking the head — which matters, because the
-number of matches is exponential in the general case.
+`deriving newtype` needs no `LANGUAGE` pragma: `GeneralisedNewtypeDeriving` is in GHC2021 and
+`DerivingStrategies` in GHC2024, so this costs nothing against §2.4's rule that extensions are
+declared per module.
 
-`Eff` is the base monad, not `Identity`, because side conditions must evaluate: `patt /; test`
-requires calling `evaluate` on `test` under the current substitution, and `?f` requires applying a
-function. The matcher therefore genuinely needs kernel access, and `LogicT (Eff es)` gives it
-without giving up enumeration.
+**Those three functions and those five instances are the entire surface a replacement backend must
+reproduce.** Nothing else in `Cassini.Pattern.*` may name `LogicT`, which is what makes D11's swap a
+one-module change rather than an audit — see §9.2 for the two candidate replacements and §11.2 for
+the trigger.
+
+One implementation, two observation functions. The laziness of the underlying `LogicT` is why
+`matchOne` genuinely stops at the first success rather than computing all matches and taking the
+head — which matters, because the number of matches is exponential in the general case. A
+replacement backend that lost that would be a regression even if it were faster on `matchAll`.
 
 **The backtracking rule, stated once:** all matcher state lives in the `Subst` value threaded through
 `match`, never in an effect. A failed branch is abandoned by dropping a value, so nothing needs
 rolling back. This sidesteps the hazard `effectful` documents as `OnEmptyPolicy` — the design avoids
 the question rather than configuring an answer to it, and the property test in §7.3 (matching leaves
-`KernelState` unchanged except for messages) is what keeps it true.
+`KernelState` unchanged except for messages) is what keeps it true. It is also what makes the choice
+of backend inside `MatchT` a performance question and nothing more: no backend can be obliged to
+restore state that was never mutated.
 
 #### 4.5.3 Staging
 
@@ -1649,7 +1699,10 @@ The suite designed to answer a specific question rather than to produce a number
 
 - Syntactic matching, pattern and subject of increasing size.
 - Sequence-variable matching: *k* sequence variables against *n* arguments, over a grid, because this
-  is where the combinatorial explosion lives.
+  is where the combinatorial explosion lives. This grid records **allocation per match** and not only
+  wall-clock time: `MatchT`'s continuation-passing interior degrades by allocating, and a time number
+  alone cannot separate the monad from the search space it is exploring. This is the measurement D11
+  turns on.
 - Commutative matching at arity 3, 5, 8, 12 — with and without phases 1–2 enabled, which measures
   the pruning directly and is the honest way to know the phases are earning their complexity.
 - A deliberately adversarial case: a linear AC pattern (polynomial) against a non-linear one
@@ -1731,10 +1784,29 @@ decision that addresses it, so that the mapping can be checked rather than assum
   the module carries `-fno-full-laziness`; the on/off agreement property (§7.3) would catch a
   divergence. Residual risk: a GHC change to weak-reference or CSE behaviour. Accepted, and the
   reason the flag exists.
-- **`LogicT (Eff es)` under deep backtracking.** `LogicT`'s continuation-passing structure over a
-  non-trivial base monad can allocate heavily. Mitigation: the matcher benchmark (§8.3) is where this
-  shows up. Fallback: a hand-rolled success/failure continuation type specialized to `Eff`, which is
-  a contained change because the matcher's interface is `matchOne`/`matchAll`, not `LogicT`.
+- **`logict` inside `MatchT` under deep backtracking.** `LogicT`'s continuation-passing structure
+  over a non-trivial base monad can allocate heavily, and the `forall r. m r` quantification blocks
+  the specialization that would make `Eff`'s bind cheap. Mitigation: the matcher benchmark (§8.3),
+  whose sequence-variable grid records allocation per match for this reason. The fallback has two
+  rungs, cheapest first, and is D11 in §11.2:
+
+  1. Swap the newtype's interior to `logict-sequence`, whose `Seq`-based representation has different
+     asymptotics under left-nested `>>=`. One module, no new correctness burden.
+  2. Hand-roll the continuation type, specialized to `Eff es` and `INLINE`d:
+
+     ```haskell
+     newtype MatchT es a = MatchT
+       { runMatchT :: forall r. (a -> Eff es r -> Eff es r) -> Eff es r -> Eff es r }
+     ```
+
+     It must reproduce `liftMatch`, `observeFirst`, `observeAll` and the five instances of §4.5.2,
+     and nothing else — in particular not `msplit` or fair disjunction, which the §4.5.4 phases as
+     specified never call for. That is a bounded amount of backtracking-monad correctness to own,
+     which is why it is the second rung and not the first.
+
+  Both rungs are genuinely one-module changes rather than audits, because §4.5.2 makes `MatchT` a
+  newtype and §2.6's fourth `.hlint.yaml` rule confines `Control.Monad.Logic` to the module that
+  defines it. Under the type synonym this design previously specified, neither would have been.
 - **Pattern-synonym indirection.** `COMPLETE`-annotated view patterns cost nothing at `-O2` and are
   visible at `-O0`, which makes the test suite slower than it would otherwise be. Accepted; the
   reversibility of §3.4 is worth more than fast unoptimized builds.
@@ -1827,7 +1899,7 @@ is named because a decision in this document requires it.
 | `relude` | the prelude (§2.3) | all |
 | `effectful` | the kernel effect and its two interpreters (§4.3) | L3+ |
 | `text`, `vector`, `containers`, `unordered-containers`, `hashable` | representation | L0–L2 |
-| `logict` | matcher nondeterminism (§4.5.2) | L2 |
+| `logict` | matcher nondeterminism, behind `MatchT` and reachable from one module (§4.5.2) | L2 |
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
 | `megaparsec` | surface syntax (§4.10) | L5 |
 | `poly`, `semirings` | polynomial substrate and coefficient classes (§5.3) | A |
@@ -1854,6 +1926,7 @@ Recorded so that each is a decision with an owner and a trigger, not something r
 | D8 | Cohen's canonical order over WL fidelity (§9.2) | oracle-suite false positives becoming the dominant failure |
 | D9 | Inexact numbers absent from `Number` (§3.1) | when they are needed; the O-7 slot is reserved |
 | D10 | SMT-backed zero testing not adopted (§5.6) | side conditions needing more than layer 4 can decide |
+| D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation-per-match number dominating on the sequence-variable grid |
 
 ### 11.3 Provenance of the design decisions
 
