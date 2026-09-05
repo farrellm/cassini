@@ -224,6 +224,7 @@ library cassini-prelude
   exposed-modules:  Cassini.Prelude
   hs-source-dirs:   prelude
   build-depends:    base, relude
+  mixins:           base hiding (Prelude)
   default-language: GHC2024
 
 library
@@ -238,9 +239,18 @@ library
 The `package:sublibrary` form is required in both `build-depends` and `mixins`; cabal rejects the
 bare `cassini-prelude` with *unknown package*. Verified against cabal 3.16.1.0.
 
+**The sublibrary needs `base hiding (Prelude)` too, and this is easy to miss.** `Cassini.Prelude`
+imports `Relude`, and relude *redefines* rather than re-exports a number of `Prelude` names — `show`
+is the `ToText`-polymorphic one (see below), and `lines`, `words`, `readFile`, `error` and friends
+are the `Text` versions. Without hiding base's `Prelude` inside the sublibrary itself, each of those
+is in scope twice as two different entities, the `module Relude` re-export is ambiguous, and the
+stanza does not compile. `{-# LANGUAGE NoImplicitPrelude #-}` in `Cassini.Prelude` would do the same
+job; the `mixins` line is preferred because it keeps the decision in the package description with the
+one for every other stanza.
+
 `Cassini.Prelude` re-exports `Relude` minus the colliding names, and adds nothing else of substance —
-it is a subtraction, not a second standard library. The same two `mixins` lines go in every stanza:
-library, executable, each test-suite, each benchmark.
+it is a subtraction, not a second standard library. The same two `mixins` lines go in every stanza
+that consumes the prelude: library, executable, each test-suite, each benchmark.
 
 ```haskell
 module Cassini.Prelude (module Relude) where
@@ -353,6 +363,14 @@ rule naming `Cassini.Eval.*` would fail the whole matcher on its first import. T
 and the rule tables are shared vocabulary that sits at the bottom of L3; the evaluation *sequence*
 (`Cassini.Eval`) and the message machinery stay above matching, which is what the `Cassini.Eval`
 rule keeps.
+
+**And why the constraint alone is not enough.** `(Kernel :> es)` grants the effect's *operations*,
+not `Cassini.Eval`'s *functions*, so a matcher that needed to call `Cassini.Eval.evaluate` would
+still have to import the module this rule forbids it. That is exactly why `Evaluate` is a
+constructor of `Kernel` (§4.3) rather than a plain function: `Cassini.Pattern.Match` and
+`Cassini.Zero` reach evaluation by `send`, `Cassini.Eval` supplies the sequence when it interprets
+the effect, and the import graph stays acyclic. A `Kernel` without that constructor makes this rule
+unsatisfiable, which is the failure this paragraph exists to prevent.
 
 Four things about this config that are not obvious, and were each found by running `hlint` against
 sample modules rather than by reading the manual:
@@ -467,10 +485,23 @@ The kernel's numeric tower is exact and small:
 data Number
   = NInt  !Integer
   | NRat  !Rational   -- ^ invariant: denominator > 1, reduced, sign on numerator
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Show)
+
+-- | Numeric order, not constructor order. This is the only 'Ord'-shaped thing
+-- 'Cassini.Number' exports, and O-1 (§3.5) is its one caller of consequence.
+instance Ord Number where compare = compareNumber
+
+compareNumber :: Number -> Number -> Ordering
 ```
 
-Two decisions.
+Three decisions.
+
+**`Ord Number` is *not* derived, for the same reason `Ord Expr` is not (§3.5).** The derived instance
+compares by constructor position, so `NInt 5 < NRat (3 % 2)` — a total order, and the wrong one. O-1
+says "both constants: numeric `<`", and a derived `Ord` sitting in scope is exactly how the wrong
+comparison gets used by accident on the way there. The invariant on `NRat` (denominator > 1) keeps
+derived `Eq` correct, so `Eq` stays derived and `Ord` does not. The §7.3 `Number` row tests
+`compareNumber` against `Rational` comparison over both constructors.
 
 **`Integer` is the right starting point, and should be logged as revisitable rather than solved.**
 Under `ghc-bignum`, `Integer` is `IS Int# | IP ByteArray# | IN ByteArray#`: values that fit a machine
@@ -603,9 +634,9 @@ reclaim nodes nothing references and the table does not grow without bound:
 
 ```haskell
 -- | Cassini.Core.Intern
-internTable :: IORef (HashMap Int [Weak Expr])   -- keyed by hash, bucketed
+internTable :: MVar (HashMap Int [Weak Expr])   -- keyed by hash, bucketed
 {-# NOINLINE internTable #-}
-internTable = unsafePerformIO (newIORef mempty)
+internTable = unsafePerformIO (newMVar mempty)
 
 intern :: Shape -> Expr
 ```
@@ -617,6 +648,17 @@ Each weak pointer is therefore created with a finalizer (`mkWeakPtr v (Just reap
 own entry from the bucket, and lookups additionally drop the entries whose `deRefWeak` returns
 `Nothing` as they scan. Neither alone is enough: the finalizer can lag, and lookup only visits
 buckets that are asked for.
+
+**The table is an `MVar`, not an `IORef`, and that is forced by the finalizers.** Unlike the symbol
+table (§3.2), which is append-only and never mutated from anywhere but `internSymbol`, this table has
+a second writer: GHC runs weak-pointer finalizers on its own thread, so `reap` can fire *between* the
+read and the write of a `modifyIORef` inside `intern` and have its deletion silently overwritten,
+leaving a dead `Weak` that lookup then has to re-collect — or, in the other order, have a
+freshly-interned entry dropped, which is worse, because two structurally equal `Expr`s then get two
+different `exprId`s and `(==)` starts returning `False` on equal terms. Read-modify-write on the
+table, in both `intern` and `reap`, is therefore under one `MVar`. `atomicModifyIORef'` would also be
+correct; the `MVar` is preferred because the critical section allocates an id and must not be
+retried.
 
 The mechanism needs immutable terms plus a collector that traces through weak references, which is
 exactly Haskell's model — the observation is ours, from reading
@@ -668,7 +710,7 @@ The rules, transcribed because they are the specification:
 | O-3 | both products (or both sums) | compare last operands, then next-to-last, …; if one is a suffix of the other, shorter first |
 | O-4 | both powers | bases first; if equal, exponents |
 | O-5 | both factorials | operands |
-| O-6 | both functions | names first; if equal, arguments left-to-right, first argument most significant |
+| O-6 | both functions | names first; if equal, arguments left-to-right, first argument most significant; if one argument list is a **prefix** of the other, shorter first |
 | O-7 | number vs anything else | the number first |
 | O-8 | product vs power/sum/factorial/function/symbol | compare as products (recur into O-3) |
 | O-9 | power vs sum/factorial/function/symbol | compare as powers, `v` read as `v^1` (recur into O-4) |
@@ -677,13 +719,20 @@ The rules, transcribed because they are the specification:
 | O-12 | function vs symbol | `false` if the function's name is the symbol, else compare names |
 | O-13 | otherwise | `not (v ▹ u)` — the swap rule |
 
+**O-3's and O-6's length tiebreaks are both load-bearing, and O-6's is the one that gets dropped.**
+Cohen states each of them (O-3-3 and O-6-2(c)): when the compared operands run out equal, the
+expression with fewer operands comes first. Leaving it off O-6 is not a lost tiebreak but a hang —
+`g[x]` against `g[x, y]` then satisfies no rule, falls to O-13, and swaps back and forth forever.
+It is written into the table above for that reason, and §7.3's totality property is what proves it.
+
 **Strings need a rule, and Cohen does not supply one.** `Shape` has an `SString` constructor
 (§3.3) and the Stage 1 parser accepts string literals (§4.10), but Cohen's algebra has no strings and
 O-1…O-13 therefore never mention them. That is not a harmless omission: with O-13 as the fallback,
 two expressions that no rule covers send `compareCanonical u v` to `compareCanonical v u` and back
 forever, so `compareCanonical (Str "a") (Str "b")` — and string-versus-symbol — is a hang, not a
-wrong answer. **Every pair of shapes must be covered by a rule that is not O-13.** The design adds
-two, placed so the existing rules are undisturbed:
+wrong answer. **Every pair of expression *kinds* must be covered by a rule that is not O-13** — kinds,
+not `Shape` constructors, because product, power, sum, factorial and function are all `SApp` and the
+rules distinguish them. The design adds two, placed so the existing rules are undisturbed:
 
 | Rule | Case | Order |
 | :--- | :--- | :--- |
@@ -692,14 +741,22 @@ two, placed so the existing rules are undisturbed:
 
 O-7 still puts every number ahead of every string, so numbers < strings < everything else, and the
 slot §3.1 reserves for inexact numbers is still inside O-7. The totality property in §7.3 is what
-catches a future constructor that repeats this mistake: it exercises every pair of shapes, and an
+catches a future constructor that repeats this mistake: it exercises every pair of *kinds*, and an
 uncovered pair diverges rather than returning the wrong `Ordering`.
+
+**Curried heads are a kind, and `exprKind` must say so.** Cohen's O-6 and O-12 read a function's
+`Kind` as its *name*, which presumes the head is a symbol; `f[x][y]` — which §4.4's step 12 and
+§4.10's grammar both admit — has an `App` for a head and no name. `exprKind` therefore classifies it
+as a function whose kind is the head *expression*, and O-6/O-12 compare heads with `compareCanonical`
+rather than with O-2. That recursion is well-founded (the head is a strict subterm), which is the
+property that keeps it from being a second instance of the O-13 hang.
 
 Two more things fall out that are worth stating, because they look like bugs otherwise. O-3 compares
 products **from the right**, so `a·x²` sorts before `x³` and a polynomial comes out in increasing
 degree. And O-13 means the table above is upper-triangular: the missing cases are the transposes,
-handled by recursion with the arguments swapped. The implementation mirrors that structure — twelve
-cases and one `flip`-with-negate — rather than writing out twenty-five.
+handled by recursion with the arguments swapped. The implementation mirrors that structure —
+fourteen cases and one `flip`-with-negate — rather than writing out all sixty-four cells of the
+eight-kind table.
 
 `Ord Expr` is defined as `compare = compareCanonical`, or it is not defined at all. There is no third
 option in which both exist, because that is exactly how the wrong one gets used by accident.
@@ -828,9 +885,17 @@ data SymbolInfo = SymbolInfo
 `(UpValue, User)`, `(UpValue, Builtin)`, `(DownValue, User)`, `(DownValue, Builtin)` in that order.
 A `RuleSet` sorted by specificity alone would let a more specific *user* downvalue be tried before a
 less specific *built-in upvalue*, which is exactly the inversion step 11-vs-12 exists to forbid. So
-`Cassini.Rules.applicableRules` takes an `(ValueKind, Origin)` pair and scans only the rules carrying
+`Cassini.Rules.applicableRules` takes a `(ValueKind, Origin)` pair and scans only the rules carrying
 that origin: steps 10-13 walk four disjoint subsets, and specificity orders *within* a rung and never
 across one.
+
+**`SubValue` does not add rungs; it is chosen by the expression's shape.** Steps 12 and 13 read
+"downvalues (and subvalues)" because which of the two applies is decided by the expression, not by
+precedence: `h[e₁, …]` with a symbol head consults `DownValues[h]`, and `h[…][…]` consults
+`SubValues[h]`. The two are never both candidates for the same expression, so each of the two lower
+rungs resolves to exactly one `(ValueKind, Origin)` lookup and the ladder stays four steps long.
+`OwnValues` is not on the ladder at all — it is consulted when a bare symbol is evaluated, which is
+step 2, not steps 10-13.
 
 Four tables, one per `ValueKind`, keyed by symbol — including `OwnValues`, because that is what makes
 plain assignment (`x = 5`) fall out of the same machinery as everything else instead of being a
@@ -854,8 +919,10 @@ data Kernel :: Effect where
   LookupSymbol  :: Symbol -> Kernel m SymbolInfo
   ModifySymbol  :: Symbol -> (SymbolInfo -> SymbolInfo) -> Kernel m ()
   EmitMessage   :: Symbol -> MessageTag -> [Expr] -> Kernel m ()
+  Evaluate      :: Expr -> Kernel m Expr   -- ^ the knot-tying operation; see below
   Iterations    :: Kernel m Int            -- ^ remaining fixed-point fuel
   SpendIteration:: Kernel m ()
+  WithFuel      :: Int -> m a -> Kernel m a  -- ^ run with a fresh fuel budget
 type instance DispatchOf Kernel = Dynamic
 
 lookupSymbol :: (Kernel :> es) => Symbol -> Eff es SymbolInfo
@@ -869,22 +936,43 @@ evaluate :: (Kernel :> es) => Expr -> Eff es Expr
 matchOne :: (Kernel :> es) => Expr -> Expr -> Eff es (Maybe Subst)
 ```
 
+**`Evaluate` is what makes the layering in §1.2 hold, and it is not a convenience.** Two modules
+below `Cassini.Eval` have to evaluate: the matcher, for `/;` side conditions and `?f` tests
+(§4.5.2), and `Cassini.Zero`, for structural simplification and evaluation at random points (§5.6).
+Both are outside the `within` list of §2.6's `Cassini.Eval` rule and must stay there — importing the
+evaluation *sequence* downward is the cycle the layering exists to forbid. Carrying `(Kernel :> es)`
+alone does not solve it: a constraint gives you the effect's operations, not `Cassini.Eval`'s
+functions. So `evaluate` is an *operation* of the effect, `Cassini.Eval` installs the real evaluation
+sequence when it interprets `Kernel`, and callers below L3 reach it through `send` without naming the
+module. This is the one place the effect is dynamically dispatched for a reason other than testing.
+
+**`WithFuel` is the reset, and its absence would be a slow-burning bug.** `Iterations` and
+`SpendIteration` alone give one monotonically draining counter for the life of the `KernelState`,
+so a nested `evaluate` would spend its parent's budget and a REPL session would spend its previous
+inputs' — every session would eventually hit `$IterationLimit::itlim` on inputs that terminate in one
+round. `WithFuel n` is a higher-order operation (hence the `m a` argument): it runs its body with the
+counter set to `n` and restores the caller's remaining fuel afterwards, which is what makes the limit
+per-evaluation, as the language defines it. The REPL calls it once per input with
+`$IterationLimit` from `EvalConfig`; §4.4's `fixpoint` is its only other caller.
+
 **Why this and not `ReaderT Env IO` with `IORef`s.** Two interpreters over one effect:
 
 ```haskell
 runKernelIO   :: (IOE :> es)
-              => IORef KernelState -> Eff (Kernel : es) a -> Eff es a
+              => EvalConfig -> IORef KernelState -> Eff (Kernel : es) a -> Eff es a
 
-runKernelPure :: KernelState
+runKernelPure :: EvalConfig
+              -> KernelState
               -> Eff (Kernel : es) a
               -> Eff es (Either Abort a, KernelState)
 ```
 
-`runKernelPure` is `reinterpret (runState s0 . runErrorNoCallStack) handler`: it introduces
-`State KernelState` and `Error Abort` for its own use and discharges both, so the caller's `es` never
-mentions them. The initial state has to be an argument and the final state has to be in the result —
-a signature that dropped either would not be implementable, since there is nowhere for the state to
-come from or go.
+`runKernelPure` is `reinterpret (runReader cfg . runState s0 . runErrorNoCallStack) handler`: it
+introduces `Reader EvalConfig`, `State KernelState` and `Error Abort` for its own use and discharges
+all three, so the caller's `es` never mentions them. The config and the initial state have to be
+arguments and the final state has to be in the result — a signature that dropped any of them would
+not be implementable, since there is nowhere for them to come from or go. `runKernelIO` takes the
+same `EvalConfig` alongside its `IORef`.
 
 `runKernelIO` is production — mutable state, the intern table, timing, interrupts. `runKernelPure`
 has no `IOE` at all, and is what the property tests run under: the evaluator becomes a pure function
@@ -955,7 +1043,7 @@ evaluation — it is doing it and then forgetting. `Hold[1+1]` would return `Hol
 from the head's attributes and `evalStep3Args` consumes it; both stay separately named and
 separately testable, and the golden traces (§7.4) still record them as two entries.
 
-Not because a twelve-link `>>=` chain is beautiful, but because each step is then a function with
+Not because a twelve-step `>>=` chain is beautiful, but because each step is then a function with
 a name, a unit test, and a golden trace — and because the three easy mistakes below are structurally
 impossible to make once the steps are separate values in a fixed order.
 
@@ -972,13 +1060,20 @@ impossible to make once the steps are separate values in a fixed order.
   put the axes and no way to nest the loops the wrong way round.
 
 `Hold`, `HoldComplete`, `HoldForm`, `ReleaseHold` and `Unevaluated` are **not** evaluator special
-cases. They are attributes plus ordinary definitions, and the evaluator must contain no branch
-naming any of them. Any patch that adds one is a bug.
+cases. They are attributes plus ordinary definitions, and **none of the thirteen steps may contain a
+branch naming any of them**. Any patch that adds one is a bug.
 
-**The fixed point is fuelled.** `fixpoint` decrements `Iterations` on each round and, on exhaustion,
-emits `$IterationLimit::itlim` and returns the expression wrapped in `Hold` — the language's own
-behaviour, and the alternative to a hang. Non-termination is a *user* error in a rewriting system,
-so it gets a message, not an exception.
+The one exception is stated here so that it is not read as a violation of that rule: `fixpoint`
+*constructs* a `Hold` on iteration-limit exhaustion (below). Constructing the wrapper is not
+special-casing the head — no step asks whether an expression *is* a `Hold`, which is the property the
+rule is protecting.
+
+**The fixed point is fuelled.** `fixpoint` runs under `WithFuel` (§4.3), decrements `Iterations` on
+each round and, on exhaustion, emits `$IterationLimit::itlim` and returns the expression wrapped in
+`Hold` — the language's own behaviour, and the alternative to a hang. Non-termination is a *user*
+error in a rewriting system, so it gets a message, not an exception. Because the budget is scoped
+rather than global, the limit is per top-level evaluation: a nested `evaluate` does not spend its
+caller's rounds, and the next REPL input starts full.
 
 ### 4.5 Pattern matching
 
@@ -1030,7 +1125,8 @@ match enumerated, and a `Maybe`-shaped alternative cannot produce a second one.
 
 So nondeterminism sits outside the effect system, in a transformer over `Eff` — the shape the README
 points at. `Eff` is the base monad, not `Identity`, because side conditions must evaluate: `patt /;
-test` requires calling `evaluate` on `test` under the current substitution, and `?f` requires
+test` requires evaluating `test` under the current substitution — through the `Kernel` effect's
+`Evaluate` operation (§4.3), not by importing `Cassini.Eval`, which §2.6 forbids it — and `?f` requires
 applying a function. The matcher genuinely needs kernel access, and a transformer over `Eff` gives it
 without giving up enumeration.
 
@@ -1108,11 +1204,19 @@ Given a multiset `P` of pattern arguments and `S` of subject arguments:
    binding repeated once per occurrence in `P`; if that is not contained in `S`, fail; otherwise
    remove. Also cheap, also prunes.
 3. **Non-variable patterns.** Group patterns and subjects by head — only equal heads can match — and
-   chain the resulting `matchOne` calls, because two patterns may share a variable and the matches
-   are therefore not independent. After this phase, **repeat phase 2**, since new bindings have
-   appeared.
+   chain the resulting submatches in `MatchT`, because two patterns may share a variable and the
+   matches are therefore not independent. After this phase, **repeat phase 2**, since new bindings
+   have appeared.
 4. **Regular variables.**
 5. **Sequence variables.** The most expensive, facing the smallest remaining problem.
+
+**Every phase stays in `MatchT`; none of them may call `matchOne`.** `matchOne` is `observeFirst`
+(§4.5.2) — it commits to a submatch and throws the alternatives away, and a later phase then has
+nothing to backtrack into. Concretely, with `P = {g[x_], x_}` against `S = {g[1], g[2], 2}`, phase 3
+matching `g[x_]` with `matchOne` binds `x = 1`, phase 4 cannot then find `1` among the leftovers, and
+the matcher reports failure even though `x = 2` matches. `matchOne` and `matchAll` are the two
+*observation* functions at the boundary of the matcher; inside it, phases compose in `MatchT` and the
+alternatives stay live.
 
 Phases 1–2 are the whole reason this is tractable in practice; they are also the phases most
 tempting to skip when writing the first version. They are not optional.
@@ -1149,22 +1253,37 @@ The "boring" part that is actually the hard part — failure mode (b) in `notes/
 simplify :: Expr -> Either Undefined Expr   -- ^ Cohen's Automatic_simplify
 
 -- the subordinate operators, each its own function with its own tests
+simplifyRNE       :: Expr -> Maybe Number                       -- Simplify_RNE (§3.1)
 simplifyRational  :: Number -> Either Undefined Number
-simplifyPower     :: Expr -> Vector Expr -> Either Undefined Expr
+simplifyPower     :: Expr -> Expr -> Either Undefined Expr      -- base, exponent
 simplifyIntPower  :: Expr -> Integer -> Either Undefined Expr   -- SINTPOW
 simplifyProduct   :: Vector Expr -> Either Undefined Expr       -- SPRD
-simplifyProductRec:: [Expr] -> [Expr]                           -- SPRDREC
+simplifyProductRec:: [Expr] -> Either Undefined [Expr]          -- SPRDREC
 simplifySum       :: Vector Expr -> Either Undefined Expr
-simplifySumRec    :: [Expr] -> [Expr]
+simplifySumRec    :: [Expr] -> Either Undefined [Expr]
 simplifyQuotient  :: Expr -> Expr -> Either Undefined Expr
 simplifyDifference:: Vector Expr -> Either Undefined Expr
 simplifyFactorial :: Expr -> Either Undefined Expr
 simplifyFunction  :: Expr -> Vector Expr -> Either Undefined Expr
 ```
 
-The `*Rec` operators are the merge steps — the recursive workers that combine two already-simplified
-operand lists — and they are where like terms are collected. They are separate functions because
-they are separately testable and because they are where the bugs live.
+Three signature notes, because each is the kind of thing that only shows up when the body is written
+and is expensive to change once callers exist.
+
+`simplifyPower` is **binary** — a base and an exponent, as `Power` is. The `Vector Expr` shape
+belongs to `simplifyFunction`, whose argument list really is variadic.
+
+The `*Rec` operators return `Either Undefined [Expr]`, not `[Expr]`. They are the merge steps — the
+recursive workers that combine two already-simplified operand lists — and they are where like terms
+are collected, which means they call `simplifyPower` and `simplifySum` to fuse equal bases and equal
+terms. Those can answer `Undefined`, and a total `[Expr] -> [Expr]` has nowhere to put that answer
+except a partial function, which §2.3 does not allow. They are separate functions because they are
+separately testable and because they are where the bugs live.
+
+`simplifyRNE` is the one operator in `Either`'s place using `Maybe`, and deliberately: it has exactly
+one failure, division by zero, and `Maybe` says so without inventing an `Undefined` value for a
+`Number`. Its callers map `Nothing` to `Left Undefined`. §3.1 explains why it lives here and not in
+`Cassini.Number`.
 
 **The normal form is a specification, not a hope.** Cohen calls it an ASAE (automatically simplified
 algebraic expression) and gives it as eight conditions: integers; reduced fractions; symbols other
@@ -1418,9 +1537,13 @@ isZero :: (Kernel :> es) => Expr -> Eff es (Maybe Bool)
 ```
 
 The `Kernel` constraint is not optional: layer 2 needs automatic simplification and layer 4 needs
-evaluation at random points, and neither is reachable from a fully polymorphic `es`. It is also why
-`Cassini.Zero` sits with `Cassini.Poly.Convert` on the `Expr` side of the algebra tower rather than
-inside it, and why both appear in §2.6's `Cassini.Core.Expr` rule.
+evaluation at random points, and neither is reachable from a fully polymorphic `es`. Both arrive
+through the effect rather than through an import — layer 4 by `send . Evaluate` (§4.3), layer 2 by
+the same route, since `Cassini.Zero` may not import `Cassini.Simplify.Automatic` any more than it may
+import `Cassini.Eval`: `Cassini.Zero` is in the algebra tower, and §1.2 lets only L4 reach sideways
+into it, never the reverse. It is also why `Cassini.Zero` sits with `Cassini.Poly.Convert` on the
+`Expr` side of the algebra tower rather than inside it, and why both appear in §2.6's
+`Cassini.Core.Expr` rule.
 
 **`Maybe Bool` has three inhabitants and all three are used.** `Just True` and `Just False` are
 proofs. `Nothing` is "I do not know", and it is returned honestly rather than being collapsed into
@@ -1645,9 +1768,9 @@ justifies its cost:
 
 | Layer | Property | Catches |
 | :--- | :--- | :--- |
-| `Number` | exact `+`/`*`/`^` agree with `Rational` arithmetic | normalization and sign errors |
+| `Number` | exact `+`/`*`/`^` agree with `Rational` arithmetic; `compareNumber` agrees with `compare` on `toRational`, across both constructors | normalization and sign errors, and a constructor-order `Ord` sneaking back in (§3.1) |
 | `Simplify` | `simplifyRNE` agrees with `Rational` arithmetic, and is `Nothing` exactly on division by zero | normalization and sign errors |
-| `Core.Order` | `compareCanonical` is irreflexive, transitive, and total (trichotomy) — over generated expressions *and* over one hand-written value of every `Shape` constructor, pairwise | O-13's swap rule getting a case wrong, and a shape no rule covers, which diverges rather than answering (§3.5) |
+| `Core.Order` | `compareCanonical` is reflexive (`x x ≡ EQ`), antisymmetric (`x y ≡ invert (y x)`), transitive, and terminates — over generated expressions *and* over one hand-written value of every expression **kind**, pairwise: constant, string, symbol, product, power, sum, factorial, function, and a function with a curried head | O-13's swap rule getting a case wrong, and a kind pair no rule covers, which diverges rather than answering (§3.5) |
 | `Core.Order` | `sortBy compareCanonical` is a permutation of its input | dropped or duplicated operands in `Orderless` |
 | `Core.Intern` | interned `==` agrees with structural `==`; `hash` agrees with `==` | the interning-on/off divergence (§3.4) |
 | `Core.Traversal` | `cata embed ≡ id` | traversal that fails to rebuild through smart constructors |
@@ -1665,7 +1788,7 @@ justifies its cost:
 | `Eval` | evaluation under `runKernelPure` is deterministic given the same initial state | hidden `IO` dependence |
 | `Syntax` | `parse . pretty ≡ id`; `parse . fullForm ≡ id` | the precedence table and printer disagreeing (§4.10) |
 | `Algebra` | ring/field axioms on every coefficient type | the axioms types do not check |
-| `Poly` | `p * q / q ≡ p`; `gcd p q` divides both and `p*q ≡ gcd * lcm` | every rung of the GCD ladder, uniformly |
+| `Poly` | for `q ≠ 0`: `p * q / q ≡ p`, and `gcd p q` divides both with `p*q` and `gcd * lcm` associates | every rung of the GCD ladder, uniformly |
 | `Poly` | GCD ladder agreement: all implemented rungs return associates of one another | rung 4/5 bugs, against rung 3 as the trusted reference |
 | `Poly.Factor` | factors multiply back to the input; each factor is irreducible over the base | recombination errors |
 | `Zero` | `isZero e == Just True` implies `e` evaluates to 0 at random points | the soundness bug §5.6 exists to prevent |
