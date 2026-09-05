@@ -75,9 +75,14 @@ design disagree, the design is the intent and the code is behind.
      project wants for its own meanings; the same subtraction handles them, and the list will grow.
      It withholds `unsafePerformIO`, which is a feature: the intern table's one `import
      System.IO.Unsafe` is a complete audit of the unsafety in the tree.
-   - **`Effectful.NonDet` is `Maybe`-shaped.** It obeys left-catch, so `a :<|>: b` runs `b` only if
-     `a` calls `Empty` — first-success backtracking, not enumeration. The pattern matcher needs
-     *every* match, so it is `LogicT (Eff es)`, not the built-in effect. `DESIGN.md` §4.5.2.
+   - **No `effectful` handler can enumerate, and `Effectful.NonDet` is the proof.** `Eff` cannot
+     capture and resume a continuation, so a handler cannot run one branch and come back for the
+     next; `NonDet` is therefore `Maybe`-shaped, obeying left-catch, and `a :<|>: b` runs `b` only if
+     `a` calls `Empty`. The matcher needs *every* match, so it uses a transformer over `Eff` — which
+     is what `effectful`'s own README says to do. Do not go looking for a newer release that fixes
+     this. The matcher's monad is the `MatchT` **newtype** in `Cassini.Pattern.Match`, the one module
+     permitted to import `Control.Monad.Logic`; the fourth `.hlint.yaml` rule enforces that, and a
+     transparent synonym would have made the containment a wish. `DESIGN.md` §4.5.2, §2.6, D11.
 
 4. **A module implementing a published algorithm names its source in the module header.**
 
