@@ -401,8 +401,8 @@ justified it, and it makes this document's citations verifiable from the other e
 
 ### 2.8 CI
 
-`.github/workflows/ci.yml`, `haskell-actions/setup`, matrix over the current and previous two GHC
-majors, with the newest as the required job:
+`.github/workflows/ci.yml`, `haskell-actions/setup`, **matrix of one: GHC 9.12.4**, which is
+therefore the required job:
 
 1. `cabal build --enable-tests --enable-benchmarks all`
 2. `cabal test all` (unit, property, golden; oracle suite skipped when absent)
@@ -412,7 +412,20 @@ majors, with the newest as the required job:
 6. `cabal haddock --haddock-quickjump` with a coverage floor
 7. benchmark regression gate against the committed baseline (§8.5)
 
-Steps 4–7 run on the newest GHC only.
+Steps 4–7 run on the newest GHC only — which today is the only one, and stays written that way so
+that widening the matrix does not also mean re-deciding what runs where.
+
+**Why one and not the usual three.** `cassini.cabal` carries `base ^>=4.21.2.0`, and `base` 4.21 is
+GHC 9.12's; the bound admits no other compiler. A matrix over "the current and previous two majors"
+would have been three jobs, two of which fail at `cabal build` on a dependency-resolution error
+before reaching a single test — the sort of red CI that gets read as flaky and then ignored. The
+choice is not "test fewer compilers", it is that the version bound and the matrix have to say the
+same thing, and the bound is the one with teeth.
+
+Widening is a deliberate act with a cost, not a maintenance chore: relaxing to `base >=4.21 && <4.23`
+means every `Cassini.Prelude` subtraction (§2.3) has to hold across both `relude` builds, and §8.5's
+benchmark baselines are committed per GHC version, so a second compiler is a second baseline to
+regenerate and defend. D12 records the trigger.
 
 ### 2.9 Versioning
 
@@ -2025,6 +2038,7 @@ Recorded so that each is a decision with an owner and a trigger, not something r
 | D9 | Inexact numbers absent from `Number` (§3.1) | when they are needed; the O-7 slot is reserved |
 | D10 | SMT-backed zero testing not adopted (§5.6) | side conditions needing more than layer 4 can decide |
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation-per-match number dominating on the sequence-variable grid |
+| D12 | Single-GHC CI matrix, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a release Stackage or a Hackage upload needing a wider bound; widening the bound and the matrix is one change, not two |
 
 ### 11.3 Provenance of the design decisions
 
