@@ -405,15 +405,28 @@ justified it, and it makes this document's citations verifiable from the other e
 therefore the required job:
 
 1. `cabal build --enable-tests --enable-benchmarks all`
-2. `cabal test all` (unit, property, golden; oracle suite skipped when absent)
-3. `cabal run doctests`
-4. `hlint .`
-5. `fourmolu --mode check $(git ls-files '*.hs')`
-6. `cabal haddock --haddock-quickjump` with a coverage floor
-7. benchmark regression gate against the committed baseline (§8.5)
+2. `cabal test cassini-test cassini-doctest` (unit, property, golden, Haddock examples)
+3. `hlint .`
+4. `fourmolu --mode check $(git ls-files '*.hs')`
+5. `cabal haddock --haddock-quickjump` with a coverage floor
+6. benchmark regression gate against the committed baseline (§8.5)
 
-Steps 4–7 run on the newest GHC only — which today is the only one, and stays written that way so
-that widening the matrix does not also mean re-deciding what runs where.
+Steps 3–6 run on the newest GHC only — which today is the only one, and stays written that way so
+that widening the matrix does not also mean re-deciding what runs where. A separate nightly job runs
+`cabal test cassini-oracle cassini-slow`, which is where §7.1 puts the two suites that are too slow
+or too environment-dependent to gate a commit; the oracle suite skips rather than fails when its
+externals are absent (§7.5).
+
+**There is no separate doctest step**, because §7.1 makes `cassini-doctest` a cabal *test-suite* and
+step 2 already runs it. A `cabal run doctests` beside it would run the same examples twice and give
+them two places to be disabled from — and the one that gets disabled is always the one whose failure
+is less legible, which is the standalone step. The suite is where doctests belong for the same
+reason `cassini-slow` is a suite and not a script: what CI runs is `cabal test`, so anything that
+wants to be run at all has to be reachable from it.
+
+**Step 2 names its suites rather than saying `all`**, because `cabal test all` would pull
+`cassini-slow` into every commit — four minutes against a fast suite whose whole purpose (§7.1) is
+to be seconds.
 
 **Why one and not the usual three.** `cassini.cabal` carries `base ^>=4.21.2.0`, and `base` 4.21 is
 GHC 9.12's; the bound admits no other compiler. A matrix over "the current and previous two majors"
@@ -1744,7 +1757,8 @@ restate them as measurements of this system.
 
 ### 7.6 Doctests
 
-`doctest` over the library's Haddock examples. Every exported function whose behaviour is
+`doctest` over the library's Haddock examples, wired as the `cassini-doctest` test-suite of §7.1 and
+run by §2.8's step 2 rather than by a CI step of its own. Every exported function whose behaviour is
 non-obvious carries a runnable example, and those examples are tests. This is cheap, idiomatic, and
 it solves the specific problem that a CAS's documentation is full of expression examples that go
 stale the moment the normal form changes.
