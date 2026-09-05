@@ -81,8 +81,9 @@ design disagree, the design is the intent and the code is behind.
      `a` calls `Empty`. The matcher needs *every* match, so it uses a transformer over `Eff` — which
      is what `effectful`'s own README says to do. Do not go looking for a newer release that fixes
      this. The matcher's monad is the `MatchT` **newtype** in `Cassini.Pattern.Match`, the one module
-     permitted to import `Control.Monad.Logic`; the fourth `.hlint.yaml` rule enforces that, and a
-     transparent synonym would have made the containment a wish. `DESIGN.md` §4.5.2, §2.6, D11.
+     permitted to import `Control.Monad.Logic`; the `Control.Monad.Logic` rule in `.hlint.yaml`
+     enforces that, and a transparent synonym would have made the containment a wish. `DESIGN.md`
+     §4.5.2, §2.6, D11.
 
 4. **A module implementing a published algorithm names its source in the module header.**
 

@@ -109,8 +109,14 @@ is what it exists to prevent.
 
 **The rule: imports go down, never up, and never sideways into `A` except from L4.** The algebra
 tower hangs off `Number` and knows nothing about `Expr`; it is reached only through the builtin
-functions that expose it, and through the bridge in `Poly.Convert`. This is what keeps the
-polynomial code testable without a kernel and the kernel testable without polynomials.
+functions that expose it, and through the bridges in `Poly.Convert` and `Zero`. This is what keeps
+the polynomial code testable without a kernel and the kernel testable without polynomials.
+
+**One seam in L3 is deliberately visible from L2.** The matcher evaluates side conditions (§4.5.2),
+so its signatures name the `Kernel` effect, and `Kernel`'s constructors name `SymbolInfo` from
+`Cassini.Rules`. The effect *declaration* and the rule tables are therefore the bottom of L3 and
+`Cassini.Pattern.*` may import them; the evaluation *sequence* in `Cassini.Eval` is above matching
+and may not be imported downward. §2.6 splits the lint rule along exactly that line.
 
 The rule is enforced by lint, not by good intentions — see §2.6.
 
@@ -159,7 +165,7 @@ expose the API, which is the `containers`/`vector`/`aeson` convention.
 | `Cassini.Core.Intern` | The hash-consing table and the `internExpr` entry point. Switchable (§3.4). |
 | `Cassini.Core.Order` | `compareCanonical` — Cohen's order relation. The kernel's *only* ordering. |
 | `Cassini.Core.Traversal` | Base functor, `recursion-schemes` instances, rebuilding traversals that respect interning. |
-| `Cassini.Structure` | Structure-based operators: `head`, `part`, `length`, `apply`, `freeOf`, `substitute`. Serves the Haskell API and the builtins alike. |
+| `Cassini.Structure` | Structure-based operators: `exprKind`, `part`, `numberOfParts`, `construct`, `freeOf`, `substitute`. Serves the Haskell API and the builtins alike. |
 | **L2** | |
 | `Cassini.Attributes` | The attribute set as a bitmask, and the predicates the evaluator asks it. |
 | `Cassini.Pattern` | The pattern language as a view over `Expr`, plus `Subst`. |
@@ -217,7 +223,7 @@ library cassini-prelude
   import:           warnings
   exposed-modules:  Cassini.Prelude
   hs-source-dirs:   prelude
-  build-depends:    base, relude, text, vector
+  build-depends:    base, relude
   default-language: GHC2024
 
 library
@@ -312,13 +318,20 @@ noticed in review three months later. `.hlint.yaml`:
 
 ```yaml
 - modules:
-    # Evaluation is above terms: nothing in L0-L2 may import it.
-    - name: [Cassini.Eval, Cassini.Eval.*, Cassini.Rules]
+    # The evaluation sequence is above matching: nothing below L3 may import it.
+    - name: [Cassini.Eval, Cassini.Eval.Message]
       within: [Cassini.Eval, Cassini.Eval.*, Cassini.Rules, Cassini.Simplify.*,
                Cassini.Builtins, Cassini.Builtins.*, Cassini.Syntax.*, Cassini.REPL, Main]
-    # The algebra tower does not know about Expr; Poly.Convert is the one bridge.
+    # The Kernel effect and the rule tables are the vocabulary the matcher needs for
+    # side conditions (§4.5.2), so L2 may name them - but not the sequence above them.
+    - name: [Cassini.Eval.Kernel, Cassini.Rules]
+      within: [Cassini.Pattern, Cassini.Pattern.*, Cassini.Eval, Cassini.Eval.*,
+               Cassini.Rules, Cassini.Simplify.*, Cassini.Builtins, Cassini.Builtins.*,
+               Cassini.Syntax.*, Cassini.REPL, Cassini.Zero, Main]
+    # The algebra tower does not know about Expr; Poly.Convert and Zero are the bridges.
     - name: [Cassini.Core.Expr]
-      within: [Cassini.Core.*, Cassini.Structure, Cassini.Attributes, Cassini.Pattern.*,
+      within: [Cassini.Core.*, Cassini.Structure, Cassini.Attributes,
+               Cassini.Pattern, Cassini.Pattern.*,
                Cassini.Rules, Cassini.Eval, Cassini.Eval.*, Cassini.Simplify.*,
                Cassini.Builtins, Cassini.Builtins.*, Cassini.Syntax.*, Cassini.REPL,
                Cassini.Zero, Cassini.Poly.Convert, Main]
@@ -330,30 +343,43 @@ noticed in review three months later. `.hlint.yaml`:
       within: [Cassini.Pattern.Match]
 ```
 
-`Cassini.Poly.Convert` appears in the second rule's `within` and its siblings do not: it is the
-bridge, and the only module in `Cassini.Poly.*` allowed to see an `Expr`.
+`Cassini.Poly.Convert` appears in the `Cassini.Core.Expr` rule's `within` and its siblings do not:
+it is the bridge, and the only module in `Cassini.Poly.*` allowed to see an `Expr`.
+
+**Why `Cassini.Eval.Kernel` and `Cassini.Rules` get their own rule.** §4.5.2's matcher evaluates side
+conditions, so `match`, `matchOne` and `matchAll` all carry `(Kernel :> es)` — L2 must name the
+`Kernel` effect, and `Kernel`'s own constructors mention `SymbolInfo` from `Cassini.Rules`. A single
+rule naming `Cassini.Eval.*` would fail the whole matcher on its first import. The effect *declaration*
+and the rule tables are shared vocabulary that sits at the bottom of L3; the evaluation *sequence*
+(`Cassini.Eval`) and the message machinery stay above matching, which is what the `Cassini.Eval`
+rule keeps.
 
 Four things about this config that are not obvious, and were each found by running `hlint` against
 sample modules rather than by reading the manual:
 
 - **`within` is an allow-list and there is no negation.** `within: [-Cassini.Poly.Uni]` is not a
   restriction on `Cassini.Poly.Uni`; hlint rejects the file outright with *Bad classification rule*.
-  The layering has to be written as "who may", not "who may not", which is why the second rule's list
-  is long.
+  The layering has to be written as "who may", not "who may not", which is why the
+  `Cassini.Core.Expr` rule's list is long.
 - **`within` lists union across rules that match the same module.** So `Cassini.Core.Expr.*` must not
-  appear in the second rule's `name`: if it did, that rule's `within` would re-permit
-  `Cassini.Core.Expr.Internal` everywhere it lists, silently defeating the third rule. The four
-  rules name disjoint module sets on purpose.
-- **`Foo.*` does not match bare `Foo`.** `Cassini.Builtins` and `Cassini.Builtins.*` are both listed;
-  omitting the first is a rule that quietly does not cover the registry module.
+  appear in the `Cassini.Core.Expr` rule's `name`: if it did, that rule's `within` would re-permit
+  `Cassini.Core.Expr.Internal` everywhere it lists, silently defeating the
+  `Cassini.Core.Expr.Internal` rule. The five rules name disjoint module sets on purpose, which is
+  also why the first names `Cassini.Eval.Message` explicitly rather than `Cassini.Eval.*`: the
+  wildcard would overlap the `Cassini.Eval.Kernel` rule and union the matcher into the sequence's
+  allow-list.
+- **`Foo.*` does not match bare `Foo`.** `Cassini.Builtins` and `Cassini.Builtins.*` are both listed,
+  and so are `Cassini.Pattern` and `Cassini.Pattern.*`; omitting the bare form is a rule that quietly
+  does not cover the registry module, or — the case that actually bit — `Cassini.Pattern` itself,
+  which holds `viewPattern :: Expr -> PatternView` (§4.5.1) and so imports `Cassini.Core.Expr`.
 - **And bare `Foo` does not match `Foo.Bar`** — the same fact from the other side, and the reason the
-  fourth rule names `Control.Monad.Logic.Class` as well as `Control.Monad.Logic`. A rule naming only
+  `Control.Monad.Logic` rule names `Control.Monad.Logic.Class` as well. A rule naming only
   the latter passes a module that imports `MonadLogic` from the former, which is precisely the
   leak §4.5.2 is trying to prevent. Checked by running it, not by reading the manual.
 
 The check that this config does what it claims belongs in CI beside `hlint` itself: a handful of
 fixture modules asserting that `Cassini.Poly.Uni` importing `Cassini.Core.Expr` is reported and
-`Cassini.Poly.Convert` doing the same is not — and, for the fourth rule, that
+`Cassini.Poly.Convert` doing the same is not — and, for the `Control.Monad.Logic` rule, that
 `Cassini.Pattern.Commutative` importing `Control.Monad.Logic` is reported while
 `Cassini.Pattern.Match` doing the same is not.
 
@@ -439,9 +465,12 @@ constructor, and the design constraint recorded now is that `compareCanonical` (
 them without disturbing the existing order — Cohen's rule O-7 puts every number before every
 non-number, which leaves room.
 
-`Cassini.Number` exports `simplifyRNE :: Expr -> Maybe Number` for evaluating a rational-number
-expression, returning `Nothing` on division by zero. That is Cohen's `Simplify_RNE`, and it is the
-one part of automatic simplification that does not need `Expr`'s full machinery.
+Cohen's `Simplify_RNE` — evaluate a rational-number expression, `Nothing` on division by zero — is
+`simplifyRNE :: Expr -> Maybe Number`, and it lives in `Cassini.Simplify.Automatic` (§4.6), **not
+here**. It takes an `Expr`, and `Cassini.Number` is L0: a `Number` module importing
+`Cassini.Core.Expr` inverts §1.2's layering and is rejected by §2.6's `Cassini.Core.Expr` rule,
+which does not list it. What `Cassini.Number` owns is the arithmetic `simplifyRNE` calls — exact
+`+`, `*`, `^` and the division-by-zero result — which is the part that genuinely needs no `Expr`.
 
 ### 3.2 Symbols
 
@@ -555,6 +584,14 @@ internTable = unsafePerformIO (newIORef mempty)
 intern :: Shape -> Expr
 ```
 
+**Weak references reclaim the node, not the entry.** A `Weak Expr` whose key dies leaves a dead
+`Weak` in its bucket, so a table that only ever appends buckets grows without bound even though every
+`Expr` it once held has been collected — the leak is the size of the bucket lists, not of the terms.
+Each weak pointer is therefore created with a finalizer (`mkWeakPtr v (Just reap)`) that deletes its
+own entry from the bucket, and lookups additionally drop the entries whose `deRefWeak` returns
+`Nothing` as they scan. Neither alone is enough: the finalizer can lag, and lookup only visits
+buckets that are asked for.
+
 The mechanism needs immutable terms plus a collector that traces through weak references, which is
 exactly Haskell's model — the observation is ours, from reading
 `references/papers/haskell/zhu2025_hash_consing.pdf`, not the paper's.
@@ -614,7 +651,25 @@ The rules, transcribed because they are the specification:
 | O-12 | function vs symbol | `false` if the function's name is the symbol, else compare names |
 | O-13 | otherwise | `not (v ▹ u)` — the swap rule |
 
-Two things fall out that are worth stating, because they look like bugs otherwise. O-3 compares
+**Strings need a rule, and Cohen does not supply one.** `Shape` has an `SString` constructor
+(§3.3) and the Stage 1 parser accepts string literals (§4.10), but Cohen's algebra has no strings and
+O-1…O-13 therefore never mention them. That is not a harmless omission: with O-13 as the fallback,
+two expressions that no rule covers send `compareCanonical u v` to `compareCanonical v u` and back
+forever, so `compareCanonical (Str "a") (Str "b")` — and string-versus-symbol — is a hang, not a
+wrong answer. **Every pair of shapes must be covered by a rule that is not O-13.** The design adds
+two, placed so the existing rules are undisturbed:
+
+| Rule | Case | Order |
+| :--- | :--- | :--- |
+| O-S1 | both strings | lexicographic on the `Text` |
+| O-S2 | string vs any non-number | the string first |
+
+O-7 still puts every number ahead of every string, so numbers < strings < everything else, and the
+slot §3.1 reserves for inexact numbers is still inside O-7. The totality property in §7.3 is what
+catches a future constructor that repeats this mistake: it exercises every pair of shapes, and an
+uncovered pair diverges rather than returning the wrong `Ordering`.
+
+Two more things fall out that are worth stating, because they look like bugs otherwise. O-3 compares
 products **from the right**, so `a·x²` sorts before `x³` and a polynomial comes out in increasing
 degree. And O-13 means the table above is upper-triangular: the missing cases are the transposes,
 handled by recursion with the arguments swapped. The implementation mirrors that structure — twelve
@@ -726,9 +781,13 @@ data Rule = Rule
   , ruleRhs      :: !Expr
   , ruleDelayed  :: !Bool          -- ^ ':>' rather than '->'
   , ruleSpecificity :: !Specificity
+  , ruleOrigin   :: !Origin        -- ^ which rung of the §4.4 ladder this rule is on
   }
 
 data ValueKind = OwnValue | DownValue | UpValue | SubValue
+  deriving stock (Eq, Ord, Enum, Bounded)
+
+data Origin = User | Builtin
   deriving stock (Eq, Ord, Enum, Bounded)
 
 newtype RuleSet = RuleSet (Seq Rule)     -- ^ ordered; first applicable wins
@@ -738,6 +797,14 @@ data SymbolInfo = SymbolInfo
   , siValues     :: !(EnumMap ValueKind RuleSet)
   }
 ```
+
+**`ruleOrigin` is not bookkeeping.** §4.4's ladder is four rungs, not two axes, and the rungs are
+`(UpValue, User)`, `(UpValue, Builtin)`, `(DownValue, User)`, `(DownValue, Builtin)` in that order.
+A `RuleSet` sorted by specificity alone would let a more specific *user* downvalue be tried before a
+less specific *built-in upvalue*, which is exactly the inversion step 11-vs-12 exists to forbid. So
+`Cassini.Rules.applicableRules` takes an `(ValueKind, Origin)` pair and scans only the rules carrying
+that origin: steps 10-13 walk four disjoint subsets, and specificity orders *within* a rung and never
+across one.
 
 Four tables, one per `ValueKind`, keyed by symbol — including `OwnValues`, because that is what makes
 plain assignment (`x = 5`) fall out of the same machinery as everything else instead of being a
@@ -779,9 +846,19 @@ matchOne :: (Kernel :> es) => Expr -> Expr -> Eff es (Maybe Subst)
 **Why this and not `ReaderT Env IO` with `IORef`s.** Two interpreters over one effect:
 
 ```haskell
-runKernelIO   :: (IOE :> es) => IORef KernelState -> Eff (Kernel : es) a -> Eff es a
-runKernelPure :: Eff (Kernel : State KernelState : Error Abort : es) a -> Eff es a
+runKernelIO   :: (IOE :> es)
+              => IORef KernelState -> Eff (Kernel : es) a -> Eff es a
+
+runKernelPure :: KernelState
+              -> Eff (Kernel : es) a
+              -> Eff es (Either Abort a, KernelState)
 ```
+
+`runKernelPure` is `reinterpret (runState s0 . runErrorNoCallStack) handler`: it introduces
+`State KernelState` and `Error Abort` for its own use and discharges both, so the caller's `es` never
+mentions them. The initial state has to be an argument and the final state has to be in the result —
+a signature that dropped either would not be implementable, since there is nowhere for the state to
+come from or go.
 
 `runKernelIO` is production — mutable state, the intern table, timing, interrupts. `runKernelPure`
 has no `IOE` at all, and is what the property tests run under: the evaluator becomes a pure function
@@ -833,13 +910,26 @@ evaluate :: (Kernel :> es) => Expr -> Eff es Expr
 evaluate = fixpoint step
   where
     step e = evalStep1Raw e
-         >>= evalStep2Head  >>= evalStep3Args    >>= evalStep4Hold
+         >>= evalStep2Head  >>= evalStep34ArgsHold
          >>= evalStep5Seq   >>= evalStep6Uneval  >>= evalStep7Flat
          >>= evalStep8List  >>= evalStep9Order   >>= evalStep10UserUp
          >>= evalStep11BuiltinUp >>= evalStep12UserDown >>= evalStep13BuiltinDown
+
+    -- Step 4 is a *gate* on step 3, not a stage after it.
+    evalStep34ArgsHold e = evalStep4Hold e >>= \held -> evalStep3Args held e
 ```
 
-Not because a thirteen-link `>>=` chain is beautiful, but because each step is then a function with
+**Steps 3 and 4 are one pass, and this is the one place the repository's numbering misleads.**
+The numbering comes from splitting the source page's third bullet in two
+(`references/papers/wolfram-language/CLAUDE.md`), and the split is a *description* of two things to
+implement, not a sequence of two passes. Running `evalStep3Args` and then `evalStep4Hold` would
+evaluate every element and only afterwards decide which ones were held, which is not skipping
+evaluation — it is doing it and then forgetting. `Hold[1+1]` would return `Hold[2]`, and
+`SetDelayed` would evaluate its right-hand side. So `evalStep4Hold` computes the held-position mask
+from the head's attributes and `evalStep3Args` consumes it; both stay separately named and
+separately testable, and the golden traces (§7.4) still record them as two entries.
+
+Not because a twelve-link `>>=` chain is beautiful, but because each step is then a function with
 a name, a unit test, and a golden trace — and because the three easy mistakes below are structurally
 impossible to make once the steps are separate values in a fixed order.
 
@@ -922,7 +1012,7 @@ without giving up enumeration.
 `type MatchT es = LogicT (Eff es)` would put `logict` in scope in all four matchers of §4.5.3 and
 make `observeAllT` callable from any of them; the containment §9.2 relies on would be a claim about
 programmer restraint. The newtype plus an export list makes it a property of the module graph, and
-the `.hlint.yaml` rule in §2.6 confines `Control.Monad.Logic` to this one module so CI fails on a
+the `Control.Monad.Logic` rule in §2.6 confines it to this one module so CI fails on a
 violation:
 
 ```haskell
@@ -1183,8 +1273,9 @@ without a variable list while the library API stays explicit.
 Two, both parameterized by coefficient type:
 
 ```haskell
--- | Cassini.Poly.Uni — dense, coefficients ascending, no trailing zeros
-newtype Uni a = Uni (Vector a)
+-- | Cassini.Poly.Uni — dense, coefficients ascending, no trailing zeros.
+-- A newtype over @poly@'s 'VPoly', not over 'Vector' directly (§5.3).
+newtype Uni a = Uni (VPoly a)
 
 -- | Cassini.Poly.Multi — sparse distributed
 newtype Monomial ord = Monomial (Vector Word)   -- exponent vector, fixed variable order
@@ -1297,8 +1388,13 @@ The module whose type signature is the design.
 -- Source: @references/papers/foundations/richardson1968_*.pdf@ — for the class of
 -- expressions over the rationals, π, ln 2, a variable, @+ - *@, composition, and
 -- @sin@/@exp@/@abs@, the predicate @E = 0@ is undecidable.
-isZero :: Expr -> Eff es (Maybe Bool)
+isZero :: (Kernel :> es) => Expr -> Eff es (Maybe Bool)
 ```
+
+The `Kernel` constraint is not optional: layer 2 needs automatic simplification and layer 4 needs
+evaluation at random points, and neither is reachable from a fully polymorphic `es`. It is also why
+`Cassini.Zero` sits with `Cassini.Poly.Convert` on the `Expr` side of the algebra tower rather than
+inside it, and why both appear in §2.6's `Cassini.Core.Expr` rule.
 
 **`Maybe Bool` has three inhabitants and all three are used.** `Just True` and `Just False` are
 proofs. `Nothing` is "I do not know", and it is returned honestly rather than being collapsed into
@@ -1523,8 +1619,9 @@ justifies its cost:
 
 | Layer | Property | Catches |
 | :--- | :--- | :--- |
-| `Number` | `simplifyRNE` agrees with `Rational` arithmetic | normalization and sign errors |
-| `Core.Order` | `compareCanonical` is irreflexive, transitive, and total (trichotomy) | O-13's swap rule getting a case wrong; the most likely bug in §3.5 |
+| `Number` | exact `+`/`*`/`^` agree with `Rational` arithmetic | normalization and sign errors |
+| `Simplify` | `simplifyRNE` agrees with `Rational` arithmetic, and is `Nothing` exactly on division by zero | normalization and sign errors |
+| `Core.Order` | `compareCanonical` is irreflexive, transitive, and total (trichotomy) — over generated expressions *and* over one hand-written value of every `Shape` constructor, pairwise | O-13's swap rule getting a case wrong, and a shape no rule covers, which diverges rather than answering (§3.5) |
 | `Core.Order` | `sortBy compareCanonical` is a permutation of its input | dropped or duplicated operands in `Orderless` |
 | `Core.Intern` | interned `==` agrees with structural `==`; `hash` agrees with `==` | the interning-on/off divergence (§3.4) |
 | `Core.Traversal` | `cata embed ≡ id` | traversal that fails to rebuild through smart constructors |
@@ -1805,7 +1902,7 @@ decision that addresses it, so that the mapping can be checked rather than assum
      which is why it is the second rung and not the first.
 
   Both rungs are genuinely one-module changes rather than audits, because §4.5.2 makes `MatchT` a
-  newtype and §2.6's fourth `.hlint.yaml` rule confines `Control.Monad.Logic` to the module that
+  newtype and §2.6's `Control.Monad.Logic` rule confines `Control.Monad.Logic` to the module that
   defines it. Under the type synonym this design previously specified, neither would have been.
 - **Pattern-synonym indirection.** `COMPLETE`-annotated view patterns cost nothing at `-O2` and are
   visible at `-O0`, which makes the test suite slower than it would otherwise be. Accepted; the
@@ -1899,6 +1996,7 @@ is named because a decision in this document requires it.
 | `relude` | the prelude (§2.3) | all |
 | `effectful` | the kernel effect and its two interpreters (§4.3) | L3+ |
 | `text`, `vector`, `containers`, `unordered-containers`, `hashable` | representation | L0–L2 |
+| `enummapset` | the `EnumMap ValueKind RuleSet` of the four rule tables (§4.2) | L3 |
 | `logict` | matcher nondeterminism, behind `MatchT` and reachable from one module (§4.5.2) | L2 |
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
 | `megaparsec` | surface syntax (§4.10) | L5 |
