@@ -112,6 +112,15 @@ tower hangs off `Number` and knows nothing about `Expr`; it is reached only thro
 functions that expose it, and through the bridges in `Poly.Convert` and `Zero`. This is what keeps
 the polynomial code testable without a kernel and the kernel testable without polynomials.
 
+**The two bridges are the stated exceptions to the "never up" half, and they are exceptions, not
+counterexamples.** `Poly.Convert` names `Cassini.Core.Expr` (L1) and `Cassini.Zero` names
+`Cassini.Eval.Kernel` (L3) — both upward from where the diagram draws `A`. That is the price of a
+bridge: recognizing an `Expr` as a polynomial requires seeing an `Expr`, and deciding whether an
+expression is zero requires evaluating one (§5.6). What makes it a boundary rather than a leak is
+that it is exactly two modules, both named in §2.6's `within` lists and nowhere else, so `Poly.Uni`,
+`Poly.Multi`, `Poly.GCD`, `Poly.Factor`, `Groebner` and the rest still cannot see an `Expr` at all
+and still compile without the kernel. Every other module in `A` obeys the rule as stated.
+
 **One seam in L3 is deliberately visible from L2.** The matcher evaluates side conditions (§4.5.2),
 so its signatures name the `Kernel` effect, and `Kernel`'s constructors name `SymbolInfo` from
 `Cassini.Rules`. The effect *declaration* and the rule tables are therefore the bottom of L3 and
@@ -162,7 +171,7 @@ expose the API, which is the `containers`/`vector`/`aeson` convention.
 | `Cassini.Core.Symbol` | Interned symbol names with contexts. `Text`-backed, `Int`-compared. |
 | `Cassini.Core.Expr` | The `Expr` API: smart constructors, pattern synonyms, accessors. **No representation.** |
 | `Cassini.Core.Expr.Internal` | The representation: node shape, cached hash, optional id. Import only from `Cassini.Core.*`. |
-| `Cassini.Core.Intern` | The hash-consing table and the `internExpr` entry point. Switchable (§3.4). |
+| `Cassini.Core.Intern` | The hash-consing table, private, behind the one exported `intern`. Switchable (§3.4). |
 | `Cassini.Core.Order` | `compareCanonical` — Cohen's order relation. The kernel's *only* ordering. |
 | `Cassini.Core.Traversal` | Base functor, `recursion-schemes` instances, rebuilding traversals that respect interning. |
 | `Cassini.Structure` | Structure-based operators: `exprKind`, `part`, `numberOfParts`, `construct`, `freeOf`, `substitute`. Serves the Haskell API and the builtins alike. |
@@ -212,8 +221,9 @@ expose the API, which is the `containers`/`vector`/`aeson` convention.
 
 `relude` is the prelude, wired in through cabal `mixins` rather than imported per module. But
 `relude` re-exports mtl's `State`/`Reader` vocabulary — `get`, `put`, `modify`, `gets`, `state`,
-`ask`, `asks`, `local`, `State`, `StateT`, `Reader`, `ReaderT`, `MonadState`, `MonadReader` — and
-those names collide, one for one, with `Effectful.State.Static.Local` and `Effectful.Reader.Static`.
+`ask`, `asks`, `local`, `withReader`, `State`, `StateT`, `Reader`, `ReaderT`, `MonadState`,
+`MonadReader` — and those names collide, one for one, with `Effectful.State.Static.Local` and
+`Effectful.Reader.Static`.
 Fixing that with qualified imports in fifty modules is fifty chances to get it wrong.
 
 So it is fixed once, in an internal sublibrary:
@@ -224,7 +234,10 @@ library cassini-prelude
   exposed-modules:  Cassini.Prelude
   hs-source-dirs:   prelude
   build-depends:    base, relude
-  mixins:           base hiding (Prelude)
+  mixins:
+      base   hiding (Prelude)
+    , relude (Relude as Prelude)
+    , relude
   default-language: GHC2024
 
 library
@@ -239,18 +252,40 @@ library
 The `package:sublibrary` form is required in both `build-depends` and `mixins`; cabal rejects the
 bare `cassini-prelude` with *unknown package*. Verified against cabal 3.16.1.0.
 
-**The sublibrary needs `base hiding (Prelude)` too, and this is easy to miss.** `Cassini.Prelude`
-imports `Relude`, and relude *redefines* rather than re-exports a number of `Prelude` names — `show`
-is the `ToText`-polymorphic one (see below), and `lines`, `words`, `readFile`, `error` and friends
-are the `Text` versions. Without hiding base's `Prelude` inside the sublibrary itself, each of those
-is in scope twice as two different entities, the `module Relude` re-export is ambiguous, and the
-stanza does not compile. `{-# LANGUAGE NoImplicitPrelude #-}` in `Cassini.Prelude` would do the same
-job; the `mixins` line is preferred because it keeps the decision in the package description with the
-one for every other stanza.
+**The sublibrary takes relude's own three-line `mixins`, and all three lines are load-bearing.**
+This is the form relude's README calls the recommended way to use a custom prelude, and it does
+three things: `base hiding (Prelude)` drops base's `Prelude` from what the stanza can see,
+`relude (Relude as Prelude)` puts relude's in its place, and the bare `relude` additionally keeps
+relude's modules importable under their own names — which is what lets `Cassini.Prelude` say
+`import Relude hiding (...)` at all.
+
+**The middle line is not optional, and dropping it is the tempting mistake.** relude *redefines*
+rather than re-exports a number of `Prelude` names — `show` is the `ToText`-polymorphic one (see
+below), and `lines`, `words`, `readFile`, `error` and friends are the `Text` versions — so leaving
+base's `Prelude` in scope inside the sublibrary puts each of those in scope twice as two different
+entities and the `module Relude` re-export is ambiguous. But `hiding` only removes the module from
+what the stanza provides; it does not cancel the implicit import GHC still makes. Hiding with no
+replacement therefore fails with *Could not load module 'Prelude'. It is a member of the hidden
+package 'base-4.21.2.0'*, reported against `Cassini.Prelude`'s own module header — a `hiding
+(Prelude)` unaccompanied by a module to resolve to is a build error in any stanza. Both spellings
+were built against GHC 9.12.4 and cabal 3.16.1.0.
+
+The consuming stanzas are the same shape with a different replacement:
+`cassini:cassini-prelude (Cassini.Prelude as Prelude)` supplies the subtracted prelude, and they
+need no third line because nothing imports `Cassini.Prelude` by name.
 
 `Cassini.Prelude` re-exports `Relude` minus the colliding names, and adds nothing else of substance —
 it is a subtraction, not a second standard library. The same two `mixins` lines go in every stanza
 that consumes the prelude: library, executable, each test-suite, each benchmark.
+
+**The subtraction survives having relude as its own prelude, which is the question the three-line
+form raises.** Inside `Cassini.Prelude`, `get`, `put`, `one` and `Undefined` are back in scope
+through the implicit `Prelude` even though the explicit `import Relude` hides them — but scope
+inside the module is not the export list. `module Relude` exports an entity only if it is in scope
+*qualified as `Relude.…`*, which the `hiding` clause is what denies, so the hidden names are in
+scope for this module's own body and absent from what it re-exports. Verified by building a
+consumer of the sublibrary: `show` is relude's `Text`-returning one, a local definition of `one`
+compiles with no clash, and `State`/`put`/`modify` are *Not in scope*.
 
 ```haskell
 module Cassini.Prelude (module Relude) where
@@ -260,11 +295,20 @@ import Relude hiding
     State, StateT, MonadState, get, put, modify, modify', gets, state
   , evalState, execState, runState, evalStateT, execStateT, runStateT
   , Reader, ReaderT, MonadReader, ask, asks, local, runReader, runReaderT
+  , withReader  -- Effectful.Reader.Static has one too, and it is not mtl's
     -- collides with this project's vocabulary
   , one        -- Relude.Container.One's singleton; we want the ring constant
   , Undefined  -- Relude.Debug's marker type; we want Cohen's Undefined (§4.6)
   )
 ```
+
+**`withReader` is on that list and is the one an eyeball census misses.** relude re-exports it from
+`Control.Monad.Reader`, and `Effectful.Reader.Static` exports a `withReader` of its own — the
+`(r1 -> r2) -> Eff (Reader r2 : es) a -> Eff (Reader r1 : es) a` reinterpreter, not mtl's
+`(r' -> r) -> Reader r a -> Reader r' a`. The list above was checked against the export lists of
+`Relude.Monad.Reexport`, `Effectful.Reader.Static` and `Effectful.State.Static.Local` rather than
+written from memory; going the other way, relude's `reader`, `withReaderT` and `withState` are
+*not* subtracted, because effectful has no such names to collide with.
 
 The second group is the one that will keep growing. **relude's namespace is large and it will
 collide with CAS vocabulary**; `one` and `Undefined` are simply the first two, and both were found
@@ -443,7 +487,7 @@ therefore the required job:
 3. `hlint .`
 4. `fourmolu --mode check $(git ls-files '*.hs')`
 5. `cabal haddock --haddock-quickjump` with a coverage floor
-6. benchmark regression gate against the committed baseline (§8.5)
+6. benchmark regression gate against the committed baseline (§8.6)
 
 Steps 3–6 run on the newest GHC only — which today is the only one, and stays written that way so
 that widening the matrix does not also mean re-deciding what runs where. A separate nightly job runs
@@ -470,7 +514,7 @@ choice is not "test fewer compilers", it is that the version bound and the matri
 same thing, and the bound is the one with teeth.
 
 Widening is a deliberate act with a cost, not a maintenance chore: relaxing to `base >=4.21 && <4.23`
-means every `Cassini.Prelude` subtraction (§2.3) has to hold across both `relude` builds, and §8.5's
+means every `Cassini.Prelude` subtraction (§2.3) has to hold across both `relude` builds, and §8.6's
 benchmark baselines are committed per GHC version, so a second compiler is a second baseline to
 regenerate and defend. D12 records the trigger.
 
@@ -568,10 +612,13 @@ places would silently inherit that: O-2 in §3.5, which Cohen defines as *lexico
 `Cassini.Poly.Convert.variables` (§5.1), whose result order fixes the exponent-vector layout of
 every `Monomial`. Reaching for the in-scope `compare` in either makes `Plus[b, a]` sort one way from
 a `--script` run and the other way from a REPL session that had already mentioned `b`, so the golden
-files in §7.4 pass or fail on evaluation history. `compareSymbolName` exists so that neither has to
-reach for `compare`, and `Cassini.Core.Order` and `Cassini.Poly.Convert` are the two modules that
-call it. This is the same trap §3.1 and §3.5 avoid by not deriving `Ord`; here the instance is
-genuinely wanted, so the containment is a second named function rather than an absence.
+files in §7.4 pass or fail on evaluation history. `compareSymbolName` exists so that O-2 does not
+have to reach for `compare`, and `Cassini.Core.Order` is its one caller. `variables` avoids the same
+trap by a different route — its elements are generalized variables and therefore `Expr`s, not
+symbols (§5.1), so it sorts with `compareCanonical`, which reaches `compareSymbolName` through O-2
+and is likewise free of `symId`. This is the same trap §3.1 and §3.5 avoid by not deriving `Ord`;
+here the instance is genuinely wanted, so the containment is a second named function rather than an
+absence.
 
 Symbols are interned unconditionally — unlike expressions (§3.4), where interning is a decision.
 Symbol interning is cheap, obviously correct, and buys `Int` comparison in the hottest inner loop
@@ -669,7 +716,8 @@ reclaim nodes nothing references and the table does not grow without bound:
 
 ```haskell
 -- | Cassini.Core.Intern
-internTable :: MVar (HashMap Int [Weak Expr])   -- keyed by hash, bucketed
+internTable :: MVar (HashMap Int [(Int, Weak Expr)])  -- keyed by hash, bucketed;
+                                                      -- the Int is the entry serial 'reap' deletes
 {-# NOINLINE internTable #-}
 internTable = unsafePerformIO (newMVar mempty)
 
@@ -679,10 +727,22 @@ intern :: Shape -> Expr
 **Weak references reclaim the node, not the entry.** A `Weak Expr` whose key dies leaves a dead
 `Weak` in its bucket, so a table that only ever appends buckets grows without bound even though every
 `Expr` it once held has been collected — the leak is the size of the bucket lists, not of the terms.
-Each weak pointer is therefore created with a finalizer (`mkWeakPtr v (Just reap)`) that deletes its
-own entry from the bucket, and lookups additionally drop the entries whose `deRefWeak` returns
-`Nothing` as they scan. Neither alone is enough: the finalizer can lag, and lookup only visits
-buckets that are asked for.
+Each weak pointer is therefore created with a finalizer (`mkWeakPtr v (Just (reap h n))`) that
+deletes its own entry from the bucket, and lookups additionally drop the entries whose `deRefWeak`
+returns `Nothing` as they scan. Neither alone is enough: the finalizer can lag, and lookup only
+visits buckets that are asked for.
+
+**The finalizer must not mention the node, and this is the pitfall that silently disables the whole
+mechanism.** `mkWeakPtr v fin` makes `v` the weak pointer's *key*, and GHC's reachability rule is
+that a finalizer keeps its own free variables alive: a `reap` closing over `v` — or over the `Weak
+Expr` that holds `v` as both key and value — makes every interned node permanently reachable, the
+finalizer never runs, and the table becomes a strong-value table that leaks the terms themselves
+rather than the bucket entries. The failure is invisible: everything still returns the right answer,
+residency just climbs, so it will be found by §8.2's allocation numbers or not at all. So `reap`
+closes over the bucket key `h` and a per-entry serial `n` only — both `Int`s, neither reaching the
+node — and the bucket holds `(Int, Weak Expr)` pairs so that `n` identifies the entry to delete
+without dereferencing anything. §7.3's interning-agreement property does not catch this, because a
+table that never reaps is still *correct*; the residency line in §8.2's A/B is what catches it.
 
 **The table is an `MVar`, not an `IORef`, and that is forced by the finalizers.** Unlike the symbol
 table (§3.2), which is append-only and never mutated from anywhere but `internSymbol`, this table has
@@ -836,8 +896,13 @@ place that forgets is a silently un-interned subtree with a stale hash — a bug
 because everything still *works*, just slower and with `Eq` quietly wrong.
 
 For the handful of places where a plain "rewrite everywhere until fixed" is what is meant,
-`Cassini.Core.Traversal` exports `rewriteM` implemented on top of `apo`, so callers never touch the
-generic machinery directly.
+`Cassini.Core.Traversal` exports `rewriteM :: (Monad m) => (Expr -> m (Maybe Expr)) -> Expr -> m
+Expr`, so callers never touch the generic machinery directly. It is written as a direct recursion
+over `project`/`embed` and not "on top of `apo`": `recursion-schemes` 5.2.3 exports no monadic
+folds or unfolds at all — no `apoM`, no `cataM` — so an `m`-valued rewrite cannot be expressed in
+terms of `apo`, whose coalgebra is pure. Checked against the package's export list. The monadic
+shape is not optional, because the callers that want this are the ones whose rewrite step evaluates
+(§4.3), and a pure `rewrite` would only ever serve the cases that could have used `cata`.
 
 `Foldable`/`Traversable` on `ExprF` gives `Cassini.Structure` its whole implementation almost for
 free, which is the other half of the argument.
@@ -930,10 +995,17 @@ data RuleBody
 newtype BuiltinId = BuiltinId Int
   deriving newtype (Eq, Ord)
 
--- | The ladder, written once. 'Ord'/'Enum' on 'ValueKind' is EnumMap key order,
+-- | The ladder, in one place. 'Ord'/'Enum' on 'ValueKind' is EnumMap key order,
 -- *not* this order: never walk 'siValues' in key order to drive steps 10-13.
-ladder :: [(ValueKind, Origin)]
-ladder = [(UpValue, User), (UpValue, Builtin), (DownValue, User), (DownValue, Builtin)]
+--
+-- The lower two rungs are 'DownValue' or 'SubValue' according to the shape of the
+-- expression being evaluated, so the ladder is a function of it and not a constant.
+ladder :: Expr -> [(ValueKind, Origin)]
+ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
+  where
+    down = case e of
+      App (App _ _) _ -> SubValue   -- h[...][...]
+      _               -> DownValue  -- h[e1, ...]
 
 data ValueKind = OwnValue | DownValue | UpValue | SubValue
   deriving stock (Eq, Ord, Enum, Bounded)
@@ -970,7 +1042,7 @@ and `Enum` put `DownValue` before `UpValue`, so walking `siValues` in `EnumMap` 
 downvalues first — precisely the "built-in upvalue beats user downvalue" inversion of §4.4, arrived
 at by writing the obvious fold. The order is kept for the same reason §3.1 and §3.5 keep `Number`'s
 and `Expr`'s: it is a fine *map key* order and a wrong *semantic* order, and the fix is to never
-derive the semantics from it. `ladder` above is the only list steps 10-13 may iterate, and §7.3's
+derive the semantics from it. `ladder e` above is the only list steps 10-13 may iterate, and §7.3's
 `Rules` row asserts that `applicableRules` visits the rungs in exactly that sequence.
 
 **`ruleOrigin` is not bookkeeping.** §4.4's ladder is four rungs, not two axes, and the rungs are
@@ -986,8 +1058,19 @@ across one.
 precedence: `h[e₁, …]` with a symbol head consults `DownValues[h]`, and `h[…][…]` consults
 `SubValues[h]`. The two are never both candidates for the same expression, so each of the two lower
 rungs resolves to exactly one `(ValueKind, Origin)` lookup and the ladder stays four steps long.
+
+**That is why `ladder` takes the expression.** A four-element constant naming `DownValue` outright
+reads as "written once" and is the same bug from the other direction: it would send `f[x][y]` to
+`DownValues[f]`, which by construction holds no rule that could match it, so `f[x_][y_] := x + y`
+would never fire and the `SubValue` constructor would be dead weight in the type. Making the rung
+depend on the shape is one `case`, and it keeps "four rungs, in this order" true while letting the
+lower two name the table the expression actually has.
+
 `OwnValues` is not on the ladder at all — it is consulted when a bare symbol is evaluated, which is
-step 2, not steps 10-13.
+§4.4's step 0 guard, not steps 10-13. Step 2 is *not* where it happens, even though step 2
+evaluates a head: step 2 evaluates the head by calling `evaluate` on it, and it is that recursive
+call's step 0 that applies the ownvalue. Putting the lookup in step 2 itself would apply ownvalues
+to heads and to nothing else, so `x = 5; x` would still return `x`.
 
 Four tables, one per `ValueKind`, keyed by symbol — including `OwnValues`, because that is what makes
 plain assignment (`x = 5`) fall out of the same machinery as everything else instead of being a
@@ -1055,6 +1138,16 @@ than the limit, and a rule whose right-hand side evaluates a subexpression each 
 minutes before anything stopped it. Per-*evaluate* fuel and per-*input* fuel are different designs;
 this is the second.
 
+**"Once per input" means once per *top-level* evaluation, and the test suite is a caller too.**
+There is no REPL under `runKernelPure`, so a property that calls `evaluate` twice on one interpreter
+run — §7.3's `evaluate . evaluate ≡ evaluate` is exactly that — has the second call spending what
+the first left. A subject taking `k` rounds followed by a subject taking `k` more exhausts a budget
+of `2k - 1` and the second call returns `Hold[…]`, so the law fails on a property of the harness
+rather than of the evaluator, and it fails intermittently as generated sizes vary. Each `evaluate`
+a test performs is a top-level evaluation and gets its own `WithFuel`; `Test/Gen.hs`'s evaluation
+helper opens it, which is why the rule is "one per top-level evaluation" and not "one call site in
+the tree".
+
 **`Descend` is the other limit, and it is not the same one.** `$IterationLimit` counts rounds of one
 fixed point; `$RecursionLimit` bounds how deep nested evaluation nests, and §4.7 makes its exhaustion
 an `Abort`. Nothing in `Iterations`/`SpendIteration` measures depth, so without a second operation
@@ -1067,7 +1160,8 @@ which is what makes the count automatic rather than something each builtin has t
 
 ```haskell
 runKernelIO   :: (IOE :> es)
-              => EvalConfig -> IORef KernelState -> Eff (Kernel : es) a -> Eff es a
+              => EvalConfig -> IORef KernelState -> Eff (Kernel : es) a
+              -> Eff es (Either Abort a)
 
 runKernelPure :: EvalConfig
               -> KernelState
@@ -1081,6 +1175,16 @@ all three, so the caller's `es` never mentions them. The config and the initial 
 arguments and the final state has to be in the result — a signature that dropped any of them would
 not be implementable, since there is nowhere for them to come from or go. `runKernelIO` takes the
 same `EvalConfig` alongside its `IORef`.
+
+**Both interpreters return `Either Abort a`, and the `IO` one is not exempt.** `Abort` is not a
+testing artefact: `Abort[]`, an interrupt and `Descend`'s `$RecursionLimit` exhaustion (below) all
+raise it, and they raise it in production, which is the only place a user can type `Abort[]` at all.
+So `runKernelIO` introduces and discharges `Error Abort` exactly as `runKernelPure` does, and hands
+the `Left` to the REPL to report as `$Aborted`. An `Eff es a` there would leave the effect
+undischarged — a type error if `Descend` uses `throwError`, and a raw `IO` exception escaping the
+kernel if it does not, which is the one thing §4.7 says the evaluator never does. It keeps
+`KernelState` out of its result for the reason `runKernelPure` keeps it in: the state is the
+caller's `IORef` and the caller already has it.
 
 `runKernelIO` is production — mutable state, the intern table, timing, interrupts. `runKernelPure`
 has no `IOE` at all, and is what the property tests run under: the evaluator becomes a pure function
@@ -1124,16 +1228,18 @@ For `h[e₁, …, eₙ]`:
 
 Then the fixed point: every time the expression changes, start over.
 
-The implementation is one function whose body is thirteen named calls, each separately testable:
+The implementation is one function whose body is thirteen named calls plus one guard the source does
+not number, each separately testable:
 
 ```haskell
 -- | Cassini.Eval
 evaluate :: (Kernel :> es) => Expr -> Eff es Expr
 evaluate = fixpoint step
   where
-    -- Step 1 is a *guard* on the other twelve, not a stage before them.
+    -- Steps 0 and 1 are *guards* on the other twelve, not stages before them.
     step e
       | evalStep1Raw e = pure e
+      | Sym s <- e     = evalStep0Own s          -- OwnValues; see below
       | otherwise =
               evalStep2Head e
           >>= evalStep34ArgsHold
@@ -1154,6 +1260,22 @@ have — a partial function reached on every integer literal, forbidden by §2.3
 test evaluates `2` first. It would also send every raw object round the ladder, looking up
 downvalues on `Integer` once per fixed-point round for an expression that by construction can never
 change.
+
+**A bare symbol is the second guard, and the transcription above does not cover it.** The source
+page's sequence is written for `h[e₁, …, eₙ]` and says nothing about an expression that is just
+`x` — but `evaluate` is called on every subterm, so `Sym x` reaches `step` constantly, and
+`evalStep1Raw` is false for it: a symbol is not a raw object. Falling through to `evalStep2Head`
+gives it exactly the treatment the paragraph above forbids for `Num 3` — no head to evaluate, no
+argument list from which to compute the held-position mask. So `evalStep0Own` is a second guard,
+numbered 0 because it is not one of the source's steps, and it is where `OwnValues[x]` is consulted:
+`x = 5` is an ownvalue on `x`, and steps 10–13 are all keyed on an application's head or an
+argument's head, so none of them can ever apply it. Without this guard `x = 5; x` returns `x`, and
+that is not a missing feature — it is the whole of plain assignment.
+
+`evalStep0Own` is a guard rather than a link for the reason step 1 is: it returns the ownvalue
+replacement (or the symbol unchanged) and the remaining twelve steps do not apply to it. The
+fixed point then re-enters `step` with whatever the ownvalue was, which is what makes `x = y; y = 5;
+x` reach `5`.
 
 **Steps 3 and 4 are one pass, and this is the one place the repository's numbering misleads.**
 The numbering comes from splitting the source page's third bullet in two
@@ -1527,13 +1649,19 @@ it is deliberately asymmetric:
 --
 -- Source: @references/papers/textbooks/cohen2002_*.pdf@ §6.2 (general polynomial
 -- expressions), §6.5 (general rational expressions).
-toPolynomial   :: (MonomialOrder ord) => [Symbol] -> Expr -> Maybe (Multi ord Rational)
-fromPolynomial :: (MonomialOrder ord) => [Symbol] -> Multi ord Rational -> Expr
 
-isPolynomialGPE :: [Symbol] -> Expr -> Bool
-degreeGPE       :: [Symbol] -> Expr -> Maybe Integer
-coefficientGPE  :: Symbol -> Integer -> Expr -> Maybe Expr
-variables       :: Expr -> [Symbol]   -- sorted by 'compareSymbolName' (§3.2)
+-- | A generalized variable is an /expression/, not a symbol: @Sin[x]@ and @x@ are
+-- both legitimate here. Ordered by 'compareCanonical' (§3.5), which fixes the
+-- exponent-vector layout of every 'Monomial'.
+newtype GenVars = GenVars (Vector Expr)
+
+toPolynomial   :: (MonomialOrder ord) => GenVars -> Expr -> Maybe (Multi ord Rational)
+fromPolynomial :: (MonomialOrder ord) => GenVars -> Multi ord Rational -> Expr
+
+isPolynomialGPE :: GenVars -> Expr -> Bool
+degreeGPE       :: GenVars -> Expr -> Maybe Integer
+coefficientGPE  :: Expr -> Integer -> Expr -> Maybe Expr   -- variable, degree, subject
+variables       :: Expr -> GenVars
 ```
 
 Recognition can fail; construction cannot. The `Maybe` is the design's honesty about *generalized
@@ -1541,6 +1669,17 @@ variables*: `Sin[x]` is a legitimate polynomial variable in `Sin[x]^2 + 1`, and 
 subexpression is a variable or a coefficient depends on the variable list you supply. Cohen treats
 this at length and the design does not try to guess — `variables` reports what it found, and callers
 say what they want.
+
+**Which is why the variable list is `Expr`s and not `Symbol`s.** A `[Symbol]` cannot name `Sin[x]`,
+so an API spelled that way would state the generalized-variable story in prose and then make it
+unrepresentable: `toPolynomial` could never be given the variable list that recognizes
+`Sin[x]^2 + 1`, `variables` could not report it, and the `Maybe` would be failing on inputs the
+design says are in scope. `GenVars` is a newtype rather than a bare `Vector Expr` because its
+*order* is load-bearing — it is the exponent-vector layout — and because a bare vector at four call
+sites is four chances to pass an unsorted one. Ordering by `compareCanonical` rather than
+`compareSymbolName` follows for the same reason: the elements are not all symbols, so there is no
+name to compare. Sorting must not use the session-dependent `Ord Symbol` (§3.2) at any point;
+`compareCanonical` is deterministic across sessions and `Ord Symbol` is not.
 
 `Cassini.Builtins.Polynomial` is where the guessing happens, once, so that `Factor[x^2-1]` works
 without a variable list while the library API stays explicit.
@@ -1766,8 +1905,21 @@ first.
 
 ```haskell
 -- | Cassini.Integrate.Rational
-integrateRational :: Symbol -> Uni Rational -> Uni Rational -> Either NotElementary Result
+
+-- | Variable, numerator, denominator. Total: every rational function has an
+-- elementary antiderivative, so there is no failure case to report — see below.
+integrateRational :: Symbol -> Uni Rational -> Uni Rational -> Result
 ```
+
+**It is total, and a `NotElementary` case here would be a lie in the type.** Liouville's theorem
+gives every rational function an elementary antiderivative — a rational part plus a sum of
+logarithms — and Hermite plus Rothstein–Trager always find it. An `Either NotElementary Result`
+would therefore carry a `Left` no input could produce, and every caller would write a branch that
+never runs and cannot be tested; worse, the first caller to see the `Either` would read it as
+licence to give up on hard inputs. `Result` carries the shape the answer actually has — rational
+part, and the logarithmic part as a list of (constant, argument) pairs, which is where the algebraic
+extension the constants may live in becomes visible. Tier 3 is where `NotElementary` becomes real,
+because for the transcendental case it is an outcome rather than a placeholder.
 
 **Tier 3: the transcendental Risch algorithm.** `bronstein2005_*.pdf` ch. 5–6: differential fields,
 monomial extensions, the Risch differential equation, and the case analysis (primitive,
