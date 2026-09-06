@@ -82,13 +82,14 @@ is what it exists to prevent.
 
 ```
                        ┌─────────────────────────────────────┐
-  L5  Frontend         │ Syntax.Lexer/.Parser/.Pretty · REPL │
+  L5  Frontend         │ Syntax.Lexer/.Parser/.FullForm/     │
+                       │ .Pretty · REPL                      │
                        └────────────────┬────────────────────┘
                        ┌────────────────┴────────────────────┐
   L4  Builtins         │ Builtins.* · Simplify.Automatic     │──┐
                        └────────────────┬────────────────────┘  │
                        ┌────────────────┴────────────────────┐  │  (L4 only)
-  L3  Evaluation       │ Eval · Eval.Kernel · Rules          │  │
+  L3  Evaluation       │ Eval · .Kernel · .Message · Rules   │  │
                        └────────────────┬────────────────────┘  │
                        ┌────────────────┴────────────────────┐  │
   L2  Matching         │ Pattern.* · Attributes              │  │
@@ -103,7 +104,8 @@ is what it exists to prevent.
                                         │                       │
                        ┌────────────────┴────────────────────┐  │
   A   Algebra (side)   │ Algebra.* · Poly.* · Zero           │◀─┘
-                       │ Calculus.* · Groebner.* · Integrate │
+                       │ Groebner · Summation.*              │
+                       │ Integrate.* (but .Rules is L4)      │
                        └─────────────────────────────────────┘
 ```
 
@@ -117,9 +119,12 @@ counterexamples.** `Poly.Convert` names `Cassini.Core.Expr` (L1) and `Cassini.Ze
 `Cassini.Eval.Kernel` (L3) — both upward from where the diagram draws `A`. That is the price of a
 bridge: recognizing an `Expr` as a polynomial requires seeing an `Expr`, and deciding whether an
 expression is zero requires evaluating one (§5.6). What makes it a boundary rather than a leak is
-that it is exactly two modules, both named in §2.6's `within` lists and nowhere else, so `Poly.Uni`,
-`Poly.Multi`, `Poly.GCD`, `Poly.Factor`, `Groebner` and the rest still cannot see an `Expr` at all
-and still compile without the kernel. Every other module in `A` obeys the rule as stated.
+that it is exactly two modules of `A`, both named in §2.6's `within` lists and nowhere else, so
+`Poly.Uni`, `Poly.Multi`, `Poly.GCD`, `Poly.Factor`, `Groebner`, `Integrate.Rational`,
+`Summation.*` and the rest still cannot see an `Expr` at all and still compile without the kernel.
+Every other module in `A` obeys the rule as stated. (`Cassini.Integrate.Rules` is also in those
+lists and is not a third bridge: it is an L4 rule table that happens to sit in the `Integrate`
+namespace — §2.2.)
 
 **One seam in L3 is deliberately visible from L2.** The matcher evaluates side conditions (§4.5.2),
 so its signatures name the `Kernel` effect, and `Kernel`'s constructors name `SymbolInfo` from
@@ -214,16 +219,20 @@ expose the API, which is the `containers`/`vector`/`aeson` convention.
 | `Cassini.Poly.Resultant` | Resultants and subresultant PRS. |
 | `Cassini.Zero` | The layered zero test, and the one place `Maybe Bool` is load-bearing (§5.6). |
 | `Cassini.Groebner` | Buchberger, then F4 (§6.1). |
-| `Cassini.Integrate.*` | Rules, rational, transcendental (§6.2). |
+| `Cassini.Integrate.Rational`, `.Risch` | Rational and transcendental integration (§6.2). |
 | `Cassini.Summation.*` | Gosper, Zeilberger (§6.3). |
+
+One module in that last block is not in `A`: **`Cassini.Integrate.Rules` is L4**, listed with the
+builtins in §2.6's `within` lists, because §6.2's tier 1 is a rule table and its loader names
+`Expr`, `Cassini.Rules` and the surface syntax exactly as `Cassini.Builtins.*` does.
 
 ### 2.3 The prelude
 
 `relude` is the prelude, wired in through cabal `mixins` rather than imported per module. But
-`relude` re-exports mtl's `State`/`Reader` vocabulary — `get`, `put`, `modify`, `gets`, `state`,
-`ask`, `asks`, `local`, `withReader`, `State`, `StateT`, `Reader`, `ReaderT`, `MonadState`,
-`MonadReader` — and those names collide, one for one, with `Effectful.State.Static.Local` and
-`Effectful.Reader.Static`.
+`relude` re-exports mtl's `State`/`Reader` vocabulary, and fifteen of those names — `State`, `get`,
+`put`, `modify`, `gets`, `state`, `runState`, `evalState`, `execState`, `Reader`, `ask`, `asks`,
+`local`, `runReader` and `withReader` — collide one for one with `Effectful.State.Static.Local`
+and `Effectful.Reader.Static`.
 Fixing that with qualified imports in fifty modules is fifty chances to get it wrong.
 
 So it is fixed once, in an internal sublibrary:
@@ -291,11 +300,15 @@ compiles with no clash, and `State`/`put`/`modify` are *Not in scope*.
 module Cassini.Prelude (module Relude) where
 
 import Relude hiding
-  ( -- collides with effectful's State and Reader effects
-    State, StateT, MonadState, get, put, modify, modify', gets, state
-  , evalState, execState, runState, evalStateT, execStateT, runStateT
-  , Reader, ReaderT, MonadReader, ask, asks, local, runReader, runReaderT
+  ( -- collides name-for-name with Effectful.State.Static.Local
+    State, get, put, modify, gets, state, evalState, execState, runState
+    -- collides name-for-name with Effectful.Reader.Static
+  , Reader, ask, asks, local, runReader
   , withReader  -- Effectful.Reader.Static has one too, and it is not mtl's
+    -- no effectful counterpart, but the transformer vocabulary the kernel does not
+    -- use: kept out so that a stray 'StateT' reads as a deliberate import (§4.3)
+  , StateT, MonadState, modify', evalStateT, execStateT, runStateT
+  , ReaderT, MonadReader, runReaderT
     -- collides with this project's vocabulary
   , one        -- Relude.Container.One's singleton; we want the ring constant
   , Undefined  -- Relude.Debug's marker type; we want Cohen's Undefined (§4.6)
@@ -307,10 +320,15 @@ import Relude hiding
 `(r1 -> r2) -> Eff (Reader r2 : es) a -> Eff (Reader r1 : es) a` reinterpreter, not mtl's
 `(r' -> r) -> Reader r a -> Reader r' a`. The list above was checked against the export lists of
 `Relude.Monad.Reexport`, `Effectful.Reader.Static` and `Effectful.State.Static.Local` rather than
-written from memory; going the other way, relude's `reader`, `withReaderT` and `withState` are
-*not* subtracted, because effectful has no such names to collide with.
+written from memory, and it is grouped by *why* each name is on it, because the three reasons are
+not the same and a single "collides with effectful" comment over the whole list would be false for
+two thirds of it. Only the first two groups actually collide: `StateT`, `ReaderT`, `MonadState`,
+`MonadReader`, `modify'`, `runStateT`/`evalStateT`/`execStateT` and `runReaderT` have no effectful
+counterpart at all, and are subtracted on the weaker ground that the kernel has no transformer stack
+(§4.3), so a module that wants one should say so in its own import list. Relude's `reader`,
+`withReaderT` and `withState` are left alone, since neither reason applies.
 
-The second group is the one that will keep growing. **relude's namespace is large and it will
+The last group is the one that will keep growing. **relude's namespace is large and it will
 collide with CAS vocabulary**; `one` and `Undefined` are simply the first two, and both were found
 by compiling this document's own fragments rather than by reading. The policy: where relude's
 meaning is unrelated to ours, subtract it here — one line, one place — rather than renaming domain
@@ -374,25 +392,31 @@ noticed in review three months later. `.hlint.yaml`:
 - modules:
     # The evaluation sequence is above matching: nothing below L3 may import it.
     - name: [Cassini.Eval, Cassini.Eval.Message]
-      within: [Cassini.Eval, Cassini.Eval.*, Cassini.Simplify.*,
-               Cassini.Builtins, Cassini.Builtins.*, Cassini.Syntax.*, Cassini.REPL,
-               Main, Test.*, Bench.*]
+      within: [Cassini.Eval.**, Cassini.Simplify.**, Cassini.Builtins.**,
+               Cassini.Integrate.Rules, Cassini.Syntax.**, Cassini.REPL,
+               Main, Test.**, Bench.**]
     # The Kernel effect and the rule tables are the vocabulary the matcher needs for
     # side conditions (§4.5.2), so L2 may name them - but not the sequence above them.
     - name: [Cassini.Eval.Kernel, Cassini.Rules]
-      within: [Cassini.Pattern, Cassini.Pattern.*, Cassini.Eval, Cassini.Eval.*,
-               Cassini.Rules, Cassini.Simplify.*, Cassini.Builtins, Cassini.Builtins.*,
-               Cassini.Syntax.*, Cassini.REPL, Cassini.Zero, Main, Test.*, Bench.*]
-    # The algebra tower does not know about Expr; Poly.Convert and Zero are the bridges.
+      within: [Cassini.Pattern.**, Cassini.Eval.**, Cassini.Rules,
+               Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
+               Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Main, Test.**, Bench.**]
+    # The algebra tower does not know about Expr; Poly.Convert, Zero and the
+    # Integrate.Rules loader are the bridges.
     - name: [Cassini.Core.Expr]
-      within: [Cassini.Core.*, Cassini.Structure, Cassini.Attributes,
-               Cassini.Pattern, Cassini.Pattern.*,
-               Cassini.Rules, Cassini.Eval, Cassini.Eval.*, Cassini.Simplify.*,
-               Cassini.Builtins, Cassini.Builtins.*, Cassini.Syntax.*, Cassini.REPL,
-               Cassini.Zero, Cassini.Poly.Convert, Main, Test.*, Bench.*]
+      within: [Cassini.Core.**, Cassini.Structure, Cassini.Attributes,
+               Cassini.Pattern.**, Cassini.Rules, Cassini.Eval.**,
+               Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
+               Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Cassini.Poly.Convert,
+               Main, Test.**, Bench.**]
     # The representation is private to the core - and to the test that A/Bs interning.
     - name: Cassini.Core.Expr.Internal
-      within: [Cassini.Core.*, Test.Cassini.Core.Intern]
+      within: [Cassini.Core.**, Test.Cassini.Core.Intern]
+    # L4 and L5 are the top of the stack: nothing below them, and nothing in the
+    # algebra tower, may import them (§1.2's "never up" from the other end).
+    - name: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Syntax.**, Cassini.REPL]
+      within: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
+               Cassini.Syntax.**, Cassini.REPL, Main, Test.**, Bench.**]
     # Nondeterminism is private to the matcher's monad (§4.5.2).
     - name: [Control.Monad.Logic, Control.Monad.Logic.Class]
       within: [Cassini.Pattern.Match]
@@ -400,6 +424,15 @@ noticed in review three months later. `.hlint.yaml`:
 
 `Cassini.Poly.Convert` appears in the `Cassini.Core.Expr` rule's `within` and its siblings do not:
 it is the bridge, and the only module in `Cassini.Poly.*` allowed to see an `Expr`.
+
+**`Cassini.Integrate.Rules` is named in all four `within` lists, because it is not really in the
+algebra
+tower.** §6.2's tier 1 is a *rule table* — the work is a loader that reads rule syntax and installs
+`Rule`s into the ordinary tables — so it names `Cassini.Core.Expr`, `Cassini.Rules` and the
+surface-syntax modules, exactly as `Cassini.Builtins.**` does. It sits at L4 in the layering even
+though its `Cassini.Integrate.*` siblings (`.Rational`, the transcendental case) are in `A` and see
+no `Expr` at all. Left out of these lists it would be reported on its first import, which is the
+failure mode described three paragraphs down for `test/`, arriving from the other direction.
 
 **Why `Cassini.Eval.Kernel` and `Cassini.Rules` get their own rule.** §4.5.2's matcher evaluates side
 conditions, so `match`, `matchOne` and `matchAll` all carry `(Kernel :> es)` — L2 must name the
@@ -423,12 +456,22 @@ unsatisfiable, which is the failure this paragraph exists to prevent.
 the cycle the second rule's whole existence is arranged around. GHC would reject it eventually, but
 only after the invariant this file is supposed to state had already been broken.
 
+**The sixth rule guards the top of the stack, and without it half the layering is unenforced.** The
+first five rules all say "who may import this *low* module"; they say nothing about who may import a
+*high* one, so `Cassini.Zero` importing `Cassini.Simplify.Automatic` — the import §5.6 spends a
+paragraph forbidding — and `Cassini.Pattern.Match` importing `Cassini.Builtins` both pass a config
+that stops at rule five. Neither is caught by GHC either, because neither is a cycle. §1.2 claims
+the rule is enforced by lint rather than by good intentions, and that claim is only true for the
+downward
+half unless L4 and L5 are named as restricted modules in their own right.
+
 **`hlint .` walks `test/` and `bench/` too, so their namespaces have to be in every list.** The
 suites import the very modules these rules guard — `Test.Cassini.Core.Order` imports
 `Cassini.Core.Expr`, `Bench.Eval` imports `Cassini.Eval` — and `within` is an allow-list, so a
 config naming only `src/` modules plus `Main` fails CI step 3 on the first test module rather than
-on a layering violation. `Main` covers `test/Main.hs`, `bench/Main.hs` and `app/Main.hs`; `Test.*`
-and `Bench.*` cover the rest. `Test.Cassini.Core.Intern` is named individually in the
+on a layering violation. `Main` covers `test/Main.hs`, `oracle/Main.hs`, `slow/Main.hs`,
+`bench/Main.hs` and `app/Main.hs`; `Test.**` and `Bench.**` cover the rest — and the second star is
+load-bearing, see below. `Test.Cassini.Core.Intern` is named individually in the
 `Cassini.Core.Expr.Internal` rule because §7.3's interning-agreement property has to reach the
 representation, and that is the one exception worth writing out rather than widening.
 
@@ -442,24 +485,36 @@ sample modules rather than by reading the manual:
 - **`within` lists union across rules that match the same module.** So `Cassini.Core.Expr.*` must not
   appear in the `Cassini.Core.Expr` rule's `name`: if it did, that rule's `within` would re-permit
   `Cassini.Core.Expr.Internal` everywhere it lists, silently defeating the
-  `Cassini.Core.Expr.Internal` rule. The five rules name disjoint module sets on purpose, which is
-  also why the first names `Cassini.Eval.Message` explicitly rather than `Cassini.Eval.*`: the
+  `Cassini.Core.Expr.Internal` rule. The six rules name disjoint module sets on purpose, which is
+  also why the first names `Cassini.Eval.Message` explicitly rather than `Cassini.Eval.**`: the
   wildcard would overlap the `Cassini.Eval.Kernel` rule and union the matcher into the sequence's
   allow-list.
-- **`Foo.*` does not match bare `Foo`.** `Cassini.Builtins` and `Cassini.Builtins.*` are both listed,
-  and so are `Cassini.Pattern` and `Cassini.Pattern.*`; omitting the bare form is a rule that quietly
-  does not cover the registry module, or — the case that actually bit — `Cassini.Pattern` itself,
-  which holds `viewPattern :: Expr -> PatternView` (§4.5.1) and so imports `Cassini.Core.Expr`.
+- **`Foo.*` is one component, `Foo.**` is the subtree, and this config wants `**` everywhere.**
+  `Foo.*` matches `Foo.Bar` and nothing else: not bare `Foo`, and — the fact that costs a green CI
+  — not `Foo.Bar.Baz`. So `Test.*` covers `Test.Gen` and `Test.Golden` and covers *none* of §7.1's
+  suite tree: `Test.Cassini.Number`, `Test.Cassini.Core.Order` and every other module under
+  `test/` is two or three components deep, so `hlint .` reports each of them on its first import of
+  a guarded module — precisely the CI step 3 failure the paragraph above says the `Test` entry
+  exists to prevent, arriving because the entry was spelled with one star. `Foo.**` matches `Foo`
+  and every descendant at any depth, which is both wider and shorter: it is why the lists no longer
+  carry `Cassini.Builtins` beside `Cassini.Builtins.*`, or `Cassini.Pattern` beside
+  `Cassini.Pattern.*`. Checked by running `hlint` over fixture modules at each depth, not by
+  reading the manual.
 - **And bare `Foo` does not match `Foo.Bar`** — the same fact from the other side, and the reason the
   `Control.Monad.Logic` rule names `Control.Monad.Logic.Class` as well. A rule naming only
   the latter passes a module that imports `MonadLogic` from the former, which is precisely the
-  leak §4.5.2 is trying to prevent. Checked by running it, not by reading the manual.
+  leak §4.5.2 is trying to prevent. `Control.Monad.Logic.**` would cover both in one entry; the two
+  names are written out because that rule's whole point is that the surface is small enough to
+  enumerate.
 
 The check that this config does what it claims belongs in CI beside `hlint` itself: a handful of
 fixture modules asserting that `Cassini.Poly.Uni` importing `Cassini.Core.Expr` is reported and
 `Cassini.Poly.Convert` doing the same is not — and, for the `Control.Monad.Logic` rule, that
 `Cassini.Pattern.Commutative` importing `Control.Monad.Logic` is reported while
-`Cassini.Pattern.Match` doing the same is not.
+`Cassini.Pattern.Match` doing the same is not, and, for the sixth rule, that `Cassini.Zero`
+importing `Cassini.Simplify.Automatic` is reported while `Cassini.Builtins.Polynomial` doing the
+same is not. One of those fixtures must live at `Test.Cassini.…` depth rather than `Test.…`, because
+that is the depth the `*`-versus-`**` mistake above hides at.
 
 ### 2.7 Documentation
 
@@ -958,7 +1013,7 @@ newtype AttributeSet = AttributeSet Word32
   deriving (Semigroup, Monoid) via (Ior Word32)   -- Data.Bits: union of attribute sets
 
 data Attribute
-  = Orderless | Flat | OneIdentity | Listable
+  = Orderless | Flat | OneIdentity | Listable | NumericFunction
   | HoldFirst | HoldRest | HoldAll | HoldAllComplete
   | SequenceHold | Protected | Constant | ReadProtected
   | NHoldFirst | NHoldRest | NHoldAll | Locked | Stub | Temporary
@@ -975,6 +1030,12 @@ arity), not raw bit tests, so the `HoldFirst`/`HoldRest` index arithmetic lives 
 `OneIdentity` is not an evaluator attribute at all: it affects matching only, and is consumed in
 `Cassini.Pattern.Commutative` and `.Sequence`. It is listed here and used there, which is a seam
 worth flagging because getting it backwards is a documented easy mistake.
+
+The constructor list is the language's whole attribute table, including the ones nothing yet reads —
+`NumericFunction`, `Locked`, `Stub`, `Temporary`, `ReadProtected`. `Attributes[Plus]` has to report
+what the language reports, so an attribute the evaluator ignores still needs a bit; leaving one out
+is a `SetAttributes` that silently drops its argument. Nineteen names against `Word32` leaves
+thirteen spare bits.
 
 ### 4.2 Rules and the four tables
 
@@ -1127,26 +1188,41 @@ module. This is the one place the effect is dynamically dispatched for a reason 
 so a REPL session would spend its previous inputs' budget — every session would eventually hit
 `$IterationLimit::itlim` on inputs that terminate in one round. `WithFuel n` is a higher-order
 operation (hence the `m a` argument): it runs its body with the counter set to `n` and restores the
-caller's remaining fuel afterwards.
+caller's remaining fuel afterwards, which is what lets a nested fixed point have a budget without
+consuming its caller's.
 
-**Exactly one caller sets the budget, and it is the REPL.** `$IterationLimit` bounds *one top-level
-evaluation*, so `WithFuel` is called once per input, with the limit from `EvalConfig`; §4.4's
-`fixpoint` only reads `Iterations` and calls `SpendIteration`. Letting `fixpoint` open a fresh
-`WithFuel` instead would make the REPL's call dead code and hand every nested `evaluate` a full
-budget — the bound on a runaway input would become the limit raised to the recursion depth rather
-than the limit, and a rule whose right-hand side evaluates a subexpression each round would spin for
-minutes before anything stopped it. Per-*evaluate* fuel and per-*input* fuel are different designs;
-this is the second.
+**The budget is per fixed point, and `fixpoint` is what opens it.** The source is explicit about
+which of the two limits counts what, and it is quoted here because this decision has been made
+backwards more than once: "`$RecursionLimit` limits the maximum depth of the evaluation stack […]
+`$IterationLimit` limits the maximum length of any particular evaluation chain, or the maximum
+length of any single list in the structure produced by `Trace`"
+(`references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html`). An evaluation
+chain is one expression's run to a fixed point, so each `fixpoint` opens a `WithFuel` seeded from
+`EvalConfig`, and the restore-on-exit is what makes nesting safe.
 
-**"Once per input" means once per *top-level* evaluation, and the test suite is a caller too.**
-There is no REPL under `runKernelPure`, so a property that calls `evaluate` twice on one interpreter
-run — §7.3's `evaluate . evaluate ≡ evaluate` is exactly that — has the second call spending what
-the first left. A subject taking `k` rounds followed by a subject taking `k` more exhausts a budget
-of `2k - 1` and the second call returns `Hold[…]`, so the law fails on a property of the harness
-rather than of the evaluator, and it fails intermittently as generated sizes vary. Each `evaluate`
-a test performs is a top-level evaluation and gets its own `WithFuel`; `Test/Gen.hs`'s evaluation
-helper opens it, which is why the rule is "one per top-level evaluation" and not "one call site in
-the tree".
+A budget opened once per REPL input instead — one counter drained by every nested `evaluate` —
+measures *total work*, not rounds: `evaluate` recurses into the head and every argument, each
+recursion runs its own `fixpoint`, and each `fixpoint` spends at least one iteration, so the
+iterations consumed by a *terminating* input are at least its node count. `Expand` of
+`(a+b+c+d)^10` (§8.4's own expression-swell benchmark) is thousands of nodes against a default limit
+of 4096, and it would come back as `Hold[…]` with `$IterationLimit::itlim` — the limit firing on the
+size of the answer rather than on non-termination. Per-*evaluate* fuel and per-*input* fuel are
+different designs; this is the first, and it is the one that matches the language.
+
+**Depth is what keeps per-fixed-point fuel bounded, and that is `Descend`'s job, not this one's.**
+The objection to a per-fixed-point budget is that a runaway input can then spend the limit at every
+level, so the total is the limit raised to the recursion depth. That product is finite because the
+depth factor is separately bounded: `$RecursionLimit` aborts past a fixed nesting (below), and the
+two limits together are exactly the pair the language ships. Collapsing them into one counter buys a
+tighter bound on runaway inputs at the cost of failing terminating ones, which is the wrong trade.
+
+**One consequence worth naming: the test suite needs no special handling.** There is no REPL under
+`runKernelPure`, and with the budget opened by `fixpoint` a property that calls `evaluate` twice on
+one interpreter run — §7.3's `evaluate . evaluate ≡ evaluate` is exactly that — gets a fresh budget
+for each call rather than having the second spend what the first left. Under per-input fuel that law
+would have failed on a property of the harness rather than of the evaluator, and failed
+intermittently as generated sizes varied; `Test/Gen.hs` would have had to open a `WithFuel` of its
+own to avoid it.
 
 **`Descend` is the other limit, and it is not the same one.** `$IterationLimit` counts rounds of one
 fixed point; `$RecursionLimit` bounds how deep nested evaluation nests, and §4.7 makes its exhaustion
@@ -1217,7 +1293,7 @@ For `h[e₁, …, eₙ]`:
 3. Evaluate each element `eᵢ` in turn.
 4. If `h` has `HoldFirst`/`HoldRest`/`HoldAll`/`HoldAllComplete`, skip evaluation of certain elements.
 5. Unless `h` has `SequenceHold` or `HoldAllComplete`, flatten out all `Sequence` objects among the `eᵢ`.
-6. Unless `h` has `HoldAllComplete`, strip the outermost of any `Unevaluated` wrappers.
+6. Unless `h` has `HoldAllComplete`, strip the outermost of any `Unevaluated` wrappers among the `eᵢ`.
 7. If `h` has `Flat`, flatten out all nested expressions with head `h`.
 8. If `h` has `Listable`, thread through any `eᵢ` that are lists.
 9. If `h` has `Orderless`, sort the `eᵢ` into order.
@@ -1303,22 +1379,32 @@ impossible to make once the steps are separate values in a fixed order.
   models this as a single ordered list of four `(ValueKind, Origin)` pairs, so there is no place to
   put the axes and no way to nest the loops the wrong way round.
 
-`Hold`, `HoldComplete`, `HoldForm`, `ReleaseHold` and `Unevaluated` are **not** evaluator special
-cases. They are attributes plus ordinary definitions, and **none of the thirteen steps may contain a
-branch naming any of them**. Any patch that adds one is a bug.
+`Hold`, `HoldComplete`, `HoldForm` and `ReleaseHold` are **not** evaluator special cases. They are
+attributes plus ordinary definitions, and **none of the thirteen steps may contain a branch naming
+any of them**. Any patch that adds one is a bug.
 
-The one exception is stated here so that it is not read as a violation of that rule: `fixpoint`
-*constructs* a `Hold` on iteration-limit exhaustion (below). Constructing the wrapper is not
-special-casing the head — no step asks whether an expression *is* a `Hold`, which is the property the
-rule is protecting.
+Two things are stated here so that they are not read as violations of that rule.
+
+`Unevaluated` is **not** on that list, because step 6 *is* its implementation: "strip the outermost
+of any `Unevaluated` wrappers among the `eᵢ`" cannot be written without recognizing the head, and
+`evalStep6Uneval` is the one step permitted to name it. The rest of `Unevaluated`'s behaviour —
+that its argument reaches the step unevaluated at all — really is attributes plus ordinary
+definitions, and no *other* step may branch on it. The source page's "do not special-case them in
+the evaluator loop" is about the `Hold` family; the stripping step is the sequence, not a
+special case bolted to it.
+
+And `fixpoint` *constructs* a `Hold` on iteration-limit exhaustion (below). Constructing the wrapper
+is not special-casing the head — no step asks whether an expression *is* a `Hold`, which is the
+property the rule is protecting.
 
 **The fixed point is fuelled.** `fixpoint` calls `SpendIteration` on each round, reads `Iterations`,
 and on exhaustion emits `$IterationLimit::itlim` and returns the expression wrapped in `Hold` — the
 language's own behaviour, and the alternative to a hang. Non-termination is a *user* error in a
-rewriting system, so it gets a message, not an exception. `fixpoint` does **not** call `WithFuel`:
-the budget is opened once per REPL input (§4.3), so the limit is per top-level evaluation and a
-nested `evaluate` spends its caller's rounds, which is what makes the bound a bound. Depth is the
-other limit and is `Descend`'s job, not this one's.
+rewriting system, so it gets a message, not an exception. `fixpoint` opens its own `WithFuel` from
+`EvalConfig` (§4.3), so the limit is per *fixed point* — per single expression, as the language
+defines it — rather than a single counter that every nested `evaluate` drains and that a large but
+terminating expression exhausts by node count alone. Depth is the other limit and is `Descend`'s
+job, not this one's; the two together are what bound a runaway input.
 
 ### 4.5 Pattern matching
 
@@ -1982,7 +2068,17 @@ test/
   regress/                    -- the regression corpus (§7.4)
 oracle/
   Main.hs                     -- the differential suite (§7.5), separate
+slow/
+  Main.hs                     -- Gröbner, factorization, integration at size
+  Test/Slow/...
+doctests/
+  Main.hs                     -- the doctest driver (§7.6)
 ```
+
+Four suites, four `hs-source-dirs`: each cabal stanza needs a `main-is` of its own, so `test/`,
+`oracle/`, `slow/` and `doctests/` are four directories and not four entry points in one. Sharing
+`test/` between them would put `cassini-slow`'s modules in `cassini-test`'s `other-modules` and
+recompile the slow suite on every fast run.
 
 Four cabal stanzas, because they have different run times and different reasons to fail:
 
