@@ -330,24 +330,25 @@ noticed in review three months later. `.hlint.yaml`:
 - modules:
     # The evaluation sequence is above matching: nothing below L3 may import it.
     - name: [Cassini.Eval, Cassini.Eval.Message]
-      within: [Cassini.Eval, Cassini.Eval.*, Cassini.Rules, Cassini.Simplify.*,
-               Cassini.Builtins, Cassini.Builtins.*, Cassini.Syntax.*, Cassini.REPL, Main]
+      within: [Cassini.Eval, Cassini.Eval.*, Cassini.Simplify.*,
+               Cassini.Builtins, Cassini.Builtins.*, Cassini.Syntax.*, Cassini.REPL,
+               Main, Test.*, Bench.*]
     # The Kernel effect and the rule tables are the vocabulary the matcher needs for
     # side conditions (§4.5.2), so L2 may name them - but not the sequence above them.
     - name: [Cassini.Eval.Kernel, Cassini.Rules]
       within: [Cassini.Pattern, Cassini.Pattern.*, Cassini.Eval, Cassini.Eval.*,
                Cassini.Rules, Cassini.Simplify.*, Cassini.Builtins, Cassini.Builtins.*,
-               Cassini.Syntax.*, Cassini.REPL, Cassini.Zero, Main]
+               Cassini.Syntax.*, Cassini.REPL, Cassini.Zero, Main, Test.*, Bench.*]
     # The algebra tower does not know about Expr; Poly.Convert and Zero are the bridges.
     - name: [Cassini.Core.Expr]
       within: [Cassini.Core.*, Cassini.Structure, Cassini.Attributes,
                Cassini.Pattern, Cassini.Pattern.*,
                Cassini.Rules, Cassini.Eval, Cassini.Eval.*, Cassini.Simplify.*,
                Cassini.Builtins, Cassini.Builtins.*, Cassini.Syntax.*, Cassini.REPL,
-               Cassini.Zero, Cassini.Poly.Convert, Main]
-    # The representation is private to the core.
+               Cassini.Zero, Cassini.Poly.Convert, Main, Test.*, Bench.*]
+    # The representation is private to the core - and to the test that A/Bs interning.
     - name: Cassini.Core.Expr.Internal
-      within: [Cassini.Core.*]
+      within: [Cassini.Core.*, Test.Cassini.Core.Intern]
     # Nondeterminism is private to the matcher's monad (§4.5.2).
     - name: [Control.Monad.Logic, Control.Monad.Logic.Class]
       within: [Cassini.Pattern.Match]
@@ -371,6 +372,21 @@ constructor of `Kernel` (§4.3) rather than a plain function: `Cassini.Pattern.M
 `Cassini.Zero` reach evaluation by `send`, `Cassini.Eval` supplies the sequence when it interprets
 the effect, and the import graph stays acyclic. A `Kernel` without that constructor makes this rule
 unsatisfiable, which is the failure this paragraph exists to prevent.
+
+**`Cassini.Rules` is not in the first rule's `within`, and that is the point.** It sits at the
+*bottom* of L3 so `Cassini.Pattern.*` may import it; letting it import `Cassini.Eval` back would put
+`Cassini.Pattern.Match → Cassini.Rules → Cassini.Eval → Cassini.Pattern.Match` back in the graph —
+the cycle the second rule's whole existence is arranged around. GHC would reject it eventually, but
+only after the invariant this file is supposed to state had already been broken.
+
+**`hlint .` walks `test/` and `bench/` too, so their namespaces have to be in every list.** The
+suites import the very modules these rules guard — `Test.Cassini.Core.Order` imports
+`Cassini.Core.Expr`, `Bench.Eval` imports `Cassini.Eval` — and `within` is an allow-list, so a
+config naming only `src/` modules plus `Main` fails CI step 3 on the first test module rather than
+on a layering violation. `Main` covers `test/Main.hs`, `bench/Main.hs` and `app/Main.hs`; `Test.*`
+and `Bench.*` cover the rest. `Test.Cassini.Core.Intern` is named individually in the
+`Cassini.Core.Expr.Internal` rule because §7.3's interning-agreement property has to reach the
+representation, and that is the one exception worth writing out rather than widening.
 
 Four things about this config that are not obvious, and were each found by running `hlint` against
 sample modules rather than by reading the manual:
@@ -535,8 +551,27 @@ which does not list it. What `Cassini.Number` owns is the arithmetic `simplifyRN
 -- | Cassini.Core.Symbol
 data Symbol = Symbol { symId :: {-# UNPACK #-} !Int, symContext :: !Text, symName :: !Text }
 instance Eq  Symbol where (==)    = (==)    `on` symId
+
+-- | Map-key order only. Interning order, therefore session-dependent.
+-- The canonical order is 'compareSymbolName'; see below.
 instance Ord Symbol where compare = compare `on` symId
+
+-- | Cohen's O-2. The only symbol comparison any *output* may depend on.
+compareSymbolName :: Symbol -> Symbol -> Ordering
+compareSymbolName = comparing symContext <> comparing symName
 ```
+
+**`Ord Symbol` is `symId` order, and `symId` is allocation order.** It is the right instance for a
+`Map Symbol` key — an `Int` compare in the hottest loop there is — and the wrong one for anything a
+user sees, because which symbol got the smaller id depends on what the session interned first. Two
+places would silently inherit that: O-2 in §3.5, which Cohen defines as *lexicographic*, and
+`Cassini.Poly.Convert.variables` (§5.1), whose result order fixes the exponent-vector layout of
+every `Monomial`. Reaching for the in-scope `compare` in either makes `Plus[b, a]` sort one way from
+a `--script` run and the other way from a REPL session that had already mentioned `b`, so the golden
+files in §7.4 pass or fail on evaluation history. `compareSymbolName` exists so that neither has to
+reach for `compare`, and `Cassini.Core.Order` and `Cassini.Poly.Convert` are the two modules that
+call it. This is the same trap §3.1 and §3.5 avoid by not deriving `Ord`; here the instance is
+genuinely wanted, so the containment is a second named function rather than an absence.
 
 Symbols are interned unconditionally — unlike expressions (§3.4), where interning is a decision.
 Symbol interning is cheap, obviously correct, and buys `Int` comparison in the hottest inner loop
@@ -706,7 +741,7 @@ The rules, transcribed because they are the specification:
 | Rule | Case | Order |
 | :--- | :--- | :--- |
 | O-1 | both constants | numeric `<` |
-| O-2 | both symbols | lexicographic |
+| O-2 | both symbols | lexicographic — `compareSymbolName` (§3.2), never `Ord Symbol` |
 | O-3 | both products (or both sums) | compare last operands, then next-to-last, …; if one is a suffix of the other, shorter first |
 | O-4 | both powers | bases first; if equal, exponents |
 | O-5 | both factorials | operands |
@@ -769,9 +804,30 @@ option in which both exist, because that is exactly how the wrong one gets used 
 data ExprF r = NumberF !Number | StringF !Text | SymbolF !Symbol | AppF !r !(Vector r)
   deriving stock (Functor, Foldable, Traversable)
 type instance Base Expr = ExprF
-instance Recursive   Expr
-instance Corecursive Expr
+
+instance Recursive Expr where
+  project e = case exprShape e of
+    SNumber n -> NumberF n
+    SString t -> StringF t
+    SSymbol s -> SymbolF s
+    SApp h as -> AppF h as
+
+instance Corecursive Expr where
+  embed = \case
+    NumberF n -> mkNumber n
+    StringF t -> mkString t
+    SymbolF s -> mkSymbol s
+    AppF h as -> mkApp h as
 ```
+
+**Both instances are written out, and neither may be left empty.** `recursion-schemes` supplies
+`Generic`-based defaults for `project`/`embed`, but they need `Rep Expr` and `Rep (ExprF Expr)` to
+line up, and they do not: `Expr` is a three-field record carrying a hash and an intern id that the
+base functor has no room for. An empty instance therefore does not compile — and the tempting
+repair, rebuilding the record by hand, is worse than the error, because it produces nodes with a
+stale `exprHash` and `notInterned` in `exprId`: everything still *works*, `Eq` is quietly wrong, and
+nothing fails until a golden file does. Naming `mkNumber`/`mkString`/`mkSymbol`/`mkApp` in `embed`
+is the entire argument below, made mechanical.
 
 **`recursion-schemes` over `uniplate`**, for one reason that outweighs the extra concept: `embed`
 goes through the smart constructors, so every `cata`/`ana`/`para` automatically maintains the hash
@@ -861,11 +917,23 @@ worth flagging because getting it backwards is a documented easy mistake.
 -- | Cassini.Rules
 data Rule = Rule
   { ruleLhs      :: !Expr          -- ^ the pattern
-  , ruleRhs      :: !Expr
-  , ruleDelayed  :: !Bool          -- ^ ':>' rather than '->'
+  , ruleBody     :: !RuleBody
   , ruleSpecificity :: !Specificity
   , ruleOrigin   :: !Origin        -- ^ which rung of the §4.4 ladder this rule is on
   }
+
+data RuleBody
+  = Immediate !Expr                -- ^ '->': RHS already evaluated at definition time
+  | Delayed   !Expr                -- ^ ':>': RHS evaluated after substitution
+  | Native    !BuiltinId           -- ^ a Haskell implementation; 'Builtin' origin only
+
+newtype BuiltinId = BuiltinId Int
+  deriving newtype (Eq, Ord)
+
+-- | The ladder, written once. 'Ord'/'Enum' on 'ValueKind' is EnumMap key order,
+-- *not* this order: never walk 'siValues' in key order to drive steps 10-13.
+ladder :: [(ValueKind, Origin)]
+ladder = [(UpValue, User), (UpValue, Builtin), (DownValue, User), (DownValue, Builtin)]
 
 data ValueKind = OwnValue | DownValue | UpValue | SubValue
   deriving stock (Eq, Ord, Enum, Bounded)
@@ -880,6 +948,30 @@ data SymbolInfo = SymbolInfo
   , siValues     :: !(EnumMap ValueKind RuleSet)
   }
 ```
+
+**A `Rule` must be able to hold Haskell, or no builtin can be installed.** §4.6 says `simplify` is
+"the built-in downvalues for `Plus`, `Times` and `Power`", §4.9 says `D`'s rules are downvalues on
+`Derivative`, and steps 11 and 13 of §4.4 apply *built-in* up- and downvalues. None of `Plus`,
+`Part`, `Map`, `Set` or `Factor` is expressible as an `Expr`-to-`Expr` rewrite, so a `Rule` whose
+right-hand side is only an `Expr` leaves those four steps with nothing to apply and `Plus[1, 2]`
+comes back unevaluated. Hence `RuleBody`, whose third case is a native implementation.
+
+**Why `Native` holds an id and not a function.** A field of type
+`forall es. (Kernel :> es) => Subst -> Eff es Expr` would make `Cassini.Rules` import
+`Cassini.Eval.Kernel`, which already imports `Cassini.Rules` for `SymbolInfo` — the one import cycle
+§2.6's shared rule for those two modules exists to keep out. So `Rule` stays a plain data type and
+carries an index; `KernelState` carries the vector of implementations, assembled by
+`Cassini.Builtins` (L4) when it builds the initial state, which is what "registry assembly" in §2.2
+means. `Cassini.Eval` resolves the id when it interprets `Kernel`. A `BuiltinId` with no entry is a
+construction error in `Cassini.Builtins`, not a user-reachable failure.
+
+**`Ord ValueKind` is not the ladder, and the constructor order says the opposite.** Derived `Ord`
+and `Enum` put `DownValue` before `UpValue`, so walking `siValues` in `EnumMap` key order tries
+downvalues first — precisely the "built-in upvalue beats user downvalue" inversion of §4.4, arrived
+at by writing the obvious fold. The order is kept for the same reason §3.1 and §3.5 keep `Number`'s
+and `Expr`'s: it is a fine *map key* order and a wrong *semantic* order, and the fix is to never
+derive the semantics from it. `ladder` above is the only list steps 10-13 may iterate, and §7.3's
+`Rules` row asserts that `applicableRules` visits the rungs in exactly that sequence.
 
 **`ruleOrigin` is not bookkeeping.** §4.4's ladder is four rungs, not two axes, and the rungs are
 `(UpValue, User)`, `(UpValue, Builtin)`, `(DownValue, User)`, `(DownValue, Builtin)` in that order.
@@ -923,6 +1015,7 @@ data Kernel :: Effect where
   Iterations    :: Kernel m Int            -- ^ remaining fixed-point fuel
   SpendIteration:: Kernel m ()
   WithFuel      :: Int -> m a -> Kernel m a  -- ^ run with a fresh fuel budget
+  Descend       :: m a -> Kernel m a       -- ^ one level deeper; '$RecursionLimit' aborts
 type instance DispatchOf Kernel = Dynamic
 
 lookupSymbol :: (Kernel :> es) => Symbol -> Eff es SymbolInfo
@@ -948,12 +1041,27 @@ module. This is the one place the effect is dynamically dispatched for a reason 
 
 **`WithFuel` is the reset, and its absence would be a slow-burning bug.** `Iterations` and
 `SpendIteration` alone give one monotonically draining counter for the life of the `KernelState`,
-so a nested `evaluate` would spend its parent's budget and a REPL session would spend its previous
-inputs' — every session would eventually hit `$IterationLimit::itlim` on inputs that terminate in one
-round. `WithFuel n` is a higher-order operation (hence the `m a` argument): it runs its body with the
-counter set to `n` and restores the caller's remaining fuel afterwards, which is what makes the limit
-per-evaluation, as the language defines it. The REPL calls it once per input with
-`$IterationLimit` from `EvalConfig`; §4.4's `fixpoint` is its only other caller.
+so a REPL session would spend its previous inputs' budget — every session would eventually hit
+`$IterationLimit::itlim` on inputs that terminate in one round. `WithFuel n` is a higher-order
+operation (hence the `m a` argument): it runs its body with the counter set to `n` and restores the
+caller's remaining fuel afterwards.
+
+**Exactly one caller sets the budget, and it is the REPL.** `$IterationLimit` bounds *one top-level
+evaluation*, so `WithFuel` is called once per input, with the limit from `EvalConfig`; §4.4's
+`fixpoint` only reads `Iterations` and calls `SpendIteration`. Letting `fixpoint` open a fresh
+`WithFuel` instead would make the REPL's call dead code and hand every nested `evaluate` a full
+budget — the bound on a runaway input would become the limit raised to the recursion depth rather
+than the limit, and a rule whose right-hand side evaluates a subexpression each round would spin for
+minutes before anything stopped it. Per-*evaluate* fuel and per-*input* fuel are different designs;
+this is the second.
+
+**`Descend` is the other limit, and it is not the same one.** `$IterationLimit` counts rounds of one
+fixed point; `$RecursionLimit` bounds how deep nested evaluation nests, and §4.7 makes its exhaustion
+an `Abort`. Nothing in `Iterations`/`SpendIteration` measures depth, so without a second operation
+`f[x_] := f[x] + 1` recurses through nested `Evaluate` calls until the RTS stack overflows — which is
+a crash, not the message the language promises. `Descend` wraps the body one level deeper and throws
+`Abort` past `$RecursionLimit`; `Evaluate`'s interpretation in `Cassini.Eval` is its only caller,
+which is what makes the count automatic rather than something each builtin has to remember.
 
 **Why this and not `ReaderT Env IO` with `IORef`s.** Two interpreters over one effect:
 
@@ -1023,15 +1131,29 @@ The implementation is one function whose body is thirteen named calls, each sepa
 evaluate :: (Kernel :> es) => Expr -> Eff es Expr
 evaluate = fixpoint step
   where
-    step e = evalStep1Raw e
-         >>= evalStep2Head  >>= evalStep34ArgsHold
-         >>= evalStep5Seq   >>= evalStep6Uneval  >>= evalStep7Flat
-         >>= evalStep8List  >>= evalStep9Order   >>= evalStep10UserUp
-         >>= evalStep11BuiltinUp >>= evalStep12UserDown >>= evalStep13BuiltinDown
+    -- Step 1 is a *guard* on the other twelve, not a stage before them.
+    step e
+      | evalStep1Raw e = pure e
+      | otherwise =
+              evalStep2Head e
+          >>= evalStep34ArgsHold
+          >>= evalStep5Seq   >>= evalStep6Uneval  >>= evalStep7Flat
+          >>= evalStep8List  >>= evalStep9Order   >>= evalStep10UserUp
+          >>= evalStep11BuiltinUp >>= evalStep12UserDown >>= evalStep13BuiltinDown
 
     -- Step 4 is a *gate* on step 3, not a stage after it.
     evalStep34ArgsHold e = evalStep4Hold e >>= \held -> evalStep3Args held e
 ```
+
+**Step 1 is a guard, for the same reason step 4 is.** "Leave raw objects unchanged" is not a stage
+that can sit at the head of a `>>=` chain: a link can only return the expression and let the other
+twelve run on it. `evalStep1Raw` is therefore a predicate, not an `Expr -> Eff es Expr`. Written as
+a link it would hand `Num 3` to `evalStep2Head`, which has no head to evaluate, and to
+`evalStep34ArgsHold`, whose held-position mask is computed from an argument list a number does not
+have — a partial function reached on every integer literal, forbidden by §2.3 and found by whichever
+test evaluates `2` first. It would also send every raw object round the ladder, looking up
+downvalues on `Integer` once per fixed-point round for an expression that by construction can never
+change.
 
 **Steps 3 and 4 are one pass, and this is the one place the repository's numbering misleads.**
 The numbering comes from splitting the source page's third bullet in two
@@ -1043,7 +1165,7 @@ evaluation — it is doing it and then forgetting. `Hold[1+1]` would return `Hol
 from the head's attributes and `evalStep3Args` consumes it; both stay separately named and
 separately testable, and the golden traces (§7.4) still record them as two entries.
 
-Not because a twelve-step `>>=` chain is beautiful, but because each step is then a function with
+Not because an eleven-link `>>=` chain is beautiful, but because each step is then a function with
 a name, a unit test, and a golden trace — and because the three easy mistakes below are structurally
 impossible to make once the steps are separate values in a fixed order.
 
@@ -1068,12 +1190,13 @@ The one exception is stated here so that it is not read as a violation of that r
 special-casing the head — no step asks whether an expression *is* a `Hold`, which is the property the
 rule is protecting.
 
-**The fixed point is fuelled.** `fixpoint` runs under `WithFuel` (§4.3), decrements `Iterations` on
-each round and, on exhaustion, emits `$IterationLimit::itlim` and returns the expression wrapped in
-`Hold` — the language's own behaviour, and the alternative to a hang. Non-termination is a *user*
-error in a rewriting system, so it gets a message, not an exception. Because the budget is scoped
-rather than global, the limit is per top-level evaluation: a nested `evaluate` does not spend its
-caller's rounds, and the next REPL input starts full.
+**The fixed point is fuelled.** `fixpoint` calls `SpendIteration` on each round, reads `Iterations`,
+and on exhaustion emits `$IterationLimit::itlim` and returns the expression wrapped in `Hold` — the
+language's own behaviour, and the alternative to a hang. Non-termination is a *user* error in a
+rewriting system, so it gets a message, not an exception. `fixpoint` does **not** call `WithFuel`:
+the budget is opened once per REPL input (§4.3), so the limit is per top-level evaluation and a
+nested `evaluate` spends its caller's rounds, which is what makes the bound a bound. Depth is the
+other limit and is `Descend`'s job, not this one's.
 
 ### 4.5 Pattern matching
 
@@ -1174,7 +1297,16 @@ replacement backend that lost that would be a regression even if it were faster 
 `match`, never in an effect. A failed branch is abandoned by dropping a value, so nothing needs
 rolling back. This sidesteps the hazard `effectful` documents as `OnEmptyPolicy` — the design avoids
 the question rather than configuring an answer to it, and the property test in §7.3 (matching leaves
-`KernelState` unchanged except for messages) is what keeps it true. It is also what makes the choice
+`KernelState` unchanged except for messages) is what keeps it true.
+
+**The rule is about the matcher, not about what a side condition does.** `/;` and `?f` evaluate
+arbitrary expressions through `Evaluate`, and an expression may assign: `MatchQ[3, _?((z = 5;
+IntegerQ[#]) &)]` writes `z` on a branch that may then fail, and the write stays. That is WL's
+behaviour and not something to fix — but it means the §7.3 property has to be stated over
+side-condition-free patterns, or it fails on the first generated `PCondition` containing a `Set` and
+gets read as a matcher bug. `genPattern` (§7.3) does not build side conditions, so the property is
+exercised on exactly the patterns it holds for; the restriction is written down so that widening the
+generator later does not quietly turn a true law into a flaky one. It is also what makes the choice
 of backend inside `MatchT` a performance question and nothing more: no backend can be obliged to
 restore state that was never mutated.
 
@@ -1401,7 +1533,7 @@ fromPolynomial :: (MonomialOrder ord) => [Symbol] -> Multi ord Rational -> Expr
 isPolynomialGPE :: [Symbol] -> Expr -> Bool
 degreeGPE       :: [Symbol] -> Expr -> Maybe Integer
 coefficientGPE  :: Symbol -> Integer -> Expr -> Maybe Expr
-variables       :: Expr -> [Symbol]
+variables       :: Expr -> [Symbol]   -- sorted by 'compareSymbolName' (§3.2)
 ```
 
 Recognition can fail; construction cannot. The `Maybe` is the design's honesty about *generalized
@@ -1776,13 +1908,13 @@ justifies its cost:
 | `Core.Traversal` | `cata embed ≡ id` | traversal that fails to rebuild through smart constructors |
 | `Structure` | `substitute u t t ≡ u`; `freeOf u t` implies `substitute u t r ≡ u` | subexpression comparison errors |
 | `Attributes` | `AttributeSet` is a commutative idempotent monoid; `holdsArgument` agrees with a naive reference for every (attributes, index, arity) triple | the `HoldFirst`/`HoldRest` index arithmetic, which is off-by-one bait |
-| `Rules` | `insertRule` leaves the set sorted by specificity, and insertion order breaks ties | rule shadowing, which presents as "my definition is ignored" |
+| `Rules` | `insertRule` leaves the set sorted by specificity, and insertion order breaks ties; `applicableRules` visits the rungs in `ladder` order | rule shadowing, which presents as "my definition is ignored", and the `Ord ValueKind` inversion of §4.2 |
 | `Simplify` | `simplify u` satisfies `isASAE` or is `Undefined` | the postcondition, directly |
 | `Simplify` | **for `u` an ASAE, `simplify u ≡ u`** | the source's own stated contract; stronger than plain idempotence |
 | `Simplify` | `simplify` preserves numeric value at random rational points | a canonicalization that is canonical but wrong |
 | `Pattern` | soundness: every `σ` from `matchAll p s` satisfies `applySubst σ p ≡ s` modulo attributes | the whole matcher, in one line |
 | `Pattern` | completeness on generated pairs: `genPattern` output always matches its subject | phases 1–2 over-pruning |
-| `Pattern` | matching leaves `KernelState` unchanged but for messages | the backtracking rule in §4.5.2 |
+| `Pattern` | for side-condition-free patterns, matching leaves `KernelState` unchanged but for messages | the backtracking rule in §4.5.2 |
 | `Pattern` | `matchOne ≡ listToMaybe <$> matchAll` | the two observation functions diverging |
 | `Eval` | `evaluate . evaluate ≡ evaluate` | a non-converging fixed point |
 | `Eval` | evaluation under `runKernelPure` is deterministic given the same initial state | hidden `IO` dependence |
@@ -1919,11 +2051,17 @@ bench/
 
 Compiled with `-O2` and `-with-rtsopts=-T` so that allocation and residency are reported alongside
 wall time. For a term rewriter, **allocation is the story** — the interesting regressions show up as
-bytes allocated long before they show up as seconds — so every benchmark reports both and the
-baseline gate watches both.
+bytes allocated long before they show up as seconds — so every benchmark reports both.
 
 The relevant flags are `--baseline`, `--fail-if-slower`, `--fail-if-faster` and `--csv`; exact
 spellings to be confirmed against the installed version when the suite is first written.
+
+**`--fail-if-slower` compares times, and only times.** `tasty-bench` puts the allocation column in
+the CSV but thresholds only the time measurement against the baseline, so a gate spelled with that
+flag alone passes a change that triples allocation at unchanged wall time — which is exactly the
+regression this section says arrives first. The allocation gate is therefore ours to write: §8.6's
+CI step diffs the committed baseline CSV against the run's CSV on the allocation column and fails on
+the same threshold. Small, and the alternative is a gate that watches the number that moves second.
 
 ### 8.2 Core (Stage 0)
 
@@ -1995,10 +2133,11 @@ differentiation, pattern replacement and polynomial arithmetic — measured as a
 sensitive to GHC version and machine, and gating on them produces flaky builds that get disabled. The
 end-to-end number is stable enough to gate, and a regression in it is always worth investigating.
 
-The gate: `--baseline baseline/ghc-9.12.csv --fail-if-slower 10`. Ten percent is chosen to sit above
-machine noise and below anything worth shipping. Baselines are committed, regenerated deliberately
-with the commit message saying why, and kept per GHC version because cross-version comparison is
-meaningless.
+The gate: `--baseline baseline/ghc-9.12.csv --fail-if-slower 10 --csv out.csv`, followed by the
+allocation diff of §8.1 over the same two CSVs — `--fail-if-slower` does not look at allocation.
+Ten percent is chosen for both, to sit above machine noise and below anything worth shipping.
+Baselines are committed, regenerated deliberately with the commit message saying why, and kept per
+GHC version because cross-version comparison is meaningless.
 
 ### 8.7 What is not measured, and why
 
