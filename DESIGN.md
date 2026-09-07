@@ -239,7 +239,7 @@ So it is fixed once, in an internal sublibrary:
 
 ```cabal
 library cassini-prelude
-  import:           warnings
+  import:           warnings, extensions
   exposed-modules:  Cassini.Prelude
   hs-source-dirs:   prelude
   build-depends:    base, relude
@@ -250,7 +250,7 @@ library cassini-prelude
   default-language: GHC2024
 
 library
-  import:           warnings
+  import:           warnings, extensions
   build-depends:    base, cassini:cassini-prelude, effectful, ...
   mixins:
       base                   hiding (Prelude)
@@ -367,21 +367,55 @@ common warnings
 `-Wmissing-export-lists` is the load-bearing one: every module states its interface, which is what
 makes the layering in §1.2 checkable and the `Internal` convention meaningful.
 
-Extensions beyond GHC2024 are declared per-module, never in `default-extensions`, so that reading a
-module tells you what it needs. The ones that actually need declaring, checked by compiling a
-one-line module against bare `-XGHC2024` rather than by reading the release notes:
-`PatternSynonyms` and `ViewPatterns` (§3.3), `TypeFamilies` (the algebra tower),
-`OverloadedStrings`, and `DerivingVia`.
+Extensions are declared per-module, so that reading a module tells you what it needs — with two
+exceptions, which are project-wide in a second `common` stanza that every stanza imports alongside
+`warnings` (`import: warnings, extensions`), the `cassini-prelude` sublibrary included:
+
+```cabal
+common extensions
+  default-extensions:
+    OverloadedRecordDot
+    OverloadedStrings
+```
+
+**The test for the project-wide tier is whether a per-module pragma would still carry information.**
+An extension that a handful of modules need is a fact about those modules; one that forty of them
+need is a fact about the project, and repeating it forty times says nothing while burying the
+pragmas that are genuinely module-local. `OverloadedStrings` follows from §2.3's `Text`-everywhere
+consequence and would appear in nearly every module. `OverloadedRecordDot` follows from records
+being the shape of §3 and §4 — `Symbol` (§3.2), `Expr`'s internal node (§3.3), `Rule` (§4.2),
+`SymbolInfo` (§4.2), `Message` (§4.7) — and from `r.field` being the house default over `field r`.
+
+The ones that stay per-module, checked by compiling a one-line module against bare `-XGHC2024`
+rather than by reading the release notes: `PatternSynonyms` and `ViewPatterns` (§3.3),
+`TypeFamilies` (the algebra tower), and `DerivingVia`.
 
 `DataKinds`, `GADTs` and `DerivingStrategies` are **already in GHC2024** and must not be declared —
 `-Wall` does not warn on a redundant `LANGUAGE` pragma, so an unnecessary one is invisible noise that
 implies the module needs something it does not. This is why §4.5.2's `deriving newtype` costs nothing
-and §4.3's `Kernel` GADT carries no pragma.
+and §4.3's `Kernel` GADT carries no pragma. The same rule covers the two project-wide extensions:
+a module that re-declares `OverloadedStrings` is claiming a local need it does not have.
+`OverloadedRecordDot` is *not* in GHC2024 — without it `r.rName` parses as `r . rName` and fails as
+a type error rather than a parse error, which is the confusing way to find out. Verified against
+GHC 9.12.4, as is the `common extensions` stanza above against cabal 3.16.1.0.
 
 ### 2.5 Formatting and lint
 
-`fourmolu` with a committed `fourmolu.yaml`; `hlint` with a committed `.hlint.yaml`. Both run in CI
-in check mode. Both are already installed locally.
+`ormolu`, with nothing to configure; `hlint` with a committed `.hlint.yaml`. Both run in CI in
+check mode. Both are already installed locally.
+
+**`ormolu` has no style configuration, and that is why it is the one chosen.** There is no
+`ormolu.yaml` to write, so the formatting is not a decision this repository makes, revisits, or
+argues about in review — which is the whole value being bought. The `.ormolu` file it does look for
+carries operator *fixities*, not style, and is needed only if a module declares custom operators;
+none are declared today, so there is no file to commit. Ormolu always spaces composition (`f . g`),
+so §2.4's `OverloadedRecordDot` and the formatter never fight over `r.field`.
+
+**Ormolu must see the cabal file, and CI must never pass `--no-cabal`.** It extracts
+`default-extensions` from the `.cabal` file by default, resolving `import:` of a `common` stanza,
+which is what makes §2.4's project-wide tier safe: with `--no-cabal` ormolu parses `r.rName` without
+`OverloadedRecordDot` and *rewrites the source* to `r . rName`, silently changing what it means.
+Verified with ormolu 0.8.0.2 against the `common extensions` stanza in §2.4.
 
 ### 2.6 Layering, enforced
 
@@ -540,7 +574,7 @@ therefore the required job:
 1. `cabal build --enable-tests --enable-benchmarks all`
 2. `cabal test cassini-test cassini-doctest` (unit, property, golden, Haddock examples)
 3. `hlint .`
-4. `fourmolu --mode check $(git ls-files '*.hs')`
+4. `ormolu --mode check $(git ls-files '*.hs')` — no `--no-cabal`, per §2.5
 5. `cabal haddock --haddock-quickjump` with a coverage floor
 6. benchmark regression gate against the committed baseline (§8.6)
 

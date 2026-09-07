@@ -57,9 +57,17 @@ design disagree, the design is the intent and the code is behind.
      siblings hold the API.
    - No partial functions. `head`, `fromJust` and `!!` are not in scope, and the places that want
      indexing return `Either` with a message — which the language semantics require anyway.
-   - The warning set in `DESIGN.md` §2.4 is not relaxed per module. Extensions beyond GHC2024 are
-     declared per module, never in `default-extensions`.
-   - `fourmolu` and `hlint`, both checked in CI.
+   - The warning set in `DESIGN.md` §2.4 is not relaxed per module. Extensions are declared per
+     module, with two exceptions: `OverloadedRecordDot` and `OverloadedStrings` are project-wide in
+     a `common extensions` stanza, because a pragma repeated in forty headers states nothing. Every
+     other extension a module needs it says so itself, and re-declaring the two project-wide ones is
+     the same invisible noise as declaring something GHC2024 already has.
+   - **Record dot syntax is usually preferred**: `s.symName`, not `symName s`. That is what
+     `OverloadedRecordDot` is on project-wide for; prefix selector application is what now wants a
+     reason (composition, passing the selector as a function, a section).
+   - `ormolu` and `hlint`, both checked in CI. Ormolu has no style config and that is the point —
+     the formatting is not a decision. It reads `default-extensions` out of the cabal file, so
+     **never pass `--no-cabal`**: without it ormolu rewrites `r.field` to `r . field`.
    - The `mixins` stanza needs the qualified `cassini:cassini-prelude` form in both
      `build-depends` and `mixins`; cabal rejects the bare sublibrary name.
    - **Module layering is a lint rule, not a convention** (`DESIGN.md` §2.6). Imports go down the
@@ -120,5 +128,5 @@ design disagree, the design is the intent and the code is behind.
 
 ## Toolchain
 
-GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`. `fourmolu`, `ormolu` and `hlint` are
-installed locally. `cabal build --enable-tests --enable-benchmarks all` is the full build.
+GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`. `ormolu` and `hlint` are installed
+locally. `cabal build --enable-tests --enable-benchmarks all` is the full build.
