@@ -67,9 +67,11 @@ heterogeneous term language, and a typed AST fights that at every step.
 **The algebra layer is typed where types pay.** The coefficient ring and the monomial order are type
 parameters, so a lex-ordered polynomial cannot meet a grevlex one and a ℤ coefficient cannot be
 divided as if it were in ℚ (`references/papers/haskell/ishii2018_*.pdf`). The number of variables and
-their identity are **runtime** data, checked at the bridge: even a type-level arity cannot tell
-ℚ[x,y,z] from ℚ[w,x,y], since both have arity 3, and the bridge (§5.1) builds variable lists at
-runtime anyway. Type-level arity is deferred as D13.
+their identity are **runtime** data, checked at the bridge. A type-level arity alone cannot tell
+ℚ[x,y,z] from ℚ[w,x,y] — both are arity 3; Ishii separates them with a second layer, `LabPoly`, that
+carries the variable names as a type-level list — and the bridge (§5.1) builds variable lists at
+runtime, so every typed polynomial would arrive wrapped in an existential. Type-level arity and
+labels are deferred together as D13.
 
 **The bridge is explicit and lossy in one direction** (§5.1): recognizing an `Expr` as a polynomial
 in given variables can fail and returns `Maybe`; going the other way always succeeds.
@@ -2136,7 +2138,7 @@ answer, not a deletion.
 | D10 | SMT-backed zero testing not adopted (§5.6) | polynomial side conditions needing more than layer 3 decides |
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation per match dominating on the sequence-variable grid |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
-| D13 | Runtime polynomial arity over type-level (§1.1, §5.2) | arity-mismatch bugs surviving the bridge checks, or F4 wanting sized vectors |
+| D13 | Runtime polynomial arity and variables over type-level arity and labels (§1.1, §5.2) | arity-mismatch bugs surviving the bridge checks, or F4 wanting sized vectors |
 | D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4) | §8.4's fixed-point benchmark showing re-evaluation dominating |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
 
