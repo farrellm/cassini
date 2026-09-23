@@ -66,12 +66,12 @@ heterogeneous term language, and a typed AST fights that at every step.
 
 **The algebra layer is typed where types pay.** The coefficient ring and the monomial order are type
 parameters, so a lex-ordered polynomial cannot meet a grevlex one and a ℤ coefficient cannot be
-divided as if it were in ℚ (`references/papers/haskell/ishii2018_*.pdf`). The number of variables and
-their identity are **runtime** data, checked at the bridge. A type-level arity alone cannot tell
-ℚ[x,y,z] from ℚ[w,x,y] — both are arity 3; Ishii separates them with a second layer, `LabPoly`, that
-carries the variable names as a type-level list — and the bridge (§5.1) builds variable lists at
-runtime, so every typed polynomial would arrive wrapped in an existential. Type-level arity and
-labels are deferred together as D13.
+divided as if it were in ℚ (`references/papers/haskell/ishii2018_*.pdf`). **The variables are
+runtime data carried by each polynomial**, and every operation aligns its operands' variables before
+combining them (§5.2). Types cannot do this job here. Type-level arity misses the dangerous case —
+ℚ[x,y] and ℚ[y,z] are both arity 2, and combining them by position is silently wrong — and Ishii's
+type-level variable labels (`LabPoly`, §2.3 of the paper) cannot name a generalized variable such as
+`Sin[x]` (§5.1), which is an `Expr`, not a type-level string. D13.
 
 **The bridge is explicit and lossy in one direction** (§5.1): recognizing an `Expr` as a polynomial
 in given variables can fail and returns `Maybe`; going the other way always succeeds.
@@ -149,9 +149,8 @@ One cabal package `cassini`: one public library, one internal sublibrary `cassin
 one executable, several test-suites and benchmark suites.
 
 **The trigger for splitting** into a multi-package `cabal.project` is dependency divergence, not
-size: when the algebra tower wants dependencies the kernel does not (a type-level-arity stack per D13
-would be the obvious case), `cassini-algebra` becomes its own package so that a user of the rewriting
-kernel does not pay for Gröbner bases. D7.
+size: when the algebra tower wants dependencies the kernel does not, `cassini-algebra` becomes its
+own package so that a user of the rewriting kernel does not pay for Gröbner bases. D7.
 
 ### 2.2 Module tree
 
@@ -203,7 +202,7 @@ expose the API (the `containers`/`vector` convention).
 | **A** | |
 | `Cassini.Algebra.Class` | The coefficient-tower classes `semirings` does not supply (§5.3). |
 | `Cassini.Poly.Uni` | Dense univariate over a coefficient ring. |
-| `Cassini.Poly.Multi` | Sparse distributed multivariate; monomial order a type parameter. |
+| `Cassini.Poly.Multi` | Sparse distributed multivariate carrying its variables; operations align them (§5.2). Monomial order a type parameter. `.Internal` is the positional core for aligned inputs. |
 | `Cassini.Poly.Convert` | The `Expr` ↔ polynomial bridge (§5.1). |
 | `Cassini.Poly.GCD` | The GCD ladder (§5.4). |
 | `Cassini.Poly.Factor` | Squarefree, finite-field, Hensel, recombination (§5.5). |
@@ -1364,31 +1363,28 @@ deliberately asymmetric:
 -- Source: @references/papers/textbooks/cohen2002_*.pdf@ §6.2 (general polynomial
 -- expressions), §6.5 (general rational expressions).
 
--- | Generalized variables: /expressions/, not symbols — @Sin[x]@ and @x@ both
--- qualify. Sorted by 'compareCanonical' (§3.5); the order is the exponent-vector
--- layout of every 'Monomial' built from them.
-newtype GenVars = GenVars (Vector Expr)
+-- Generalized variables are /expressions/, not symbols — @Sin[x]@ and @x@ both
+-- qualify — so the bridge instantiates 'Multi''s variable type at 'Expr', whose
+-- 'Ord' is 'compareCanonical' (§3.5).
 
-toPolynomial   :: (MonomialOrder ord) => GenVars -> Expr -> Maybe (Multi ord Rational)
-fromPolynomial :: (MonomialOrder ord) => GenVars -> Multi ord Rational -> Expr
+toPolynomial   :: (MonomialOrder ord) => Vars Expr -> Expr -> Maybe (Multi Expr ord Rational)
+fromPolynomial :: (MonomialOrder ord) => Multi Expr ord Rational -> Expr
 
-isPolynomialGPE :: GenVars -> Expr -> Bool
-degreeGPE       :: GenVars -> Expr -> Maybe Integer
+isPolynomialGPE :: Vars Expr -> Expr -> Bool
+degreeGPE       :: Vars Expr -> Expr -> Maybe Integer
 coefficientGPE  :: Expr -> Integer -> Expr -> Maybe Expr   -- variable, degree, subject
-variables       :: Expr -> GenVars
+variables       :: Expr -> Vars Expr                        -- in compareCanonical order
 ```
 
 **Recognition can fail; construction cannot.** Whether a subexpression is a variable or a
 coefficient depends on the variable list: `Sin[x]` is a variable in `Sin[x]^2 + 1`. The library does
 not guess; `Cassini.Builtins.Polynomial` guesses once, so `Factor[x^2-1]` needs no variable list.
 
-**The variable list is `Expr`s**, because a `[Symbol]` cannot name `Sin[x]`. It is a newtype
-because its order is load-bearing, and it is sorted with `compareCanonical`, never the
-session-dependent `Ord Symbol` (§3.2).
-
-**Arity is checked here, not by the type checker** (§1.1): a `Multi` is meaningful only against the
-`GenVars` it was built from, so `fromPolynomial` and every builtin-level binary operation check that
-the vectors agree; a mismatch is a bug at the call site.
+**The variables are `Expr`s**, because a `Symbol` cannot name `Sin[x]`. `variables` returns them in
+`compareCanonical` order, never the session-dependent `Ord Symbol` (§3.2), so the default layout is
+deterministic across sessions. `fromPolynomial` needs no variable argument: the polynomial carries
+its variables (§5.2), which is what makes a mismatch between a polynomial and "its" variable list
+unrepresentable rather than a check each caller must remember.
 
 ### 5.2 Representations
 
@@ -1399,8 +1395,10 @@ Two, both parameterized by coefficient type:
 -- A newtype over @poly@'s 'VPoly' (§5.3).
 newtype Uni a = Uni (VPoly a)
 
--- | Cassini.Poly.Multi — sparse distributed
-newtype Monomial ord = Monomial (Vector Word)   -- exponent vector; length = number of variables
+-- | Cassini.Poly.Multi — sparse distributed, carrying its variables
+newtype Vars v = Vars (Vector v)                -- ordered, no duplicates: the exponent layout
+
+newtype Monomial ord = Monomial (Vector Word)   -- exponents, positionally per 'Vars'
   deriving newtype (Eq)
 
 class MonomialOrder ord where
@@ -1409,22 +1407,45 @@ class MonomialOrder ord where
 instance (MonomialOrder ord) => Ord (Monomial ord) where
   compare = compareMonomial
 
-newtype Multi ord a = Multi (Map (Monomial ord) a)
+data Multi v ord a = Multi { mVars :: !(Vars v), mTerms :: !(Map (Monomial ord) a) }
 ```
 
 **Dense univariate** because fast univariate arithmetic and the modular and Hensel algorithms want
 it. **Sparse distributed multivariate** because a CAS's multivariate polynomials are overwhelmingly
 sparse, and Gröbner bases (§6.1) need a distributed representation with an explicit order anyway.
 
-**No stored recursive representation**, but a recursive **view**: `asRecursive :: Multi ord a ->
-Uni (Multi ord a)` (univariate in the main variable over the rest) and its inverse, computed on
-demand. The PRS rungs of §5.4 are univariate algorithms, and this view is how they apply to
-multivariate inputs without maintaining two representations.
+**Every polynomial carries its variables, and every binary operation aligns them** (D13). The
+variable type `v` is a parameter with `Ord v`, so the algebra tower never names `Expr`; the bridge
+instantiates it (§5.1). The rules:
+
+- **Equal `Vars`: the fast path.** No reindexing; comparing a handful of variables is O(k).
+- **Otherwise the result's variables are the left operand's, followed by the right operand's extras
+  in the right operand's order**, and both are reindexed to that layout — a runtime
+  `canonicalMap` (`references/papers/haskell/ishii2018_*.pdf` §2.3). So `+`, `*`, `divide` and `gcd`
+  are total, with no `Either` and no partial function (§2.3), and ℚ[x,y] and ℚ[y,z] combine in
+  ℚ[x,y,z] instead of by position. The left operand is never reordered, so a variable order a caller
+  chose survives.
+- **`Eq` aligns before comparing**, so `p + q == q + p` although the two layouts may differ. Layout
+  never reaches output: `fromPolynomial` goes back through evaluation.
+- **`zero` and constants have empty `Vars`** and align with anything, which gives the `semirings`
+  instances clean identities.
+- **Hot loops are positional.** `Cassini.Poly.Multi.Internal` holds the aligned-input core that
+  Gröbner reduction and the GCD rungs run on; algorithm modules align once at entry, then stay
+  positional.
+
+**No stored recursive representation**, but a recursive **view**:
+`asRecursive :: (Ord v) => v -> Multi v ord a -> Uni (Multi v ord a)` — univariate in the *named*
+main variable, over the remaining ones — and its inverse, computed on demand. The PRS rungs of §5.4
+are univariate algorithms, and this view is how they apply to multivariate inputs without
+maintaining two representations. `Uni` itself stays variable-free; the caller of the view knows the
+main variable.
 
 The monomial order is a type parameter (`references/papers/haskell/ishii2018_*.pdf`), because mixing
 lex and grevlex polynomials is a real bug that types prevent. **The parameter sits on `Monomial`**, so
 that `Ord` — hence the `Map`'s order, hence the leading term — is determined by it; on `Multi` alone
-it would not reach the key type, where it does its work. Arity is runtime (§5.1, D13).
+it would not reach the key type, where it does its work. Orders compare exponent vectors
+positionally, which is sound because alignment makes each position mean the same variable in both
+operands.
 
 ### 5.3 Build or buy
 
@@ -1448,6 +1469,11 @@ into a semantic interface, and is too coarse — defining `+` forces `*`. (Its o
 **The switching cost:** `Cassini.Poly.Uni` is a newtype over `VPoly`, not a re-export, so replacing
 `poly` means rewriting that module, not the GCD and factorization code above it.
 
+**`poly` is built with its `sparse` flag off.** Only its dense univariate `VPoly` is used —
+multivariate polynomials are `Cassini.Poly.Multi` (§5.2) — and the flag, on by default, enables
+"sparse and multivariate polynomials, incurring a larger dependency footprint"
+(`references/papers/haskell/poly_hackage.html`).
+
 ### 5.4 GCD
 
 A ladder, cheapest first, each rung a separate function with the same signature so a dispatcher can
@@ -1456,7 +1482,8 @@ choose:
 1. **Euclidean** over a field. Correct; catastrophic coefficient growth over ℚ.
 2. **Primitive PRS** — content and primitive part at every step. Correct, still slow.
 3. **Subresultant PRS** — the standard remedy for coefficient explosion, and the default for small
-   problems. Shares `Cassini.Poly.Resultant` with §6.
+   problems. Shares `Cassini.Poly.Resultant` with §6, whose resultants name the variable they
+   eliminate rather than taking "the first".
 4. **Brown's modular algorithm** — dense multivariate, via evaluation/interpolation and CRT.
 5. **Zippel's sparse interpolation** — sparse multivariate; the right answer for the inputs a CAS
    actually sees.
@@ -1554,8 +1581,12 @@ explicitly, and — for integration — ship a useful thing before the complete 
 
 ```haskell
 -- | Cassini.Groebner
-groebnerBasis :: (Field a, MonomialOrder ord) => [Multi ord a] -> [Multi ord a]
-reduce        :: (Field a, MonomialOrder ord) => Multi ord a -> [Multi ord a] -> Multi ord a
+-- | The 'Vars' argument is the variable order, which lex and elimination orders
+-- depend on; inputs are aligned to it once, at entry (§5.2).
+groebnerBasis :: (Field a, MonomialOrder ord, Ord v)
+              => Vars v -> [Multi v ord a] -> [Multi v ord a]
+reduce        :: (Field a, MonomialOrder ord, Ord v)
+              => Vars v -> Multi v ord a -> [Multi v ord a] -> Multi v ord a
 ```
 
 **Buchberger first**, with both Buchberger criteria for discarding S-pairs and the selection
@@ -1772,6 +1803,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Algebra` | ring/field axioms on every coefficient type | the axioms types do not check |
 | `Poly` | for `q ≠ 0`, `p * q / q ≡ p`; `gcd p q` divides both, and `gcd * lcm` associates with `p * q` | every GCD rung, uniformly |
 | `Poly` | all implemented GCD rungs return associates of one another | rung 4/5 bugs, with rung 3 as reference |
+| `Poly.Multi` | operations on operands with different `Vars` agree with the same operations after explicit alignment; `p + q == q + p` across layouts; `fromPolynomial (toPolynomial vs e)` round-trips for any `vs` containing `e`'s variables | reindexing errors, and a fast path that skips alignment it needed (§5.2) |
 | `Poly.Factor` | factors multiply back to the input; factoring any factor returns it unchanged | recombination errors |
 | `Zero` | `Just True` ⇒ the test evaluator gives 0 at random points; `Just False` ⇒ it gives nonzero somewhere | the soundness bugs §5.6 exists to prevent |
 | `Calculus` | `D` agrees with finite differences of the test evaluator | sign and chain-rule errors |
@@ -2079,7 +2111,7 @@ gating on.
 **Done when** multivariate GCD and content/primitive part are correct on non-trivial inputs, and
 `isZero` never returns `Just` wrongly.
 
-- Tests: the `Algebra`, `Poly`, `Poly.Factor` and `Zero` rows of §7.3, including GCD-ladder
+- Tests: the `Algebra`, `Poly`, `Poly.Multi`, `Poly.Factor` and `Zero` rows of §7.3, including GCD-ladder
   agreement, which is what makes rungs 4 and 5 safe to add.
 - Benchmark: §8.5, with the subresultant/modular crossover recorded for the dispatcher.
 
@@ -2117,7 +2149,8 @@ document requires it.
 Deliberately *not* dependencies: `lens` (the structure operators are a dozen functions, not an optics
 library); `uniplate` (§3.6); `sbv` (D10); `symengine` (FFI to a fast external core would settle the
 two-layer question by outsourcing it, and this project is the exercise of not doing that);
-`vector-sized`/`singletons` (D13).
+`vector-sized`/`singletons` for type-level arity (D13), which is also why `poly`'s `sparse` flag is
+off (§5.3).
 
 ### 11.2 Deferred decisions
 
@@ -2138,7 +2171,7 @@ answer, not a deletion.
 | D10 | SMT-backed zero testing not adopted (§5.6) | polynomial side conditions needing more than layer 3 decides |
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation per match dominating on the sequence-variable grid |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
-| D13 | Runtime polynomial arity and variables over type-level arity and labels (§1.1, §5.2) | arity-mismatch bugs surviving the bridge checks, or F4 wanting sized vectors |
+| D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
 | D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4) | §8.4's fixed-point benchmark showing re-evaluation dominating |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
 
