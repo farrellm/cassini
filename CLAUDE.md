@@ -9,16 +9,16 @@ design disagree, the design is the intent and the code is behind.
 
 | Path | What it is |
 | :--- | :--- |
-| [`DESIGN.md`](./DESIGN.md) | The architecture: module boundaries, types, the evaluation contract, and the test and benchmark plans. **Start here.** |
-| [`notes/`](./notes/) | The reading-and-building guide and its bibliography — what to read, in what order, and why. Has its own `CLAUDE.md` with strict editing rules. |
-| [`references/`](./references/) | The document corpus the notes cite: 87 files, indexed, with per-file defect annotations. Gitignored; see rule 6. |
+| [`DESIGN.md`](./DESIGN.md) | The architecture: module boundaries, types, the evaluation contract, the test and benchmark plans. **Start here.** |
+| [`notes/`](./notes/) | The reading-and-building guide and its bibliography. Has its own `CLAUDE.md` with strict editing rules. |
+| [`references/`](./references/) | The document corpus the notes cite: 87 documents, indexed, with per-file defect annotations. Gitignored; see rule 6. |
 | `cassini.cabal` | Package definition. GHC2024, `base ^>=4.21.2.0`. |
 | `src/`, `app/`, `test/` | Library, executable, tests. Currently the `cabal init` skeleton. |
-| `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release (rule 5). |
+| `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release. |
 
 ## Rules
 
-1. **Four documentation surfaces, and each holds one kind of thing.**
+1. **Four documentation surfaces, one kind of thing each.**
 
    | Surface | Holds |
    | :--- | :--- |
@@ -27,71 +27,61 @@ design disagree, the design is the intent and the code is behind.
    | `references/` | the documents themselves, plus the index |
    | each directory's `CLAUDE.md` | local annotations and rules for that directory |
 
-   The rule that keeps them from entangling: **`DESIGN.md` cites sources by path and does not
-   restate facts *about* them** — editions, page counts, who proved what first. Those live in
-   `notes/`, where `notes/CLAUDE.md` rule 4 already tracks each one across six files. Adding a
-   seventh copy adds a seventh thing to correct and a seventh thing to get silently wrong. Design
-   rationale here, source provenance there.
+   **`DESIGN.md` cites sources by path and does not restate facts *about* them** — editions, page
+   counts, who proved what first. Those live in `notes/`, where `notes/CLAUDE.md` rule 4 tracks each
+   across six files; a seventh copy is a seventh thing to get silently wrong. The exception: where a
+   source's *content* is the design (the evaluation steps, the ASAE conditions, the order relation,
+   the commutative-matching phases), it is transcribed, because a pointer would not be
+   implementable.
 
-   The exception, marked where it occurs: where a source's *content* is the design — the thirteen
-   evaluation steps, the ASAE conditions, the five commutative-matching phases — it is transcribed,
-   because a design that only pointed at it would not be implementable.
+   A correction to a claim *about a source* follows `notes/CLAUDE.md` rule 4 wherever it starts,
+   including in a `DESIGN.md` review: fix every copy in `notes/` and `references/` in the same
+   change.
 
 2. **A decision that changes changes `DESIGN.md` in the same commit.** A decision recorded only in a
-   commit message is lost, and this repository's whole character is that the reasoning outlives the
-   session. If an implementation departs from the design, either the design was wrong — fix it and
-   say why — or the implementation is, and the departure is a bug. Silent divergence is neither.
+   commit message is lost. If an implementation departs from the design, either the design was wrong
+   — fix it and say why — or the implementation is, and the departure is a bug. Silent divergence is
+   neither.
 
-   `DESIGN.md` §11.2 is a register of deferred decisions, each with a trigger to revisit. When a
-   trigger fires, that row gets an answer and a number, not a deletion.
+   `DESIGN.md` §11.2 registers deferred decisions, each with a trigger. When a trigger fires, the row
+   gets an answer, not a deletion. Section and D-numbers are cited from elsewhere; keep them stable.
 
-3. **Haskell house style, so it is not re-litigated.**
+3. **Haskell house style, so it is not re-litigated** (`DESIGN.md` §2.3–§2.6).
 
-   - **`relude` is the prelude**, wired in through cabal `mixins`, not imported per module. It is
-     re-exported from the internal `cassini-prelude` sublibrary minus the names that collide with
-     `effectful` (see below). See `DESIGN.md` §2.3.
+   - **`relude` is the prelude**, wired in through cabal `mixins` from the internal
+     `cassini-prelude` sublibrary, minus the names that collide with `effectful` or with this
+     project's vocabulary. The `mixins` stanza needs the qualified `cassini:cassini-prelude` form in
+     both `build-depends` and `mixins`; cabal rejects the bare name.
    - **`effectful` for the kernel** — never a bare `ReaderT Env IO`, never an mtl stack. The kernel
      is a custom dynamically dispatched effect with two interpreters, one of which has no `IOE`;
-     that is what makes the evaluator testable as a pure function. See `DESIGN.md` §4.3.
+     that is what makes the evaluator testable as a pure function (§4.3).
    - Explicit export lists everywhere. `Internal` modules hold representations; their non-`Internal`
      siblings hold the API.
-   - No partial functions. `head`, `fromJust` and `!!` are not in scope, and the places that want
-     indexing return `Either` with a message — which the language semantics require anyway.
-   - The warning set in `DESIGN.md` §2.4 is not relaxed per module. Extensions are declared per
-     module, with two exceptions: `OverloadedRecordDot` and `OverloadedStrings` are project-wide in
-     a `common extensions` stanza, because a pragma repeated in forty headers states nothing. Every
-     other extension a module needs it says so itself, and re-declaring the two project-wide ones is
-     the same invisible noise as declaring something GHC2024 already has.
-   - **Record dot syntax is usually preferred**: `s.symName`, not `symName s`. That is what
-     `OverloadedRecordDot` is on project-wide for; prefix selector application is what now wants a
-     reason (composition, passing the selector as a function, a section).
-   - `ormolu` and `hlint`, both checked in CI. Ormolu has no style config and that is the point —
-     the formatting is not a decision. It reads `default-extensions` out of the cabal file, so
-     **never pass `--no-cabal`**: without it ormolu rewrites `r.field` to `r . field`.
-   - The `mixins` stanza needs the qualified `cassini:cassini-prelude` form in both
-     `build-depends` and `mixins`; cabal rejects the bare sublibrary name.
-   - **Module layering is a lint rule, not a convention** (`DESIGN.md` §2.6). Imports go down the
-     layer stack. A `Cassini.Core.*` module importing `Cassini.Eval` fails `hlint`.
+   - No partial functions. `head`, `fromJust` and `!!` are not in scope; indexing returns `Either`
+     with a message, which the language semantics require anyway.
+   - The warning set (§2.4) is not relaxed per module, and CI builds with `-Werror`.
+   - Extensions are declared per module, except `OverloadedRecordDot` and `OverloadedStrings`, which
+     are project-wide in a `common extensions` stanza. Never re-declare those two or anything
+     GHC2024 already has; a redundant pragma is invisible noise.
+   - **Record dot syntax is preferred**: `s.symName`, not `symName s`. Prefix selector application
+     wants a reason (composition, passing the selector as a function, a section).
+   - `ormolu` and `hlint`, both checked in CI. Ormolu has no style config, and that is the point.
+     It reads `default-extensions` from the cabal file, so **never pass `--no-cabal`**: without it
+     ormolu rewrites `r.field` to `r . field`.
+   - **Module layering is a lint rule, not a convention** (§2.6). Imports go down the layer stack;
+     `.hlint.yaml` fails a violation.
 
-   Two collisions already found, so they are not rediscovered:
+   Two traps already found, so they are not rediscovered:
 
-   - **relude re-exports mtl's `State`/`Reader` vocabulary** — `get`, `put`, `modify`, `gets`,
-     `state`, `ask`, `asks`, `local` — which collides name-for-name with
-     `Effectful.State.Static.Local` and `Effectful.Reader.Static`. Resolved once in
-     `Cassini.Prelude` by subtraction, not per module by qualification. relude also takes `one`
-     (a singleton-container constructor) and `Undefined` (a debug marker), both of which this
-     project wants for its own meanings; the same subtraction handles them, and the list will grow.
-     It withholds `unsafePerformIO`, which is a feature: the intern table's one `import
-     System.IO.Unsafe` is a complete audit of the unsafety in the tree.
-   - **No `effectful` handler can enumerate, and `Effectful.NonDet` is the proof.** `Eff` cannot
-     capture and resume a continuation, so a handler cannot run one branch and come back for the
-     next; `NonDet` is therefore `Maybe`-shaped, obeying left-catch, and `a :<|>: b` runs `b` only if
-     `a` calls `Empty`. The matcher needs *every* match, so it uses a transformer over `Eff` — which
-     is what `effectful`'s own README says to do. Do not go looking for a newer release that fixes
-     this. The matcher's monad is the `MatchT` **newtype** in `Cassini.Pattern.Match`, the one module
-     permitted to import `Control.Monad.Logic`; the `Control.Monad.Logic` rule in `.hlint.yaml`
-     enforces that, and a transparent synonym would have made the containment a wish. `DESIGN.md`
-     §4.5.2, §2.6, D11.
+   - **relude re-exports mtl's `State`/`Reader` vocabulary** (`get`, `put`, `ask`, `local`, …), which
+     collides name-for-name with `effectful`. Resolved once in `Cassini.Prelude` by subtraction, not
+     per module by qualification; the same subtraction removes relude's `one` and `Undefined`, and
+     the list will grow (§2.3). relude also withholds `unsafePerformIO`, which is a feature: the
+     intern table's one `import System.IO.Unsafe` is a complete audit of the unsafety in the tree.
+   - **No `effectful` handler can enumerate matches.** `Effectful.NonDet` is `Maybe`-shaped by
+     necessity, not by an old release, so the matcher uses `LogicT` over `Eff` inside the `MatchT`
+     **newtype** in `Cassini.Pattern.Match`, the one module the `.hlint.yaml` rule lets import
+     `Control.Monad.Logic` (§4.5.2, D11). Do not replace the newtype with a synonym.
 
 4. **A module implementing a published algorithm names its source in the module header.**
 
@@ -102,31 +92,35 @@ design disagree, the design is the intent and the code is behind.
    module Cassini.Simplify.Automatic (simplify, isASAE) where
    ```
 
-   This is what ties the code to the corpus that justified it, and it makes `DESIGN.md`'s citations
-   checkable from the other end. It is also how someone debugging the commutative matcher at 2am
-   finds out that the phase order is not arbitrary.
+   That ties the code to the corpus that justified it, and makes `DESIGN.md`'s citations checkable
+   from the other end.
 
-5. **Test and benchmark discipline.**
+5. **Test and benchmark discipline** (§7, §8).
 
    - **Every fixed bug adds a numbered regression case in `test/regress/`, in the same commit as the
-     fix.** Not "when convenient". The evaluation sequence's step order, the four-way rule ladder and
-     the matcher's phase order are all things a plausible-looking refactor breaks silently.
-   - **Goldens are read before they are accepted.** `--accept` makes it trivially easy to enshrine a
-     bug; a person looks at the diff, and the commit message says why the new output is right.
-   - Regression cases are named for the behaviour, not the bug number: `0002-builtin-upvalue-beats-
-     user-downvalue`, not `0002-issue-17`.
-   - Unit tests are worked examples lifted from the sources, and each cites where it came from — the
-     expected values were then computed by someone else, before the implementation existed.
-   - Benchmark baselines are committed, per GHC version, and regenerated deliberately with the commit
-     message saying why. A performance regression is a CI failure, not a memory. `DESIGN.md` §8.6.
+     fix.** The evaluation step order, the four-way rule ladder and the matcher's phase order are
+     all things a plausible-looking refactor breaks silently.
+   - **Goldens are read before they are accepted.** `--accept` makes it trivial to enshrine a bug;
+     a person reads the diff, and the commit message says why the new output is right.
+   - Regression cases are named for the behaviour, not the bug:
+     `0002-builtin-upvalue-beats-user-downvalue`, not `0002-issue-17`.
+   - Unit tests are worked examples lifted from the sources, each citing where it came from.
+   - Benchmark baselines are committed per GHC version and regenerated deliberately, with the commit
+     message saying why. An allocation regression fails CI; time is gated only against a baseline
+     from the same CI runner class (§8.6).
 
-6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git; a fresh clone
-   gets the `.md` indexes and none of the ~436 MB. This is expected, not a broken checkout.
+6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git; a fresh
+   clone gets the `.md` indexes and none of the ~436 MB. That is expected, not a broken checkout.
    `references/downloaded-references-summary.md`'s Source column is how to re-fetch it, and
-   `references/CLAUDE.md` carries the corpus rules — including which held copies have OCR defects
-   that make `grep` lie, in both directions.
+   `references/CLAUDE.md` carries the corpus rules, including which held copies have OCR defects
+   that make `grep` lie in both directions.
 
 ## Toolchain
 
-GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`. `ormolu` and `hlint` are installed
-locally. `cabal build --enable-tests --enable-benchmarks all` is the full build.
+GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`; `ormolu` and `hlint` are installed
+locally.
+
+- Full build: `cabal build --enable-tests --enable-benchmarks all`
+- Fast tests: `cabal test cassini-test`, and again with `-f intern` — CI runs both interning
+  settings (§3.4)
+- Lint and format: `hlint .` and `ormolu --mode check $(git ls-files '*.hs')`
