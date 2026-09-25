@@ -16,7 +16,7 @@ All four build stages, at design depth:
 | Stage | Substance | §  |
 | :---- | :--- | :--- |
 | 0 | Exact numbers, the `Expr` representation, interning, canonical order, traversal | [§3](#3-stage-0--foundations) |
-| 1 | Attributes, rule tables, the evaluation sequence, the pattern matcher, automatic simplification, surface syntax | [§4](#4-stage-1--the-kernel) |
+| 1 | Attributes, rule tables, the evaluation sequence, the pattern matcher, automatic simplification, surface syntax, elementary functions | [§4](#4-stage-1--the-kernel) |
 | 2 | Polynomials, GCD, factorization, zero testing | [§5](#5-stage-2--the-polynomial-substrate) |
 | 3 | Gröbner bases, integration, summation | [§6](#6-stage-3--the-hard-algorithms) |
 
@@ -87,7 +87,7 @@ This split is the design's most consequential commitment. It exists to prevent f
                        │ .Pretty · REPL                      │
                        └────────────────┬────────────────────┘
                        ┌────────────────┴────────────────────┐
-  L4  Builtins         │ Builtins.* · Simplify.Automatic     │──┐
+  L4  Builtins         │ Builtins.* · Simplify.*             │──┐
                        │ Integrate.Rules                     │  │
                        └────────────────┬────────────────────┘  │
                        ┌────────────────┴────────────────────┐  │  (L4 only)
@@ -184,12 +184,17 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Eval.Message` | The `Message` type and emission. Formatting is L5's job. |
 | **L4** | |
 | `Cassini.Simplify.Automatic` | Cohen's automatic simplification: `Plus`, `Times`, `Power` to canonical form. |
+| `Cassini.Simplify.Elementary` | Automatic rules for the elementary functions: special values, parity, periodicity, `E^(c·Log[z])` (§4.11). |
+| `Cassini.Simplify.Rational` | Algebraic expansion, `Expand_main_op`, rationalization, numerator and denominator over ASAEs (§4.12). |
+| `Cassini.Simplify.Trig` | Trigonometric expansion, contraction and `Simplify_trig`, circular and hyperbolic (§4.12). |
 | `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed. |
 | `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, comparison. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
 | `Cassini.Builtins.List` | List construction and manipulation. |
 | `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `RuleDelayed`. |
 | `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `TagSet`, `Unset`, `Attributes`, `Protect`. |
+| `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
+| `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12). |
 | `Cassini.Builtins.Calculus` | `D`, `Integrate`, `Series`, `Limit`. |
 | `Cassini.Builtins.Polynomial` | `Expand`, `Factor`, `Together`, `Apart`, `PolynomialGCD`, `Coefficient`, `Exponent`, `Variables`. |
 | `Cassini.Integrate.Rules` | The tier-1 integration rule set and its loader (§6.2). **L4 despite its namespace**: it names `Expr`, `Cassini.Rules` and the surface syntax exactly as `Cassini.Builtins.*` does. |
@@ -383,7 +388,9 @@ about in review, which is the whole value being bought. The `.ormolu` file it re
 Rules 1 and 2 split L3 at §1.2's seam. Rule 5 guards the top of the stack: without it nothing stops
 `Cassini.Zero` importing `Cassini.Simplify.Automatic`, and GHC would not object, since that is not a
 cycle. `Main`, `Test.**` and `Bench.**` appear throughout because `hlint .` walks every suite
-directory and `app/`.
+directory and `app/`. §4.11–§4.12's modules need no rule of their own: `Cassini.Simplify.**` and
+`Cassini.Builtins.**` already place them, and they import only downward within L4
+(`Simplify.Trig` → `.Elementary`, `.Rational` → `.Automatic`).
 
 The hlint behaviours this depends on (checked against fixture modules and hlint's
 `Hint/Restrict.hs`, which matches module names with `filepattern` after turning `.` into `/`):
@@ -1231,7 +1238,12 @@ simplifyFactorial :: Expr -> Either Undefined Expr
 simplifyFunction  :: Expr -> Vector Expr -> Either Undefined Expr
 
 -- | Why the answer is undefined, so the builtin can choose the result and message.
-data Undefined = DivisionByZero | ZeroToZero   -- 0^w, w < 0, is DivisionByZero
+data Undefined
+  = DivisionByZero     -- ^ 0^w, w < 0
+  | ZeroToZero
+  | Pole               -- ^ Tan[π/2], Csc[0], … (§4.11)
+  | LogOfZero          -- ^ Log[0] (§4.11)
+  | ZeroDenominator    -- ^ Simplify's denominator contracted to 0 (§4.12)
 ```
 
 Signature notes:
@@ -1243,7 +1255,7 @@ Signature notes:
   `Left DivisionByZero`.
 - `Undefined` carries its cause because the builtin maps it to different results: `1/0` is
   `ComplexInfinity` with `Power::infy`, `0^0` is `Indeterminate` with `Power::indet` (§4.7). The
-  constructor list grows with the operators.
+  constructor list grows with the operators; the last three belong to §4.11–§4.12.
 
 **The normal form is a specification.** Cohen calls it an ASAE, and `isASAE :: Expr -> Bool`
 implements the definition directly. It is exported, not test-only: it is the postcondition the
@@ -1276,7 +1288,9 @@ and `1·x` are **not** ASAEs, while `(x·y)^(1/2)` and `(x^(1/2))^(1/2)` are.
 recursive `simplify`. By step 13 the arguments have already been evaluated, and so simplified, by
 step 3; calling `simplify` would re-traverse every subtree on every round. The recursive `simplify`
 is for the Haskell API and the property tests. From the evaluator's side this is a rule like any
-other; from its own side, a total function with a normal form — §1.3 made concrete.
+other; from its own side, a total function with a normal form — §1.3 made concrete. `Power`'s
+downvalue also tries `simplifyExpPower` on the result, and the elementary heads attach the same way
+(§4.11); `Simplify.Automatic` itself stays exactly Cohen's.
 
 ### 4.7 Failure, messages, and `Undefined`
 
@@ -1296,7 +1310,10 @@ the pretty-printer). The two limits are not errors either: both return `Hold` wi
 
 Cohen's `Undefined` and the language's result-plus-message meet at one point: `simplify` returns
 `Either Undefined Expr`, and `Cassini.Builtins.Arithmetic` turns a `Left` into `ComplexInfinity` or
-`Indeterminate` plus the matching message, according to its cause (§4.6). Keeping `simplify` in
+`Indeterminate` plus the matching message, according to its cause (§4.6).
+`Cassini.Builtins.Elementary` and `.Simplify` do the same for the causes they add: `Pole` is
+`ComplexInfinity` and `LogOfZero` is `DirectedInfinity[-1]`, both silent as in WL, and
+`ZeroDenominator` is `Indeterminate` with `Simplify::indet`. Keeping `simplify` in
 `Either` rather than in the effect is what lets it be tested as a pure function.
 
 ### 4.8 Zero testing is not available here
@@ -1312,7 +1329,8 @@ exports only the rational case.
 
 `D` is easy; the design point is how it is built. **`D` is a rule table, not a Haskell `case` on
 `Expr` shape**: the sum, product and chain rules are built-in downvalues on `D`, derivatives of
-known functions are subvalues on `Derivative` (`Derivative[1][Sin]` is `Cos[#]&`), and a user's own
+known functions are subvalues on `Derivative` (`Derivative[1][Sin]` is `Cos[#]&`; §4.11 has the
+table), and a user's own
 function extends it by definition. That exercises the whole engine — patterns, attributes, the
 subvalue rung, upvalues — while the engine is still small enough to debug. A Haskell `case` would
 work sooner and test nothing.
@@ -1341,6 +1359,244 @@ and that must not invalidate hundreds of regression cases.
 `Cassini.REPL` fills the `cassini` executable: `In[n]`/`Out[n]`, `%`, message display, `Trace`,
 timing, and a `--script` mode that reads FullForm and writes FullForm. The script mode is a library
 function, `runScript :: Text -> IO Text`, which the golden tests call directly.
+
+### 4.11 Elementary functions
+
+| Group | Heads | Automatic rules (this section) | Transformations (§4.12) |
+| :--- | :--- | :--- | :--- |
+| Circular | `Sin`, `Cos`, `Tan`, `Cot`, `Sec`, `Csc` | special values, parity, periodicity | expansion, contraction, `Simplify` |
+| Hyperbolic | `Sinh`, `Cosh`, `Tanh`, `Coth`, `Sech`, `Csch` | values at 0, parity | expansion, contraction, `Simplify` |
+| Inverse circular | `ArcSin`, `ArcCos`, `ArcTan`, `ArcCot`, `ArcSec`, `ArcCsc` | special values, parity, `Sin[ArcSin[x]] → x` | none |
+| Exponential | `Exp`, `Log` | `Exp[u] → E^u`; values of `Log`; `E^(c·Log[z]) → z^c` | none: contraction is automatic |
+
+Each head is `Listable`, `NumericFunction` and `Protected`. `Pi` and `E` are `Constant` symbols
+with no value; nothing here computes a digit of either (§0.2).
+
+**The exponential is a power.** `Exp[u]` evaluates to `Power[E, u]`, as in WL, and two consequences
+follow, both wanted. Cohen's product merge already collects `E^x·E^y` to `E^(x+y)` (same base,
+SPRDREC), and SINTPOW folds `(E^x)^n` to `E^(n·x)` for integer `n` only — so exponential
+contraction (`references/papers/textbooks/cohen2002_*.pdf` §7.2, (7.27)–(7.28)) happens during
+automatic simplification, and only where it is valid over ℂ. And an exponential-expanded form
+(Definition 7.1) cannot survive evaluation, because `E^x·E^y` re-merges; so `Expand_exp` and
+`Contract_exp` (Figs. 7.2, 7.4, 7.5) are not implemented, and there is no `ExpExpand` — which is
+also WL's position.
+
+**The automatic rules are not in `Cassini.Simplify.Automatic`.** Cohen's `Simplify_function` is
+the identity apart from propagating `Undefined` — "there are no function transformations in our
+algorithm" (`references/papers/textbooks/cohen2003_*.pdf` §3.2) — and §4.6's contract depends on
+that: `Sin[0]` is an ASAE, so `simplify` must return it unchanged. The elementary rules are a second
+pure layer above Cohen's:
+
+```haskell
+-- | Cassini.Simplify.Elementary
+--
+-- Source: @references/papers/textbooks/cohen2002_*.pdf@ §7.2 ("Automatic
+-- Simplification of Trigonometric Functions", transformations 1–5 and Fig. 7.9).
+
+-- | One elementary-function node whose arguments are already simplified.
+-- 'Nothing': no rule applies, and the node is in normal form.
+simplifyElementary :: Symbol -> Vector Expr -> Maybe (Either Undefined Expr)
+
+-- | @E^(c·Log[z]) → z^c@, tried on the result of 'simplifyPower' (base, exponent).
+simplifyExpPower   :: Expr -> Expr -> Maybe (Either Undefined Expr)
+
+-- | 'simplify' with the two above applied at every function and power node, bottom-up.
+simplifyE          :: Expr -> Either Undefined Expr
+
+-- | An ASAE on which no elementary rule fires.
+isElementaryNormal :: Expr -> Bool
+```
+
+It attaches to the evaluator as §4.6 does: each head's built-in downvalue (step 13) calls
+`simplifyElementary`, and `Power`'s calls `simplifyExpPower` after `simplifyPower`. The evaluator
+and `simplifyE` therefore agree on every built-in, and §4.12's algorithms use `simplifyE` wherever
+Cohen's procedures assume an expression is automatically simplified on construction. User rules on
+`Sin` are not consulted inside those algorithms; they see the result, which the builtin returns to
+the fixed point (§4.4).
+
+**The rules** follow Cohen's list of automatic trigonometric transformations
+(`references/papers/textbooks/cohen2002_*.pdf` §7.2). Its Fig. 7.9 shows Maple, Mathematica and
+MuPAD disagreeing, so each rule names the column it reproduces, and those rows are unit tests
+(§7.2):
+
+- **Special values.** An argument `r·π`, `r` rational, is reduced by the head's period and
+  symmetries to `[0, π/2]` — Cohen's item 3, the MPL column: `Sin[15π/16] → Sin[π/16]`. For
+  denominators 1, 2, 3, 4 and 6 a table then gives the value. Outputs are ASAEs, one spelling per
+  value: `Sin[π/3] → (1/2)·3^(1/2)`, `Sin[π/4] → 2^(-1/2)`, `Tan[π/6] → 3^(-1/2)`. Poles
+  (`Tan[π/2]`, `Cot[0]`, `Sec[π/2]`, `Csc[0]`) are `Left Pole`. The hyperbolic heads have only
+  their values at 0, with `Coth[0]` and `Csch[0]` poles.
+- **Parity.** When the argument's **first operand in ◁ order has a negative coefficient**, odd
+  heads (`Sin`, `Tan`, `Cot`, `Csc`, their hyperbolic counterparts, `ArcSin`, `ArcTan`, `ArcCot`,
+  `ArcCsc`) pull the sign out and even ones (`Cos`, `Sec`, `Cosh`, `Sech`) drop it. This reproduces
+  the Mathematica column: `Sin[-x] → -Sin[x]`, `Sin[x-1] → -Sin[1-x]`, and `Sin[1-x]` is left
+  alone, since ◁ puts the constant first. `ArcCos` and `ArcSec` have no parity and are left alone.
+- **Periodicity with a symbolic remainder.** In an argument `x + r·π`, the `r·π` term is removed
+  only when `r` is a multiple of 1/2 (Cohen's item 4): `Sin[x + π/2] → Cos[x]`,
+  `Cos[x + 2π] → Cos[x]`, `Tan[x + π] → Tan[x]`. `Sin[x + 2π/3]` is left alone, as in the
+  Mathematica column; the MPL column's `Cos[x + π/6]` would be item 3 applied to sums, not adopted.
+- **No function transformations** (Cohen's item 5). `Sin[x]/Cos[x]` stays; it does not become
+  `Tan[x]` as in WL. That transformation is the inverse of `Trig_substitute`, so with it in
+  automatic simplification `Simplify` could never see a `Tan` as a quotient; Cohen's footnote to
+  Fig. 7.10 says as much, and it is why his Mathematica implementation fails Example 7.18. A known
+  divergence from WL, recorded as D16.
+- **Inverses.** `Sin[ArcSin[x]] → x`, and likewise for the other five. The inverse tables are the
+  forward tables read backwards onto the principal ranges, and they recognize an argument only in
+  the spelling the forward table emits: `ArcSin[2^(-1/2)] → π/4`, while `ArcSin[2^(1/2)/2]` is
+  left alone. There is no canonical form for radicals here, and pretending otherwise is how a table
+  becomes wrong. `ArcSin[Sin[x]] → x` is not a rule: it is false off the principal branch.
+- **Exponential and logarithm.** `E^(c·Log[z]) → z^c` for numeric `c`: the principal `z^c` is
+  *defined* as `E^(c·Log[z])`, so this is an identity. `Log[1] → 0`; `Log[E^r] → r` for rational
+  `r`, with `Log[E] → 1` the case `r = 1`; `Log[0]` is `Left LogOfZero`. `Log[E^x]` for symbolic
+  `x` is left alone.
+
+**Every rule is an identity over ℂ.** The kernel works in ℂ, as WL does, so a transformation that
+holds only for real arguments is applied neither automatically nor by any builtin in §4.12.
+Excluded by this, each right for reals and wrong for some complex input: `Log[E^x] → x`; the log
+expansions and contractions of Cohen's §7.1 and §7.2 exercises (`Log[a·b] → Log[a] + Log[b]` and
+kin); `(E^x)^w → E^(w·x)` for non-integer `w`, where Cohen's footnote to (7.4) gives the
+counterexample; and anything `PowerExpand`-shaped. Admitting them needs a way to say "`x` is real"
+(D18). Everything in §4.12 — addition, multiple-angle and power-reduction formulas — is a
+polynomial identity in `E^(iθ)` and qualifies.
+
+**Termination.** Each rule produces a value, strictly removes the π term from an argument, or makes
+the argument's leading coefficient non-negative, which no rule undoes. So `simplifyE` is total, and
+"no elementary rule fires on its own output" is a property test (§7.3).
+
+**Poles and `Log[0]`** are two more causes in §4.6's `Undefined`, `Pole` and `LogOfZero`; §4.7
+says what each becomes.
+
+**Derivatives** are `Derivative[1]` subvalues (§4.9), installed by `Cassini.Builtins.Elementary`
+alongside each head's downvalues, so one module holds everything the system knows about a function:
+
+| f | f′ | f | f′ | f | f′ |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `Sin` | `Cos[#]&` | `Sinh` | `Cosh[#]&` | `ArcSin` | `1/Sqrt[1-#^2]&` |
+| `Cos` | `-Sin[#]&` | `Cosh` | `Sinh[#]&` | `ArcCos` | `-1/Sqrt[1-#^2]&` |
+| `Tan` | `Sec[#]^2&` | `Tanh` | `Sech[#]^2&` | `ArcTan` | `1/(1+#^2)&` |
+| `Cot` | `-Csc[#]^2&` | `Coth` | `-Csch[#]^2&` | `ArcCot` | `-1/(1+#^2)&` |
+| `Sec` | `Sec[#] Tan[#]&` | `Sech` | `-Sech[#] Tanh[#]&` | `ArcSec` | `1/(#^2 Sqrt[1-#^-2])&` |
+| `Csc` | `-Cot[#] Csc[#]&` | `Csch` | `-Coth[#] Csch[#]&` | `ArcCsc` | `-1/(#^2 Sqrt[1-#^-2])&` |
+| `Log` | `1/#&` | | | | |
+
+`Exp` has no row. `D` of `E^u` is `Power`'s rule, `E^u·Log[E]·D[u]`, and is `E^u·D[u]` only because
+`Log[E] → 1` fires — a dependency between two sections, stated so that a change to one does not
+quietly break the other.
+
+### 4.12 Trigonometric transformations and `Simplify`
+
+Three builtins in `Cassini.Builtins.Simplify`, each a thin wrapper over one pure module:
+
+| Builtin | Algorithm (`cohen2002_*.pdf`) | Output satisfies |
+| :--- | :--- | :--- |
+| `TrigExpand[e]` | `Expand_trig` (Fig. 7.3), then algebraic expansion | trig-expanded, below |
+| `TrigReduce[e]` | `Contract_trig` (Figs. 7.6–7.8) | trig-contracted, below |
+| `Simplify[e]` | `Simplify_trig` (Fig. 7.10) | numerator and denominator each trig-contracted |
+
+```haskell
+-- | Cassini.Simplify.Trig
+--
+-- Source: @references/papers/textbooks/cohen2002_*.pdf@ §7.1 (Expand_trig),
+-- §7.2 (Contract_trig, Simplify_trig), §5.2 (Trig_substitute).
+expandTrig       :: Expr -> Either Undefined Expr
+contractTrig     :: Expr -> Either Undefined Expr
+trigSubstitute   :: Expr -> Expr     -- TRIGSUB-1..4 and their hyperbolic counterparts
+simplifyTrig     :: Expr -> Either Undefined Expr
+isTrigExpanded   :: Expr -> Bool
+isTrigContracted :: Expr -> Bool
+```
+
+`Either`, because expansion or contraction can turn a denominator into 0
+(`1/(Sin[2x] - 2 Sin[x] Cos[x])`), and Cohen's §7.1 Exercise 7 and §7.2 Exercise 8 have the
+procedures return `Undefined` when it does; the builtins map it as §4.7 does. Every intermediate expression is built with
+`simplifyE` (§4.11), which is how Example 7.17's `Cos[x + π/6]` expands into terms whose `Cos[π/6]`
+becomes a number mid-algorithm.
+
+**The normal forms, transcribed** from Definitions 7.4 and 7.11, each extended to the hyperbolic
+pair as Cohen's §7.1 Exercise 9 and §7.2 Exercise 9 do:
+
+| Form | Every … |
+| :--- | :--- |
+| trig-expanded (Def. 7.4, strengthened per §7.1 Exercise 8) | argument of a `Sin`, `Cos`, `Sinh` or `Cosh` is neither a sum nor a product with an integer operand; **and** every complete subexpression is in algebraic-expanded form |
+| trig-contracted (Def. 7.11) | product has at most one circular operand (`Sin`, `Cos`) and at most one hyperbolic operand (`Sinh`, `Cosh`); power with a positive integer exponent has none of the four as its base; complete subexpression is in algebraic-expanded form |
+
+Neither mentions `Tan` and the other eight: `TrigExpand` and `TrigReduce` apply `trigSubstitute`
+first, so `TrigReduce[Tan[x]]` is `Sin[x]/Cos[x]`, and with no function transformations (§4.11) it
+stays that way.
+
+**The formulas Cohen leaves to exercises**, for `n` a positive integer. Negative `n` goes through
+parity first (§7.1 Exercise 5). Each identity was checked numerically when this section was written,
+and each is a unit test.
+
+Addition, Cohen's (7.11)–(7.12), and the hyperbolic pair of §7.1 Exercise 9:
+
+```
+sin(θ+φ)  = sin θ cos φ + cos θ sin φ        sinh(θ+φ) = sinh θ cosh φ + cosh θ sinh φ
+cos(θ+φ)  = cos θ cos φ − sin θ sin φ        cosh(θ+φ) = cosh θ cosh φ + sinh θ sinh φ
+```
+
+Multiple angle, Cohen's (7.20)–(7.21), and the hyperbolic pair from §7.1 Exercise 9's
+`cosh(nθ) ± sinh(nθ) = (cosh θ ± sinh θ)ⁿ`:
+
+```
+cos(nθ)  = Σ_{j even} (−1)^(j/2)     C(n,j) cosⁿ⁻ʲθ sinʲθ
+sin(nθ)  = Σ_{j odd}  (−1)^((j−1)/2) C(n,j) cosⁿ⁻ʲθ sinʲθ
+cosh(nθ) = Σ_{j even}                C(n,j) coshⁿ⁻ʲθ sinhʲθ
+sinh(nθ) = Σ_{j odd}                 C(n,j) coshⁿ⁻ʲθ sinhʲθ
+```
+
+Product to sum, Cohen's (7.30)–(7.32), and their hyperbolic counterparts:
+
+```
+sin θ sin φ = (cos(θ−φ) − cos(θ+φ))/2        sinh θ sinh φ = (cosh(θ+φ) − cosh(θ−φ))/2
+cos θ cos φ = (cos(θ+φ) + cos(θ−φ))/2        cosh θ cosh φ = (cosh(θ+φ) + cosh(θ−φ))/2
+sin θ cos φ = (sin(θ+φ) + sin(θ−φ))/2        sinh θ cosh φ = (sinh(θ+φ) + sinh(θ−φ))/2
+```
+
+Power reduction, sums over `j = 0 … n`. Cohen's (7.35)–(7.36) fold each sum at `n/2`, which gives
+four cases per function; the unfolded form is one formula per parity, and §4.11's parity rule does
+the folding on construction (`cos(−2θ) → cos(2θ)`, and the middle term's `cos(0) → 1`):
+
+```
+cosⁿθ  = 2⁻ⁿ Σ C(n,j) cos((n−2j)θ)
+sinⁿθ  = (−1)^⌊n/2⌋ 2⁻ⁿ Σ (−1)ʲ C(n,j) cos((n−2j)θ)     n even
+       = (−1)^⌊n/2⌋ 2⁻ⁿ Σ (−1)ʲ C(n,j) sin((n−2j)θ)     n odd
+coshⁿθ = 2⁻ⁿ Σ C(n,j) cosh((n−2j)θ)
+sinhⁿθ = 2⁻ⁿ Σ (−1)ʲ C(n,j) cosh((n−2j)θ)              n even
+       = 2⁻ⁿ Σ (−1)ʲ C(n,j) sinh((n−2j)θ)              n odd
+```
+
+**Choices Cohen leaves open, fixed here:**
+
+- `Expand_trig_rules` returns the pair `(sin A, cos A)`, as in Fig. 7.3, and its hyperbolic twin
+  `(sinh A, cosh A)`. Expanding a function of a sum of `n` symbols then costs 2(n−1) rule
+  applications instead of 2ⁿ⁻¹−1 (§7.1 Exercise 6); §8.4 gates it.
+- `Separate_sin_cos` (§4.2 Exercise 12) splits a product's operands three ways, not two: circular
+  factors, hyperbolic factors, the rest. `Contract_trig_product` runs on each group separately, so
+  nothing contracts `Sin[x] Sinh[y]`.
+- The contraction procedures use `Expand_main_op`, not a full `Algebraic_expand`, as Fig. 7.7
+  does, to avoid the redundant recursion Cohen describes.
+
+**`Simplify` is `Simplify_trig`, and it is not WL's `Simplify`.** Fig. 7.10: `trigSubstitute`,
+`Rationalize_expression`, then expand and contract the numerator and denominator separately. A
+denominator that contracts to 0 is `Left ZeroDenominator`, which becomes `Indeterminate` with a
+`Simplify::indet` message (§4.7). Cohen's appraisal is the specification of its limits, stated here
+so that they are read as the contract and not reported as bugs. It proves identities well when asked
+about a difference — Example 7.18's left side minus `Tan[4x]` gives 0 — but leaves a larger form
+than necessary otherwise: the same left side alone is unchanged. And it cannot see that two
+differently spelled arguments are equal, so `Sin[(x+1)/(x+2)]^2 + Cos[(1+1/x)/(1+2/x)]^2` is not 1.
+WL's `Simplify` searches over transformations scored by a complexity measure; with one strategy
+there is nothing to search. The name is bound anyway, because it is the one users type; D17 records
+when that changes.
+
+**The support it needs, and where it lives.** `Contract_trig` and `Simplify_trig` call
+`Algebraic_expand`, `Expand_main_op`, `Rationalize_expression`, `Numerator` and `Denominator`
+(`references/papers/textbooks/cohen2002_*.pdf` §6.4–6.5). They are pure procedures on ASAEs that
+need no polynomial substrate, so they are Stage 1, in `Cassini.Simplify.Rational`; the `Expand`
+builtin (§2.2) is `algebraicExpand`. `Together` is not among them: it cancels common factors, which
+needs §5.4's GCD.
+
+**Exponential–trigonometric conversion is not here.** `TrigToExp` and `ExpToTrig` need `I` with
+`I^2 → -1` and exact complex arithmetic, which `Number` does not have (§3.1); D19.
 
 ---
 
@@ -1557,6 +1813,14 @@ The layers, tried in order:
    `Sin[x]^2 + Cos[x]^2 - 1` has a nonzero normal form in `{Sin[x], Cos[x]}` and is zero, as does
    `I^2 + 1` in `{I}`, and whether π and e are algebraically independent is an open problem.
    Otherwise, fall through.
+
+   3′. **Trigonometric.** If some generalized variable has a circular or hyperbolic head (§4.11),
+   evaluate `Simplify[e]` (§4.12). A result of 0 proves `Just True`: every step of
+   `Simplify_trig` is an identity over ℂ, so `e` is zero wherever it is defined — the same
+   standard layer 3 applies to `x/x - 1`. Anything else, `Indeterminate` included, falls through;
+   this layer never proves `Just False`. It is what decides `Sin[x]^2 + Cos[x]^2 - 1`. It needs no
+   new import: `Cassini.Zero` reaches it by evaluating, exactly as layer 2 reaches automatic
+   simplification.
 4. **`Nothing`.**
 
 **There is no random-evaluation layer yet.** It would help only where layer 3 cannot decide — the
@@ -1749,6 +2013,9 @@ Harvests worth doing:
 - **Krebber** §3.3's commutative-matching examples, including the one with six candidate mappings
   and exactly one match, a precise test of whether the phases prune correctly.
 - **Bronstein** ch. 2's worked Hermite reductions and Rothstein–Trager examples.
+- **Cohen** `cohen2002_*.pdf` ch. 7: Examples 7.5–7.7 (expansion), 7.12–7.14 (contraction), 7.15–7.18
+  (`Simplify`, each to 0), and (7.18)/(7.19); Fig. 7.9's rows for §4.11's automatic rules, each
+  tagged with the column it reproduces.
 
 Plus the ordinary kind: every edge case gets a test, and every bug gets one (§7.4).
 
@@ -1793,6 +2060,9 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Simplify` | `simplify u` satisfies `isASAE` or is `Left` | the postcondition, directly |
 | `Simplify` | **for an ASAE `u`, `simplify u ≡ u`** | the source's own contract; stronger than idempotence |
 | `Simplify` | `simplify` preserves numeric value (test evaluator) | a canonical form that is canonical but wrong |
+| `Simplify.Elementary` | `simplifyE u` satisfies `isElementaryNormal` or is `Left`; for elementary-normal `u`, `simplifyE u ≡ u`; `simplifyE` preserves numeric value | a parity or periodicity rule that fires on its own output; a special-value table entry that is wrong (§4.11) |
+| `Simplify.Trig` | `expandTrig` output satisfies `isTrigExpanded` and `contractTrig`'s satisfies `isTrigContracted`; each is idempotent and preserves numeric value | a transcribed formula with a wrong sign; a procedure that stops before its normal form (§4.12) |
+| `Simplify.Trig` | `simplifyTrig` preserves numeric value wherever the input is defined | a cancellation that is not an identity |
 | `Pattern` | soundness: every `σ` from `matchAll p s` satisfies `applySubst σ p ≡ s` modulo attributes | the whole matcher, in one line |
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
 | `Pattern` | for side-condition-free patterns, matching leaves `KernelState` unchanged except for messages | the backtracking rule (§4.5.2) |
@@ -1875,6 +2145,10 @@ trusted implementation from inside a property, where the property cannot be stat
 **Comparison is semantic.** Two CASs rarely agree on printed form, so the oracle checks
 `isZero (ours - theirs)` and reports `Nothing` as inconclusive, for human review, not as failure. A
 suite that cries wolf gets turned off.
+
+Two structural divergences from WL are deliberate, and a reader of a Mathics3 transcript will meet
+them first: `Sin[x]/Cos[x]` is not rewritten to `Tan[x]` (D16), and a constant trigonometric
+argument is reduced to `[0, π/2]` (§4.11). Semantic comparison absorbs both; neither is a bug.
 
 The Rubi problem corpus is the aspirational end state for `Integrate`; its size and timings are
 vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system.
@@ -1976,6 +2250,9 @@ generates.
 - **`//.` against 10, 100, 1000 rules**.
 - **Automatic simplification**: sums and products of 10, 100, 1000 terms, with and without like
   terms, separating sort cost from merge cost.
+- **Trigonometric expansion**: `TrigExpand[Sin[a₁ + … + aₙ]]` for growing `n`. Allocation grows with
+  the 2(n−1) rule applications of §4.12's pair recursion; the naive recursion's 2ⁿ⁻¹−1 shows up as
+  a curve, which is what the gate catches.
 
 ### 8.5 Polynomial
 
@@ -2106,6 +2383,14 @@ gating on.
 - Benchmark: §8.3 and §8.4 baselined; the discrimination-net crossover recorded; D2 closed on the
   real `Expand` workload.
 
+**Elementary functions (§4.11–§4.12) do not gate Stage 1.** They need nothing beyond it, and are
+done when Cohen's Examples 7.15–7.18 simplify to 0 and Fig. 7.9's rows reproduce as §4.11
+specifies — and, once §5.6 lands, when `isZero` returns `Just True` for `Sin[x]^2 + Cos[x]^2 - 1`.
+
+- Tests: the `Simplify.Elementary` and `Simplify.Trig` rows of §7.3; the §7.2 harvest from
+  `cohen2002_*.pdf` ch. 7.
+- Benchmark: §8.4's trigonometric expansion, baselined.
+
 ### Stage 2
 
 **Done when** multivariate GCD and content/primitive part are correct on non-trivial inputs, and
@@ -2174,6 +2459,10 @@ answer, not a deletion.
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
 | D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4) | §8.4's fixed-point benchmark showing re-evaluation dominating |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
+| D16 | No `Sin[x]/Cos[x] → Tan[x]` in automatic evaluation, unlike WL: it would undo `Trig_substitute` inside `Simplify` (§4.11) | wanting WL's `Tan` spelling in output — answered first by a rewrite in `Cassini.Syntax.Pretty`, not by an evaluation rule |
+| D17 | `Simplify` is Cohen's `Simplify_trig`, one fixed strategy, not WL's search under a complexity measure (§4.12) | a second strategy existing — Gröbner side relations (§6.1), or Cohen's `Simplify_exp` (`cohen2002_*.pdf` §7.2 Exercise 4) — so that choosing between them needs a measure |
+| D18 | Identities that hold only over ℝ are not applied: log expansion and contraction, `Log[E^x] → x`, `(E^x)^w → E^(w·x)` for non-integer `w`, `PowerExpand` (§4.11) | an assumptions mechanism that can state "`x` is real" |
+| D19 | No `TrigToExp`/`ExpToTrig`, and no `E^(I π) → -1` (§4.12) | exact complex numbers in `Number` (§3.1), a neighbour of D9 |
 
 ### 11.3 Provenance
 
