@@ -5,7 +5,8 @@ the evaluator is being written against** — when the implementation and these p
 implementation is wrong.
 
 All files are `curl` captures of `reference.wolfram.com`, fetched 2026-08-29 — except
-`wolfram_ref_ownvalues.html`, added 2026-08-30. They carry no CSS;
+`wolfram_ref_ownvalues.html`, added 2026-08-30, and the fourteen scoping, control-flow, pattern and
+infinity pages, added 2026-09-25. They carry no CSS;
 strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 
 | File | Read it for |
@@ -15,6 +16,12 @@ strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 | `wolfram_ref_associating_definitions.html` | Transformation rules and definitions: where DownValues, UpValues, and SubValues attach, in context and with examples. |
 | `wolfram_ref_ownvalues.html` / `_downvalues.html` / `_upvalues.html` / `_subvalues.html` | The four symbol reference pages for the rule-storage model. **Thin captures** — roughly 13 KB of text each, almost all navigation chrome; only the one-line definitions survived and the "Details" sections did not. Use `wolfram_ref_associating_definitions.html` (55 KB of real text) for the model in context, and `wolfram_ref_evaluation_of_expressions.html` for precedence. |
 | `wolfram_ref_attributes.html` / `wolfram_guide_attributes.html` | **Do not go here for the attribute list.** Both are thin captures: the ref page has only the `Attributes[symbol]` signatures plus bare section labels (its "Details" did not capture), and the guide page is a list of links. **The full attribute table — `Orderless`, `Flat`, `OneIdentity`, `Listable`, `Constant`, `Protected`, `SequenceHold`, the `Hold*` and `NHold*` families, each with its one-line meaning — is in `wolfram_ref_evaluation_of_expressions.html`.** |
+| `wolfram_ref_modularity_and_naming.html` | **Scoping.** The tutorial chapter *Modularity and the Naming of Things* — "Modules and Local Variables", "Local Constants", "How Modules Work", "Variables in Pure Functions and Rules", "Blocks and Local Values", "Blocks Compared with Modules". The old per-topic tutorial URLs all redirect to this one page, so it is one file, not three. Fetched 2026-09-25. |
+| `wolfram_ref_numbers.html` | The *Numbers* tutorial, held for one section: **"Indeterminate and Infinite Results"** — `Indeterminate` poisons arithmetic, and the `Infinity`/`DirectedInfinity`/`ComplexInfinity` forms. The rest is floating point, out of scope (D9). Fetched 2026-09-25. |
+| `wolfram_ref_module.html` / `_block.html` / `_with.html` / `_function.html` | Reference pages for the scoping constructs and pure functions. **Not thin, unlike the four values pages:** each carries its full "Details" list — `Module`'s `xxx$nnn` naming and `$ModuleNumber`, `Block`'s clear-and-restore, `With`'s scoping-aware substitution, `Function`'s slots and `Function[params, body, attrs]`. Fetched 2026-09-25. |
+| `wolfram_ref_return.html` / `_throw.html` / `_catch.html` / `_break.html` | Reference pages for non-local control flow, with full "Details". `Return` "exits only the innermost construct in which it is invoked". Fetched 2026-09-25. |
+| `wolfram_ref_except.html` / `_verbatim.html` | Pattern reference pages, with full "Details". Fetched 2026-09-25. |
+| `wolfram_ref_indeterminate.html` / `_directedinfinity.html` | Reference pages for the non-finite results, with full "Details". Fetched 2026-09-25. |
 | `wltools_language_spec.html` | Community reverse-engineering index. **Informed inference, not authoritative** — the kernel is closed source. Never cite it against the official pages. |
 
 ## The evaluation procedure these pages specify
@@ -71,6 +78,12 @@ same machinery.
 cases — they fall out of attributes plus ordinary definitions (`Unevaluated[expr]` "effectively
 works by temporarily giving a function an attribute like `HoldFirst`"). Do not special-case them in
 the evaluator loop.
+
+**Example outputs are images.** In every capture, including the 2026-09-25 ones, the result of each
+worked example is a `data-src` image reference, not text, and the images were not fetched. So the
+inputs and the prose are greppable, but **what an example evaluates to, and the text of any message
+it prints (`Throw::nocatch`, `Infinity::indet`), is not in the corpus.** A claim about an output
+needs the running system or another source.
 
 ## Not obtained
 

@@ -7,17 +7,20 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**87 documents (~436 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 41 HTML captures — plus 2 OCR sidecars.**
+**101 documents (~439 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 55 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
 summarised in [`CLAUDE.md`](./CLAUDE.md); they render without CSS but retain the full text. The
-original **22** were fetched **2026-08-29** and the other **16** on **2026-08-30** — ten in the
+original **22** were fetched **2026-08-29** and **16** on **2026-08-30** — ten in the
 second validation round (the eight README/package/licence captures that anchor verbatim quotes, plus
 `pickering2014_*` and `sympy_docs_*`), four in the third (`symbolica_home`,
 `symbolica_home_2023_wayback`, `wikipedia_wolfram_language`, `numhask_hackage`), and two in the
-fourth (`springer_geddes_book_page`, `symbolica_home_2025_wayback`). Two of them are Wayback
-captures rather than live fetches, for reasons the rows give.
+fourth (`springer_geddes_book_page`, `symbolica_home_2025_wayback`). **1** more followed on
+**2026-08-31** (`sbv_docs_data_sbv`), **2** on **2026-09-01** (`algebra_hackage`,
+`constructive_algebra_hackage`), and **14** Wolfram documentation pages on **2026-09-25** (§7: the
+scoping, control-flow, pattern and infinity pages `DESIGN.md` §4.13–§4.15 rest on). Two of them are
+Wayback captures rather than live fetches, for reasons the rows give.
 
 ---
 
@@ -163,6 +166,20 @@ cited and were not fetched.
 | [`wolfram_ref_downvalues.html`](./papers/wolfram-language/wolfram_ref_downvalues.html) | `DownValues` reference page | [`.../ref/DownValues.html`](https://reference.wolfram.com/language/ref/DownValues.html) | 229.7 KB |
 | [`wolfram_ref_upvalues.html`](./papers/wolfram-language/wolfram_ref_upvalues.html) | `UpValues` reference page | [`.../ref/UpValues.html`](https://reference.wolfram.com/language/ref/UpValues.html) | 248.2 KB |
 | [`wolfram_ref_subvalues.html`](./papers/wolfram-language/wolfram_ref_subvalues.html) | `SubValues` reference page | [`.../ref/SubValues.html`](https://reference.wolfram.com/language/ref/SubValues.html) | 234.2 KB |
+| [`wolfram_ref_modularity_and_naming.html`](./papers/wolfram-language/wolfram_ref_modularity_and_naming.html) | *Modularity and the Naming of Things* — the tutorial chapter behind `Module`, `With`, `Block` and pure-function variables: sections "Modules and Local Variables", "Local Constants", "How Modules Work", "Variables in Pure Functions and Rules", "Blocks and Local Values", "Blocks Compared with Modules", then contexts and packages. **The old per-topic URLs (`tutorial/HowModulesWork`, `/BlocksAndLocalValues`, `/VariablesInPureFunctionsAndRules`) all 301 to this one page.** Fetched 2026-09-25. | [`.../tutorial/ModularityAndTheNamingOfThings.html`](https://reference.wolfram.com/language/tutorial/ModularityAndTheNamingOfThings.html) | 541.6 KB |
+| [`wolfram_ref_numbers.html`](./papers/wolfram-language/wolfram_ref_numbers.html) | *Numbers* — the tutorial chapter; held for its section **"Indeterminate and Infinite Results"** (`Indeterminate` poisons arithmetic; `Infinity`, `DirectedInfinity`, `ComplexInfinity`). `tutorial/IndeterminateAndInfiniteResults` 301s here. Fetched 2026-09-25. | [`.../tutorial/Numbers.html`](https://reference.wolfram.com/language/tutorial/Numbers.html) | 509.2 KB |
+| [`wolfram_ref_module.html`](./papers/wolfram-language/wolfram_ref_module.html) | `Module` reference page — `xxx$nnn` naming from `$ModuleNumber`, `Temporary`, renaming of nested scopes. Fetched 2026-09-25. | [`.../ref/Module.html`](https://reference.wolfram.com/language/ref/Module.html) | 228.6 KB |
+| [`wolfram_ref_block.html`](./papers/wolfram-language/wolfram_ref_block.html) | `Block` reference page — values cleared and restored, dynamic scoping, iterator localization. Fetched 2026-09-25. | [`.../ref/Block.html`](https://reference.wolfram.com/language/ref/Block.html) | 207.0 KB |
+| [`wolfram_ref_with.html`](./papers/wolfram-language/wolfram_ref_with.html) | `With` reference page — local constants, substitution that respects inner scoping constructs. Fetched 2026-09-25. | [`.../ref/With.html`](https://reference.wolfram.com/language/ref/With.html) | 253.3 KB |
+| [`wolfram_ref_function.html`](./papers/wolfram-language/wolfram_ref_function.html) | `Function` reference page — slots, `##`, `#0`, `Function[params, body, attrs]`, renaming of named parameters. Fetched 2026-09-25. | [`.../ref/Function.html`](https://reference.wolfram.com/language/ref/Function.html) | 326.9 KB |
+| [`wolfram_ref_return.html`](./papers/wolfram-language/wolfram_ref_return.html) | `Return` reference page — exits "only the innermost construct in which it is invoked". Fetched 2026-09-25. | [`.../ref/Return.html`](https://reference.wolfram.com/language/ref/Return.html) | 184.1 KB |
+| [`wolfram_ref_except.html`](./papers/wolfram-language/wolfram_ref_except.html) | `Except` reference page. Fetched 2026-09-25. | [`.../ref/Except.html`](https://reference.wolfram.com/language/ref/Except.html) | 196.1 KB |
+| [`wolfram_ref_verbatim.html`](./papers/wolfram-language/wolfram_ref_verbatim.html) | `Verbatim` reference page — including that it "does not maintain expr in an unevaluated form". Fetched 2026-09-25. | [`.../ref/Verbatim.html`](https://reference.wolfram.com/language/ref/Verbatim.html) | 182.0 KB |
+| [`wolfram_ref_throw.html`](./papers/wolfram-language/wolfram_ref_throw.html) | `Throw` reference page — tags, the three-argument form, and the unevaluated `Throw` returned when uncaught. Fetched 2026-09-25. | [`.../ref/Throw.html`](https://reference.wolfram.com/language/ref/Throw.html) | 229.8 KB |
+| [`wolfram_ref_catch.html`](./papers/wolfram-language/wolfram_ref_catch.html) | `Catch` reference page. Fetched 2026-09-25. | [`.../ref/Catch.html`](https://reference.wolfram.com/language/ref/Catch.html) | 223.8 KB |
+| [`wolfram_ref_break.html`](./papers/wolfram-language/wolfram_ref_break.html) | `Break` reference page — exits the nearest `Do`, `For`, `Until` or `While` and returns `Null`. Fetched 2026-09-25. | [`.../ref/Break.html`](https://reference.wolfram.com/language/ref/Break.html) | 189.8 KB |
+| [`wolfram_ref_indeterminate.html`](./papers/wolfram-language/wolfram_ref_indeterminate.html) | `Indeterminate` reference page — `NumericFunction` heads return `Indeterminate` on an `Indeterminate` argument. Fetched 2026-09-25. | [`.../ref/Indeterminate.html`](https://reference.wolfram.com/language/ref/Indeterminate.html) | 222.8 KB |
+| [`wolfram_ref_directedinfinity.html`](./papers/wolfram-language/wolfram_ref_directedinfinity.html) | `DirectedInfinity` reference page — the `Infinity`/`-Infinity`/`ComplexInfinity` conversions. Fetched 2026-09-25. | [`.../ref/DirectedInfinity.html`](https://reference.wolfram.com/language/ref/DirectedInfinity.html) | 235.4 KB |
 | [`wltools_language_spec.html`](./papers/wolfram-language/wltools_language_spec.html) | *Wolfram Language Specification* — community reverse-engineering project index. **Informed inference, not authoritative.** | [`wltools.github.io/LanguageSpec/`](https://wltools.github.io/LanguageSpec/) | 35.0 KB |
 
 ---

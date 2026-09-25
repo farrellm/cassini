@@ -11,7 +11,7 @@ design disagree, the design is the intent and the code is behind.
 | :--- | :--- |
 | [`DESIGN.md`](./DESIGN.md) | The architecture: module boundaries, types, the evaluation contract, the test and benchmark plans. **Start here.** |
 | [`notes/`](./notes/) | The reading-and-building guide and its bibliography. Has its own `CLAUDE.md` with strict editing rules. |
-| [`references/`](./references/) | The document corpus the notes cite: 87 documents, indexed, with per-file defect annotations. Gitignored; see rule 6. |
+| [`references/`](./references/) | The document corpus the notes cite: 101 documents, indexed, with per-file defect annotations. Gitignored; see rule 6. |
 | `cassini.cabal` | Package definition. GHC2024, `base ^>=4.21.2.0`. |
 | `src/`, `app/`, `test/` | Library, executable, tests. Currently the `cabal init` skeleton. |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release. |
@@ -110,7 +110,7 @@ design disagree, the design is the intent and the code is behind.
      from the same CI runner class (§8.6).
 
 6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git; a fresh
-   clone gets the `.md` indexes and none of the ~436 MB. That is expected, not a broken checkout.
+   clone gets the `.md` indexes and none of the ~439 MB. That is expected, not a broken checkout.
    `references/downloaded-references-summary.md`'s Source column is how to re-fetch it, and
    `references/CLAUDE.md` carries the corpus rules, including which held copies have OCR defects
    that make `grep` lie in both directions.
