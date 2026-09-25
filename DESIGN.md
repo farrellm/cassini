@@ -959,10 +959,10 @@ newtype Sequence = Sequence (forall es. (Kernel :> es) => Expr -> Eff es Expr)
 
 runKernelIO   :: (IOE :> es)
               => Sequence -> EvalConfig -> IORef KernelState
-              -> Eff (Kernel : es) a -> Eff es (Either Abort a)
+              -> Eff (Kernel : es) a -> Eff es (Either Unwind a)
 
 runKernelPure :: Sequence -> EvalConfig -> KernelState
-              -> Eff (Kernel : es) a -> Eff es (Either Abort a, KernelState)
+              -> Eff (Kernel : es) a -> Eff es (Either Unwind a, KernelState)
 ```
 
 `Cassini.Eval` ties the knot (`runKernelPure (Sequence evalSequence)`) and exports the closed
@@ -988,10 +988,14 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   x + 1; x` yields a partial result with a `Hold` at the cut — the source's "computations limited by
   `$RecursionLimit` … build up large intermediate structures" — rather than aborting.
 
-**`Abort` is for `Abort[]` and interrupts**, which happen in production, so both interpreters return
-`Either Abort a` and the REPL reports a `Left` as `$Aborted`. `Throw`, `Break` and `Continue` travel
-the same `Error` channel, as constructors of `Unwind` beside `UAbort`, through two more operations
-(§4.13); the result type is unchanged, because only an abort escapes the interpreter.
+**`Abort` is for `Abort[]` and interrupts**, which happen in production, and the REPL reports one
+as `$Aborted`. `Throw`, `Break`, `Continue` and `Return` travel the same `Error` channel, as
+constructors of `Unwind` beside `UAbort`, through two more operations (§4.13). So both interpreters
+return `Either Unwind a`: an interpreter runs any `Eff (Kernel : es) a`, and with `a` polymorphic it
+has no `Expr` to turn an uncaught `Throw` into, while the rule against partial functions rules out
+pretending one cannot arrive. Matcher tests with a stub `Sequence`, and property tests that call an
+interpreter directly, can see any constructor. `Cassini.Eval`'s top-level entry catches the
+non-abort ones and converts them (§4.13), so from the REPL's side only `Left (UAbort _)` occurs.
 
 **Why this and not `ReaderT Env IO` with `IORef`s.** The property tests run `runKernelPure` under
 `runPureEff`, which cannot discharge `IOE`, so the type checker guarantees the evaluator under test
@@ -1125,9 +1129,11 @@ sequence variables bind runs of arguments.
 `HoldAll`, so a rule's left side keeps the structure the user wrote ("you need to wrap HoldPattern
 around r[x_] to prevent it from being evaluated",
 `references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html`). Rule tables need
-it as soon as a left-hand side would evaluate, so it is Stage 1. `Except` and `Verbatim` are not
-described on any held page; their semantics above are the design's, to be checked when the
-reference pages are fetched.
+it as soon as a left-hand side would evaluate, so it is Stage 1. `Except[c, p]` "represents any
+expression that matches p but not c", with `Except[c]` meaning `Except[c, _]`; `Verbatim[e]`
+requires "that expr be matched exactly as it appears, with no substitutions for blanks", and
+"does not maintain expr in an unevaluated form" — so, unlike `HoldPattern`, it has no hold
+attribute (`wolfram_ref_except.html`, `wolfram_ref_verbatim.html`).
 
 #### 4.5.2 The matcher monad, and why nondeterminism cannot be an effect
 
@@ -1634,11 +1640,13 @@ until `Function` applies. `Cassini.Builtins.Control` owns this section.
 **Sources.** `references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html`
 specifies `Function` with attributes (section "Attributes"), `If`/`Which`/`Switch`, `TrueQ` and
 `&&` (section "Conditionals"), `Do`/`While`/`For`/`Nest`/`FixedPoint` and `Catch`/`Throw` ("Loops
-and Control Structures"), and iterator evaluation ("Evaluation in Iteration Functions"). **Not
-held:** the tutorials that page defers to for scoping — "How Modules Work", "Blocks and Local
-Values" and "Variables in Pure Functions and Rules". The `Module`, `Block`, `With` and renaming
-rules below are the design's reading of the language; they are to be checked against those pages
-once fetched, before implementation, and until then a disagreement is a design bug.
+and Control Structures"), and iterator evaluation ("Evaluation in Iteration Functions"). Scoping is
+in `wolfram_ref_modularity_and_naming.html` — the chapter now holding "How Modules Work", "Blocks
+and Local Values" and "Variables in Pure Functions and Rules" — and the exact rules are in the
+reference pages' "Details": `wolfram_ref_module.html`, `_block.html`, `_with.html`,
+`_function.html`, `_return.html`, `_throw.html`, `_catch.html` and `_break.html`, all in the same
+directory. **The captured examples show inputs, not outputs** (the outputs are images), so a rule
+below that rests only on what an example returns is marked as such.
 
 **Pure functions.** `Function` has `HoldAll`. `Function[params, body][args]` and
 `Function[body][args]` apply as a **built-in subvalue** on `Function` (step 13's `h[…][…]`), by
@@ -1659,20 +1667,35 @@ substituting into the held body: named parameters for `Function[{x, …}, …]`,
 order and returns the last. `If` (`HoldRest`) follows the source exactly: when the test is neither
 `True` nor `False`, `If[test, t, f]` stays unevaluated and the four-argument `If[test, t, f, u]`
 takes `u`. `Which` evaluates tests in turn; `Switch` matches its first argument against each form
-with `matchOne` (§4.5.2). No construct treats an undecided test as `False` — `TrueQ` is the only
-one that does, by definition (§4.14).
+with `matchOne` (§4.5.2). `If`, `Which` and `Switch` never treat an undecided test as `False`:
+they stay unevaluated, or take `If`'s fourth argument. Constructs that must decide in order to
+proceed treat anything but `True` as failure: `TrueQ` by definition (§4.14); `While` and `For`,
+per the source ("As soon as the loop test fails to be True, While and For terminate",
+`wolfram_ref_evaluation_of_expressions.html`, "Loops and Control Structures"); and the matcher's
+`Condition` and `PatternTest` (§4.5), where only `True` admits a match.
 
 **Scoping.**
 
-- **`Module[{x, …}, body]`** renames each local to a fresh `x$n` and evaluates the renamed body.
+- **`Module[{x, …}, body]`** renames each local to a fresh `x$n` and evaluates the renamed body —
+  "Module creates a symbol with name xxx$nnn … The number nnn is the current value of
+  $ModuleNumber", incremented "every time any module is used". Renaming skips occurrences that are
+  "local variables in scoping constructs", and the new symbols carry `Temporary`.
   `n` is `$ModuleNumber`, a counter in `KernelState`, **not** the intern table's allocation
   counter (§3.2): under `runKernelPure` the names must be a function of the initial state, or the
   §7.3 determinism law fails and golden files record session history.
 - **`With[{x = v, …}, body]`** substitutes the evaluated `v` into the held body before evaluating
-  it — the same scoping-aware substitution as `Function`.
-- **`Block[{x, …}, body]`** is dynamic: it saves each symbol's `OwnValues`, clears or sets them,
-  evaluates the body, and **restores on every exit**, including `Throw`, `Break` and `Abort[]`.
+  it — the same scoping-aware substitution as `Function`. `With[{x := v}, …]` "inserts the
+  unevaluated form" of `v`, and `With[def₁, def₂, expr]` is `With[def₁, With[def₂, expr]]`
+  (`wolfram_ref_with.html`).
+- **`Block[{x, …}, body]`** is dynamic ("values assigned to x, y, … are cleared. When the execution
+  of the block is finished, the original values of these symbols are restored"; initial values are
+  evaluated before the clear): it saves each symbol's whole value record — own, down, up, sub and
+  N values — clears it or sets the own-value, evaluates the body, and **restores on every exit**, including `Throw`, `Break` and `Abort[]`.
   Restoration uses the unwinding operations below; it is the one place state changes are undone.
+  Clearing only own-values would be wrong: `Block[{f}, f[x_] := …; …]` must leave `f`'s old
+  down-values in place afterwards, and the idiom `Block[{Print}, …]` works because the builtin's
+  definitions are cleared too. The page says "Block affects only the values of symbols, not their
+  names"; whether attributes are localized is not stated, and a regression case pins it.
 - **Iterators** (`Table`, `Do`, `Sum`, `Product`) localize the iteration variable as `Block` does —
   the source: "the first step … is to make the value of i local. Next, the limit imax … is
   evaluated. The expression f is maintained in an unevaluated form, but is repeatedly evaluated".
@@ -1683,34 +1706,49 @@ one that does, by definition (§4.14).
   `evaluate`. `FixedPoint` compares with `SameQ` and is bounded by `$IterationLimit` (§4.3), so it
   cannot loop forever.
 
-**Non-local exits need two operations on the `Kernel` effect** (§4.3). `Throw`, `Break`,
-`Continue` and `Abort[]` unwind to the nearest handler, and a handler must be able to observe an
+**Non-local exits need two operations on the `Kernel` effect** (§4.3). `Throw`, `Break`, `Continue`,
+`Return` and `Abort[]` unwind to the nearest handler, and a handler must be able to observe an
 unwind in order to restore state and rethrow:
 
 ```haskell
 -- | Cassini.Eval.Kernel — added to 'Kernel'
-  Unwind      :: Unwind -> Kernel m a                 -- ^ Throw, Break, Continue, Abort[]
+  Unwind      :: Unwind -> Kernel m a                 -- ^ Throw, Break, Continue, Return, Abort[]
   CatchUnwind :: m a -> Kernel m (Either Unwind a)    -- ^ Catch, loops, Block's restore
 
-data Unwind = UThrow !Expr !(Maybe Expr)   -- ^ value, tag
+data Unwind = UThrow !Expr !(Maybe Expr) !(Maybe Expr)  -- ^ value, tag, Throw's third argument
             | UBreak | UContinue
+            | UReturn !Expr                                 -- ^ D23, answered below
             | UAbort !Abort
 ```
 
-The interpreters discharge `Error Unwind` (§4.3); their result type is unchanged, because `UAbort`
-still surfaces as `Left Abort` and the rest are caught above them. `Catch` catches `UThrow`
-(matching the tag against its form) and rethrows anything else; `Do`, `While` and `For` catch
+The interpreters discharge `Error Unwind` and return `Either Unwind a` (§4.3). `Catch` catches `UThrow`
+(matching the tag against its form, re-evaluating the tag each time it is compared, per
+`wolfram_ref_catch.html`; `Catch[expr, form, f]` returns `f[value, tag]`) and rethrows anything
+else; `Do`, `While` and `For` catch
 `UBreak` and `UContinue`; `Block` catches everything, restores, and rethrows. **Only `Block` may
 observe `UAbort`**, and only to restore — nothing else in the tree catches it, so `Abort[]` still
-stops evaluation (§4.7). An uncaught `UThrow` or `UBreak` reaching the top of a REPL input becomes
-`Hold[Throw[…]]` with `Throw::nocatch` (a stray `Break[]` or `Continue[]` likewise, with its own
-message), converted in `Cassini.Eval`'s top-level entry, not in the interpreter. `KernelState`
-changes made before an unwind persist: `Effectful.State.Static.Local` is not rolled back by `Error`,
-and `Block` is the explicit exception. Both facts get regression cases.
+stops evaluation (§4.7). `Break[]` makes its loop return `Null`. An uncaught `UThrow` reaching the
+top of a REPL input becomes an unevaluated `Throw` with a message ("An error is generated and an
+unevaluated Throw is returned"), or, for `Throw[value, tag, f]`, `f[value, tag]`; a stray `Break[]`
+or `Continue[]` likewise. The conversion is in `Cassini.Eval`'s top-level entry, which wraps
+the input's evaluation in `CatchUnwind` and so has an `Expr` to build; the interpreter only
+reports what escaped. The message tags are not in the captures; `Throw::nocatch` is from memory.
+`KernelState` changes made before an unwind persist: "no matter the order of effects, state updates
+made within the `catchError` block before the error happens always persist" (effectful-core
+2.6.1.0, `Effectful.Error.Static`; `Effectful.State.Static.Local` says the same of exceptions).
+`Block` is the explicit exception. Both facts get regression cases.
 
-**`Return` is deferred** (D23). Which construct it exits — the innermost loop, the innermost
-user-rule application, or something else — is not specified by any held page, and it is the
-control structure most likely to be implemented plausibly and wrongly.
+**`Return` is a fourth unwind, `UReturn Expr`** (D23, answered). `wolfram_ref_return.html`:
+"Return[expr] exits control structures within the definition of a function, and gives the value
+expr for the whole function", and "Return exits only the innermost construct in which it is
+invoked" — its example returns from a `Do` loop inside `g` "but not the function g". So `UReturn`
+is caught by whichever is innermost of a loop (`Do`, `While`, `For`, `Scan`, which then yields the
+value) and a **user-rule application** (the evaluation of a downvalue's right-hand side in steps
+10–13, which then yields the value as the rule's result). What an uncaught `Return` becomes at the
+top is not on the page; here it is the value itself, a choice pending a check against WL (from
+memory, WL leaves `Return[expr]` unevaluated there). The page's first "Possible Issues" example has no captured output, so what `If` alone does
+with a `Return` inside a compound body is taken from the prose, not checked; a regression case
+pins it once the evaluator exists.
 
 ### 4.14 Logic and comparison
 
@@ -1783,7 +1821,9 @@ unlike bases (`2^(1/2)·3^(1/2)` stays). This is what gives §4.11's inverse tab
 spelling per value" for prime radicands: `ArcSin[Sqrt[2]/2]` evaluates its argument to
 `2^(-1/2)` and reaches the table.
 
-**Infinities and `Indeterminate`.** §4.7 produces `ComplexInfinity`, `DirectedInfinity[-1]` and
+**Infinities and `Indeterminate`.** Sources: `wolfram_ref_numbers.html`, section "Indeterminate and
+Infinite Results", and `wolfram_ref_directedinfinity.html`/`wolfram_ref_indeterminate.html`, all in
+`references/papers/wolfram-language/`. §4.7 produces `ComplexInfinity`, `DirectedInfinity[-1]` and
 `Indeterminate`, and to Cohen they are symbols — so without a rule `1 + ComplexInfinity` is a
 well-formed ASAE sum. `Infinity` is `DirectedInfinity[1]` and `ComplexInfinity` is
 `DirectedInfinity[]`; directions are `±1` until there are complex numbers (D20). `Plus`, `Times` and
@@ -1794,15 +1834,34 @@ Riemann-sphere tables:
 | :--- | :--- |
 | finite number `+` `DirectedInfinity[d]` | `DirectedInfinity[d]` |
 | `DirectedInfinity[d] + DirectedInfinity[d]` | `DirectedInfinity[d]` |
-| `Infinity − Infinity`, `ComplexInfinity + ComplexInfinity`, `ComplexInfinity + Infinity` | `Indeterminate`, `Infinity::indet` |
+| `DirectedInfinity[d] + DirectedInfinity[−d]`, `ComplexInfinity + ComplexInfinity`, `ComplexInfinity + DirectedInfinity[d]` | `Indeterminate`, `Infinity::indet` |
 | nonzero number `c` `·` `DirectedInfinity[d]` | `DirectedInfinity[sign(c)·d]`; `ComplexInfinity` unchanged |
+| `DirectedInfinity[d] · DirectedInfinity[e]` | `DirectedInfinity[d·e]`; `ComplexInfinity` if either is |
 | `0 · DirectedInfinity[…]` | `Indeterminate`, `Infinity::indet` |
-| `1/DirectedInfinity[…]` | `0` |
-| anything involving `Indeterminate` | `Indeterminate` |
+| `DirectedInfinity[…]^n`, integer `n > 0` | the product row, `n` times |
+| `DirectedInfinity[…]^n`, integer `n < 0`; in particular `1/DirectedInfinity[…]` | `0` |
+| `c^Infinity`, rational `c`: `c > 1`; `c < −1`; `|c| < 1`; `c = ±1` | `Infinity`; `ComplexInfinity`; `0`; `Indeterminate` |
+| `c^(−Infinity)` | as `(1/c)^Infinity`; `0^(−Infinity)` is `ComplexInfinity` |
+| `c^ComplexInfinity`, `c ≠ 0` | `Indeterminate` |
+| `Indeterminate` as an argument of any `NumericFunction` head | `Indeterminate` |
 
-**Only numbers are absorbed.** `x + Infinity` stays as it is: `x` may itself be infinite, and
+The table's rows follow the sources' prose ("If you try to find the difference between two infinite
+quantities, you get an indeterminate result"; "A message is produced whenever an operation first
+yields Indeterminate"). The product, power and exponent rows are the extended-real limits, from
+memory of WL rather than from the captures, whose outputs are images; so is the tag
+`Infinity::indet`. Each such row is a regression case once there is an oracle (§7.5).
+
+The last row is not the infinity pass's: it holds for every `NumericFunction` head
+(`wolfram_ref_indeterminate.html`: "If Indeterminate appears in the argument of any function with
+attribute NumericFunction, the result will be Indeterminate"), so it is one evaluator rule, keyed on
+the attribute and tried before the head's downvalues, not a case in each builtin. `Sin[Indeterminate]`
+reaches it, not `Cassini.Simplify.Elementary`.
+
+**Only numbers are absorbed — a deliberate divergence from WL.** `x + Infinity` stays as it is. WL
+absorbs symbols too (`wolfram_ref_directedinfinity.html`: "Finite or symbolic quantities are
+absorbed", with `DirectedInfinity[z] + x` as the example). Here `x` may itself be infinite, and
 absorbing it would be the kind of rule §4.8 forbids — one that quietly assumes something about
-`x`. `compareCanonical` needs no change: the heads are symbols and `DirectedInfinity[…]` is a
+`x`. D25 records this. `compareCanonical` needs no change: the heads are symbols and `DirectedInfinity[…]` is a
 function, both already ordered.
 
 **Integer and rational functions** — `Cassini.Builtins.Integer`, evaluating on exact numbers and
@@ -2314,7 +2373,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Simplify.Trig` | `simplifyTrig` preserves numeric value wherever the input is defined | a cancellation that is not an identity |
 | `Simplify.Numeric` | radical normalization preserves numeric value and is idempotent; two products of rationals and prime-radicand radicals below `B` with equal numeric value normalize identically; `integerRoot n b` is exact exactly on perfect powers; the infinity pass agrees with the extended-real table on every pair from a fixed set of finite and infinite values | a sign or branch error in steps 1–3 of §4.15; a table cell wrong |
 | `Number.Integer` | `m ≡ n·Quotient m n + Mod m n` with `Mod` taking the sign of `n`; `factorInteger` multiplies back and every factor passes `isProbablePrime`; `isProbablePrime` agrees with trial division below 10⁶ | floor-versus-truncate division; a composite witness set |
-| `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every symbol's `OwnValues` as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState` | variable capture; a `Block` that leaks on unwind; session-dependent names (§4.13) |
+| `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every localized symbol's own, down, up, sub and N values as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState` | variable capture; a `Block` that leaks on unwind; session-dependent names (§4.13) |
 | `Logic` | `Equal a b` is `True`/`False` only when `isZero (a − b)` is `Just True`/`Just False`; `And`/`Or` never evaluate an argument after the deciding one | a comparison that turns "don't know" into `False` |
 | `Pattern` | soundness: every `σ` from `matchAll p s` satisfies `applySubst σ p ≡ s` modulo attributes | the whole matcher, in one line |
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
@@ -2399,11 +2458,13 @@ trusted implementation from inside a property, where the property cannot be stat
 `isZero (ours - theirs)` and reports `Nothing` as inconclusive, for human review, not as failure. A
 suite that cries wolf gets turned off.
 
-Two structural divergences from WL are deliberate, and a reader of a Mathics3 transcript will meet
-them first: `Sin[x]/Cos[x]` is not rewritten to `Tan[x]` (D16), and a constant trigonometric
-argument is reduced to `[0, π/2]` (§4.11). The second is a divergence per Cohen's Fig. 7.9, whose
-Mathematica column is circa 2002; what current WL and Mathics3 do is not in the corpus, and the
-first oracle run settles it. Semantic comparison absorbs both; neither is a bug.
+Three structural divergences from WL are deliberate, and a reader of a Mathics3 transcript will meet
+them first: `Sin[x]/Cos[x]` is not rewritten to `Tan[x]` (D16); a constant trigonometric argument
+is reduced to `[0, π/2]` (§4.11); and `x + Infinity` stays a sum instead of absorbing `x` (§4.15,
+D25). The second is a divergence per Cohen's Fig. 7.9, whose Mathematica column is circa 2002;
+what current WL and Mathics3 do is not in the corpus, and the first oracle run settles it. The
+third is not absorbed by semantic comparison, since `isZero` cannot prove `x + Infinity` equal to
+`Infinity`; the oracle harness whitelists it. None of the three is a bug.
 
 The Rubi problem corpus is the aspirational end state for `Integrate`; its size and timings are
 vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system.
@@ -2648,8 +2709,10 @@ specifies — and, once §5.6 lands, when `isZero` returns `Just True` for `Sin[
 
 **Pure-function application (§4.13) does gate Stage 1**: every `Derivative` subvalue is a
 `Function`, so the chain-rule half of Stage 1's criterion needs it. The rest of §4.13–§4.15 does
-not gate, and is done when its §7.3 rows pass and `Module`, `Block` and `Return`'s rules have been
-checked against the reference pages §4.13 says are not yet held.
+not gate, and is done when its §7.3 rows pass and the regression corpus pins the behaviours §4.13
+takes from prose alone (a `Return` inside `If` in a compound body; an uncaught `Return` at the top;
+the uncaught-`Throw` message; whether `Block` localizes attributes) and §4.15's infinity rows taken
+from memory.
 
 ### Stage 2
 
@@ -2726,8 +2789,9 @@ answer, not a deletion.
 | D20 | No complex numbers: `I` is a symbol, and `Re`, `Im`, `Conjugate`, `Arg` and `DirectedInfinity` directions other than `±1` are absent. The open choice is a Gaussian-rational `Number` constructor versus symbolic `I` with `I^2 → -1` | D19's trigger; or `Solve` needing the roots of a quadratic with negative discriminant |
 | D21 | No special functions beyond §4.11: `Gamma`, `Pochhammer`, `Erf`, `Ei`, `PolyLog` absent | Gosper (§6.3) landing — its closed forms need `Pochhammer`/`Gamma` first; transcendental Risch (§6.2) proving a result non-elementary, where `Erf`/`Ei` would be the answer |
 | D22 | No conditional results (`ConditionalExpression`, `Piecewise`): a generic answer is returned, e.g. `∫xⁿ` assumes `n ≠ -1` | tier-1 integration rules (§6.2) or `Solve` (§6.5) needing to report a case split rather than drop it |
-| D23 | `Return` not implemented (§4.13) | the reference page for `Return` fetched and read, or user code in the regression corpus needing it |
+| D23 | **Answered 2026-09-25:** `Return` is `UReturn`, caught by the innermost loop or user-rule application, per `wolfram_ref_return.html` (§4.13) | the regression case for `Return` inside `If` in a compound body disagreeing with §4.13 |
 | D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split composite radicands (§4.15), so it is canonical only for prime radicands below `B` | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
+| D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
 
 ### 11.3 Provenance
 

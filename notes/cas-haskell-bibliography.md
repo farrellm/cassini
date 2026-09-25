@@ -178,6 +178,15 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **Wolfram Research.** Documentation on **Attributes**: `HoldAll`, `HoldFirst`, `HoldRest`, `HoldAllComplete`, `Flat`, `Orderless`, `Listable`, `OneIdentity`, `SequenceHold`, `Protected`, `Constant`. Free.
 > `OneIdentity` in particular affects pattern matching — the attribute table's wording is "`f[f[a]]`, etc. are equivalent to `a` for pattern matching" — and is easy to get wrong. **Do not go to `ref/Attributes` for the list** — that page carries only the `Attributes[symbol]` signatures. The full attribute table, each entry with its one-line meaning, is inside *Evaluation of Expressions*.
 
+**Wolfram Research.** "Modularity and the Naming of Things." Tech note, `reference.wolfram.com/language/tutorial/ModularityAndTheNamingOfThings.html`. Free.
+> **The scoping spec**, for the `Module`/`With`/`Block` and pure-function stage of the evaluator: "Modules and Local Variables", "Local Constants", "How Modules Work", "Variables in Pure Functions and Rules", "Blocks and Local Values", "Blocks Compared with Modules". The older per-topic URLs (`tutorial/HowModulesWork` and siblings) now redirect here, so cite this page.
+
+**Wolfram Research.** "Numbers" — section "Indeterminate and Infinite Results." Tech note, `reference.wolfram.com/language/tutorial/Numbers.html`. Free.
+> How `Indeterminate` and the infinities behave in arithmetic: an indeterminate result prints a message and returns `Indeterminate`, which "'poisons' any arithmetic computation"; `Infinity` is "converted internally to `DirectedInfinity[1]`", and `1/0` gives the undirected `DirectedInfinity[]`. The rest of the chapter is floating point.
+
+**Wolfram Research.** Reference pages for **`Module`, `Block`, `With`, `Function`, `Return`, `Throw`, `Catch`, `Break`, `Except`, `Verbatim`, `Indeterminate`, `DirectedInfinity`**. Free.
+> Unlike the four values pages above, these captures carry their full "Details" lists, and they are where the precise rules live: `Module` names locals `xxx$nnn` from `$ModuleNumber`; `Block` clears values and restores them; `Function[params, body, attrs]` "is treated as having attributes attrs for purposes of evaluation"; `Return` "exits only the innermost construct in which it is invoked"; `Break[]` "exits the nearest enclosing `Do`, `For`, `Until` or `While`". **Example outputs are images and were not captured**, so what an example returns, and the text of any message it prints, is not in the held copy.
+
 **riptutorial.** "Wolfram Language — Evaluation Order." **Dead — do not cite.**
 > The site's Wolfram Language content is gone and no Wayback snapshot exists. Everything it summarized is in *Evaluation of Expressions* above, including the point that `Hold`, `HoldComplete`, `HoldForm`, `ReleaseHold` and `Unevaluated` are not evaluator special cases but fall out of attributes plus ordinary definitions.
 
@@ -291,7 +300,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **Free PDFs / online, start here at zero cost:**
 - *A=B* (released free by the authors)
-- Wolfram evaluation & attributes documentation (`reference.wolfram.com`)
+- Wolfram documentation (`reference.wolfram.com`): evaluation and attributes, scoping, control flow, patterns, and infinite results
 - Ishii, arXiv:1807.01456
 - Krebber MatchPy papers, arXiv:1710.06915 / 1710.00077 / 1705.00907
 - Zhu et al. on hash consing, arXiv:2509.20534
@@ -529,6 +538,15 @@ claims that were faithful to their sources' words and still wrong about the thin
 
 Neither needed a new capture: the first rests on the held Ishii pre-print, the second on the
 compiler this project pins.
+
+**A tenth round, 2026-09-25**, filled gaps `DESIGN.md` §4.13–§4.15 had flagged as "not held": the
+scoping, control-flow, pattern and infinite-result behaviour of the language. Fourteen Wolfram pages
+were captured and indexed, taking the corpus to **101 documents / 55 HTML captures** (§6 above). Two
+findings about the pages themselves. The three scoping tutorials the design named ("How Modules Work",
+"Blocks and Local Values", "Variables in Pure Functions and Rules") **no longer exist as separate
+pages**: each URL redirects to *Modularity and the Naming of Things*, which carries all three as
+sections. And **example outputs are images in every Wolfram capture**, old and new, so what an example
+returns, and any message text, cannot be checked against the corpus.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
