@@ -16,7 +16,7 @@ All four build stages, at design depth:
 | Stage | Substance | §  |
 | :---- | :--- | :--- |
 | 0 | Exact numbers, the `Expr` representation, interning, canonical order, traversal | [§3](#3-stage-0--foundations) |
-| 1 | Attributes, rule tables, the evaluation sequence, the pattern matcher, automatic simplification, surface syntax | [§4](#4-stage-1--the-kernel) |
+| 1 | Attributes, rule tables, the evaluation sequence, the pattern matcher, automatic simplification, surface syntax, pure functions; not gating (§10): elementary functions, control flow, logic, radicals and integer functions | [§4](#4-stage-1--the-kernel) |
 | 2 | Polynomials, GCD, factorization, zero testing | [§5](#5-stage-2--the-polynomial-substrate) |
 | 3 | Gröbner bases, integration, summation | [§6](#6-stage-3--the-hard-algorithms) |
 
@@ -87,7 +87,7 @@ This split is the design's most consequential commitment. It exists to prevent f
                        │ .Pretty · REPL                      │
                        └────────────────┬────────────────────┘
                        ┌────────────────┴────────────────────┐
-  L4  Builtins         │ Builtins.* · Simplify.Automatic     │──┐
+  L4  Builtins         │ Builtins.* · Simplify.*             │──┐
                        │ Integrate.Rules                     │  │
                        └────────────────┬────────────────────┘  │
                        ┌────────────────┴────────────────────┐  │  (L4 only)
@@ -101,13 +101,14 @@ This split is the design's most consequential commitment. It exists to prevent f
                        │ .Symbol · .Traversal · Structure    │  │
                        └────────────────┬────────────────────┘  │
                        ┌────────────────┴────────────────────┐  │
-  L0  Numbers          │ Number                              │  │
+  L0  Numbers          │ Number · Number.Integer             │  │
                        └────────────────┬────────────────────┘  │
                                         │                       │
                        ┌────────────────┴────────────────────┐  │
   A   Algebra (side)   │ Algebra.* · Poly.* · Zero           │◀─┘
-                       │ Groebner · Summation.*              │
+                       │ Groebner · Summation.* · Solve      │
                        │ Integrate.Rational, .Risch          │
+                       │ Series · Limit                      │
                        └─────────────────────────────────────┘
 ```
 
@@ -161,6 +162,7 @@ expose the API (the `containers`/`vector` convention).
 | :--- | :--- |
 | **L0** | |
 | `Cassini.Number` | Exact rationals over `Integer`: normalization, arithmetic, numeric order. |
+| `Cassini.Number.Integer` | Integer roots, trial division, strong pseudoprimality, `factorInteger` (§4.15). No `Expr`. |
 | **L1** | |
 | `Cassini.Core.Symbol` | Interned symbol names with contexts. `Text`-backed, `Int`-compared. |
 | `Cassini.Core.Expr` | The `Expr` API: smart constructors, pattern synonyms, accessors. **No representation.** |
@@ -184,14 +186,23 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Eval.Message` | The `Message` type and emission. Formatting is L5's job. |
 | **L4** | |
 | `Cassini.Simplify.Automatic` | Cohen's automatic simplification: `Plus`, `Times`, `Power` to canonical form. |
+| `Cassini.Simplify.Elementary` | Automatic rules for the elementary functions: special values, parity, periodicity, `E^(c·Log[z])` (§4.11). |
+| `Cassini.Simplify.Rational` | Algebraic expansion, `Expand_main_op`, rationalization, numerator and denominator over ASAEs (§4.12). |
+| `Cassini.Simplify.Trig` | Trigonometric expansion, contraction and `Simplify_trig`, circular and hyperbolic (§4.12). |
+| `Cassini.Simplify.Numeric` | Radical normalization of rational bases and the infinity pass for `Plus`/`Times`/`Power` (§4.15). |
 | `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed. |
-| `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, comparison. |
+| `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL). Comparison is `Builtins.Logic`'s. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
 | `Cassini.Builtins.List` | List construction and manipulation. |
 | `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `RuleDelayed`. |
 | `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `TagSet`, `Unset`, `Attributes`, `Protect`. |
-| `Cassini.Builtins.Calculus` | `D`, `Integrate`, `Series`, `Limit`. |
-| `Cassini.Builtins.Polynomial` | `Expand`, `Factor`, `Together`, `Apart`, `PolynomialGCD`, `Coefficient`, `Exponent`, `Variables`. |
+| `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
+| `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
+| `Cassini.Builtins.Control` | `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). |
+| `Cassini.Builtins.Logic` | `Equal` and the orderings, `SameQ`, `TrueQ`, `And`/`Or`/`Not` (§4.14). |
+| `Cassini.Builtins.Integer` | `Abs`, `Sign`, `Floor`, `Ceiling`, `Round`, `Mod`, `Quotient`, `GCD`, `LCM`, `Binomial`, `Factorial`, `Max`, `Min`, `PrimeQ`, `FactorInteger`, `Numerator`, `Denominator` (§4.15). |
+| `Cassini.Builtins.Calculus` | `D`, `Integrate`, `Series`, `Normal`, `Limit`, `Sum`, `Product`; `RootSum` (§6.5). |
+| `Cassini.Builtins.Polynomial` | `Expand`, `ExpandAll`, `Collect`, `Cancel`, `Factor`, `Together`, `Apart`, `PolynomialGCD`, `Coefficient`, `Exponent`, `Variables`, `Resultant`, `Discriminant`, `GroebnerBasis`, `PolynomialReduce`, `Solve` (§6.5). |
 | `Cassini.Integrate.Rules` | The tier-1 integration rule set and its loader (§6.2). **L4 despite its namespace**: it names `Expr`, `Cassini.Rules` and the surface syntax exactly as `Cassini.Builtins.*` does. |
 | **L5** | |
 | `Cassini.Syntax.Lexer` | Tokens. |
@@ -211,6 +222,8 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Groebner` | Buchberger, then F4 (§6.1). |
 | `Cassini.Integrate.Rational`, `.Risch` | Rational and transcendental integration (§6.2). |
 | `Cassini.Summation.*` | Gosper, Zeilberger (§6.3). |
+| `Cassini.Series`, `Cassini.Limit` | Truncated power series as a coefficient ring over §5.2's representations, and series-based limits (§6.4); `Cassini.Builtins.Calculus` converts to `SeriesData` and back (§6.5). |
+| `Cassini.Solve` | Fraction-free elimination and Gröbner-based polynomial systems (§6.4); returns triangular systems of polynomials, not `Expr` rules; `Solve` converts (§6.5). |
 
 ### 2.3 The prelude
 
@@ -383,7 +396,13 @@ about in review, which is the whole value being bought. The `.ormolu` file it re
 Rules 1 and 2 split L3 at §1.2's seam. Rule 5 guards the top of the stack: without it nothing stops
 `Cassini.Zero` importing `Cassini.Simplify.Automatic`, and GHC would not object, since that is not a
 cycle. `Main`, `Test.**` and `Bench.**` appear throughout because `hlint .` walks every suite
-directory and `app/`.
+directory and `app/`. §4.11–§4.12's modules need no rule of their own: `Cassini.Simplify.**` and
+`Cassini.Builtins.**` already place them, and they import only downward within L4
+(`Simplify.Trig` → `.Elementary`, `.Rational`; `.Rational` → `.Elementary`, for `simplifyE`;
+`.Elementary` → `.Numeric`; `.Numeric` → `.Automatic`; `Builtins.Arithmetic` → `Simplify.Elementary`, for `simplifyExpPower`,
+and → `Simplify.Numeric`). The same holds for
+§4.13–§4.15 and §6.5: `Cassini.Number.Integer` sees no `Expr`, and `Cassini.Solve` is in `A`, where
+rule 3 keeps it off `Expr` and `Cassini.Builtins.Polynomial` converts its results.
 
 The hlint behaviours this depends on (checked against fixture modules and hlint's
 `Hint/Restrict.hs`, which matches module names with `filepattern` after turning `.` into `/`):
@@ -943,10 +962,10 @@ newtype Sequence = Sequence (forall es. (Kernel :> es) => Expr -> Eff es Expr)
 
 runKernelIO   :: (IOE :> es)
               => Sequence -> EvalConfig -> IORef KernelState
-              -> Eff (Kernel : es) a -> Eff es (Either Abort a)
+              -> Eff (Kernel : es) a -> Eff es (Either Unwind a)
 
 runKernelPure :: Sequence -> EvalConfig -> KernelState
-              -> Eff (Kernel : es) a -> Eff es (Either Abort a, KernelState)
+              -> Eff (Kernel : es) a -> Eff es (Either Unwind a, KernelState)
 ```
 
 `Cassini.Eval` ties the knot (`runKernelPure (Sequence evalSequence)`) and exports the closed
@@ -956,7 +975,7 @@ versions; matcher tests can supply a stub. This works because an `effectful` han
 `evalSequence`**, so the depth count cannot be bypassed.
 
 `runKernelPure` is `reinterpret (runReader cfg . runState s0 . runErrorNoCallStack) handler`,
-introducing and discharging `Reader EvalConfig`, `State KernelState` and `Error Abort`.
+introducing and discharging `Reader EvalConfig`, `State KernelState` and `Error Unwind` (§4.13).
 `runKernelIO` uses the caller's `IORef` in place of `State`, so it returns no state.
 
 **Two limits, per the language.** "`$RecursionLimit` limits the maximum depth of the evaluation
@@ -972,8 +991,14 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   x + 1; x` yields a partial result with a `Hold` at the cut — the source's "computations limited by
   `$RecursionLimit` … build up large intermediate structures" — rather than aborting.
 
-**`Abort` is for `Abort[]` and interrupts**, which happen in production, so both interpreters return
-`Either Abort a` and the REPL reports a `Left` as `$Aborted`.
+**`Abort` is for `Abort[]` and interrupts**, which happen in production, and the REPL reports one
+as `$Aborted`. An interrupt is polled for, not thrown asynchronously (§4.13). `Throw`, `Break`, `Continue` and `Return` travel the same `Error` channel, as
+constructors of `Unwind` beside `UAbort`, through two more operations (§4.13). So both interpreters
+return `Either Unwind a`: an interpreter runs any `Eff (Kernel : es) a`, and with `a` polymorphic it
+has no `Expr` to turn an uncaught `Throw` into, while the rule against partial functions rules out
+pretending one cannot arrive. Matcher tests with a stub `Sequence`, and property tests that call an
+interpreter directly, can see any constructor. `Cassini.Eval`'s top-level entry catches the
+non-abort ones and converts them (§4.13), so from the REPL's side only `Left (UAbort _)` occurs.
 
 **Why this and not `ReaderT Env IO` with `IORef`s.** The property tests run `runKernelPure` under
 `runPureEff`, which cannot discharge `IOE`, so the type checker guarantees the evaluator under test
@@ -1021,7 +1046,8 @@ evalSequence = fixpoint step
               evalStep2Head e
           >>= evalStep34ArgsHold
           >>= evalStep5Seq   >>= evalStep6Uneval  >>= evalStep7Flat
-          >>= evalStep8List  >>= evalStep9Order   >>= evalStep10UserUp
+          >>= evalStep8List  >>= evalStep9Order   >>= evalStepIndet
+          >>= evalStep10UserUp
           >>= evalStep11BuiltinUp >>= evalStep12UserDown >>= evalStep13BuiltinDown
 
     -- Step 4 is a gate on step 3, not a stage after it.
@@ -1031,7 +1057,7 @@ evalSequence = fixpoint step
 Each step is a named function with its own unit test and golden trace, and the easy mistakes below
 become structurally impossible once the steps are separate values in a fixed order.
 
-**Three places where the code is not the list read literally:**
+**Six places where the code is not the list read literally:**
 
 - **Step 1 is a guard.** A raw object has no head and no argument list to compute a held-position
   mask from; as a link it would hit a partial function on every literal.
@@ -1043,6 +1069,23 @@ become structurally impossible once the steps are separate values in a fixed ord
   implement, not two passes: evaluating everything and then deciding what was held would give
   `Hold[2]` for `Hold[1+1]`. `evalStep4Hold` computes the mask and `evalStep3Args` consumes it; the
   golden traces still record two entries.
+- **"The attributes of `h`" (steps 4–9) is a function of the head, not a symbol lookup.** A symbol
+  head supplies its own attributes; a head `Function[_, _, attrs]` supplies `attrs`, one attribute
+  or a list (§4.13); any other compound head supplies none. One function, `headAttributes`, answers
+  for every step, so no step can forget the `Function` case.
+- **`evalStepIndet` sits between steps 9 and 10**, and is not on the source's list: when `h` has
+  `NumericFunction` and some `eᵢ` is `Indeterminate`, the result is `Indeterminate` (§4.15). It
+  follows step 8, so `Sin[{Indeterminate, 0}]` threads first, and precedes all four rungs, so no rule,
+  user or built-in, up or down, sees an `Indeterminate` argument of a numeric function. This is what
+  keeps Cohen's `Plus` from collecting `Indeterminate - Indeterminate` to 0 (§4.15).
+- **A user rule evaluates its own right-hand side** (steps 10 and 12). Read literally, a rung
+  returns the instantiated right-hand side and the fixed point evaluates it next round, so no
+  computation corresponds to "applying the rule" and there is nothing for `Return` to exit. Here,
+  when a user rule fires, the rung calls `evaluate` on the right-hand side inside `CatchUnwind`,
+  turns a caught `UReturn v` into `v`, rethrows every other unwind, and hands the result to the fixed
+  point, whose next round finds it settled. This is the catch point of §4.13's `Return`. Built-in
+  rungs (11, 13) are Haskell and return as the list says; a pure function applies at step 13 and
+  so does not catch `Return` (§4.13).
 
 **The traps the sequence exists to prevent:**
 
@@ -1093,12 +1136,25 @@ data PatternView
   | POptional   !PatternView !(Maybe Expr)
   | PLiteral    !Expr
   | PCompound   !PatternView !(Vector PatternView)
+  | PExcept     !PatternView !(Maybe PatternView)  -- ^ Except[c], Except[c, p]
+  | PHold       !PatternView                      -- ^ HoldPattern[p]
+  | PVerbatim   !Expr                             -- ^ Verbatim[e]: e literally, blanks too
 
 viewPattern :: Expr -> PatternView
 ```
 
 `Subst` is a `Map Symbol Binding`, where a binding is one expression or a sequence, because
 sequence variables bind runs of arguments.
+
+`HoldPattern[p]` matches as `p` does; its point is evaluation, not matching — `HoldPattern` has
+`HoldAll`, so a rule's left side keeps the structure the user wrote ("you need to wrap HoldPattern
+around r[x_] to prevent it from being evaluated",
+`references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html`). Rule tables need
+it as soon as a left-hand side would evaluate, so it is Stage 1. `Except[c, p]` "represents any
+expression that matches p but not c", with `Except[c]` meaning `Except[c, _]`; `Verbatim[e]`
+requires "that expr be matched exactly as it appears, with no substitutions for blanks", and
+"does not maintain expr in an unevaluated form" — so, unlike `HoldPattern`, it has no hold
+attribute (`wolfram_ref_except.html`, `wolfram_ref_verbatim.html`).
 
 #### 4.5.2 The matcher monad, and why nondeterminism cannot be an effect
 
@@ -1231,7 +1287,13 @@ simplifyFactorial :: Expr -> Either Undefined Expr
 simplifyFunction  :: Expr -> Vector Expr -> Either Undefined Expr
 
 -- | Why the answer is undefined, so the builtin can choose the result and message.
-data Undefined = DivisionByZero | ZeroToZero   -- 0^w, w < 0, is DivisionByZero
+data Undefined
+  = DivisionByZero     -- ^ 0^w, w < 0
+  | ZeroToZero
+  | Pole               -- ^ Tan[π/2], Csc[0], … (§4.11)
+  | LogOfZero          -- ^ Log[0] (§4.11)
+  | ZeroDenominator    -- ^ a denominator contracted to 0, numerator not (§4.12)
+  | ZeroOverZero       -- ^ numerator and denominator both contracted to 0 (§4.12)
 ```
 
 Signature notes:
@@ -1243,7 +1305,7 @@ Signature notes:
   `Left DivisionByZero`.
 - `Undefined` carries its cause because the builtin maps it to different results: `1/0` is
   `ComplexInfinity` with `Power::infy`, `0^0` is `Indeterminate` with `Power::indet` (§4.7). The
-  constructor list grows with the operators.
+  constructor list grows with the operators; the last four belong to §4.11–§4.12.
 
 **The normal form is a specification.** Cohen calls it an ASAE, and `isASAE :: Expr -> Bool`
 implements the definition directly. It is exported, not test-only: it is the postcondition the
@@ -1276,7 +1338,9 @@ and `1·x` are **not** ASAEs, while `(x·y)^(1/2)` and `(x^(1/2))^(1/2)` are.
 recursive `simplify`. By step 13 the arguments have already been evaluated, and so simplified, by
 step 3; calling `simplify` would re-traverse every subtree on every round. The recursive `simplify`
 is for the Haskell API and the property tests. From the evaluator's side this is a rule like any
-other; from its own side, a total function with a normal form — §1.3 made concrete.
+other; from its own side, a total function with a normal form — §1.3 made concrete. `Power`'s
+downvalue also tries `simplifyExpPower` on the result, and the elementary heads attach the same way
+(§4.11); `Simplify.Automatic` itself stays exactly Cohen's.
 
 ### 4.7 Failure, messages, and `Undefined`
 
@@ -1292,11 +1356,17 @@ data Message = Message { msgSymbol :: !Symbol, msgTag :: !MessageTag, msgArgs ::
 
 Messages accumulate in `KernelState` and are drained and formatted by the REPL (L5; formatting needs
 the pretty-printer). The two limits are not errors either: both return `Hold` with a message (§4.3).
-`Error Abort` is reserved for what genuinely stops evaluation: `Abort[]` and interrupts.
+`Error Unwind` (§4.13) is reserved for control transfer — `Throw`, `Break`, `Continue`, `Return` — and for
+what genuinely stops evaluation: `Abort[]` and interrupts.
 
 Cohen's `Undefined` and the language's result-plus-message meet at one point: `simplify` returns
 `Either Undefined Expr`, and `Cassini.Builtins.Arithmetic` turns a `Left` into `ComplexInfinity` or
-`Indeterminate` plus the matching message, according to its cause (§4.6). Keeping `simplify` in
+`Indeterminate` plus the matching message, according to its cause (§4.6).
+`Cassini.Builtins.Elementary` and `.Simplify` do the same for the causes they add: `Pole` is
+`ComplexInfinity` and `LogOfZero` is `DirectedInfinity[-1]`, both silent as in WL, and
+`ZeroDenominator` and `ZeroOverZero` are mapped as `1/0` and `0/0` are: `ComplexInfinity` with
+`Power::infy`, and `Indeterminate` with `Power::indet`. That is what WL gives for the same inputs,
+because its own evaluation meets the `1/0` or `0/0`, and it needs no new message name. Keeping `simplify` in
 `Either` rather than in the effect is what lets it be tested as a pure function.
 
 ### 4.8 Zero testing is not available here
@@ -1312,7 +1382,8 @@ exports only the rational case.
 
 `D` is easy; the design point is how it is built. **`D` is a rule table, not a Haskell `case` on
 `Expr` shape**: the sum, product and chain rules are built-in downvalues on `D`, derivatives of
-known functions are subvalues on `Derivative` (`Derivative[1][Sin]` is `Cos[#]&`), and a user's own
+known functions are subvalues on `Derivative` (`Derivative[1][Sin]` is `Cos[#]&`; §4.11 has the
+table), and a user's own
 function extends it by definition. That exercises the whole engine — patterns, attributes, the
 subvalue rung, upvalues — while the engine is still small enough to debug. A Haskell `case` would
 work sooner and test nothing.
@@ -1341,6 +1412,626 @@ and that must not invalidate hundreds of regression cases.
 `Cassini.REPL` fills the `cassini` executable: `In[n]`/`Out[n]`, `%`, message display, `Trace`,
 timing, and a `--script` mode that reads FullForm and writes FullForm. The script mode is a library
 function, `runScript :: Text -> IO Text`, which the golden tests call directly.
+
+### 4.11 Elementary functions
+
+| Group | Heads | Automatic rules (this section) | Transformations (§4.12) |
+| :--- | :--- | :--- | :--- |
+| Circular | `Sin`, `Cos`, `Tan`, `Cot`, `Sec`, `Csc` | special values, parity, periodicity | expansion, contraction, `Simplify` |
+| Hyperbolic | `Sinh`, `Cosh`, `Tanh`, `Coth`, `Sech`, `Csch` | values at 0, parity | expansion, contraction, `Simplify` |
+| Inverse circular | `ArcSin`, `ArcCos`, `ArcTan`, `ArcCot`, `ArcSec`, `ArcCsc` | special values, parity, `Sin[ArcSin[x]] → x` | none |
+| Exponential | `Exp`, `Log` | `Exp[u] → E^u`; values of `Log`; `E^(c·Log[z]) → z^c` | none: contraction is automatic |
+
+Each head is `Listable`, `NumericFunction` and `Protected`. `Pi` and `E` are `Constant` symbols
+with no value; nothing here computes a digit of either (§0.2).
+
+**The exponential is a power.** `Exp[u]` evaluates to `Power[E, u]`, as in WL, and two consequences
+follow, both wanted. Cohen's product merge already collects `E^x·E^y` to `E^(x+y)` (same base,
+SPRDREC), and SINTPOW folds `(E^x)^n` to `E^(n·x)` for integer `n` only — so the two
+contraction rules (`references/papers/textbooks/cohen2002_*.pdf` §7.2, (7.27)–(7.28)) are applied
+during automatic simplification, and only where they are valid over ℂ. That gives properties 1 and
+2 of Definition 7.8, not property 3: automatic simplification does not expand, so `E^x·(E^x + E^y)`
+stays, and reaching `E^(2x) + E^(x+y)` takes an explicit `Expand`. An exponential-expanded form
+(Definition 7.1) cannot survive evaluation, because `E^x·E^y` re-merges; so `Expand_exp` and
+`Contract_exp` (Figs. 7.2, 7.4, 7.5) are not implemented, and there is no `ExpExpand` — which is
+also WL's position. What `Contract_exp` would add beyond `Expand`, rationalizing and contracting
+numerator and denominator, is Cohen's `Simplify_exp`, which D17 names as a second strategy.
+
+**The automatic rules are not in `Cassini.Simplify.Automatic`.** Cohen's `Simplify_function` is
+the identity apart from propagating `Undefined` — "there are no function transformations in our
+algorithm" (`references/papers/textbooks/cohen2003_*.pdf` §3.2) — and §4.6's contract depends on
+that: `Sin[0]` is an ASAE, so `simplify` must return it unchanged. The elementary rules are a second
+pure layer above Cohen's:
+
+```haskell
+-- | Cassini.Simplify.Elementary
+--
+-- Source: @references/papers/textbooks/cohen2002_*.pdf@ §7.2 ("Automatic
+-- Simplification of Trigonometric Functions", transformations 1–5 and Fig. 7.9).
+
+-- | One elementary-function node whose arguments are already simplified.
+-- 'Nothing': no rule applies, and the node is in normal form.
+simplifyElementary :: Symbol -> Vector Expr -> Maybe (Either Undefined Expr)
+
+-- | @E^(c·Log[z]) → z^c@, tried on the result of 'simplifyPower' (base, exponent).
+simplifyExpPower   :: Expr -> Expr -> Maybe (Either Undefined Expr)
+
+-- | 'simplify' with the two above, §4.15's 'Cassini.Simplify.Numeric' passes
+-- (radicals, coefficient merge, infinities and their guards) and §4.4's
+-- 'Indeterminate' rule, applied at every node, bottom-up.
+simplifyE          :: Expr -> Either Undefined Expr
+
+-- | An ASAE on which no elementary or §4.15 rule fires; or such a product with
+-- two unmerged factors on one infinity-bearing base (§4.15's one undecided case).
+isElementaryNormal :: Expr -> Bool
+```
+
+It attaches to the evaluator as §4.6 does: each head's built-in downvalue (step 13) calls
+`simplifyElementary`, and `Power`'s calls `simplifyExpPower` after `simplifyPower`. `Plus`,
+`Times` and `Power` also run §4.15's passes, and `simplifyE` runs the same ones at the same nodes.
+Without them, Cohen's sum merge inside a §4.12 algorithm would build `2·2^(-1/2)`, which the
+evaluator rewrites to `2^(1/2)`, and like terms spelled the two ways would not cancel. The evaluator
+and `simplifyE` therefore agree on every built-in, and §4.12's algorithms use `simplifyE` wherever
+Cohen's procedures assume an expression is automatically simplified on construction. User rules on
+`Sin` are not consulted inside those algorithms; they see the result, which the builtin returns to
+the fixed point (§4.4).
+
+**The rules** follow Cohen's list of automatic trigonometric transformations
+(`references/papers/textbooks/cohen2002_*.pdf` §7.2). Its Fig. 7.9 shows Maple, Mathematica and
+MuPAD disagreeing, so each rule names the column it reproduces, and those rows are unit tests
+(§7.2):
+
+- **Special values.** An argument `r·π`, `r` rational, is reduced by the head's period and
+  symmetries to `[0, π/2]` — Cohen's item 3, the MPL column: `Sin[15π/16] → Sin[π/16]`. For
+  denominators 1, 2, 3, 4 and 6 a table then gives the value. Outputs are ASAEs, one spelling per
+  value: `Sin[π/3] → (1/2)·3^(1/2)`, `Sin[π/4] → 2^(-1/2)`, `Tan[π/6] → 3^(-1/2)`. Poles
+  (`Tan[π/2]`, `Cot[0]`, `Sec[π/2]`, `Csc[0]`) are `Left Pole`. The hyperbolic heads have only
+  their values at 0, with `Coth[0]` and `Csch[0]` poles. WL also evaluates denominators 5, 8, 10
+  and 12 (`Sin[π/12]`, `Cos[π/5]`). They are not in the table, and §7.5 lists this as a
+  divergence, for two reasons. Some values are nested radicals (`Sin[π/8] = (2-2^(1/2))^(1/2)/2`,
+  `Sin[π/5]`), which §4.15 does not normalize at all. Others are flat but outside §4.15's
+  canonical class: `Sin[π/12] = (6^(1/2) - 2^(1/2))/4` has a radicand with two prime factors
+  (D24), so the inverse tables could not rely on its spelling. `Cos[π/5] = (1 + 5^(1/2))/4` is
+  flat and canonical, and could join the table; it is left out so that a denominator is in or
+  out as a whole, not value by value.
+- **Parity.** When the argument's **first operand in ◁ order has a negative coefficient**, odd
+  heads (`Sin`, `Tan`, `Cot`, `Csc`, their hyperbolic counterparts, `ArcSin`, `ArcTan`, `ArcCot`,
+  `ArcCsc`) pull the sign out and even ones (`Cos`, `Sec`, `Cosh`, `Sech`) drop it. This reproduces
+  the Mathematica column: `Sin[-x] → -Sin[x]`, `Sin[x-1] → -Sin[1-x]`, and `Sin[1-x]` is left
+  alone, since ◁ puts the constant first. `ArcCos` and `ArcSec` have no parity and are left alone.
+- **Periodicity with a symbolic remainder.** In an argument `x + r·π`, the `r·π` term is removed
+  only when `r` is a multiple of 1/2 (Cohen's item 4): `Sin[x + π/2] → Cos[x]`,
+  `Cos[x + 2π] → Cos[x]`, `Tan[x + π] → Tan[x]`. Any other `r` is reduced modulo the head's
+  period into a symmetric range: `(−1, 1)` for period 2π and `(−1/2, 1/2)` for period π
+  (`Sin[x + 7π/3] → Sin[x + π/3]`). Each reduction is an identity, and the range is closed under
+  negation, so parity cannot push `r` back out. `Sin[x + 2π/3]` is left alone, as in the
+  Mathematica column; the MPL column's `Cos[x + π/6]` would be item 3 applied to sums, not adopted.
+- **No function transformations** (Cohen's item 5). `Sin[x]/Cos[x]` stays; it does not become
+  `Tan[x]` as in WL. That transformation is the inverse of `Trig_substitute`, so with it in
+  automatic simplification `Simplify` could never see a `Tan` as a quotient. Cohen's footnote 9,
+  on his description of Fig. 7.10, says his Mathematica implementation omits `Trig_substitute` for
+  this reason, and his appraisal of `Simplify_trig` reports that it then fails Example 7.18's
+  difference. A known divergence from WL, recorded as D16.
+- **Inverses.** `Sin[ArcSin[x]] → x`, and likewise for the other five. The inverse tables are the
+  forward tables read backwards onto the principal ranges, and they recognize an argument only in
+  the spelling the forward table emits: `ArcSin[2^(-1/2)] → π/4`. Automatic simplification alone
+  leaves `(1/2)·2^(1/2)` a different expression from `2^(-1/2)`; §4.15's radical normalization
+  makes the two one spelling for prime radicands, and the tables rely on that and on nothing
+  stronger, since pretending to a canonical form that does not exist is how a table becomes
+  wrong. `ArcSin[Sin[x]] → x` is not a rule: it is false off the principal branch.
+- **Exponential and logarithm.** `E^(c·Log[z]) → z^c` for numeric `c`: the principal `z^c` is
+  *defined* as `E^(c·Log[z])`, so this is an identity. `Log[1] → 0`; `Log[E^r] → r` for rational
+  `r`, with `Log[E] → 1` the case `r = 1`; `Log[0]` is `Left LogOfZero`. `Log[E^x]` for symbolic
+  `x` is left alone.
+
+**Every rule is an identity over ℂ.** The kernel works in ℂ, as WL does, so a transformation that
+holds only for real arguments is applied neither automatically nor by any builtin in §4.12.
+Excluded by this, each right for reals and wrong for some complex input: `Log[E^x] → x`; the log
+expansions and contractions of Cohen's §7.1 and §7.2 exercises (`Log[a·b] → Log[a] + Log[b]` and
+kin); `(E^x)^w → E^(w·x)` for non-integer `w`, where Cohen's footnote to (7.4) gives the
+counterexample; and anything `PowerExpand`-shaped. Admitting them needs a way to say "`x` is real"
+(D18). Everything in §4.12 — addition, multiple-angle and power-reduction formulas — is a
+polynomial identity in `E^(iθ)` and qualifies.
+
+**Termination.** Each rule produces a value, strictly removes the π term from an argument, moves
+the π coefficient `r` into its reduced range (`[0, 1/2]` for a constant argument, the symmetric
+range above otherwise), or makes the argument's leading coefficient non-negative. Periodicity can
+hand parity a negative argument (`Sin[π - x] → -Sin[-x]`, then `Sin[x]`), so the measure is
+lexicographic. First comes the number of π terms, which periodicity decreases and no rule
+increases. Second is whether `r` is out of range, which the reductions clear and parity leaves
+clear. Last is whether the leading coefficient is negative, which parity clears without touching
+the first two. So `simplifyE` is total, and "no elementary rule fires on its own
+output" is a property test (§7.3).
+
+**Poles and `Log[0]`** are two more causes in §4.6's `Undefined`, `Pole` and `LogOfZero`; §4.7
+says what each becomes.
+
+**Derivatives** are `Derivative[1]` subvalues (§4.9), installed by `Cassini.Builtins.Elementary`
+alongside each head's downvalues, so one module holds everything the system knows about a function:
+
+| f | f′ | f | f′ | f | f′ |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `Sin` | `Cos[#]&` | `Sinh` | `Cosh[#]&` | `ArcSin` | `1/Sqrt[1-#^2]&` |
+| `Cos` | `-Sin[#]&` | `Cosh` | `Sinh[#]&` | `ArcCos` | `-1/Sqrt[1-#^2]&` |
+| `Tan` | `Sec[#]^2&` | `Tanh` | `Sech[#]^2&` | `ArcTan` | `1/(1+#^2)&` |
+| `Cot` | `-Csc[#]^2&` | `Coth` | `-Csch[#]^2&` | `ArcCot` | `-1/(1+#^2)&` |
+| `Sec` | `Sec[#] Tan[#]&` | `Sech` | `-Sech[#] Tanh[#]&` | `ArcSec` | `1/(#^2 Sqrt[1-#^-2])&` |
+| `Csc` | `-Cot[#] Csc[#]&` | `Csch` | `-Coth[#] Csch[#]&` | `ArcCsc` | `-1/(#^2 Sqrt[1-#^-2])&` |
+| `Log` | `1/#&` | | | | |
+
+`Exp` has no row. `D` of `E^u` is `Power`'s rule, `E^u·Log[E]·D[u]`, and is `E^u·D[u]` only because
+`Log[E] → 1` fires — a dependency between two sections, stated so that a change to one does not
+quietly break the other.
+
+### 4.12 Trigonometric transformations and `Simplify`
+
+Three builtins in `Cassini.Builtins.Simplify`, each a thin wrapper over one pure module:
+
+| Builtin | Algorithm (`cohen2002_*.pdf`) | Output satisfies |
+| :--- | :--- | :--- |
+| `TrigExpand[e]` | `Expand_trig` (Fig. 7.3), then algebraic expansion | trig-expanded, below |
+| `TrigReduce[e]` | `Contract_trig` (Figs. 7.6–7.8) | trig-contracted, below |
+| `Simplify[e]` | `Simplify_trig` (Fig. 7.10) | numerator and denominator each trig-contracted |
+
+```haskell
+-- | Cassini.Simplify.Trig
+--
+-- Source: @references/papers/textbooks/cohen2002_*.pdf@ §7.1 (Expand_trig),
+-- §7.2 (Contract_trig, Simplify_trig), §5.2 (Trig_substitute).
+expandTrig       :: Expr -> Either Undefined Expr
+contractTrig     :: Expr -> Either Undefined Expr
+expandTrigRules  :: Expr -> Either Undefined (Expr, Expr)  -- (sin A, cos A), Fig. 7.3; exported for §8.4
+trigSubstitute   :: Expr -> Expr     -- TRIGSUB-1..4 and their hyperbolic counterparts
+simplifyTrig     :: Expr -> Either Undefined Expr
+isTrigExpanded   :: Expr -> Bool
+isTrigContracted :: Expr -> Bool
+```
+
+`Either`, because expansion or contraction can turn a denominator into 0
+(`1/(Sin[2x] - 2 Sin[x] Cos[x])`), and Cohen's §7.1 Exercise 7 and §7.2 Exercise 8 have the
+procedures return `Undefined` when it does; the builtins map it as §4.7 does. Every intermediate expression is built with
+`simplifyE` (§4.11), which is how Example 7.17's `Cos[x + π/6]` expands into terms whose `Cos[π/6]`
+becomes a number mid-algorithm.
+
+**The normal forms, transcribed** from Definitions 7.4 and 7.11, each extended to the hyperbolic
+pair as Cohen's §7.1 Exercise 9 and §7.2 Exercise 9 do:
+
+| Form | Every … |
+| :--- | :--- |
+| trig-expanded (Def. 7.4, strengthened per §7.1 Exercise 8) | argument of a `Sin`, `Cos`, `Sinh` or `Cosh` is neither a sum nor a product with an integer operand; **and** every complete subexpression is in algebraic-expanded form |
+| trig-contracted (Def. 7.11) | product has at most one circular operand (`Sin`, `Cos`) and at most one hyperbolic operand (`Sinh`, `Cosh`); power with a positive integer exponent has none of the four as its base; complete subexpression is in algebraic-expanded form |
+
+Neither mentions `Tan` and the other seven: `TrigExpand` and `TrigReduce` apply `trigSubstitute`
+first, so `TrigReduce[Tan[x]]` is `Sin[x]/Cos[x]`, and with no function transformations (§4.11) it
+stays that way.
+
+**The formulas Cohen leaves to exercises**, for `n` a positive integer. Negative `n` goes through
+parity first (§7.1 Exercise 5). Each identity was checked numerically when this section was written,
+and each is a unit test.
+
+Addition, Cohen's (7.11)–(7.12), and the hyperbolic pair of §7.1 Exercise 9:
+
+```
+sin(θ+φ)  = sin θ cos φ + cos θ sin φ        sinh(θ+φ) = sinh θ cosh φ + cosh θ sinh φ
+cos(θ+φ)  = cos θ cos φ − sin θ sin φ        cosh(θ+φ) = cosh θ cosh φ + sinh θ sinh φ
+```
+
+Multiple angle, Cohen's (7.20)–(7.21), and the hyperbolic pair from §7.1 Exercise 9's
+`cosh(nθ) ± sinh(nθ) = (cosh θ ± sinh θ)ⁿ`:
+
+```
+cos(nθ)  = Σ_{j even} (−1)^(j/2)     C(n,j) cosⁿ⁻ʲθ sinʲθ
+sin(nθ)  = Σ_{j odd}  (−1)^((j−1)/2) C(n,j) cosⁿ⁻ʲθ sinʲθ
+cosh(nθ) = Σ_{j even}                C(n,j) coshⁿ⁻ʲθ sinhʲθ
+sinh(nθ) = Σ_{j odd}                 C(n,j) coshⁿ⁻ʲθ sinhʲθ
+```
+
+Product to sum, Cohen's (7.30)–(7.32), and their hyperbolic counterparts:
+
+```
+sin θ sin φ = (cos(θ−φ) − cos(θ+φ))/2        sinh θ sinh φ = (cosh(θ+φ) − cosh(θ−φ))/2
+cos θ cos φ = (cos(θ+φ) + cos(θ−φ))/2        cosh θ cosh φ = (cosh(θ+φ) + cosh(θ−φ))/2
+sin θ cos φ = (sin(θ+φ) + sin(θ−φ))/2        sinh θ cosh φ = (sinh(θ+φ) + sinh(θ−φ))/2
+```
+
+Power reduction, sums over `j = 0 … n`. Cohen's (7.35)–(7.36) fold each sum at `n/2`, which gives
+two cases per function; the unfolded form is one formula per parity, and §4.11's parity rule does
+the folding on construction (`cos(−2θ) → cos(2θ)`, and the middle term's `cos(0) → 1`):
+
+```
+cosⁿθ  = 2⁻ⁿ Σ C(n,j) cos((n−2j)θ)
+sinⁿθ  = (−1)^⌊n/2⌋ 2⁻ⁿ Σ (−1)ʲ C(n,j) cos((n−2j)θ)     n even
+       = (−1)^⌊n/2⌋ 2⁻ⁿ Σ (−1)ʲ C(n,j) sin((n−2j)θ)     n odd
+coshⁿθ = 2⁻ⁿ Σ C(n,j) cosh((n−2j)θ)
+sinhⁿθ = 2⁻ⁿ Σ (−1)ʲ C(n,j) cosh((n−2j)θ)              n even
+       = 2⁻ⁿ Σ (−1)ʲ C(n,j) sinh((n−2j)θ)              n odd
+```
+
+**Cohen's structure, kept:** `Expand_trig_rules` returns the pair `(sin A, cos A)`, as in
+Fig. 7.3, and its hyperbolic twin returns `(sinh A, cosh A)`. Expanding a function of a sum of `n`
+symbols then costs 2(n−1) rule applications instead of 2ⁿ⁻¹−1 (§7.1 Exercise 6); §8.4 gates it.
+The contraction procedures use `Expand_main_op`, not a full `Algebraic_expand`, as Fig. 7.7 does,
+to avoid the redundant recursion Cohen describes.
+
+**The choice the hyperbolic extension forces, fixed here:** `Separate_sin_cos` (§4.2 Exercise 12)
+splits a product's operands three ways, not two: circular factors, hyperbolic factors, the rest.
+`Contract_trig_product` runs on each group separately, so nothing contracts `Sin[x] Sinh[y]`.
+
+**`Simplify` is `Simplify_trig`, and it is not WL's `Simplify`.** Fig. 7.10: `trigSubstitute`,
+`Rationalize_expression`, then expand and contract the numerator and denominator separately. A
+denominator that contracts to 0 is `Left ZeroDenominator`, or `Left ZeroOverZero` if the
+numerator contracted to 0 as well. Cohen's line 7 returns `Undefined` without looking at the
+numerator, and the split is ours, so that §4.7 can map each as `1/0` and `0/0` are mapped. Cohen's appraisal is the specification of its limits, stated here
+so that they are read as the contract and not reported as bugs. It proves identities well when asked
+about a difference — Example 7.18's left side minus `Tan[4x]` gives 0 — but leaves a larger form
+than necessary otherwise: the same left side alone is unchanged. And it cannot see that two
+differently spelled arguments are equal, so `Sin[(x+1)/(x+2)]^2 + Cos[(1+1/x)/(1+2/x)]^2` is not 1.
+WL's `Simplify` searches over transformations scored by a complexity measure; with one strategy
+there is nothing to search. The name is bound anyway, because it is the one users type; D17 records
+when that changes.
+
+**The support it needs, and where it lives.** `Contract_trig` and `Simplify_trig` call
+`Algebraic_expand`, `Expand_main_op`, `Rationalize_expression`, `Numerator` and `Denominator`
+(`references/papers/textbooks/cohen2002_*.pdf` §6.4–6.5). They are pure procedures on ASAEs that
+need no polynomial substrate, so they are Stage 1, in `Cassini.Simplify.Rational`; the `Expand`
+builtin (§2.2) is `algebraicExpand`. They build every intermediate with `simplifyE`, not `simplify`,
+which is why `.Rational` imports `.Elementary` (§2.6). `Contract_trig` expands through them
+(`Expand_main_op`, Fig. 7.7 lines 1, 13 and 15), so with plain `simplify` an expansion of
+`2·(2^(-1/2)·Cos[x] + …)` would build `2·2^(-1/2)·Cos[x]`, which never meets the evaluator's
+`2^(1/2)·Cos[x]`, and a difference that is zero would not contract to 0. `Together` is not among them: it cancels common factors, which
+needs §5.4's GCD.
+
+**Exponential–trigonometric conversion is not here.** `TrigToExp` and `ExpToTrig` need `I` with
+`I^2 → -1` and exact complex arithmetic, which `Number` does not have (§3.1); D19.
+
+### 4.13 Pure functions, control flow and scoping
+
+The language is more than algebra, and a missing control structure blocks the algebra: every
+`Derivative` subvalue in §4.11 is a pure function, so `D`'s chain rule cannot produce an answer
+until `Function` applies. `Cassini.Builtins.Control` owns this section.
+
+**Sources.** `references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html`
+specifies `Function` with attributes (section "Attributes"), `If`/`Which`/`Switch`, `TrueQ` and
+`&&` (section "Conditionals"), `Do`/`While`/`For`/`Nest`/`FixedPoint` and `Catch`/`Throw` ("Loops
+and Control Structures"), and iterator evaluation ("Evaluation in Iteration Functions"). Scoping is
+in `wolfram_ref_modularity_and_naming.html` — the chapter now holding "How Modules Work", "Blocks
+and Local Values" and "Variables in Pure Functions and Rules" — and the exact rules are in the
+reference pages' "Details": `wolfram_ref_module.html`, `_block.html`, `_with.html`,
+`_function.html`, `_return.html`, `_throw.html`, `_catch.html` and `_break.html`, all in the same
+directory. **The captured examples show inputs, not outputs** (the outputs are images), so a rule
+below that rests only on what an example returns is marked as such.
+
+**Pure functions.** `Function` has `HoldAll`. `Function[params, body][args]` and
+`Function[body][args]` apply as a **built-in subvalue** on `Function` (step 13's `h[…][…]`), by
+substituting into the held body: named parameters for `Function[{x, …}, …]` and for the
+single-parameter `Function[x, …]`, and `#n`, `##n` and `#0` for slot form, which is also what
+`Function[Null, body, attrs]` uses ("represents a function in which the parameters in body are given
+using # etc.", `wolfram_ref_function.html`). In slot form, arguments beyond the highest slot are
+ignored, per the same page. Two
+points the evaluator must get right:
+
+- **Attributes of a compound head.** The source sets up "pure functions which behave as if they
+  carry attributes" with `Function[vars, body, {attr₁, …}]`, e.g. `Listable`. So wherever §4.4
+  consults "the attributes of `h`" (steps 4–9), a head of the form `Function[_, _, attrs]` supplies
+  `attrs`, which may be one attribute or a list (`wolfram_ref_function.html`). Every other
+  compound head supplies none. §4.4's `headAttributes` is where this lives.
+- **Substitution respects scoping.** Substituting into a body passes through nested `Function`,
+  `Module`, `With` and rule-delayed right-hand sides, and a bound variable of the inner construct
+  that would capture a free symbol of the substituted value is renamed (`y` → `y$`). This is
+  `Cassini.Structure.substitute` extended by one scoping-aware case, not a second substitution
+  function.
+
+**Sequencing and conditionals.** `CompoundExpression` (`;`, `HoldAll`) evaluates its arguments in
+order and returns the last. `If` (`HoldRest`) follows the source exactly: when the test is neither
+`True` nor `False`, `If[test, t, f]` stays unevaluated and the four-argument `If[test, t, f, u]`
+takes `u`. `Which` evaluates tests in turn; `Switch` matches its first argument against each form
+with `matchOne` (§4.5.2). `If`, `Which` and `Switch` never treat an undecided test as `False`:
+they stay unevaluated, or take `If`'s fourth argument. Constructs that must decide in order to
+proceed treat anything but `True` as failure: `TrueQ` by definition (§4.14); `While` and `For`,
+per the source ("As soon as the loop test fails to be True, While and For terminate",
+`wolfram_ref_evaluation_of_expressions.html`, "Loops and Control Structures"); and the matcher's
+`Condition` and `PatternTest` (§4.5), where only `True` admits a match.
+
+**Scoping.**
+
+- **`Module[{x, …}, body]`** renames each local to a fresh `x$n` and evaluates the renamed body —
+  "Module creates a symbol with name xxx$nnn … The number nnn is the current value of
+  $ModuleNumber", incremented "every time any module is used". Renaming skips occurrences that are
+  "local variables in scoping constructs", and the new symbols carry `Temporary`.
+  `n` is `$ModuleNumber`, a counter in `KernelState`, **not** the intern table's allocation
+  counter (§3.2): under `runKernelPure` the names must be a function of the initial state, or the
+  §7.3 determinism law fails and golden files record session history.
+- **`With[{x = v, …}, body]`** substitutes the evaluated `v` into the held body before evaluating
+  it — the same scoping-aware substitution as `Function`. `With[{x := v}, …]` "inserts the
+  unevaluated form" of `v`, and `With[def₁, def₂, expr]` is `With[def₁, With[def₂, expr]]`
+  (`wolfram_ref_with.html`).
+- **`Block[{x, …}, body]`** is dynamic ("values assigned to x, y, … are cleared. When the execution
+  of the block is finished, the original values of these symbols are restored"; initial values are
+  evaluated before the clear): it saves each symbol's whole value record — its own, down, up and
+  sub values (§4.2's four kinds) — clears it or sets the own-value, evaluates the body, and **restores on every exit**, including `Throw`, `Break` and `Abort[]`.
+  Restoration uses the unwinding operations below; it is the one place state changes are undone.
+  Clearing only own-values would be wrong: `Block[{f}, f[x_] := …; …]` must leave `f`'s old
+  down-values in place afterwards, and the idiom `Block[{Print}, …]` works because the builtin's
+  definitions are cleared too. The page says "Block affects only the values of symbols, not their
+  names"; whether attributes are localized is not stated, and a regression case pins it.
+- **Iterators** (`Table`, `Do`, `Sum`, `Product`) localize the iteration variable as `Block` does —
+  the source: "the first step … is to make the value of i local. Next, the limit imax … is
+  evaluated. The expression f is maintained in an unevaluated form, but is repeatedly evaluated".
+  One parser for the iterator forms `{n}`, `{i, imax}`, `{i, imin, imax}`, `{i, imin, imax, di}` and
+  `{i, list}`, shared by all four; `Sum` and `Product` fall back to §6.3 only when a bound is
+  symbolic.
+- **`Nest`, `NestList`, `Fold`, `FoldList`, `FixedPoint`** are ordinary downvalues over
+  `evaluate`. `FixedPoint` compares with `SameQ` and is bounded by `$IterationLimit` (§4.3), so it
+  cannot loop forever.
+
+**Non-local exits need two operations on the `Kernel` effect** (§4.3). `Throw`, `Break`, `Continue`,
+`Return` and `Abort[]` unwind to the nearest handler, and a handler must be able to observe an
+unwind in order to restore state and rethrow:
+
+```haskell
+-- | Cassini.Eval.Kernel — added to 'Kernel'
+  Unwind      :: Unwind -> Kernel m a                 -- ^ Throw, Break, Continue, Return, Abort[]
+  CatchUnwind :: m a -> Kernel m (Either Unwind a)    -- ^ Catch, loops, Block's restore
+
+data Unwind = UThrow !Expr !(Maybe Expr) !(Maybe Expr)  -- ^ value, tag, Throw's third argument
+            | UBreak | UContinue
+            | UReturn !Expr                                 -- ^ D23, answered below
+            | UAbort !Abort
+```
+
+The interpreters discharge `Error Unwind` and return `Either Unwind a` (§4.3). `Catch` catches `UThrow`
+(matching the tag against its form, re-evaluating the tag each time it is compared, per
+`wolfram_ref_catch.html`; `Catch[expr, form, f]` returns `f[value, tag]`) and rethrows anything
+else. The one-argument `Catch[expr]` catches only an untagged `Throw[value]`: "Throw[value, tag] is
+caught only by Catch[expr, form], where tag matches form" (`wolfram_ref_throw.html`), so a tagged
+throw passes it by; `Do`, `While`, `For` and `Until` catch `UBreak` and `UContinue` — the loops
+`wolfram_ref_break.html` names ("Break[] exits the nearest enclosing Do, For, Until or While");
+`Block` catches everything, restores, and rethrows. **Nothing handles `UAbort`.** Three things
+observe it, each only to restore and rethrow: `Block`, the kernel's own depth and fuel bookkeeping
+(below), and the top-level entry, which hands it on as `Left (UAbort _)`. So `Abort[]` still stops
+evaluation (§4.7). `Break[]` makes its loop return `Null`. An uncaught `UThrow` reaching the top of
+a REPL input becomes an unevaluated `Throw` with a message ("An error is generated and an
+unevaluated Throw is returned"), or, for `Throw[value, tag, f]`, `f[value, tag]`; a stray `Break[]`
+or `Continue[]` likewise. **"Unevaluated" is wrapped in `Hold`**: the result is
+`Hold[Throw[value]]`, `Hold[Break[]]`, `Hold[Continue[]]`. A bare `Throw[value]` would be a trap
+here, because evaluating it again — `%`, or `r = …; r` — raises `UThrow` again, far from where it
+was thrown. `Hold` is what WL itself prints, from memory rather than the captures; a regression
+case pins it against an oracle. The conversion is in `Cassini.Eval`'s top-level entry, which wraps
+the input's evaluation in `CatchUnwind` and so has an `Expr` to build; the interpreter only
+reports what escaped. The message tags are not in the captures; `Throw::nocatch` is from memory.
+`KernelState` changes made before an unwind persist: "no matter the order of effects, state updates
+made within the `catchError` block before the error happens always persist" (effectful-core
+2.6.1.0, `Effectful.Error.Static`; `Effectful.State.Static.Local` says the same of exceptions).
+`Block` is the explicit exception. Both facts get regression cases.
+
+**The kernel's own bookkeeping must survive a caught unwind.** Before §4.13, an unwind ended the
+evaluation, so nothing after it read the recursion depth or the fuel budget. Now `Catch`, the loops
+and rule application catch unwinds and carry on. So `Evaluate`'s depth count and `WithFuel`'s
+budget restore (§4.3) are bracketed: each catches, restores and rethrows, as `Block` does, or else
+the depth is held in `Reader` and changed with `local`. A decrement written after the inner call
+would be skipped by every caught `Throw`, and a loop of them would push the depth up until
+`$RecursionLimit` fired on a shallow computation. The brackets catch `UAbort` too: under
+`runKernelIO` the state is the REPL session's `IORef`, so an `Abort[]` deep in a recursion would
+otherwise leave the depth raised for the next input. §7.3 states it as a law.
+
+**An interrupt becomes `UAbort` at a safe point, not by an asynchronous throw.** Under
+`runKernelIO`, Ctrl-C arrives as an asynchronous exception, which `Error Unwind` never sees. If it
+propagated as one, `Block` could not restore, and the REPL session's `IORef` would keep `Block`'s
+cleared values. So the REPL's interrupt handler only sets a flag. `Evaluate`'s handler polls the
+flag on entry and, if it is set, clears it and raises `UAbort` through the ordinary channel. An
+interrupt is then an `Abort[]` at the next evaluation step, and every guarantee above covers it.
+A long pure computation below the kernel, such as `factorInteger` or a Gröbner basis, never reaches
+a poll. So a **second** Ctrl-C while the flag is still set is thrown asynchronously. The REPL
+reports that it skipped `Block` restoration, and the session state is not guaranteed.
+`runKernelPure` has no interrupts.
+
+**`Return` is a fourth unwind, `UReturn Expr`** (D23, answered). `wolfram_ref_return.html`:
+"Return[expr] exits control structures within the definition of a function, and gives the value
+expr for the whole function", and "Return exits only the innermost construct in which it is
+invoked" — its example returns from a `Do` loop inside `g` "but not the function g". So `UReturn`
+is caught by whichever is innermost of a loop (`Do`, `While`, `For`, `Until`, `Scan`, which then
+yields the value) and a **user-rule application**, which then yields the value as the rule's
+result. A user rule's application is a delimited computation only because §4.4 makes its rung
+evaluate the right-hand side itself (steps 10 and 12); that is where the catch sits. A pure
+function is applied by a built-in rung and does not catch `Return`, so `f[x_] := (Return[1]&[];
+2)` gives `f[0]` as `1`, not `2`. Whether WL's `Function` catches `Return` is not on
+the page; a regression case pins it. What an uncaught `Return`
+becomes at the top is not on the page. Here it is `Hold[Return[expr]]`, held for the same reason
+as an uncaught `Throw`: in this design evaluating `Return[expr]` unwinds, so a bare one would fire
+again when the result is reused. WL, from memory, prints `Return[expr]` unheld, because its
+`Return` is a value that constructs strip rather than an unwind; if the oracle confirms that, this
+is a divergence, recorded in §7.5 when the regression case runs. The top-level entry converts it
+like the other non-abort unwinds. The page's first "Possible Issues" example has no captured
+output, so what `If` alone does with a `Return` inside a compound body is taken from the prose,
+not checked; a regression case pins it once the evaluator exists.
+
+### 4.14 Logic and comparison
+
+`Cassini.Builtins.Logic`. The language's comparisons are three-valued, and a symbolic system must
+leave undecided comparisons alone: "the condition x==y does not yield True or False unless x and y
+have specific values" (`wolfram_ref_evaluation_of_expressions.html`, "Conditionals").
+
+- **`Equal`** (`==`) is `True` when the arguments are identical. Arguments that are not
+  numeric expressions are compared structurally first: two distinct strings, or two lists of
+  different lengths, are `False`, and two lists of equal length are `Equal` elementwise, `True`
+  only if every pair is and `False` if any pair is. Otherwise it asks `isZero` (§5.6)
+  about their difference `d`: `Just True` gives `True`, and **`Nothing` leaves `lhs == rhs`
+  unevaluated**. `Just False` gives `False` **only when `d` contains no free symbol**. Otherwise
+  it too leaves the comparison unevaluated. The reason is that §5.6's `Just False` means "not
+  identically zero", which layer 3 proves for `x - y` because `x` and `y` are free. That is not
+  "unequal at the current values", and reading it as such would make `x == y` evaluate to `False`,
+  against the source just quoted. This is where §5.6's refusal to collapse `Nothing` into
+  `Just False` becomes visible: `Sqrt[2] == 1` stays unevaluated, because no exact layer can prove
+  a difference involving `2^(1/2)` nonzero (§5.6 layer 3); WL answers `False` numerically, and here
+  that waits on D15. `Unequal` is its negation under the same three values.
+- **`Less`, `Greater`, `LessEqual`, `GreaterEqual`** decide exactly on rationals and stay
+  unevaluated on anything else, including real constants such as `Pi` — deciding `Pi > 3` needs
+  certified numerics (D9).
+- **`SameQ`** (`===`) and `UnsameQ` are structural `==` on `Expr`: always `True` or `False`.
+  **`TrueQ`** is `True` only for `True` — "unless expr is manifestly True, TrueQ[expr] effectively
+  assumes that expr is False".
+- **`And`, `Or`** have `HoldAll` and evaluate left to right, stopping at the first `False` (for
+  `And`; the source: "evaluate until one of the exprᵢ is found to be False") or `True` (for `Or`).
+  Arguments that evaluate to the identity element are dropped; if non-Boolean arguments remain, the
+  result is `And`/`Or` of those. **`Not`** evaluates `True` and `False` and leaves anything else.
+  No further Boolean simplification: normal forms for Boolean expressions are not in scope.
+
+### 4.15 Numbers beyond arithmetic
+
+Three gaps that a user meets in the first minute: radicals, infinities, and the integer functions.
+The integer algorithms are L0 — `Cassini.Number.Integer`, no `Expr` — and their `Expr`-level rules
+are a pure L4 module, `Cassini.Simplify.Numeric`, attached to the builtins as §4.6 and §4.11 are.
+
+**Radicals of rationals.** Cohen's SPOW-5 returns `v^w` unchanged when no earlier rule applies
+(`references/papers/textbooks/cohen2003_*.pdf` §3.2), so `4^(1/2)` stays `4^(1/2)`. `Power`'s
+downvalue therefore tries a radical rule after `simplifyPower`, as it tries `simplifyExpPower`
+(§4.11). For a rational base and a non-integer rational exponent `a/b`:
+
+1. **Sign:** a negative base `−n`, `n > 0` and `n ≠ 1`, becomes `(−1)^(a/b)·n^(a/b)` — an identity for the
+   principal power, since `log(−n) = log n + iπ` for `n > 0`. The base `−1` is excluded. Only step
+   3 applies to it, and step 1 would otherwise rewrite `(−1)^(a/b)` to itself times `1^(a/b)`
+   without end. Bases between −1 and 0 are included: `(−1/2)^(1/2)` becomes `(−1)^(1/2)·(1/2)^(1/2)`,
+   and step 2 then gives `(−1)^(1/2)·2^(−1/2)`, one spelling with its positive counterpart.
+2. **Fraction:** `(p/q)^(a/b)` becomes `p^(a/b)·q^(−a/b)`, valid for positive rationals.
+3. **Integer part of the exponent:** `n^(a/b)` with `|a| > b` becomes `n^k·n^(r/b)`, `k` and `r`
+   from `a = k·b + r` with `k` truncated toward zero, so `r` keeps the sign of `a` and
+   `0 < |r| < b`: `2^(3/2) → 2·2^(1/2)`, `2^(-3/2) → (1/2)·2^(-1/2)`. Truncation, not floor, is
+   what keeps §4.11's `2^(-1/2)` a fixed point of step 6.
+4. **Perfect powers:** a radicand `n = m^j`, `j > 1`, becomes `m^(j·a/b)`, which Cohen's SPOW and
+   step 3 then settle: `4^(1/2) → 2`, `4^(1/3) → 2^(2/3)`. The integer root algorithm of
+   `references/papers/textbooks/vonzurgathen_gerhard2013_*.pdf` §9.5 is tried for each prime
+   `j ≤ log₂ n`, and the first hit is taken. The maximal `j` is not searched for: the result is a
+   new power, which evaluation re-enters: `64^(1/3)` takes `j = 2` to `8^(2/3)`, and step 4 again
+   gives `2^2 = 4`, the fixed point a maximal `j = 6` would have reached in one step.
+5. **Perfect-power factors:** `b`-th powers of primes below a bound `B` are pulled out by trial
+   division (§19.2 of the same): `8^(1/2) → 2·2^(1/2)`.
+6. **Coefficient merge** — in `Times`, not `Power`: Cohen's product merge never combines a rational
+   coefficient with a power, because `1/2` is a number and not `2^(-1)`, so without this step
+   `(1/2)·2^(1/2)` (what `Sqrt[2]/2` evaluates to) and `2^(-1/2)` (§4.11's `Sin[π/4]`) are both
+   normal forms of one number. For each factor `p^e` with `p` a prime below `B` and `e` a
+   non-integer rational, the coefficient's `p`-adic multiplicity `v` moves into the exponent and
+   the total `v + e` is split again as in step 3: `(1/2)·2^(1/2) → 2^(-1/2)`,
+   `(1/3)·3^(1/2) → 3^(-1/2)`, while `(1/2)·3^(1/2)` and `2·2^(1/2)` are already fixed points.
+   This is WL's own convention, from memory rather than the corpus (`Sqrt[2]/2` evaluates to
+   `1/Sqrt[2]`); an oracle case pins it.
+
+Each step is valid over ℂ for the principal branch, which §4.11 requires. The result is canonical
+for radicals whose radicand is a prime below `B`, or a power of one: the total exponent of each
+such prime is determined by the number, and steps 3, 4 and 6 spell it one way. It is **canonical
+only relative to `B`** beyond that: a square factor of a prime above `B` stays inside the radical,
+and a radicand with two or more distinct prime factors is neither split into primes nor merged with
+the coefficient (`(1/2)·6^(1/2)` stays). Nor is `(−1)^(−1/2)` equated with `−(−1)^(1/2)`. So
+two spellings of one number can survive and `isZero` layer 2 will not equate them. Full
+factorization would close that at unbounded cost; the bound is a decision (D24). Cohen's product
+merge does the rest — `2^(1/2)·2^(1/2)` has one base and merges to 2 — and nothing here combines
+unlike bases (`2^(1/2)·3^(1/2)` stays). This is what gives §4.11's inverse tables their "one
+spelling per value" for prime radicands: `ArcSin[Sqrt[2]/2]` evaluates its argument to
+`2^(-1/2)` and reaches the table.
+
+**Infinities and `Indeterminate`.** Sources: `wolfram_ref_numbers.html`, section "Indeterminate and
+Infinite Results", and `wolfram_ref_directedinfinity.html`/`wolfram_ref_indeterminate.html`, all in
+`references/papers/wolfram-language/`. §4.7 produces `ComplexInfinity`, `DirectedInfinity[-1]` and
+`Indeterminate`, and to Cohen they are symbols — so without a rule `1 + ComplexInfinity` is a
+well-formed ASAE sum. `Infinity` is `DirectedInfinity[1]` and `ComplexInfinity` is
+`DirectedInfinity[]`; directions are `±1` until there are complex numbers (D20). `Plus`, `Times` and
+`Power` run an infinity pass **before** Cohen's operators, implementing the extended-real and
+Riemann-sphere tables. In the table `d` and `e` are directions, `±1`; `ComplexInfinity` is named
+wherever a row covers it:
+
+| Expression | Result |
+| :--- | :--- |
+| finite number `+` `DirectedInfinity[d]`; finite number `+` `ComplexInfinity` | `DirectedInfinity[d]`; `ComplexInfinity` |
+| `DirectedInfinity[d] + DirectedInfinity[d]` | `DirectedInfinity[d]` |
+| `DirectedInfinity[d] + DirectedInfinity[−d]`, `ComplexInfinity + ComplexInfinity`, `ComplexInfinity + DirectedInfinity[d]` | `Indeterminate`, `Infinity::indet` |
+| nonzero number `c` `·` `DirectedInfinity[d]` | `DirectedInfinity[sign(c)·d]`; `ComplexInfinity` unchanged |
+| `DirectedInfinity[d] · DirectedInfinity[e]` | `DirectedInfinity[d·e]`; `ComplexInfinity` if either is |
+| `0 · DirectedInfinity[…]` | `Indeterminate`, `Infinity::indet` |
+| `DirectedInfinity[…]^n`, integer `n > 0` | the product row, `n` times |
+| `DirectedInfinity[1]^r`, `ComplexInfinity^r`, non-integer rational `r > 0` | `Infinity`; `ComplexInfinity`. `DirectedInfinity[-1]^r` is left unevaluated: its direction `(−1)^r` is not `±1` (D20) |
+| `DirectedInfinity[…]^r`, rational `r < 0`; in particular `1/DirectedInfinity[…]` | `0` |
+| `DirectedInfinity[…]^0` | `Indeterminate`, `Power::indet`. Without this row, Cohen's SINTPOW-2 would give `1` |
+| `c^Infinity`, rational `c`: `c > 1`; `c < −1`; `|c| < 1`; `c = ±1` | `Infinity`; `ComplexInfinity`; `0`; `Indeterminate` |
+| `c^(−Infinity)` | as `(1/c)^Infinity`; `0^(−Infinity)` is `ComplexInfinity` |
+| `c^ComplexInfinity`, any rational `c`, `0` included | `Indeterminate`. Without the `0` case, `0^ComplexInfinity` would reach Cohen's SPOW-2, whose `Undefined` has no cause in §4.6 to map |
+| `Infinity^Infinity`; `Infinity^(−Infinity)` | `ComplexInfinity`; `0`. Other infinite bases with infinite exponents are left unevaluated |
+| `Indeterminate` as an argument of any `NumericFunction` head | `Indeterminate` |
+
+In a product with non-numeric factors, the rows apply to the numbers and the infinities, and the
+other factors stay (D25): `2·x·Infinity → x·Infinity`, while `0·x·Infinity` is `Indeterminate`.
+Sums work the same way: the rows apply to the numeric and infinite terms, and every other term
+stays. `2 + x + Infinity → x + Infinity`, and `x + Infinity - Infinity` is `Indeterminate`, since
+the pass sees `Infinity` and `DirectedInfinity[-1]` whatever else is in the sum.
+
+The table's rows follow the sources' prose ("If you try to find the difference between two infinite
+quantities, you get an indeterminate result"; "A message is produced whenever an operation first
+yields Indeterminate"). The product, power and exponent rows are the extended-real limits, from
+memory of WL rather than from the captures, whose outputs are images; so are the tags
+`Infinity::indet` and `Power::indet` on the `^0` row. Each such row is a regression case once there is an oracle (§7.5).
+
+The last row is not the infinity pass's: it holds for every `NumericFunction` head
+(`wolfram_ref_indeterminate.html`: "If Indeterminate appears in the argument of any function with
+attribute NumericFunction, the result will be Indeterminate"), so it is one evaluator rule, keyed on
+the attribute, not a case in each builtin: §4.4's `evalStepIndet`, after step 9 and before every
+rule rung. `Sin[Indeterminate]` reaches it, not `Cassini.Simplify.Elementary`. **`Plus`, `Times`
+and `Power` carry `NumericFunction`**, as in WL, and they must: without it `Indeterminate -
+Indeterminate` reaches Cohen's sum merge and collects to 0, the very example
+`wolfram_ref_numbers.html` gives of arithmetic laws that are "suspended in the case of
+Indeterminate". `simplifyE` applies the same rule at every node, so it and the evaluator still
+agree (§4.11).
+
+**Only numbers are absorbed — a deliberate divergence from WL.** `x + Infinity` stays as it is. WL
+absorbs symbols too (`wolfram_ref_directedinfinity.html`: "Finite or symbolic quantities are
+absorbed", with `DirectedInfinity[z] + x` as the example). Here `x` may itself be infinite, and
+absorbing it would be the kind of rule §4.8 forbids — one that quietly assumes something about
+`x`. D25 records this. `compareCanonical` needs no change: the heads are symbols and `DirectedInfinity[…]` is a
+function, both already ordered.
+
+**What is not absorbed must be guarded.** Keeping `x + Infinity` as an ordinary term exposes it to
+Cohen's identity transformations, which assume every term is finite: like-term collection sends
+`y·(x + Infinity) - y·(x + Infinity)` to 0, the same-base merge sends `(x + Infinity)/(x + Infinity)`
+to `(x + Infinity)^0`, and SINTPOW-2 sends that, and `(x·Infinity)^0`, to 1. Each is a finite
+answer to an indeterminate form — the same quiet assumption D25 exists to refuse, made in the other
+direction. So the pass also recognizes **infinity-bearing** expressions: `DirectedInfinity[…]`
+itself, a sum with an infinity-bearing term, a product with an infinity-bearing factor, and a power
+whose base is infinity-bearing and whose exponent is a positive rational. (An infinity inside a
+function argument or an exponent does not count: `Sin[x + Infinity]` is not infinite.) Before
+Cohen's operators run, it applies three more rows, each giving `Indeterminate`:
+
+| Node | Guarded case | Result |
+| :--- | :--- | :--- |
+| `Plus` | two infinity-bearing terms with the same term part (Cohen's `Term`, what his sum merge compares) whose coefficients have opposite signs, a `DirectedInfinity[-1]` factor counting as a sign, as in `u - u` and `2u - u` | `Indeterminate`, `Infinity::indet` |
+| `Times` | two factors with the same infinity-bearing base (Cohen's `Base`) whose exponents are rationals of opposite sign, as in `u·u^(-1)` | `Indeterminate`, `Infinity::indet` |
+| `Power` | an infinity-bearing base with exponent 0 | `Indeterminate`, `Power::indet` |
+
+Like terms and like bases with coefficients or exponents of one sign merge as Cohen merges them:
+`u + u → 2u` and `u·u → u^2` hold for an infinite `u`. One case is left alone rather than decided: an
+infinity-bearing base under two exponents that are not both rationals (`u^x·u^(-x)`), whose merge
+is sound or not according to the signs of values the kernel does not have. The pass hands Cohen's
+operator the other factors and appends those two unmerged, in ◁ order, so the product is not an
+ASAE; `isElementaryNormal` admits exactly this exception. The sources give the principle, not the
+rows: "The usual laws of arithmetic simplification are suspended in the case of Indeterminate"
+(`wolfram_ref_numbers.html`), and an infinite quantity is where they would fail first. §7.3 states
+it as a property.
+
+**Integer and rational functions** — `Cassini.Builtins.Integer`, evaluating on exact numbers and
+leaving symbolic arguments alone:
+
+| Builtin | Rule | Note |
+| :--- | :--- | :--- |
+| `Abs`, `Sign` | exact on rationals | symbolic arguments need assumptions (D18) |
+| `Floor`, `Ceiling`, `Round` | exact on rationals | `Round` breaks ties to even |
+| `Quotient`, `Mod` | `Quotient[m, n] = Floor[m/n]`; `Mod` has the sign of `n` | so `m = n·Quotient[m, n] + Mod[m, n]` always |
+| `GCD`, `LCM` | integers | `PolynomialGCD` is §5.4's |
+| `Binomial`, `Factorial` | non-negative integer arguments | `Factorial` is Cohen's `simplifyFactorial` (§4.6) |
+| `Numerator`, `Denominator` | Cohen's `numerator`/`denominator` (§4.12) | on rationals and general expressions |
+| `Max`, `Min` | `Flat`, `Orderless`; numeric arguments collapse to the extreme | symbolic arguments remain |
+| `PrimeQ` | strong pseudoprimality test, fixed witnesses (vzGG §18.3) | deterministic, so `runKernelPure` stays a function. With the first 13 primes as witnesses it is a proof below 3.3·10²⁴ (bound from memory; the corpus does not hold it); above that a fixed witness set has constructible strong pseudoprimes, so `PrimeQ` there is "probable prime" |
+| `FactorInteger` | trial division, then Pollard's rho with a fixed sequence of seeds (vzGG §19.2, §19.4) | `{{p, e}, …}` with every `p` prime (probable prime above `PrimeQ`'s bound). It factors completely, as WL's does, so its time is unbounded on hard inputs. A partial answer would break the contract. Interrupting it needs §4.13's second Ctrl-C |
+
+`Cassini.Number.Integer` exports the algorithms (`integerRoot`, `trialFactor`, `isProbablePrime`,
+`factorInteger`), each citing its section in the module header (§2.7). Randomized algorithms run
+with fixed seeds throughout: the evaluator under test is a pure function (§4.3), and a
+nondeterministic `FactorInteger` would make that false.
 
 ---
 
@@ -1556,7 +2247,20 @@ The layers, tried in order:
    value, not a built-in constant. Other generalized variables can be algebraically dependent:
    `Sin[x]^2 + Cos[x]^2 - 1` has a nonzero normal form in `{Sin[x], Cos[x]}` and is zero, as does
    `I^2 + 1` in `{I}`, and whether π and e are algebraically independent is an open problem.
-   Otherwise, fall through.
+   Otherwise, fall through. A `Just False` from this layer means **not identically zero**. For
+   an expression with a free symbol it does not mean "nonzero at the symbol's eventual value", so
+   §4.14's `Equal` does not read it that way.
+
+   3′. **Trigonometric.** If some generalized variable has a circular or hyperbolic head (§4.11),
+   evaluate `` Cassini`TrigZero[e] `` (§4.12). That is a protected, internal head whose built-in
+   downvalue runs `simplifyTrig`, the same function the `Simplify` builtin wraps. It goes through
+   its own head so that a user's definition on `Simplify`, or a `Block[{Simplify}, …]`, cannot
+   change what `isZero` proves. A result of 0 proves `Just True`: every step of
+   `Simplify_trig` is an identity over ℂ, so `e` is zero wherever it is defined — the same
+   standard layer 3 applies to `x/x - 1`. Anything else, `Indeterminate` included, falls through;
+   this layer never proves `Just False`. It is what decides `Sin[x]^2 + Cos[x]^2 - 1`. It needs no
+   new import: `Cassini.Zero` reaches it by evaluating, exactly as layer 2 reaches automatic
+   simplification.
 4. **`Nothing`.**
 
 **There is no random-evaluation layer yet.** It would help only where layer 3 cannot decide — the
@@ -1675,6 +2379,27 @@ comparable size to Risch, reaching nested sums and products Gosper–Zeilberger 
 with documented incompleteness). Each is a module with a stated dependency on the substrate; none is
 on the critical path.
 
+### 6.5 Surface forms
+
+Every algorithm in §5–§6 needs a builtin, and a builtin needs a result form a user can read and the
+kernel can evaluate. The algorithm modules in `A` never see an `Expr` (§1.2), so each builtin below
+converts at the boundary, in L4.
+
+| Builtin | Algorithm | Result form, and what the form must settle |
+| :--- | :--- | :--- |
+| `GroebnerBasis[polys, vars]` | §6.1 | a list of polynomials; the monomial order is an option naming §5.2's order type |
+| `PolynomialReduce[p, basis, vars]` | §6.1 | `{quotients, remainder}`; the surface form of "simplification with side relations" (§10) |
+| `Resultant[p, q, x]`, `Discriminant[p, x]` | §5.4's `Cassini.Poly.Resultant` | a polynomial in the remaining variables |
+| `Collect`, `Cancel`, `ExpandAll` | §4.12's `Cassini.Simplify.Rational`; `Cancel` needs §5.4 | expressions; `Cancel` removes only the common factors the GCD finds |
+| `Solve[eqns, vars]` | §6.4, in `Cassini.Solve` | `{{x -> a, …}, …}`, one rule list per solution. Degenerate and parametric systems (a coefficient that may be zero) are not split into cases: that needs conditional results (D22) |
+| `Sum`, `Product` | §4.13's iterators; §6.3 when a bound is symbolic | a closed form, or the input unevaluated; Gosper's closed forms are hypergeometric terms, which need `Pochhammer`/`Gamma` (D21) |
+| `Series[f, {x, x0, n}]` | §6.4 | `SeriesData[x, x0, coeffs, nmin, nmax, den]`, printed with `O[x]^n`; `Normal` drops the order term. Arithmetic on two `SeriesData` truncates to the smaller order |
+| `Limit[f, x -> a]` | §6.4 | a value, a `DirectedInfinity` (§4.15), or the input unevaluated — never a guess |
+| `Integrate` (tier 2) | §6.2's `integrateRational` | its log part is `RootSum[Function[t, R(t)], Function[t, t·Log[S(t, x)]]]`, which evaluates to explicit logarithms when `R` factors into linear factors over ℚ and stays symbolic otherwise; `D` of a `RootSum` distributes over its second argument |
+
+`RootSum` is the one new head here with evaluation rules of its own: the form above is what makes
+`integrateRational`'s totality (§6.2) printable without an algebraic-number type.
+
 ---
 
 ## 7. Testing
@@ -1745,10 +2470,14 @@ Harvests worth doing:
 - **Cohen** §3.1: the ASAE examples and non-examples (Examples 3.22–3.25) and the order examples
   (`a·x² ◁ x³`, `(1+x)³ ◁ (1+y)`, `m! ◁ n`); §3.2's worked simplifications.
 - **Wolfram's** evaluation traces from *Evaluation of Expressions* — each also a golden trace
-  (§7.4).
+  (§7.4) — and its worked examples under "Conditionals" and "Loops and Control Structures"
+  (`If[x == y, a, b]` staying unevaluated, the `Switch` and `Do` examples) for §4.13–§4.14.
 - **Krebber** §3.3's commutative-matching examples, including the one with six candidate mappings
   and exactly one match, a precise test of whether the phases prune correctly.
 - **Bronstein** ch. 2's worked Hermite reductions and Rothstein–Trager examples.
+- **Cohen** `cohen2002_*.pdf` ch. 7: Examples 7.5–7.7 (expansion), 7.12–7.14 (contraction), 7.15–7.18
+  (`Simplify`, each to 0), and (7.18)/(7.19); Fig. 7.9's rows for §4.11's automatic rules, each
+  tagged with the column it reproduces.
 
 Plus the ordinary kind: every edge case gets a test, and every bug gets one (§7.4).
 
@@ -1793,6 +2522,13 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Simplify` | `simplify u` satisfies `isASAE` or is `Left` | the postcondition, directly |
 | `Simplify` | **for an ASAE `u`, `simplify u ≡ u`** | the source's own contract; stronger than idempotence |
 | `Simplify` | `simplify` preserves numeric value (test evaluator) | a canonical form that is canonical but wrong |
+| `Simplify.Elementary` | `simplifyE u` satisfies `isElementaryNormal` or is `Left`; for elementary-normal `u`, `simplifyE u ≡ u`; `simplifyE` preserves numeric value | a parity or periodicity rule that fires on its own output; a special-value table entry that is wrong (§4.11) |
+| `Simplify.Trig` | `expandTrig` output satisfies `isTrigExpanded` and `contractTrig`'s satisfies `isTrigContracted`; each is idempotent and preserves numeric value | a transcribed formula with a wrong sign; a procedure that stops before its normal form (§4.12) |
+| `Simplify.Trig` | `simplifyTrig` preserves numeric value wherever the input is defined | a cancellation that is not an identity |
+| `Simplify.Numeric` | radical normalization preserves numeric value and is idempotent; two products of rationals and radicals whose radicands are primes below `B` or their powers with equal numeric value normalize identically; `integerRoot n b` is exact exactly on perfect powers; the infinity pass agrees with the extended-real table on every pair from a fixed set of finite and infinite values; for generated infinity-bearing `u`, `u - u`, `2u - u`, `u/u` and `u^0` evaluate to `Indeterminate`, and no evaluation turns an infinity-bearing input finite by cancellation | a sign or branch error in steps 1–3 of §4.15; a table cell wrong; Cohen's identity transformations cancelling an infinity D25 left unabsorbed |
+| `Number.Integer` | `m ≡ n·Quotient m n + Mod m n` with `Mod` taking the sign of `n`; `factorInteger` multiplies back and every factor passes `isProbablePrime`; `isProbablePrime` agrees with trial division below 10⁶ | floor-versus-truncate division; a composite witness set |
+| `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every localized symbol's own, down, up and sub values as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState`; after any caught `Throw`, `Break`, `Continue` or `Return`, the recursion depth and fuel budget equal their values before the catching construct, and after an `Abort[]` they equal their values before the top-level input; an uncaught `Throw`, `Break`, `Continue` or `Return` comes back `Hold`-wrapped, and evaluating that result raises nothing | variable capture; a `Block` that leaks on unwind; session-dependent names; depth or fuel leaking through an unwind or an abort; an uncaught `Throw` that fires again when its result is reused (§4.13) |
+| `Logic` | `Equal a b` is `True` only when `isZero (a − b)` is `Just True`, and `False` only when it is `Just False` and `a − b` has no free symbol; `x == y` for distinct free `x`, `y` stays unevaluated; `And`/`Or` never evaluate an argument after the deciding one | a comparison that turns "don't know", or "not identically zero", into `False` (§4.14) |
 | `Pattern` | soundness: every `σ` from `matchAll p s` satisfies `applySubst σ p ≡ s` modulo attributes | the whole matcher, in one line |
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
 | `Pattern` | for side-condition-free patterns, matching leaves `KernelState` unchanged except for messages | the backtracking rule (§4.5.2) |
@@ -1875,6 +2611,24 @@ trusted implementation from inside a property, where the property cannot be stat
 **Comparison is semantic.** Two CASs rarely agree on printed form, so the oracle checks
 `isZero (ours - theirs)` and reports `Nothing` as inconclusive, for human review, not as failure. A
 suite that cries wolf gets turned off.
+
+Three structural divergences from WL are deliberate, and a reader of a Mathics3 transcript will meet
+them first: `Sin[x]/Cos[x]` is not rewritten to `Tan[x]` (D16); a constant trigonometric argument
+is reduced to `[0, π/2]` (§4.11); and `x + Infinity` stays a sum instead of absorbing `x` (§4.15,
+D25). The second is a divergence per Cohen's Fig. 7.9, whose Mathematica column is circa 2002;
+what current WL and Mathics3 do is not in the corpus, and the first oracle run settles it. The
+third is not absorbed by semantic comparison, since `isZero` cannot prove `x + Infinity` equal to
+`Infinity`; the oracle harness whitelists it. None of the three is a bug. The third would be one
+without §4.15's guards, which stop Cohen's cancellations from turning the unabsorbed term into a
+finite answer; an oracle case where WL says `Indeterminate` and this system says a number is a
+bug, not a whitelisted divergence.
+
+Smaller divergences follow from the same sections. `Sin[π/12]` and the other special values at
+denominators 5, 8, 10 and 12 stay unevaluated (§4.11). `2^(1/2)·3^(1/2)` does not become
+`6^(1/2)`, and `(1/2)·6^(1/2)` stays as it is (§4.15, D24). And comparisons that WL decides
+numerically, such as `Sqrt[2] == 1` and `Pi > 3`, stay unevaluated (§4.14, D9, D15). `isZero`
+cannot equate either side of any of these, so semantic comparison does not absorb them, and the
+harness whitelists all three kinds.
 
 The Rubi problem corpus is the aspirational end state for `Integrate`; its size and timings are
 vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system.
@@ -1976,6 +2730,15 @@ generates.
 - **`//.` against 10, 100, 1000 rules**.
 - **Automatic simplification**: sums and products of 10, 100, 1000 terms, with and without like
   terms, separating sort cost from merge cost.
+- **Trigonometric expansion**, in two parts, because the obvious one cannot see what it is meant
+  to guard. `TrigExpand[Sin[a₁ + … + aₙ]]` for growing `n` is the end-to-end cost, baselined; but
+  its output has 2ⁿ⁻¹ terms, so its allocation is exponential under either recursion, and the naive
+  recursion's re-expansion adds only about a factor of `n` on top, which a baseline at fixed `n`
+  catches as a jump and a curve does not show. The pair recursion is gated separately:
+  `expandTrigRules (a₁ + … + aₙ)` alone, before algebraic expansion. With the pair returned, each
+  level builds a constant number of new nodes over shared subterms, so allocation is linear in `n`;
+  the naive recursion's 2ⁿ⁻¹−1 rule applications make it exponential, and that curve is what the
+  gate catches.
 
 ### 8.5 Polynomial
 
@@ -2106,6 +2869,21 @@ gating on.
 - Benchmark: §8.3 and §8.4 baselined; the discrimination-net crossover recorded; D2 closed on the
   real `Expand` workload.
 
+**Elementary functions (§4.11–§4.12) do not gate Stage 1.** They need nothing beyond it, and are
+done when Cohen's Examples 7.15–7.18 simplify to 0 and Fig. 7.9's rows reproduce as §4.11
+specifies — and, once §5.6 lands, when `isZero` returns `Just True` for `Sin[x]^2 + Cos[x]^2 - 1`.
+
+- Tests: the `Simplify.Elementary` and `Simplify.Trig` rows of §7.3; the §7.2 harvest from
+  `cohen2002_*.pdf` ch. 7.
+- Benchmark: §8.4's trigonometric expansion, baselined.
+
+**Pure-function application (§4.13) does gate Stage 1**: every `Derivative` subvalue is a
+`Function`, so the chain-rule half of Stage 1's criterion needs it. The rest of §4.13–§4.15 does
+not gate, and is done when its §7.3 rows pass and the regression corpus pins the behaviours §4.13
+takes from prose alone (a `Return` inside `If` in a compound body; an uncaught `Return` at the top;
+the uncaught-`Throw` message and its `Hold` wrapper; whether `Block` localizes attributes; whether a pure function catches `Return`) and §4.15's infinity rows taken
+from memory.
+
 ### Stage 2
 
 **Done when** multivariate GCD and content/primitive part are correct on non-trivial inputs, and
@@ -2174,6 +2952,16 @@ answer, not a deletion.
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
 | D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4) | §8.4's fixed-point benchmark showing re-evaluation dominating |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
+| D16 | No `Sin[x]/Cos[x] → Tan[x]` in automatic evaluation, unlike WL: it would undo `Trig_substitute` inside `Simplify` (§4.11) | wanting WL's `Tan` spelling in output — answered first by a rewrite in `Cassini.Syntax.Pretty`, not by an evaluation rule |
+| D17 | `Simplify` is Cohen's `Simplify_trig`, one fixed strategy, not WL's search under a complexity measure (§4.12) | a second strategy existing — Gröbner side relations (§6.1), or Cohen's `Simplify_exp` (`cohen2002_*.pdf` §7.2 Exercise 4) — so that choosing between them needs a measure |
+| D18 | Identities that hold only over ℝ are not applied: log expansion and contraction, `Log[E^x] → x`, `(E^x)^w → E^(w·x)` for non-integer `w`, `PowerExpand` (§4.11) | an assumptions mechanism that can state "`x` is real" |
+| D19 | No `TrigToExp`/`ExpToTrig`, and no `E^(I π) → -1` (§4.12) | exact complex numbers in `Number` (§3.1), a neighbour of D9 |
+| D20 | No complex numbers: `I` is a symbol, and `Re`, `Im`, `Conjugate`, `Arg` and `DirectedInfinity` directions other than `±1` are absent. The open choice is a Gaussian-rational `Number` constructor versus symbolic `I` with `I^2 → -1` | D19's trigger; or `Solve` needing the roots of a quadratic with negative discriminant |
+| D21 | No special functions beyond §4.11: `Gamma`, `Pochhammer`, `Erf`, `Ei`, `PolyLog` absent. The inverse hyperbolic functions (`ArcSinh` … `ArcCsch`) are elementary but absent too; they would join §4.11 by its pattern | Gosper (§6.3) landing — its closed forms need `Pochhammer`/`Gamma` first; transcendental Risch (§6.2) proving a result non-elementary, where `Erf`/`Ei` would be the answer |
+| D22 | No conditional results (`ConditionalExpression`, `Piecewise`): a generic answer is returned, e.g. `∫xⁿ` assumes `n ≠ -1` | tier-1 integration rules (§6.2) or `Solve` (§6.5) needing to report a case split rather than drop it |
+| D23 | **Answered 2026-09-25:** `Return` is `UReturn`, caught by the innermost loop or user-rule application, per `wolfram_ref_return.html` (§4.13) | the regression case for `Return` inside `If` in a compound body disagreeing with §4.13 |
+| D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
+| D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8). The unabsorbed terms are guarded against Cohen's cancellations, which would otherwise assume them finite; one case, an infinity-bearing base under non-numeric exponents, is left unmerged (§4.15) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
 
 ### 11.3 Provenance
 
