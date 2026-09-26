@@ -198,7 +198,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `TagSet`, `Unset`, `Attributes`, `Protect`. |
 | `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
 | `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
-| `Cassini.Builtins.Control` | `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, loops and iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). |
+| `Cassini.Builtins.Control` | `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). |
 | `Cassini.Builtins.Logic` | `Equal` and the orderings, `SameQ`, `TrueQ`, `And`/`Or`/`Not` (§4.14). |
 | `Cassini.Builtins.Integer` | `Abs`, `Sign`, `Floor`, `Ceiling`, `Round`, `Mod`, `Quotient`, `GCD`, `LCM`, `Binomial`, `Factorial`, `Max`, `Min`, `PrimeQ`, `FactorInteger`, `Numerator`, `Denominator` (§4.15). |
 | `Cassini.Builtins.Calculus` | `D`, `Integrate`, `Series`, `Normal`, `Limit`, `Sum`, `Product`; `RootSum` (§6.5). |
@@ -1464,8 +1464,13 @@ MuPAD disagreeing, so each rule names the column it reproduces, and those rows a
   value: `Sin[π/3] → (1/2)·3^(1/2)`, `Sin[π/4] → 2^(-1/2)`, `Tan[π/6] → 3^(-1/2)`. Poles
   (`Tan[π/2]`, `Cot[0]`, `Sec[π/2]`, `Csc[0]`) are `Left Pole`. The hyperbolic heads have only
   their values at 0, with `Coth[0]` and `Csch[0]` poles. WL also evaluates denominators 5, 8, 10
-  and 12 (`Sin[π/12]`, `Cos[π/5]`). Their values are nested radicals, which §4.15 does not
-  normalize, so they are not in the table, and §7.5 lists this as a divergence.
+  and 12 (`Sin[π/12]`, `Cos[π/5]`). They are not in the table, and §7.5 lists this as a
+  divergence, for two reasons. Some values are nested radicals (`Sin[π/8] = (2-2^(1/2))^(1/2)/2`,
+  `Sin[π/5]`), which §4.15 does not normalize at all. Others are flat but outside §4.15's
+  canonical class: `Sin[π/12] = (6^(1/2) - 2^(1/2))/4` has a radicand with two prime factors
+  (D24), so the inverse tables could not rely on its spelling. `Cos[π/5] = (1 + 5^(1/2))/4` is
+  flat and canonical, and could join the table; it is left out so that a denominator is in or
+  out as a whole, not value by value.
 - **Parity.** When the argument's **first operand in ◁ order has a negative coefficient**, odd
   heads (`Sin`, `Tan`, `Cot`, `Csc`, their hyperbolic counterparts, `ArcSin`, `ArcTan`, `ArcCot`,
   `ArcCsc`) pull the sign out and even ones (`Cos`, `Sec`, `Cosh`, `Sech`) drop it. This reproduces
@@ -1744,13 +1749,19 @@ data Unwind = UThrow !Expr !(Maybe Expr) !(Maybe Expr)  -- ^ value, tag, Throw's
 The interpreters discharge `Error Unwind` and return `Either Unwind a` (§4.3). `Catch` catches `UThrow`
 (matching the tag against its form, re-evaluating the tag each time it is compared, per
 `wolfram_ref_catch.html`; `Catch[expr, form, f]` returns `f[value, tag]`) and rethrows anything
-else; `Do`, `While` and `For` catch
-`UBreak` and `UContinue`; `Block` catches everything, restores, and rethrows. **Only `Block` may
-observe `UAbort`**, and only to restore — nothing else in the tree catches it, so `Abort[]` still
-stops evaluation (§4.7). `Break[]` makes its loop return `Null`. An uncaught `UThrow` reaching the
-top of a REPL input becomes an unevaluated `Throw` with a message ("An error is generated and an
+else; `Do`, `While`, `For` and `Until` catch `UBreak` and `UContinue` — the loops
+`wolfram_ref_break.html` names ("Break[] exits the nearest enclosing Do, For, Until or While");
+`Block` catches everything, restores, and rethrows. **Nothing handles `UAbort`.** Three things
+observe it, each only to restore and rethrow: `Block`, the kernel's own depth and fuel bookkeeping
+(below), and the top-level entry, which hands it on as `Left (UAbort _)`. So `Abort[]` still stops
+evaluation (§4.7). `Break[]` makes its loop return `Null`. An uncaught `UThrow` reaching the top of
+a REPL input becomes an unevaluated `Throw` with a message ("An error is generated and an
 unevaluated Throw is returned"), or, for `Throw[value, tag, f]`, `f[value, tag]`; a stray `Break[]`
-or `Continue[]` likewise. The conversion is in `Cassini.Eval`'s top-level entry, which wraps
+or `Continue[]` likewise. **"Unevaluated" is wrapped in `Hold`**: the result is
+`Hold[Throw[value]]`, `Hold[Break[]]`, `Hold[Continue[]]`. A bare `Throw[value]` would be a trap
+here, because evaluating it again — `%`, or `r = …; r` — raises `UThrow` again, far from where it
+was thrown. `Hold` is what WL itself prints, from memory rather than the captures; a regression
+case pins it against an oracle. The conversion is in `Cassini.Eval`'s top-level entry, which wraps
 the input's evaluation in `CatchUnwind` and so has an `Expr` to build; the interpreter only
 reports what escaped. The message tags are not in the captures; `Throw::nocatch` is from memory.
 `KernelState` changes made before an unwind persist: "no matter the order of effects, state updates
@@ -1764,7 +1775,9 @@ and rule application catch unwinds and carry on. So `Evaluate`'s depth count and
 budget restore (§4.3) are bracketed: each catches, restores and rethrows, as `Block` does, or else
 the depth is held in `Reader` and changed with `local`. A decrement written after the inner call
 would be skipped by every caught `Throw`, and a loop of them would push the depth up until
-`$RecursionLimit` fired on a shallow computation. §7.3 states it as a law.
+`$RecursionLimit` fired on a shallow computation. The brackets catch `UAbort` too: under
+`runKernelIO` the state is the REPL session's `IORef`, so an `Abort[]` deep in a recursion would
+otherwise leave the depth raised for the next input. §7.3 states it as a law.
 
 **An interrupt becomes `UAbort` at a safe point, not by an asynchronous throw.** Under
 `runKernelIO`, Ctrl-C arrives as an asynchronous exception, which `Error Unwind` never sees. If it
@@ -1781,14 +1794,17 @@ reports that it skipped `Block` restoration, and the session state is not guaran
 "Return[expr] exits control structures within the definition of a function, and gives the value
 expr for the whole function", and "Return exits only the innermost construct in which it is
 invoked" — its example returns from a `Do` loop inside `g` "but not the function g". So `UReturn`
-is caught by whichever is innermost of a loop (`Do`, `While`, `For`, `Scan`, which then yields the
-value) and a **user-rule application** (the evaluation of a downvalue's right-hand side in steps
-10–13, which then yields the value as the rule's result). What an uncaught `Return` becomes at the
-top is not on the page. Here it is `Return[expr]` itself, returned unevaluated as an uncaught
-`Throw` is, which is WL's behaviour from memory. The top-level entry converts it like the other
-non-abort unwinds, and a regression case pins it against an oracle. The page's first "Possible Issues" example has no captured output, so what `If` alone does
-with a `Return` inside a compound body is taken from the prose, not checked; a regression case
-pins it once the evaluator exists.
+is caught by whichever is innermost of a loop (`Do`, `While`, `For`, `Until`, `Scan`, which then
+yields the value) and a **user-rule application** (the evaluation of a downvalue's right-hand side
+in steps 10–13, which then yields the value as the rule's result). What an uncaught `Return`
+becomes at the top is not on the page. Here it is `Hold[Return[expr]]`, held for the same reason
+as an uncaught `Throw`: in this design evaluating `Return[expr]` unwinds, so a bare one would fire
+again when the result is reused. WL, from memory, prints `Return[expr]` unheld, because its
+`Return` is a value that constructs strip rather than an unwind; if the oracle confirms that, this
+is a divergence, recorded in §7.5 when the regression case runs. The top-level entry converts it
+like the other non-abort unwinds. The page's first "Possible Issues" example has no captured
+output, so what `If` alone does with a `Return` inside a compound body is taken from the prose,
+not checked; a regression case pins it once the evaluator exists.
 
 ### 4.14 Logic and comparison
 
@@ -1832,19 +1848,22 @@ are a pure L4 module, `Cassini.Simplify.Numeric`, attached to the builtins as §
 downvalue therefore tries a radical rule after `simplifyPower`, as it tries `simplifyExpPower`
 (§4.11). For a rational base and a non-integer rational exponent `a/b`:
 
-1. **Sign:** a negative base `−n`, `n > 1`, becomes `(−1)^(a/b)·n^(a/b)` — an identity for the
+1. **Sign:** a negative base `−n`, `n > 0` and `n ≠ 1`, becomes `(−1)^(a/b)·n^(a/b)` — an identity for the
    principal power, since `log(−n) = log n + iπ` for `n > 0`. The base `−1` is excluded. Only step
    3 applies to it, and step 1 would otherwise rewrite `(−1)^(a/b)` to itself times `1^(a/b)`
-   without end.
+   without end. Bases between −1 and 0 are included: `(−1/2)^(1/2)` becomes `(−1)^(1/2)·(1/2)^(1/2)`,
+   and step 2 then gives `(−1)^(1/2)·2^(−1/2)`, one spelling with its positive counterpart.
 2. **Fraction:** `(p/q)^(a/b)` becomes `p^(a/b)·q^(−a/b)`, valid for positive rationals.
 3. **Integer part of the exponent:** `n^(a/b)` with `|a| > b` becomes `n^k·n^(r/b)`, `k` and `r`
    from `a = k·b + r` with `k` truncated toward zero, so `r` keeps the sign of `a` and
    `0 < |r| < b`: `2^(3/2) → 2·2^(1/2)`, `2^(-3/2) → (1/2)·2^(-1/2)`. Truncation, not floor, is
    what keeps §4.11's `2^(-1/2)` a fixed point of step 6.
-4. **Perfect powers:** a radicand `n = m^j`, with `j > 1` maximal, becomes `m^(j·a/b)`, which
-   Cohen's SPOW and step 3 then settle: `4^(1/2) → 2`, `4^(1/3) → 2^(2/3)`. The integer root
-   algorithm of `references/papers/textbooks/vonzurgathen_gerhard2013_*.pdf` §9.5 is tried for each
-   prime `j ≤ log₂ n`.
+4. **Perfect powers:** a radicand `n = m^j`, `j > 1`, becomes `m^(j·a/b)`, which Cohen's SPOW and
+   step 3 then settle: `4^(1/2) → 2`, `4^(1/3) → 2^(2/3)`. The integer root algorithm of
+   `references/papers/textbooks/vonzurgathen_gerhard2013_*.pdf` §9.5 is tried for each prime
+   `j ≤ log₂ n`, and the first hit is taken. The maximal `j` is not searched for: the result is a
+   new power, which evaluation re-enters: `64^(1/3)` takes `j = 2` to `8^(2/3)`, and step 4 again
+   gives `2^2 = 4`, the fixed point a maximal `j = 6` would have reached in one step.
 5. **Perfect-power factors:** `b`-th powers of primes below a bound `B` are pulled out by trial
    division (§19.2 of the same): `8^(1/2) → 2·2^(1/2)`.
 6. **Coefficient merge** — in `Times`, not `Power`: Cohen's product merge never combines a rational
@@ -1877,11 +1896,12 @@ Infinite Results", and `wolfram_ref_directedinfinity.html`/`wolfram_ref_indeterm
 well-formed ASAE sum. `Infinity` is `DirectedInfinity[1]` and `ComplexInfinity` is
 `DirectedInfinity[]`; directions are `±1` until there are complex numbers (D20). `Plus`, `Times` and
 `Power` run an infinity pass **before** Cohen's operators, implementing the extended-real and
-Riemann-sphere tables:
+Riemann-sphere tables. In the table `d` and `e` are directions, `±1`; `ComplexInfinity` is named
+wherever a row covers it:
 
 | Expression | Result |
 | :--- | :--- |
-| finite number `+` `DirectedInfinity[d]` | `DirectedInfinity[d]` |
+| finite number `+` `DirectedInfinity[d]`; finite number `+` `ComplexInfinity` | `DirectedInfinity[d]`; `ComplexInfinity` |
 | `DirectedInfinity[d] + DirectedInfinity[d]` | `DirectedInfinity[d]` |
 | `DirectedInfinity[d] + DirectedInfinity[−d]`, `ComplexInfinity + ComplexInfinity`, `ComplexInfinity + DirectedInfinity[d]` | `Indeterminate`, `Infinity::indet` |
 | nonzero number `c` `·` `DirectedInfinity[d]` | `DirectedInfinity[sign(c)·d]`; `ComplexInfinity` unchanged |
@@ -1893,12 +1913,15 @@ Riemann-sphere tables:
 | `DirectedInfinity[…]^0` | `Indeterminate`, `Power::indet`. Without this row, Cohen's SINTPOW-2 would give `1` |
 | `c^Infinity`, rational `c`: `c > 1`; `c < −1`; `|c| < 1`; `c = ±1` | `Infinity`; `ComplexInfinity`; `0`; `Indeterminate` |
 | `c^(−Infinity)` | as `(1/c)^Infinity`; `0^(−Infinity)` is `ComplexInfinity` |
-| `c^ComplexInfinity`, `c ≠ 0` | `Indeterminate` |
+| `c^ComplexInfinity`, any rational `c`, `0` included | `Indeterminate`. Without the `0` case, `0^ComplexInfinity` would reach Cohen's SPOW-2, whose `Undefined` has no cause in §4.6 to map |
 | `Infinity^Infinity`; `Infinity^(−Infinity)` | `ComplexInfinity`; `0`. Other infinite bases with infinite exponents are left unevaluated |
 | `Indeterminate` as an argument of any `NumericFunction` head | `Indeterminate` |
 
 In a product with non-numeric factors, the rows apply to the numbers and the infinities, and the
 other factors stay (D25): `2·x·Infinity → x·Infinity`, while `0·x·Infinity` is `Indeterminate`.
+Sums work the same way: the rows apply to the numeric and infinite terms, and every other term
+stays. `2 + x + Infinity → x + Infinity`, and `x + Infinity - Infinity` is `Indeterminate`, since
+the pass sees `Infinity` and `DirectedInfinity[-1]` whatever else is in the sum.
 
 The table's rows follow the sources' prose ("If you try to find the difference between two infinite
 quantities, you get an indeterminate result"; "A message is produced whenever an operation first
@@ -2433,7 +2456,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Simplify.Trig` | `simplifyTrig` preserves numeric value wherever the input is defined | a cancellation that is not an identity |
 | `Simplify.Numeric` | radical normalization preserves numeric value and is idempotent; two products of rationals and radicals whose radicands are primes below `B` or their powers with equal numeric value normalize identically; `integerRoot n b` is exact exactly on perfect powers; the infinity pass agrees with the extended-real table on every pair from a fixed set of finite and infinite values | a sign or branch error in steps 1–3 of §4.15; a table cell wrong |
 | `Number.Integer` | `m ≡ n·Quotient m n + Mod m n` with `Mod` taking the sign of `n`; `factorInteger` multiplies back and every factor passes `isProbablePrime`; `isProbablePrime` agrees with trial division below 10⁶ | floor-versus-truncate division; a composite witness set |
-| `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every localized symbol's own, down, up and sub values as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState`; after any caught `Throw`, `Break`, `Continue` or `Return`, the recursion depth and fuel budget equal their values before the catching construct | variable capture; a `Block` that leaks on unwind; session-dependent names; depth or fuel leaking through an unwind (§4.13) |
+| `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every localized symbol's own, down, up and sub values as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState`; after any caught `Throw`, `Break`, `Continue` or `Return`, the recursion depth and fuel budget equal their values before the catching construct, and after an `Abort[]` they equal their values before the top-level input; an uncaught `Throw`, `Break`, `Continue` or `Return` comes back `Hold`-wrapped, and evaluating that result raises nothing | variable capture; a `Block` that leaks on unwind; session-dependent names; depth or fuel leaking through an unwind or an abort; an uncaught `Throw` that fires again when its result is reused (§4.13) |
 | `Logic` | `Equal a b` is `True` only when `isZero (a − b)` is `Just True`, and `False` only when it is `Just False` and `a − b` has no free symbol; `x == y` for distinct free `x`, `y` stays unevaluated; `And`/`Or` never evaluate an argument after the deciding one | a comparison that turns "don't know", or "not identically zero", into `False` (§4.14) |
 | `Pattern` | soundness: every `σ` from `matchAll p s` satisfies `applySubst σ p ≡ s` modulo attributes | the whole matcher, in one line |
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
@@ -2778,7 +2801,7 @@ specifies — and, once §5.6 lands, when `isZero` returns `Just True` for `Sin[
 `Function`, so the chain-rule half of Stage 1's criterion needs it. The rest of §4.13–§4.15 does
 not gate, and is done when its §7.3 rows pass and the regression corpus pins the behaviours §4.13
 takes from prose alone (a `Return` inside `If` in a compound body; an uncaught `Return` at the top;
-the uncaught-`Throw` message; whether `Block` localizes attributes) and §4.15's infinity rows taken
+the uncaught-`Throw` message and its `Hold` wrapper; whether `Block` localizes attributes) and §4.15's infinity rows taken
 from memory.
 
 ### Stage 2
