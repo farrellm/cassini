@@ -46,6 +46,10 @@ The documents these cite live in [`../references/`](../references/) — see that
    | `../references/missing-documents.md` | the defect and misidentification tables |
    | `../references/CLAUDE.md` | corpus totals, capture dates, the directory blurb |
 
+   Nothing outside these files states a corpus total: the root `CLAUDE.md` and `.gitignore` point at
+   `../references/CLAUDE.md` instead. They used to copy it, and `.gitignore` was still saying ~429 MB
+   after the corpus reached ~439 MB. A new copy elsewhere is a seventh place; point instead.
+
    `missing-documents.md` is the one this rule omitted for eight rounds while every correction was
    touching it anyway. Correcting one copy and leaving the others is the single most repeated
    mistake in this repo's history: the

@@ -11,7 +11,7 @@ design disagree, the design is the intent and the code is behind.
 | :--- | :--- |
 | [`DESIGN.md`](./DESIGN.md) | The architecture: module boundaries, types, the evaluation contract, the test and benchmark plans. **Start here.** |
 | [`notes/`](./notes/) | The reading-and-building guide and its bibliography. Has its own `CLAUDE.md` with strict editing rules. |
-| [`references/`](./references/) | The document corpus the notes cite: 101 documents, indexed, with per-file defect annotations. Gitignored; see rule 6. |
+| [`references/`](./references/) | The document corpus the notes cite, indexed, with per-file defect annotations; its totals are in `references/CLAUDE.md`. Gitignored; see rule 6. |
 | `cassini.cabal` | Package definition. GHC2024, `base ^>=4.21.2.0`. |
 | `src/`, `app/`, `test/` | Library, executable, tests. Currently the `cabal init` skeleton. |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release. |
@@ -59,17 +59,18 @@ design disagree, the design is the intent and the code is behind.
      siblings hold the API.
    - No partial functions. `head`, `fromJust` and `!!` are not in scope; indexing returns `Either`
      with a message, which the language semantics require anyway.
-   - The warning set (§2.4) is not relaxed per module, and CI builds with `-Werror`.
+   - The warning set (§2.4) is not relaxed per module, and CI builds with `-Werror` — once CI
+     exists (see Toolchain).
    - Extensions are declared per module, except `OverloadedRecordDot` and `OverloadedStrings`, which
      are project-wide in a `common extensions` stanza. Never re-declare those two or anything
      GHC2024 already has; a redundant pragma is invisible noise.
    - **Record dot syntax is preferred**: `s.symName`, not `symName s`. Prefix selector application
      wants a reason (composition, passing the selector as a function, a section).
-   - `ormolu` and `hlint`, both checked in CI. Ormolu has no style config, and that is the point.
-     It reads `default-extensions` from the cabal file, so **never pass `--no-cabal`**: without it
+   - `ormolu` and `hlint`, both to be checked in CI (see Toolchain). Ormolu has no style config,
+     and that is the point. It reads `default-extensions` from the cabal file, so **never pass `--no-cabal`**: without it
      ormolu rewrites `r.field` to `r . field`.
    - **Module layering is a lint rule, not a convention** (§2.6). Imports go down the layer stack;
-     `.hlint.yaml` fails a violation.
+     `.hlint.yaml` fails a violation, once it exists (see Toolchain).
 
    Two traps already found, so they are not rediscovered:
 
@@ -106,11 +107,14 @@ design disagree, the design is the intent and the code is behind.
      `0002-builtin-upvalue-beats-user-downvalue`, not `0002-issue-17`.
    - Unit tests are worked examples lifted from the sources, each citing where it came from.
    - Benchmark baselines are committed per GHC version and regenerated deliberately, with the commit
-     message saying why. An allocation regression fails CI; time is gated only against a baseline
-     from the same CI runner class (§8.6).
+     message saying why. Once the gate exists (see Toolchain), an allocation regression fails CI;
+     time is gated only against a baseline from the same CI runner class (§8.6).
 
-6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git; a fresh
-   clone gets the `.md` indexes and none of the ~439 MB. That is expected, not a broken checkout.
+6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git, and neither
+   are the `*.txt` OCR sidecars for the two image-only PDFs, which are the only way to `grep` those
+   two; regenerate them after a fetch (`references/missing-documents.md`, "Regenerating the
+   sidecars"). A fresh clone gets the `.md` indexes and none of the documents. That is expected,
+   not a broken checkout.
    `references/downloaded-references-summary.md`'s Source column is how to re-fetch it, and
    `references/CLAUDE.md` carries the corpus rules, including which held copies have OCR defects
    that make `grep` lie in both directions.
@@ -120,7 +124,20 @@ design disagree, the design is the intent and the code is behind.
 GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`; `ormolu` and `hlint` are installed
 locally.
 
-- Full build: `cabal build --enable-tests --enable-benchmarks all`
-- Fast tests: `cabal test cassini-test`, and again with `-f intern` — CI runs both interning
-  settings (§3.4)
-- Lint and format: `hlint .` and `ormolu --mode check $(git ls-files '*.hs')`
+**Nothing enforces the rules above yet.** There is no CI workflow, no `.hlint.yaml`, no benchmark
+suite and no `intern` flag, and `cassini.cabal` carries only `-Wall`; all of them arrive with
+`DESIGN.md` §2.4–§2.8. Until then, run the checks by hand and do not read a clean run as the gate
+having passed.
+
+Works today:
+
+- Build: `cabal build --enable-tests all`
+- Tests: `cabal test cassini-test`
+- Format: `ormolu --mode check $(git ls-files '*.hs')`
+
+Once §2.8 lands (and not before, because each is currently a silent no-op):
+
+- `--enable-benchmarks` on the build, and the §8.6 gate
+- `cabal test -f intern cassini-test` — cabal accepts an undeclared flag without complaint, so
+  today this reruns the same build and tests nothing about interning (§3.4)
+- `hlint .` as the layering check — without `.hlint.yaml` it checks style only, not §2.6's rules
