@@ -87,6 +87,15 @@ held — the third time this class has produced a wrong claim, after `sbv` and t
 
 Corpus now **87 documents / 41 HTML captures**.
 
+A **tenth round** (2026-09-25) filled the gaps `DESIGN.md` §4.13–§4.15 had flagged as "not held".
+Fourteen Wolfram pages were captured (scoping, control flow, patterns, infinite results), taking the
+corpus to **101 documents / 55 HTML captures**. One of those gaps was a misidentification rather than
+an absence. The three scoping tutorials the design named ("How Modules Work", "Blocks and Local
+Values", "Variables in Pure Functions and Rules") no longer exist as pages: each URL 301s to
+*Modularity and the Naming of Things*, which holds all three as sections and is held as
+`wolfram_ref_modularity_and_naming.html`. The other finding, that example outputs are images, is in
+the table below.
+
 **The pattern, stated plainly.** Every one of these was an assertion *about a package's API* that
 quoted nothing, so no quotation sweep could see it, and each read as an ordinary one-line library
 summary. Three have now been wrong: `sbv` (which classes it overloads), the `numhask` comparison
@@ -135,6 +144,7 @@ Files that are held and correctly indexed, but that a grep-based workflow cannot
 | `textbooks/karr1981_summation_in_finite_terms.pdf` | 46 pp | **Partial letter-spacing** — scattered prose extracts as "p a p e r", "c o n c e r n e d w i t h". Greps *under-count* rather than fail: `theorem` shows 76 of 100. Recorded here as **clean** until round 6. |
 | `pattern-matching/bachmair1995_ac_discrimination_nets.pdf` | 7 pp | **Letter-spaced byline** — `grep Anantharaman` / `grep Chabin` return zero on a paper both co-wrote. |
 | `textbooks/bronstein2005_symbolic_integration_1.pdf` | 331 pp | Mild letter-spacing (~360 prose runs); `Rothstein` shows 53 of 54. Body otherwise sound. |
+| `wolfram-language/wolfram_*.html` (all 23 Wolfram captures) | — | **Example outputs are images**, referenced by `data-src` and not fetched. Inputs, prose and "Details" grep cleanly, but what an example evaluates to, and any message text it prints (`Throw::nocatch`, `Infinity::indet`), is not in the corpus. A grep for an output comes back empty and says nothing about the source, so a claim about an output needs a running system or another source. |
 | `pattern-matching/benanav1987_complexity_of_matching_problems.pdf` | 14 pp | Letter-spacing hides whole words — `important` and `programming` both return **zero**. The abstract, which carries both quoted complexity results, extracts cleanly. |
 
 **A trap worth knowing about.** Eker's PDF reports extractable text on *every* page, so a naive
