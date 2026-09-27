@@ -16,8 +16,8 @@ All four build stages, at design depth:
 | Stage | Substance | §  |
 | :---- | :--- | :--- |
 | 0 | Exact numbers, the `Expr` representation, interning, canonical order, traversal | [§3](#3-stage-0--foundations) |
-| 1 | Attributes, rule tables, the evaluation sequence, the pattern matcher, automatic simplification, surface syntax, pure functions; not gating (§10): elementary functions, control flow, logic, radicals and integer functions | [§4](#4-stage-1--the-kernel) |
-| 2 | Polynomials, GCD, factorization, zero testing | [§5](#5-stage-2--the-polynomial-substrate) |
+| 1 | In three milestones (§10): 1a attributes, rule tables, the evaluation sequence, automatic simplification; 1b the pattern matcher; 1c pure functions, `D`, surface syntax. Not gating: elementary functions, control flow, logic, radicals and integer functions | [§4](#4-stage-1--the-kernel) |
+| 2 | Polynomials, GCD, zero testing and their builtins (2a); modular GCD and factorization (2b) | [§5](#5-stage-2--the-polynomial-substrate) |
 | 3 | Gröbner bases, integration, summation | [§6](#6-stage-3--the-hard-algorithms) |
 
 Plus the cross-cutting plans: [testing](#7-testing), [benchmarking](#8-benchmarking),
@@ -448,10 +448,11 @@ module Cassini.Simplify.Automatic (simplify, isASAE) where
 5. `hlint .`, plus the §2.6 fixtures
 6. `ormolu --mode check $(git ls-files '*.hs')` — no `--no-cabal` (§2.5)
 7. `cabal haddock --haddock-quickjump`, with a scripted floor on haddock's documented-percentage
-8. the benchmark gate (§8.6)
+8. the benchmark gate (§8.6), from milestone 1a
 
-Step 2 names its suite rather than `all`, which would pull the slow suite into every commit. A
-nightly job runs `cassini-oracle`, `cassini-slow` and the random-seed property run (§7.1, §7.3).
+Steps 1–7 are Stage 0's exit condition (§10); step 8 needs an evaluator to measure. Step 2 names
+its suite rather than `all`, which would pull the slow suite into every commit. A nightly job runs
+`cassini-oracle`, `cassini-slow` and the random-seed property run (§7.1, §7.3).
 
 **One compiler, because the version bound says so.** `base ^>=4.21.2.0` admits only GHC 9.12, so a
 wider matrix would be jobs failing at dependency resolution, read as flaky and then ignored.
@@ -473,7 +474,7 @@ Nothing here evaluates anything. This is the stage most likely to be rushed and 
 to get wrong, because every later layer is written against these types.
 
 **Exit criterion:** large expressions can be constructed, compared and traversed at measured cost,
-and `compareCanonical` passes its order laws. See §10.
+`compareCanonical` passes its order laws, and §2.3–§2.8's tooling exists. See §10.
 
 ### 3.1 Numbers
 
@@ -677,9 +678,9 @@ Also:
   `hs-source-dirs` that implement the same one-function interface: hash-only (every node
   `notInterned`) and the weak table. CI builds and tests both (§2.8).
 - **The gate is a number.** §8.2 runs the same workload with the flag on and off. At Stage 0 the
-  workload is a constructor-built expression-swell proxy; the decision closes at the end of Stage 1,
-  when §8.4's real `Expand` workload exists. Interning ships if it wins there on both time and
-  allocation; either way the result is recorded as D2.
+  workload is a constructor-built expression-swell proxy; the decision closes when §8.4's real
+  `Expand` workload exists, with the elementary-functions track (§10). Interning ships if it wins
+  there on both time and allocation; either way the result is recorded as D2.
 
 ### 3.5 Canonical order
 
@@ -824,8 +825,9 @@ A Wolfram-Language-subset evaluator: attributes, four rule tables, the standard 
 a pattern matcher, automatic simplification, differentiation, and enough surface syntax to type at
 it.
 
-**Exit criterion:** `Plus[a, Plus[b, a]]` flattens, sorts and *collects* to `2a + b`; `D` gets the
-product and chain rules right. See §10.
+**Exit criterion:** `Plus[a, Plus[b, a]]` flattens, sorts and *collects* to `2a + b` (milestone 1a);
+the full matcher reproduces Krebber's commutative examples (1b); `D` gets the product and chain
+rules right (1c). See §10.
 
 ### 4.1 Attributes
 
@@ -1214,7 +1216,8 @@ Four matchers, one interface, added in order:
    distributing *n* arguments among *m* sequence variables, over `Vector` slices so a candidate
    distribution copies nothing.
 3. **`Cassini.Pattern.Commutative`** — `Orderless` heads (§4.5.4).
-4. **`Cassini.Pattern.Net`** — many-to-one discrimination net, Stage 1b (§4.5.5).
+4. **`Cassini.Pattern.Net`** — many-to-one discrimination net, built only if milestone 1b's
+   measured crossover says so (§4.5.5, §10).
 
 #### 4.5.4 Commutative matching: the five phases
 
@@ -1375,8 +1378,8 @@ Stated in Stage 1 because it bounds Stage 1: **there is no general algorithm for
 symbolic expression is zero** (`references/papers/foundations/richardson1968_*.pdf`). Automatic
 simplification must never *need* a zero test it cannot perform. Cohen's algorithm is written to that
 constraint — it decides zero only for rational numbers and structurally identical operands — and the
-design's job is not to add a rule that quietly requires more. Until Stage 2 (§5.6), `Cassini.Zero`
-exports only the rational case.
+design's job is not to add a rule that quietly requires more. Until milestone 2a (§5.6, §10),
+`Cassini.Zero` exports only the rational case.
 
 ### 4.9 Differentiation
 
@@ -2041,7 +2044,7 @@ Everything hard in a CAS runs on polynomial arithmetic and GCD. Building integra
 factorization before this is solid is failure mode (c), the ordering error that kills projects.
 
 **Exit criterion:** correct multivariate GCD and content/primitive part on non-trivial inputs, and a
-zero test that never answers `Just` wrongly. See §10.
+zero test that never answers `Just` wrongly (milestone 2a); factorization over ℤ (2b). See §10.
 
 ### 5.1 The bridge
 
@@ -2180,9 +2183,10 @@ choose:
    actually sees.
 
 Rungs 1–3 are univariate; for multivariate inputs they run over the recursive view (§5.2), with
-coefficient GCDs computed recursively. That is enough for Stage 2's correctness criterion. Rungs 4–5
-are Stage 2b, where §8.5's benchmark starts to matter: they are the first place an asymptotically
-better algorithm is slower on small inputs and the dispatcher has to choose.
+coefficient GCDs computed recursively. That is enough for Stage 2's correctness criterion
+(milestone 2a). Rungs 4–5 are milestone 2b (§10), where §8.5's benchmark starts to matter: they are
+the first place an asymptotically better algorithm is slower on small inputs and the dispatcher has
+to choose.
 
 Sources: `references/papers/textbooks/geddes_czapor_labahn1992_*.pdf` ch. 7 for the pipeline,
 `references/papers/textbooks/vonzurgathen_gerhard2013_*.pdf` for modular and fast-arithmetic depth,
@@ -2377,7 +2381,7 @@ comparable size to Risch, reaching nested sums and products Gosper–Zeilberger 
 `Solve` (linear systems by fraction-free Gaussian elimination, polynomial systems by Gröbner),
 `Series` (truncated power series as a coefficient ring, reusing §5.2), and `Limit` (series-based,
 with documented incompleteness). Each is a module with a stated dependency on the substrate; none is
-on the critical path.
+on the critical path. §10 gives each a track with its own criterion.
 
 ### 6.5 Surface forms
 
@@ -2399,6 +2403,11 @@ converts at the boundary, in L4.
 
 `RootSum` is the one new head here with evaluation rules of its own: the form above is what makes
 `integrateRational`'s totality (§6.2) printable without an algebraic-number type.
+
+**The table is here, but not all of it is Stage 3.** Builtins whose algorithms are Stage 2's —
+`Resultant`, `Discriminant`, `Cancel`, and with them `PolynomialGCD`, `Together`, `Factor` and
+`Apart` — land with milestones 2a and 2b (§10), so the polynomial substrate reaches a user when it is
+built, not a stage later. The result forms are fixed together, in one place, either way.
 
 ---
 
@@ -2630,6 +2639,9 @@ numerically, such as `Sqrt[2] == 1` and `Pi > 3`, stay unevaluated (§4.14, D9, 
 cannot equate either side of any of these, so semantic comparison does not absorb them, and the
 harness whitelists all three kinds.
 
+**The externals arrive with the milestones they check** (§10): Mathics3 with 1a, SymPy with 2a,
+Singular with 3d.
+
 The Rubi problem corpus is the aspirational end state for `Integrate`; its size and timings are
 vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system.
 
@@ -2698,8 +2710,9 @@ The suite that decides interning (§3.4), and so the first written:
   allocation and residency. Residency is what shows whether the table reclaims.
 
 **The gate** (D2): interning ships if it wins on expression swell on both time and allocation. The
-Stage 0 run uses the proxy and is provisional; the decision closes at the end of Stage 1 against
-§8.4's real `Expand` workload, and the numbers are recorded in §11.2 either way.
+Stage 0 run uses the proxy and is provisional; the decision closes against §8.4's real `Expand`
+workload, which arrives with the elementary-functions track (§10), and the numbers are recorded in
+§11.2 either way.
 
 ### 8.3 Matcher
 
@@ -2755,6 +2768,12 @@ Buchberger/F4 ratio on the same inputs, not absolute time.
 
 One fixed workload — parse, evaluate and print a script exercising simplification,
 differentiation, pattern replacement and polynomial arithmetic — measured as a single number.
+
+**The workload grows by milestone, and the gate is on from 1a** (§10). At 1a it is a FullForm script
+of automatic simplification and user rules through `runScript`; 1c adds infix parsing, printing and
+differentiation, and 2a polynomial arithmetic. A gate that waited for the full workload would be off
+through Stage 1, the most refactor-heavy stretch of the project. Each extension is a deliberate
+baseline regeneration, with the commit message saying what the workload gained.
 
 **This is the number CI gates on.** Microbenchmarks are advisory: noisy, sensitive to compiler and
 machine, and gating on them produces flaky builds that get disabled.
@@ -2842,66 +2861,204 @@ incomplete simplifier quietly becoming a *wrong* one by treating "could not prov
 
 ## 10. Milestones
 
-Each stage has an acceptance criterion that is a *behaviour*, the tests that encode it, and a number
-recorded on completion.
+Each milestone has an acceptance criterion that is a *behaviour*, the tests that encode it, and,
+where it has them, the numbers it records on completion — benchmark baselines in `bench/baseline/`,
+decisions in §11.2.
+
+**Stages are split where one criterion would hide most of the work.** Stage 1 carried one criterion
+that exercised a small part of its gating set, and Stage 2 one that said nothing about factorization
+or about what a user can type. The milestones within a stage gate in order. **Tracks** are the work
+that gates nothing, each stating what it waits for and when it is done.
 
 ### Stage 0
 
-**Done when** large expressions can be constructed, compared and traversed at measured cost, and
-`compareCanonical` passes its order laws.
+**Done when** large expressions can be constructed, compared and traversed at measured cost,
+`compareCanonical` passes its order laws, **and the tooling that enforces the rules exists**. The
+tooling is here because every later stage is written under it; added afterwards, it is a cleanup of
+everything already written.
 
+- Tooling: `cassini.cabal` per §2.4 — the `common` stanzas, the `cassini-prelude` sublibrary and its
+  `mixins` (§2.3), and the `intern` manual flag selecting §3.4's two source directories;
+  `.hlint.yaml` per §2.6, with its fixtures; CI (§2.8) green on steps 1–7 with `-Werror`. Step 8
+  arrives with 1a.
+- §7.6's doctest risk answered on this first build, and §2.8 step 4 and §7.6 edited to say which
+  form survived.
 - Tests: the `Number`, `Core.Order`, `Core.Intern`, `Core.Traversal` and `Structure` rows of §7.3,
-  under both interning settings, plus Cohen's order examples as unit tests.
-- Benchmark: §8.2 in full, with the provisional interning A/B recorded against D2.
+  under both interning settings, over `Test/Gen.hs`'s `genExpr` and `shrinkExpr`; Cohen's order
+  examples as unit tests.
+- Benchmark: §8.1's harness and §8.2 in full, with the provisional interning A/B recorded against D2.
 
 ### Stage 1
 
-**Done when** `Plus[a, Plus[b, a]]` flattens, sorts and collects to `2a + b`, and `D` gets the
-product and chain rules right.
+Three milestones, each a working evaluator a size larger than the last, then tracks.
+
+#### 1a — the evaluator
+
+Attributes (§4.1), the rule tables and ladder (§4.2), the `Kernel` effect and both interpreters
+(§4.3), the evaluation sequence (§4.4), the syntactic matcher (§4.5.3, step 1), automatic
+simplification (§4.6), messages (§4.7), `Builtins.Assign`, and `Cassini.Syntax.FullForm` with
+`runScript` (§4.10) — the last so that the regression corpus (§7.4) starts here, with the code it
+guards.
+
+**Done when** `Plus[a, Plus[b, a]]` flattens, sorts and collects to `2a + b`, and its golden trace
+shows step 7 before step 9.
 
 That criterion is four features at once: `Flat` flattening (step 7), `Orderless` sorting (step 9),
 Cohen's `Simplify_sum_rec` merge, and the fixed-point loop. Flattening and sorting to `Plus[a, a, b]`
 is the easy half; **collecting like terms is automatic simplification proper**, and the half worth
 gating on.
 
-- Tests: the `Attributes`, `Rules`, `Simplify`, `Pattern`, `Eval` and `Syntax` rows of §7.3; the
-  Wolfram evaluation traces as golden traces; Krebber's commutative examples.
-- Benchmark: §8.3 and §8.4 baselined; the discrimination-net crossover recorded; D2 closed on the
-  real `Expand` workload.
+- Tests: the `Attributes`, `Rules`, `Simplify` and `Eval` rows of §7.3; the `Syntax` row's FullForm
+  half; the `Pattern` rows over syntactic patterns; the Wolfram evaluation traces as golden traces;
+  Cohen §3.2's worked simplifications; the seeded corpus (§7.4), including
+  `0002-builtin-upvalue-beats-user-downvalue`.
+- Benchmark: §8.4's fixed-point and automatic-simplification rows baselined; the §8.6 gate on, over
+  its 1a workload.
+- The oracle harness (§7.5) arrives here, with Mathics3: evaluator semantics are where it is most
+  informative, and where this stage's behaviour is most easily got subtly wrong.
 
-**Elementary functions (§4.11–§4.12) do not gate Stage 1.** They need nothing beyond it, and are
-done when Cohen's Examples 7.15–7.18 simplify to 0 and Fig. 7.9's rows reproduce as §4.11
-specifies — and, once §5.6 lands, when `isZero` returns `Just True` for `Sin[x]^2 + Cos[x]^2 - 1`.
+#### 1b — the matcher
 
-- Tests: the `Simplify.Elementary` and `Simplify.Trig` rows of §7.3; the §7.2 harvest from
-  `cohen2002_*.pdf` ch. 7.
-- Benchmark: §8.4's trigonometric expansion, baselined.
+The sequence and commutative matchers (§4.5.3 steps 2–3, §4.5.4), side conditions through the
+kernel (§4.5.2), and `Builtins.Pattern`.
 
-**Pure-function application (§4.13) does gate Stage 1**: every `Derivative` subvalue is a
-`Function`, so the chain-rule half of Stage 1's criterion needs it. The rest of §4.13–§4.15 does
-not gate, and is done when its §7.3 rows pass and the regression corpus pins the behaviours §4.13
+**Done when** Krebber's commutative examples match exactly as the source says — including the one
+with six candidate mappings and exactly one match — and §4.5.4's `{g[x_], x_, y_}` against
+`{g[1], g[2], 2}` finds `x = 2, y = g[1]`.
+
+- Tests: the `Pattern` rows of §7.3 in full, with `genPattern` over `Orderless` heads and sequence
+  variables.
+- Benchmark: §8.3 in full; the discrimination-net crossover recorded (§4.5.5), and the net built only
+  if it says so; allocation per match on the sequence-variable grid recorded against D11.
+
+#### 1c — calculus in the kernel
+
+Pure-function application (§4.13's `Function`), `D` (§4.9), and the rest of §4.10's Stage 1 syntax:
+the infix parser, `Cassini.Syntax.Pretty` and the REPL.
+
+**Done when** `D` gets the product and chain rules right through user definitions: `D[f[x] g[x], x]`
+gives both product-rule terms, and after `Derivative[1][f] = 3 #^2 &`, `D[f[x^2], x]` evaluates to
+`6 x^5`. The criterion uses user-defined derivatives so that it needs neither §4.11's table nor a
+built-in function; the `Function` in it is why **pure-function application gates Stage 1** — every
+`Derivative` subvalue is one.
+
+- Tests: the `Syntax` row in full; the `Calculus` row over arithmetic expressions (the elementary
+  functions join with their track).
+- Benchmark: §8.4's deep-`D` and `//.` rows baselined; the §8.6 workload gains parsing, printing and
+  differentiation.
+
+#### Track: elementary functions (§4.11–§4.12)
+
+Waits for 1c. **Done when** Cohen's Examples 7.15–7.18 simplify to 0 and Fig. 7.9's rows reproduce as
+§4.11 specifies — and, once 2a has landed, when `isZero` returns `Just True` for
+`Sin[x]^2 + Cos[x]^2 - 1`.
+
+- Tests: the `Simplify.Elementary` and `Simplify.Trig` rows of §7.3; the `Calculus` row over
+  elementary expressions; the §7.2 harvest from `cohen2002_*.pdf` ch. 7.
+- Benchmark: §8.4's trigonometric expansion, baselined; §8.4's expression swell on `Expand`, which is
+  `Cassini.Simplify.Rational`'s `algebraicExpand` (§4.12) and so arrives with this track. **D2 closes
+  here**, on that workload, not at a stage boundary.
+
+#### Track: control flow, logic and numbers (§4.13–§4.15)
+
+Waits for 1c. **Done when** its §7.3 rows pass and the regression corpus pins the behaviours §4.13
 takes from prose alone (a `Return` inside `If` in a compound body; an uncaught `Return` at the top;
-the uncaught-`Throw` message and its `Hold` wrapper; whether `Block` localizes attributes; whether a pure function catches `Return`) and §4.15's infinity rows taken
-from memory.
+the uncaught-`Throw` message and its `Hold` wrapper; whether `Block` localizes attributes; whether a
+pure function catches `Return`) and §4.15's infinity rows taken from memory.
+
+`Equal` is done here over §4.8's rational-only `isZero`, and gets stronger at 2a with no change to
+`Cassini.Builtins.Logic`: `(x + 1)^2 == x^2 + 2 x + 1` stays unevaluated until then, which is
+§4.14's contract working, not a gap in it.
 
 ### Stage 2
 
-**Done when** multivariate GCD and content/primitive part are correct on non-trivial inputs, and
-`isZero` never returns `Just` wrongly.
+#### 2a — the substrate
 
-- Tests: the `Algebra`, `Poly`, `Poly.Multi`, `Poly.Factor` and `Zero` rows of §7.3, including GCD-ladder
-  agreement, which is what makes rungs 4 and 5 safe to add.
-- Benchmark: §8.5, with the subresultant/modular crossover recorded for the dispatcher.
+`Cassini.Algebra.Class`, `Poly.Uni`, `Poly.Multi`, `Poly.Convert`, GCD rungs 1–3 with content and
+primitive part (§5.4), `Poly.Resultant`, squarefree decomposition (§5.5 step 1), and `isZero`'s
+layers 2 and 3 (§5.6); layer 3′ lands when both 2a and the elementary track have. **With their
+builtins**: `PolynomialGCD`, `Cancel`, `Together`, `Resultant`, `Discriminant`, `Coefficient`,
+`Exponent`, `Variables` and `FactorSquareFree`, in the result forms §6.5 fixes. A stage whose work
+reaches a user only a stage later has no user-visible way to be wrong in the meantime.
+
+**Done when** multivariate GCD and content/primitive part are correct on non-trivial inputs — the
+worked examples of `geddes_czapor_labahn1992_*.pdf` ch. 7 as unit tests — and `isZero` never returns
+`Just` wrongly; visibly, `Cancel[(x^2 - 1)/(x - 1)]` is `1 + x` and `(x + 1)^2 == x^2 + 2 x + 1` is
+`True`.
+
+- Tests: the `Algebra`, `Poly`, `Poly.Multi` and `Zero` rows of §7.3, including GCD-ladder agreement
+  over rungs 1–3, which is what makes rungs 4 and 5 safe to add.
+- Benchmark: §8.5 over rungs 1–3, against `poly`'s own operations; D1 checked against the profile;
+  the §8.6 workload gains polynomial arithmetic.
+- The oracle gains SymPy.
+
+#### 2b — modular methods and factorization
+
+GCD rungs 4–5 (§5.4), and factorization over ℤ (§5.5 steps 2–4), with `Factor`, `Factor[…, Modulus
+-> p]` and `Apart`. Multivariate factorization (§5.5's last paragraph) is a follow-on, not gating.
+
+**Done when** `Factor` over ℤ[x] multiplies back and returns every factor unchanged when factoring it
+again, and rungs 4–5 return associates of rung 3's answers.
+
+**Stopping after §5.5 steps 1–2 is allowed, and is a decision**, recorded in this section with
+integer `Factor` limited to the rational-root interim — §5.5 says why that prefix is where the
+schedule slips.
+
+- Tests: the `Poly.Factor` row of §7.3; the `Poly` rows over all five rungs.
+- Benchmark: §8.5 across the ladder, with the subresultant/modular crossover recorded for the
+  dispatcher; factorization at size in `cassini-slow`.
 
 ### Stage 3
 
-**Deliberately partial.** Three independent acceptance criteria, each worth reaching alone:
+**Deliberately partial.** Four independent milestones, each worth reaching alone, in the order
+recommended: cheapest first, and each after the one whose machinery it reuses. None gates another
+except as stated.
 
-- `Cassini.Integrate.Rules` handles the standard first-year-calculus table.
-- `integrateRational` is complete for rational functions, verified by `D ∘ ∫ ≡ id`.
-- Simplification with side relations works via Gröbner reduction.
+#### 3a — Gosper (§6.3)
 
-Transcendental Risch is a further milestone; the algebraic case is not a milestone at all (§6.2).
+Waits for 2a. **Done when** `Cassini.Summation.Gosper` reproduces the worked examples of
+`petkovsek_wilf_zeilberger1996_*.pdf`'s Gosper chapter, including those with no hypergeometric
+antidifference, and its `Summation` row passes. This is the library milestone: the `Sum` surface
+form for a symbolic bound needs `Pochhammer`/`Gamma`, and so fires D21.
+
+#### 3b — rational integration (§6.2 tier 2)
+
+Waits for 2a. `integrateRational`, `RootSum` (§6.5) with `D` distributing over it, and `Integrate`
+dispatching to it. **Done when** `integrateRational` is complete for rational functions, verified by
+the `Integrate` row (`D ∘ ∫ ≡ id`) over generated rational functions and by Bronstein ch. 2's worked
+examples. `RootSum` resolves to explicit logarithms only as far as factorization over ℚ reaches:
+the rational-root interim before 2b, full `Factor` after.
+
+#### 3c — the tier-1 rule set (§6.2 tier 1)
+
+Waits for 1b and the elementary track. **Done when** `Cassini.Integrate.Rules` solves a committed
+problem list — **written before the rules**, drawn from the Rubi problem corpus (§7.5) for the
+families §6.2 names — with each answer checked by `D ∘ ∫ ≡ id` in `cassini-slow`. The number solved
+is the recorded number; conditional answers such as `∫xⁿ` wait on D22.
+
+#### 3d — side relations (§6.1)
+
+Buchberger, `GroebnerBasis` and `PolynomialReduce`. Waits for 2a. **Done when**
+`PolynomialReduce[x^2 + y^2 + x, {x^2 + y^2 - 1}, {x, y}]` gives quotients `{1}` and remainder
+`x + 1`, Cohen ch. 8's worked examples of simplification with side relations reproduce, and the
+`Groebner` row passes. Reaching `Simplify` itself waits on D17.
+
+- Benchmark: §8.5's Gröbner ideals in `cassini-slow`, with their timeout. The oracle gains Singular.
+
+#### Tracks
+
+None of these is on the critical path (§6.4); each has a criterion so that "done" is not a feeling.
+
+| Track | Waits for | Done when |
+| :--- | :--- | :--- |
+| Zeilberger (§6.3) | 3a | the worked examples of the source's Zeilberger chapter, each certificate verified |
+| F4 (§6.1) | 3d | its reduced bases equal Buchberger's on §8.5's ideals; the Buchberger/F4 ratio recorded |
+| `Solve` (§6.4) | 2a; 3d for polynomial systems | every returned solution, substituted back, makes each equation's difference `isZero`-`Just True` |
+| `Series` (§6.4) | 2a; the elementary track for elementary functions | coefficients agree with repeated `D` at the expansion point, over arithmetic and elementary functions |
+| `Limit` (§6.4) | `Series` | every value it returns agrees with the test evaluator approaching the point; anything else stays unevaluated |
+| Transcendental Risch (§6.2 tier 3) | 3b | `bronstein2005_*.pdf` ch. 5–6's worked examples; `D ∘ ∫ ≡ id` on every result; `NotElementary` on the source's non-elementary examples — whose answers, such as `Erf`, fire D21 |
+
+The algebraic case of Risch is not a milestone at all (§6.2).
 
 ---
 
@@ -2937,8 +3094,8 @@ answer, not a deletion.
 
 | # | Decision | Trigger to revisit |
 | :--- | :--- | :--- |
-| D1 | `Integer` over a custom bignum (§3.1) | Stage 2 polynomial benchmarks showing `Integer` overhead dominating |
-| D2 | Interning on or off (§3.4) | provisional at Stage 0 on the §8.2 proxy; decided at the end of Stage 1 on §8.4's `Expand`, with the numbers recorded here |
+| D1 | `Integer` over a custom bignum (§3.1) | milestone 2a's polynomial benchmarks (§10) showing `Integer` overhead dominating |
+| D2 | Interning on or off (§3.4) | provisional at Stage 0 on the §8.2 proxy; decided when the elementary-functions track (§10) brings §8.4's `Expand`, with the numbers recorded here |
 | D3 | `recursion-schemes` over `uniplate` (§3.6) | traversal showing up in the §8.4 profile |
 | D4 | QuickCheck over Hedgehog (§7.3) | shrinking quality becoming the reason counterexamples go uninvestigated |
 | D5 | `poly` over Kmett's `algebra` (§5.3) | Gröbner work at Stage 3 needing the `Numeric.Domain.*` chain |
