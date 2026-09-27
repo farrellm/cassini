@@ -7,7 +7,7 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**101 documents (~439 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 55 HTML captures — plus 2 OCR sidecars.**
+**103 documents (~439 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 57 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
@@ -180,6 +180,8 @@ cited and were not fetched.
 | [`wolfram_ref_break.html`](./papers/wolfram-language/wolfram_ref_break.html) | `Break` reference page — exits the nearest `Do`, `For`, `Until` or `While` and returns `Null`. Fetched 2026-09-25. | [`.../ref/Break.html`](https://reference.wolfram.com/language/ref/Break.html) | 189.8 KB |
 | [`wolfram_ref_indeterminate.html`](./papers/wolfram-language/wolfram_ref_indeterminate.html) | `Indeterminate` reference page — `NumericFunction` heads return `Indeterminate` on an `Indeterminate` argument. Fetched 2026-09-25. | [`.../ref/Indeterminate.html`](https://reference.wolfram.com/language/ref/Indeterminate.html) | 222.8 KB |
 | [`wolfram_ref_directedinfinity.html`](./papers/wolfram-language/wolfram_ref_directedinfinity.html) | `DirectedInfinity` reference page — the `Infinity`/`-Infinity`/`ComplexInfinity` conversions. Fetched 2026-09-25. | [`.../ref/DirectedInfinity.html`](https://reference.wolfram.com/language/ref/DirectedInfinity.html) | 235.4 KB |
+| [`wolfram_terms_of_use.html`](./papers/wolfram-language/wolfram_terms_of_use.html) | *Wolfram Terms of Use* (effective July 29, 2024) — covers Wolfram's "services, websites, applications, software" collectively as "Services", and states that "Scraping or bulk downloading of data from the Services is strictly prohibited." The reason `DESIGN.md` §7.9 does not harvest examples from `reference.wolfram.com`. Not documentation: a legal page, held because the design rests on it. Fetched 2026-09-27. | [`wolfram.com/legal/terms/wolfram`](https://www.wolfram.com/legal/terms/wolfram) | 69.1 KB |
+| [`wolfram_mathematica_license.html`](./papers/wolfram-language/wolfram_mathematica_license.html) | *Mathematica License Agreement* — defines the licensed "Product" as "All the materials, including the Software", and prohibits distributing any portion "including collections of data". Governs the local documentation notebooks §7.9 extracts from, and is why that corpus is never committed. Fetched 2026-09-27. | [`wolfram.com/legal/agreements/wolfram-mathematica/`](https://www.wolfram.com/legal/agreements/wolfram-mathematica/) | 58.8 KB |
 | [`wltools_language_spec.html`](./papers/wolfram-language/wltools_language_spec.html) | *Wolfram Language Specification* — community reverse-engineering project index. **Informed inference, not authoritative.** | [`wltools.github.io/LanguageSpec/`](https://wltools.github.io/LanguageSpec/) | 35.0 KB |
 
 ---
