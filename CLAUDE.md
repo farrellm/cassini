@@ -125,8 +125,9 @@ GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`; `ormolu` and `hlint` ar
 locally.
 
 **Nothing enforces the rules above yet.** There is no CI workflow, no `.hlint.yaml`, no benchmark
-suite and no `intern` flag, and `cassini.cabal` carries only `-Wall`; all of them arrive with
-`DESIGN.md` §2.4–§2.8. Until then, run the checks by hand and do not read a clean run as the gate
+suite and no `intern` flag, and `cassini.cabal` carries only `-Wall`. All of them, as `DESIGN.md`
+§2.4–§2.8 specify them, are Stage 0's exit condition (§10), except the §8.6 benchmark gate, which is
+on from milestone 1a. Until then, run the checks by hand and do not read a clean run as the gate
 having passed.
 
 Works today:
@@ -137,7 +138,7 @@ Works today:
 
 Once §2.8 lands (and not before, because each is currently a silent no-op):
 
-- `--enable-benchmarks` on the build, and the §8.6 gate
+- `--enable-benchmarks` on the build, and — from milestone 1a — the §8.6 gate
 - `cabal test -f intern cassini-test` — cabal accepts an undeclared flag without complaint, so
   today this reruns the same build and tests nothing about interning (§3.4)
 - `hlint .` as the layering check — without `.hlint.yaml` it checks style only, not §2.6's rules
