@@ -31,6 +31,9 @@ references/**/*.pamphlet
 references/**/*.txt
 
 # Imported test corpora (DESIGN.md §7.8–§7.9): fetched corpora are cloned at pinned commits, and
-# the Wolfram documentation corpus is extracted from a licensed local install. Neither is committed.
+# the Wolfram documentation corpus is extracted from licensed documentation notebooks. Neither is committed.
 corpus/fetched/
 corpus/wolfram-docs/
+
+# Python bytecode from the corpus tools.
+__pycache__/

@@ -2685,7 +2685,7 @@ those they are a wall of red, and a suite that is mostly red gets turned off.
 | The Rubi test suite, `RuleBasedIntegration/MathematicaSyntaxTestSuite` | `{integrand, x, steps, answer}` | `0 Independent test suites/` vendored; the rest fetched, for size | 3b, 3c |
 | Mathics3, `test/` | `check_evaluation(input, expected)` pytest calls | fetched | 1c |
 | SymPy's test suite | Python asserts | generated: a script run under SymPy writes chosen cases out as WL, and its output is vendored | 2a, 2b |
-| Wolfram's documentation examples | the reference pages' input and output cells | extracted from a licensed local install, never committed (§7.9) | W; runs from 1a |
+| Wolfram's documentation examples | the reference pages' input and output cells | extracted from the documentation notebooks that come with a licence, never committed (§7.9) | W; runs from 1a |
 
 **Disposition follows licence** (D26); the licences are recorded per system in
 `notes/cas-haskell-bibliography.md` §5. A permissively licensed corpus is *vendored*: copied into
@@ -2711,14 +2711,15 @@ corpus/
   divergences.txt             -- case ID, and the D-number that explains it
 ```
 
-The tools are a Wolfram Language script (§7.9) and Python scripts for Mathics3's pytest files and
-SymPy's generator. None is a cabal dependency (§11.1): they produce data, and the suite reads data.
+The tools are Python scripts: the Wolfram documentation extractor (§7.9), Mathics3's pytest reader
+and SymPy's generator. None is a cabal dependency (§11.1): they produce data, and the suite reads
+data.
 
 **Expected values given as printed text are normalized by their own system.** Mathics3's are
 strings such as `"34 / 15"`, which parse to `Times[34, Power[15, -1]]`, not `Rational[34, 15]`. Its
 extractor therefore runs under Mathics3, reading the test files with Python's `ast` rather than
 importing them, and has Mathics3 parse and evaluate each expected string once and write FullForm.
-That is the same normalization §7.9 applies to Wolfram's outputs. Normalizing with Cassini's own
+§7.9 applies the same kind of normalization to Wolfram's outputs, restricted there to arithmetic. Normalizing with Cassini's own
 evaluator would let a bug reproduce on both sides and pass. Some Mathics3 cases carry a note that
 Mathics3 departs from WMA; those are dropped, since they document Mathics3 rather than the language.
 
@@ -2728,7 +2729,8 @@ format, so the same `runScript` runs it. A case ID is stable and carries no cont
 position, as in `expreduce/pattern/MatchQ/7` or `wolfram/With/BasicExamples/2`.
 
 **The scope rule** keeps a young system from drowning. A case is *in scope* when every `System``
-symbol it mentions is defined in the `Cassini.Builtins` registry; the rest are counted and not run.
+symbol it mentions is defined in the `Cassini.Builtins` registry and, while D9 stands, it holds no
+inexact number; the rest are counted and not run.
 Scope grows by itself as builtins land, and in-scope over total, per source, is the report's
 headline: it is how much of the language the system claims.
 
@@ -2765,50 +2767,82 @@ benchmark baselines, in `corpus/passing/`'s commit history.
 The reference pages' examples are the largest body of expected WL behaviour there is, written by the
 language's owner. They are not open. Wolfram's Terms of Use forbid scraping and bulk downloading its
 websites (`references/papers/wolfram-language/wolfram_terms_of_use.html`), and the web pages carry
-each output only as an image. **So the corpus is extracted from the documentation notebooks of a
-licensed local Mathematica installation, by that installation's kernel, and is never committed or
-distributed** (`references/papers/wolfram-language/wolfram_mathematica_license.html`; D27). A
-developer who wants it regenerates it from their own install, as the `references/` corpus is
-re-fetched.
+each output only as an image. **So the corpus is extracted from the documentation notebooks that come
+with a Mathematica licence, and is never committed or distributed**
+(`references/papers/wolfram-language/wolfram_mathematica_license.html`; D27). A developer who wants
+it regenerates it from their own copy, as the `references/` corpus is re-fetched.
 
-`corpus/tools/ExtractWolframDocs.wl`, run with `wolframscript -file`, walks the reference-page
-notebooks under the installation's `Documentation/English/System/ReferencePages/Symbols/`, and for
-each:
+**No Wolfram kernel is involved.** `corpus/tools/extract_wolfram_docs.py NOTEBOOK_DIR
+corpus/wolfram-docs` is Python, and uses Mathics3 where a kernel would parse and normalize. It:
 
-1. **Reads the notebook as an expression.** `Get` on a `.nb` file returns `Notebook[…]`, with no front
-   end needed.
-2. **Splits its example sections into examples** (Basic Examples, Scope, Options, Applications,
-   Properties & Relations, Possible Issues, …) at each example delimiter. Each example is one
-   session, because the documentation evaluates each one fresh.
-3. **Converts cells to FullForm.** Each input cell goes through `MakeExpression[boxes,
-   StandardForm]`, which returns the expression held in `HoldComplete`, unevaluated, and its
-   `FullForm` is written. Each output cell is converted the same way and then **evaluated once, in a
-   fresh context with no definitions**, because conversion loses the canonical form the display
-   showed: the output `1/2` converts to `Times[1, Power[2, -1]]` and only evaluation gives back
-   `Rational[1, 2]`. A documented output is a WL fixed point, so this changes spelling, not value; an
-   output that a second evaluation changes again is marked unusable. Each message cell becomes
-   `symbol::tag`. An input ending in `;` has no output.
-4. **Records what it cannot use, rather than dropping it.** An output that is graphics, `Dynamic`, or
-   typeset with no `MakeExpression` inverse, and an input whose result depends on state (`Random*`,
-   `Now`, `$Version`, `$Line`), keeps its case with the output marked unusable and the reason given.
-   The count of what was skipped, and why, is part of the output.
-5. **Writes** `corpus/wolfram-docs/<Symbol>/<Section>-<n>.in` and `.expected` in §7.4's format, plus
-   `index.tsv` (case ID, the symbols it mentions, its status) and `run.txt` (`$Version`, the date,
-   and the counts).
+1. **Finds the reference pages by content.** A page is a notebook whose header cell reads
+   `BUILT-IN SYMBOL`, and its symbol is the first word of its window title (`Plus (+)`). Recognizing
+   pages by content rather than path lets the extractor read an installation's `Documentation/`
+   tree or the unpacked offline documentation installer, whose file names are opaque keys.
+2. **Reads each notebook** with a tolerant parser of its `Notebook[…]` expression, after removing
+   the file format's backslash-newline line continuations.
+3. **Splits the examples into sessions.** After the `PrimaryExamplesSection` cell, a session starts
+   at each `ExampleSection` or `ExampleSubsection` heading and at each `ExampleDelimiter`, whose
+   content is `$Line = 0`: the documentation's own fresh session. Outputs pair with inputs by
+   `CellLabel` (`In[k]:=`, `Out[k]=`), and messages by `During evaluation of In[k]:=`.
+4. **Flattens boxes to input text.** `RowBox` joins its tokens with spaces. `SuperscriptBox`,
+   `FractionBox`, `SqrtBox` and `RadicalBox` become `^`, `/`, `Sqrt` and a fractional power.
+   `StyleBox` and `AdjustmentBox` are transparent. `InterpretationBox` yields its second argument,
+   which is the expression itself rather than a display of it. A few long names (`\[ImaginaryI]`,
+   `\[ExponentialE]`, `\[LeftDoubleBracket]`) are spelled out. A multi-line input cell is one
+   `In[k]` with one `Out[k]`; when every line but the last ends in `;`, it becomes one
+   `CompoundExpression`, which has the same value. Every other box is unusable, and the box names
+   the reason. That covers graphics, `SubscriptBox`, `TraditionalForm`, grids, summary boxes, and
+   `TemplateBox` displays such as `Quantity`, `DateObject` and `Entity`.
+5. **Parses the text with Mathics3's parser and writes the input's FullForm.** Inputs are never
+   evaluated.
+6. **Normalizes each output.** Flattened boxes lose the canonical spelling: the output `1/2` parses
+   to `Times[1, Power[2, -1]]`, not `Rational[1, 2]`. So each output is evaluated once in Mathics3,
+   with every head except arithmetic (`Plus`, `Times`, `Power`, `Sqrt`, `Rational`, `Complex`,
+   `DirectedInfinity`, `List` and a few spellings of them) renamed to an inert copy that keeps only
+   the original's `Hold*` attributes. Only arithmetic re-canonicalizes, a held argument stays as
+   displayed, and Mathics3 cannot evaluate further an output that WL left unevaluated. An output is
+   unusable in any of these cases:
+   - a second evaluation changes it;
+   - normalization takes more than five seconds, or Mathics3 raises an error on it;
+   - its label names a display form other than `InputForm` or `FullForm` (`Out[k]//MatrixForm=`);
+   - it contains a `Module` local such as `x$123`, whose number depends on the history of the kernel
+     that built the page (§4.13).
+7. **Reads messages as `symbol::tag`** from their `MessageTemplate`. `Print` cells are counted, not
+   compared. A page still unfinished after five minutes, which only a hang inside compiled code
+   causes, is killed and counted as an extractor failure; `run.txt` lists each one.
+8. **Writes** `corpus/wolfram-docs/<Page>/<Section>[/<Subsection>]/<n>.in` and `.expected` for every
+   case whose inputs are all usable, plus `index.tsv` for every case and `run.txt` (the counts and
+   the reasons, tallied, and the documentation's version). `index.tsv` gives each case's ID,
+   status and counts, whether it holds an inexact number, the reasons, and the `System`` symbols
+   its inputs and outputs mention, which is what the scope rule (§7.8) reads. Mathics3 files a
+   System symbol it does not implement under `Global``, so "System" here means Mathics3's or any
+   symbol with a reference page. A System symbol with neither, such as `ChartElementData`, passes
+   for a user symbol; triage catches the rare case this lets into scope.
 
-**The expected outputs are the stored documentation outputs, not re-evaluations of the inputs.** The
-extractor's kernel normalizes each output; it never runs an example's inputs. The expected values
-are therefore what Wolfram published, from whichever version built each page; `run.txt` records the
-extractor kernel's version, and a page's own version metadata where its notebook carries any.
+   `<Page>` is the page's own documentation URL, not its title, because a few functions have
+   variant pages under one title (`blockchain/BlockchainData-Bitcoin` beside `BlockchainData`).
+   Three pages ship twice under one URL; the copy tagged with the `Mathematica` paclet is kept.
 
-The cell styles and section structure above are the documentation's as expected, not yet as
-observed. The first run confirms them, and this section is corrected then (D27).
+A `.in` file holds one FullForm input per line. A `.expected` file holds, for each input, a line
+`Out[k]: <FullForm>`, or `Out[k]: -` for an input with no output, or `Out[k]: ?<reason>` for an
+unusable output, followed by one `Message[k]: symbol::tag` line per message. §7.4 fixes the golden
+format when `runScript` lands; if the two differ, the adapter translates this one.
+
+**The expected outputs are the published outputs, not re-evaluations.** Nothing runs an example's
+inputs; the only evaluation is the arithmetic normalization of step 6.
+
+**The normalization is Mathics3's arithmetic, not Wolfram's**; that is the cost of having no kernel
+(D27). It is confined to arithmetic applied to what was already a WL fixed point, but it is not the
+same system. A normalizer defect surfaces as a case that fails in Cassini and whose expected value,
+read against the page, is not what the page shows. Triage then fixes the extractor; it does not add
+a divergence entry.
 
 Because the output is FullForm, this corpus runs from 1a, before the infix parser exists. It also
 reaches what the web captures could not: a behaviour §4.13–§4.15 takes from prose alone can be
-checked against a documented output, wherever the pages carry an example of it. The tutorial notebooks (*Evaluation of Expressions* and its
-neighbours) are a second pass of the same extractor. Their examples overlap the §7.2 harvest, which
-keeps its hand-cited cases.
+checked against a documented output, wherever the pages carry an example of it. The tutorial
+notebooks (*Evaluation of Expressions* and its neighbours) are a second pass, which needs a page
+recognizer for tutorials; their examples overlap the §7.2 harvest, which keeps its hand-cited cases.
 
 ---
 
@@ -3038,11 +3072,11 @@ everything already written.
 
 ### Milestone W — the Wolfram documentation corpus
 
-Needs a licensed Mathematica installation, not Cassini, so it waits for nothing in the code and
-runs alongside Stage 0. It should: 1a is the first milestone that can use it, and it is more use as
+Needs the documentation notebooks that come with a Mathematica licence, and Mathics3; it does not
+need Cassini or a Wolfram kernel. So it waits for nothing in the code and runs alongside Stage 0. It should: 1a is the first milestone that can use it, and it is more use as
 a corpus waiting there than as a corpus assembled afterwards.
 
-**Done when** `ExtractWolframDocs.wl` (§7.9) has run over every reference page in the installed
+**Done when** `extract_wolfram_docs.py` (§7.9) has run over every reference page in the installed
 documentation, and `run.txt` accounts for every example on every page: extracted, or unusable with
 its reason. The goal is *as many examples as possible*, and this makes it countable. The measure is
 coverage of the documentation, not of Cassini: examples with a usable input and output, over all
@@ -3051,6 +3085,9 @@ examples, recorded in D27's row with the Mathematica version.
 - The first-run corrections to §7.9's assumed cell styles and structure made, per D27.
 - `corpus/wolfram-docs/` confirmed untracked by `git status` after a run.
 - The tutorial notebooks' second pass is not gating.
+
+**Done 2026-09-28**, over Mathematica 14.1's documentation. Every example on all 6,552 pages is
+extracted or has a recorded reason, with no extractor failures; the counts are in D27's row.
 
 ### Stage 1
 
@@ -3278,8 +3315,8 @@ two-layer question by outsourcing it, and this project is the exercise of not do
 `vector-sized`/`singletons` for type-level arity (D13), which is also why `poly`'s `sparse` flag is
 off (§5.3).
 
-Outside cabal altogether: the corpus tools of §7.8–§7.9, a Wolfram Language script and Python
-scripts. They produce test data and are never built.
+Outside cabal altogether: the corpus tools of §7.8–§7.9, which are Python scripts; two of them need
+Mathics3. They produce test data and are never built.
 
 ### 11.2 Deferred decisions
 
@@ -3314,7 +3351,7 @@ answer, not a deletion.
 | D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
 | D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8). The unabsorbed terms are guarded against Cohen's cancellations, which would otherwise assume them finite; one case, an infinity-bearing base under non-numeric exponents, is left unmerged (§4.15) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
 | D26 | Imported corpora are vendored only when permissively licensed and small enough to commit; any other corpus is fetched at a pinned commit, and the repository holds only its case IDs (§7.8) | a corpus's licence changing; or the test suites being shipped in a package, where fetched corpora must stay optional |
-| D27 | The Wolfram documentation corpus comes from a licensed local Mathematica installation's notebooks, by its own kernel. It is never scraped from `reference.wolfram.com`, and it is never committed (§7.9). The extractor's assumptions about cell styles and section structure are unconfirmed | the first extraction run: confirm or correct §7.9, and record the Mathematica version and milestone W's coverage count here. Also written permission from Wolfram, which would allow a shared copy, or a change to either held terms page |
+| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here |
 
 ### 11.3 Provenance
 
