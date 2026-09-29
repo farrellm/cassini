@@ -6,7 +6,8 @@ implementation is wrong.
 
 All files are `curl` captures of `reference.wolfram.com`, fetched 2026-08-29 — except
 `wolfram_ref_ownvalues.html`, added 2026-08-30, and the fourteen scoping, control-flow, pattern and
-infinity pages, added 2026-09-25. They carry no CSS;
+infinity pages, added 2026-09-25 — and the two legal pages, from `www.wolfram.com`, added 2026-09-27.
+They carry no CSS;
 strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 
 | File | Read it for |
@@ -22,6 +23,8 @@ strip tags to read them (`sed -e 's/<[^>]*>/ /g' FILE | tr -s ' \n' ' \n'`).
 | `wolfram_ref_return.html` / `_throw.html` / `_catch.html` / `_break.html` | Reference pages for non-local control flow, with full "Details". `Return` "exits only the innermost construct in which it is invoked". Fetched 2026-09-25. |
 | `wolfram_ref_except.html` / `_verbatim.html` | Pattern reference pages, with full "Details". Fetched 2026-09-25. |
 | `wolfram_ref_indeterminate.html` / `_directedinfinity.html` | Reference pages for the non-finite results, with full "Details". Fetched 2026-09-25. |
+| `wolfram_terms_of_use.html` | **Not documentation.** Wolfram's Terms of Use, which cover its websites as "Services" and forbid "Scraping or bulk downloading of data from the Services". Read it for why `DESIGN.md` §7.9 takes no examples from the web pages. Fetched 2026-09-27. |
+| `wolfram_mathematica_license.html` | **Not documentation.** The Mathematica License Agreement: the licensed "Product" is "All the materials, including the Software", and distributing any portion "including collections of data" is prohibited. Read it for why the §7.9 corpus is extracted locally and never committed. Fetched 2026-09-27. |
 | `wltools_language_spec.html` | Community reverse-engineering index. **Informed inference, not authoritative** — the kernel is closed source. Never cite it against the official pages. |
 
 ## The evaluation procedure these pages specify
@@ -83,7 +86,9 @@ the evaluator loop.
 worked example is a `data-src` image reference, not text, and the images were not fetched. So the
 inputs and the prose are greppable, but **what an example evaluates to, and the text of any message
 it prints (`Throw::nocatch`, `Infinity::indet`), is not in the corpus.** A claim about an output
-needs the running system or another source.
+needs the running system or another source. A licensed install's documentation notebooks carry the
+outputs as text, and `DESIGN.md` §7.9 extracts them locally; these web captures cannot become that
+corpus (see `wolfram_terms_of_use.html`).
 
 ## Not obtained
 

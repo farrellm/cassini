@@ -111,8 +111,9 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 
 Ordered roughly by relevance to a Wolfram-style Haskell build.
 
-**Expreduce** (Cory Walker). Go. `github.com/corywalker/expreduce`
+**Expreduce** (Cory Walker). Go; MIT. `github.com/corywalker/expreduce`
 > **The single most relevant codebase.** From-scratch Wolfram Language term-rewriter/CAS with Blank/BlankSequence, Orderless/Flat matching, conditional rules, attributes, and the fixed-point evaluator. The README describes it as "experimental quality and… not currently intended for serious use" — which makes it small and readable. *Lesson: how to structure evaluator + matcher in a statically typed host language.*
+> **Also a test corpus.** The builtin definition files under `expreduce/resources/*.m` carry their tests inline, as `ESameTest[expected, expr]` in WL syntax; `DESIGN.md` §7.8 vendors them (checked at commit `9c5d539cbd3d`, 2024-12-01).
 
 **Mathics / Mathics3.** Python, GPL v3. `github.com/Mathics3/mathics-core`
 > A fuller open Wolfram Language kernel: parser building Expressions, evaluator, WL built-ins, delegating heavy math to SymPy and mpmath. *Lesson: realistic module layout for a batteries-included WL kernel.*
@@ -150,6 +151,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **Rubi** (Albert Rich). `rulebasedintegration.org`
 > The rule-based integration ruleset. Rich's "Vision" page describes "over 6600 integration rules" and states that "Rubi 4.15 has 6,662 rules" — note the discrepancy with Symbolica's "7,000+" count of its port of Rubi 4.17.
+> - **The Rubi test suite.** `github.com/RuleBasedIntegration/MathematicaSyntaxTestSuite`, MIT. Problems as `{integrand, x, steps, answer}`, filed by Rubi's rule families, plus a folder `0 Independent test suites/` of problem sets taken from other sources (Apostol, Bondarenko, Bronstein, Charlwood, Hearn, Hebisch, Jeffrey, Moses, Stewart, Timofeev, Welz, Wester). `DESIGN.md` §7.8 vendors that folder and fetches the rest (checked at commit `32b79cedb8a5`, 2018-10-25).
 
 **Singular, CoCoA, Macaulay2.** Specialized: Gröbner bases, commutative algebra, algebraic geometry.
 > Consult selectively at Stage 3 for specific algorithms done fast and correctly.
@@ -186,6 +188,9 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 
 **Wolfram Research.** Reference pages for **`Module`, `Block`, `With`, `Function`, `Return`, `Throw`, `Catch`, `Break`, `Except`, `Verbatim`, `Indeterminate`, `DirectedInfinity`**. Free.
 > Unlike the four values pages above, these captures carry their full "Details" lists, and they are where the precise rules live: `Module` names locals `xxx$nnn` from `$ModuleNumber`; `Block` clears values and restores them; `Function[params, body, attrs]` "is treated as having attributes attrs for purposes of evaluation"; `Return` "exits only the innermost construct in which it is invoked"; `Break[]` "exits the nearest enclosing `Do`, `For`, `Until` or `While`". **Example outputs are images and were not captured**, so what an example returns, and the text of any message it prints, is not in the held copy.
+
+**Wolfram Research.** *Wolfram Terms of Use* (effective July 29, 2024), `wolfram.com/legal/terms/wolfram`, and *Mathematica License Agreement*, `wolfram.com/legal/agreements/wolfram-mathematica/`. Free.
+> **Not documentation, but they bound its use as a test corpus.** The Terms of Use cover Wolfram's "services, websites, applications, software" as "Services" and state that "Scraping or bulk downloading of data from the Services is strictly prohibited", so the reference pages cannot be harvested from the web. The licence agreement defines the licensed "Product" as "All the materials, including the Software", and prohibits distributing any portion "including collections of data". Hence `DESIGN.md` §7.9: the documentation examples are extracted from the documentation notebooks that come with a licence, whose outputs are box expressions where the web pages' are images, and are never committed.
 
 **riptutorial.** "Wolfram Language — Evaluation Order." **Dead — do not cite.**
 > The site's Wolfram Language content is gone and no Wayback snapshot exists. Everything it summarized is in *Evaluation of Expressions* above, including the point that `Hold`, `HoldComplete`, `HoldForm`, `ReleaseHold` and `Unevaluated` are not evaluator special cases but fall out of attributes plus ordinary definitions.
@@ -317,6 +322,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Pickering, "Data Types à la Carte with Closed Type Families" (`mpickering.github.io`) and SymPy's *Advanced Expression Manipulation* page (`docs.sympy.org`)
 - The READMEs and package pages quoted in §5 and §7: Expreduce, Symja, HaskSymb, `poly`, `dumb-cas`, `numhask`, `sbv` (the `Data.SBV` haddock page), `numeric-prelude` (both the Hackage README, which carries the four objections to `Num`, and the HaskellWiki page), and Symbolica's licence and home pages. All captured in `references/` — the `numeric-prelude` pair on 2026-08-29, `sbv` on 2026-08-31, and the rest on 2026-08-30 — so the quotes have anchors.
 - Wikipedia's *Wolfram Language* article (§5, for the MockMMA cease-and-desist sentence and its missing citation)
+- Wolfram's Terms of Use and Mathematica licence agreement (§6), captured 2026-09-27
+- The Expreduce and Rubi test corpora (§5), as source repositories
 
 **Paywalled journal/conference papers — held here, but not freely re-obtainable.** Re-obtaining any
 of these needs institutional access. Where a free substitute exists it is named:
@@ -547,6 +554,13 @@ findings about the pages themselves. The three scoping tutorials the design name
 pages**: each URL redirects to *Modularity and the Naming of Things*, which carries all three as
 sections. And **example outputs are images in every Wolfram capture**, old and new, so what an example
 returns, and any message text, cannot be checked against the corpus.
+
+**An eleventh round, 2026-09-27**, added the sources behind `DESIGN.md` §7.8–§7.9, the imported test
+corpora. Two Wolfram legal pages were captured and indexed, the Terms of Use and the Mathematica licence
+agreement (§6 above), taking the corpus to **103 documents / 57 HTML captures**; every phrase quoted
+from them was checked against the captures. The Expreduce and Rubi test-suite additions in §5 are
+repositories, covered by the pointers-only waiver: their licences and file layouts were checked
+against the repositories at the commits named in the entries, and nothing from them is quoted.
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 

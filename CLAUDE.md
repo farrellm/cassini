@@ -14,6 +14,7 @@ design disagree, the design is the intent and the code is behind.
 | [`references/`](./references/) | The document corpus the notes cite, indexed, with per-file defect annotations; its totals are in `references/CLAUDE.md`. Gitignored; see rule 6. |
 | `cassini.cabal` | Package definition. GHC2024, `base ^>=4.21.2.0`. |
 | `src/`, `app/`, `test/` | Library, executable, tests. Currently the `cabal init` skeleton. |
+| `corpus/` | Imported test corpora (`DESIGN.md` §7.8–§7.9). So far only `tools/extract_wolfram_docs.py`; `fetched/` and `wolfram-docs/` are gitignored. |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release. |
 
 ## Rules
@@ -119,6 +120,13 @@ design disagree, the design is the intent and the code is behind.
    `references/CLAUDE.md` carries the corpus rules, including which held copies have OCR defects
    that make `grep` lie in both directions.
 
+   **Two test corpora are never committed either** (`DESIGN.md` §7.8–§7.9, D26–D27):
+   `corpus/fetched/`, cloned at pinned commits by `corpus/fetch.sh`, and `corpus/wolfram-docs/`,
+   extracted by `corpus/tools/extract_wolfram_docs.py` from the documentation notebooks that come
+   with a Mathematica licence. Wolfram's terms forbid scraping
+   `reference.wolfram.com`, so do not add a scraper, and do not commit an extracted case: only case
+   IDs go in git.
+
 ## Toolchain
 
 GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`; `ormolu` and `hlint` are installed
@@ -135,6 +143,9 @@ Works today:
 - Build: `cabal build --enable-tests all`
 - Tests: `cabal test cassini-test`
 - Format: `ormolu --mode check $(git ls-files '*.hs')`
+- The Wolfram documentation corpus (milestone W, `DESIGN.md` §7.9):
+  `python corpus/tools/extract_wolfram_docs.py <notebook-dir> corpus/wolfram-docs`, in a Python
+  environment with `Mathics3` installed. It takes about ten minutes on eight cores.
 
 Once §2.8 lands (and not before, because each is currently a silent no-op):
 
