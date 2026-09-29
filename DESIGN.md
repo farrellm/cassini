@@ -452,7 +452,9 @@ module Cassini.Simplify.Automatic (simplify, isASAE) where
 
 Steps 1–7 are Stage 0's exit condition (§10); step 8 needs an evaluator to measure. Step 2 names
 its suite rather than `all`, which would pull the slow suite into every commit. A nightly job runs
-`cassini-oracle`, `cassini-slow` and the random-seed property run (§7.1, §7.3).
+`cassini-oracle`, `cassini-slow`, `cassini-corpus` and the random-seed property run (§7.1, §7.3,
+§7.8). CI's `cassini-corpus` covers the vendored and fetched corpora only: the Wolfram documentation
+corpus is never on a CI runner (§7.9), so its ratchet is checked on a developer machine.
 
 **One compiler, because the version bound says so.** `base ^>=4.21.2.0` admits only GHC 9.12, so a
 wider matrix would be jobs failing at dependency resolution, read as flaky and then ignored.
@@ -2413,7 +2415,7 @@ built, not a stage later. The result forms are fixed together, in one place, eit
 
 ## 7. Testing
 
-In a CAS, "it ran without crashing" says almost nothing. The tests are the specification, in five
+In a CAS, "it ran without crashing" says almost nothing. The tests are the specification, in six
 kinds that catch different failures.
 
 ### 7.1 Layout and harness
@@ -2445,6 +2447,8 @@ slow/
   Test/Slow/...
 doctests/
   Main.hs                     -- the doctest driver (§7.6)
+corpus/
+  Main.hs                     -- the imported corpora (§7.8–§7.9)
 ```
 
 Each suite is its own cabal stanza with its own `hs-source-dirs`, because they have different run
@@ -2455,6 +2459,7 @@ times and different reasons to fail:
 | `cassini-test` | unit, property, golden | every commit, both interning settings; must take seconds |
 | `cassini-doctest` | Haddock examples | every commit |
 | `cassini-oracle` | differential against external systems | nightly, and wherever the externals are present |
+| `cassini-corpus` | other systems' test cases and Wolfram's documentation examples, under a ratchet (§7.8) | nightly, over whichever corpora are present |
 | `cassini-slow` | Gröbner, factorization, integration at size | nightly |
 
 A suite that takes minutes stops being run; the fast suite's job is to be run compulsively.
@@ -2643,7 +2648,9 @@ harness whitelists all three kinds.
 Singular with 3d.
 
 The Rubi problem corpus is the aspirational end state for `Integrate`; its size and timings are
-vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system.
+vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system. §7.8
+imports its test suite, which is a static corpus and not an oracle: the answers are already written
+down.
 
 ### 7.6 Doctests
 
@@ -2663,6 +2670,179 @@ HPC via `cabal test --enable-coverage`, reported but **not gated on a percentage
 branch count is dominated by combinatorial cases that a handful of tests reach and a hundred more
 would not improve. The checked signals are *uncovered top-level functions*, and *uncovered branches
 in `Cassini.Eval` and `Cassini.Simplify.Automatic`*, where an unexercised branch is alarming.
+
+### 7.8 Imported corpora
+
+Other systems have already written down thousands of expected results for the language and the
+algorithms this design implements. They were computed before this implementation existed, which is
+§7.2's reason for trusting worked examples, at a scale no hand harvest reaches. They are also other
+systems' opinions, so they arrive with a scope rule, a divergence manifest and a ratchet; without
+those they are a wall of red, and a suite that is mostly red gets turned off.
+
+| Corpus | Holds | Disposition | Joins at (§10) |
+| :--- | :--- | :--- | :--- |
+| Expreduce, `expreduce/resources/*.m` | `ESameTest[expected, expr]` cases, grouped by builtin, inline with its definitions | vendored | 1c |
+| The Rubi test suite, `RuleBasedIntegration/MathematicaSyntaxTestSuite` | `{integrand, x, steps, answer}` | `0 Independent test suites/` vendored; the rest fetched, for size | 3b, 3c |
+| Mathics3, `test/` | `check_evaluation(input, expected)` pytest calls | fetched | 1c |
+| SymPy's test suite | Python asserts | generated: a script run under SymPy writes chosen cases out as WL, and its output is vendored | 2a, 2b |
+| Wolfram's documentation examples | the reference pages' input and output cells | extracted from the documentation notebooks that come with a licence, never committed (§7.9) | W; runs from 1a |
+
+**Disposition follows licence** (D26); the licences are recorded per system in
+`notes/cas-haskell-bibliography.md` §5. A permissively licensed corpus is *vendored*: copied into
+`corpus/vendor/<source>/` at a pinned upstream commit, with the upstream `LICENSE` beside it and a
+`SOURCE` file naming the commit and the command that fetched it. Any other corpus is *fetched*:
+`corpus/fetch.sh` clones it at its pinned commit into gitignored `corpus/fetched/`, and the suite
+skips a source that is absent, as `cassini-oracle` does. A corpus too large to vendor is fetched
+whatever its licence. Of a fetched corpus, the repository holds only case IDs.
+
+Not taken: Symja's and Maxima's test files, which cover the ground of Mathics3's and SymPy's; and
+FriCAS's `.input` files, which are sessions without asserted results.
+
+```
+corpus/
+  Main.hs                     -- the cassini-corpus driver
+  Test/Corpus/<Source>.hs     -- one adapter per corpus: its format to sessions
+  fetch.sh                    -- pinned clones of the fetched corpora
+  tools/                      -- extractors that run outside cabal (§7.9, SymPy's generator)
+  vendor/<source>/            -- committed, each with LICENSE and SOURCE
+  fetched/                    -- gitignored
+  wolfram-docs/               -- gitignored (§7.9)
+  passing/<source>.txt        -- the ratchet: IDs of the cases known to pass
+  divergences.txt             -- case ID, and the D-number that explains it
+```
+
+The tools are Python scripts: the Wolfram documentation extractor (§7.9), Mathics3's pytest reader
+and SymPy's generator. None is a cabal dependency (§11.1): they produce data, and the suite reads
+data.
+
+**Expected values given as printed text are normalized by their own system.** Mathics3's are
+strings such as `"34 / 15"`, which parse to `Times[34, Power[15, -1]]`, not `Rational[34, 15]`. Its
+extractor therefore runs under Mathics3, reading the test files with Python's `ast` rather than
+importing them, and has Mathics3 parse and evaluate each expected string once and write FullForm.
+§7.9 applies the same kind of normalization to Wolfram's outputs, restricted there to arithmetic. Normalizing with Cassini's own
+evaluator would let a bug reproduce on both sides and pass. Some Mathics3 cases carry a note that
+Mathics3 departs from WMA; those are dropped, since they document Mathics3 rather than the language.
+
+**An adapter turns a corpus into sessions.** A session is a sequence of inputs, each with an
+optional expected output and expected messages, evaluated in one fresh kernel; that is §7.4's golden
+format, so the same `runScript` runs it. A case ID is stable and carries no content: source, file,
+position, as in `expreduce/pattern/MatchQ/7` or `wolfram/With/BasicExamples/2`.
+
+**The scope rule** keeps a young system from drowning. A case is *in scope* when every `System``
+symbol it mentions is defined in the `Cassini.Builtins` registry and, while D9 stands, it holds no
+inexact number; the rest are counted and not run.
+Scope grows by itself as builtins land, and in-scope over total, per source, is the report's
+headline: it is how much of the language the system claims.
+
+**The ratchet** replaces pass/fail. `cassini-corpus` fails when an in-scope case listed in
+`passing/` fails. A case that newly passes is reported, and a person adds it to the list after
+reading it, with the same discipline as goldens (§7.4). A case that fails for a deliberate reason
+goes in `divergences.txt` with its D-number and is reported as a divergence, not a failure; this is
+§7.5's whitelist, kept per case. When a D-number is answered, its divergence entries are
+re-examined in the same change.
+
+**Comparison, per corpus:**
+
+- **Expreduce, Mathics3, Wolfram documentation: structural.** Actual and expected FullForm must be
+  identical up to the order of arguments under `Orderless` heads. Both sides are put in canonical
+  order without evaluating either: the order is D8's known divergence, and not worth an entry per
+  case. Messages compare by `symbol::tag`, never by text.
+- **Rubi: semantic.** `D` of Cassini's answer, minus the integrand, must be `isZero`-`Just True`, as
+  in §7.5. The corpus's own answer is not compared; two correct antiderivatives can differ by a
+  constant and routinely differ in form. The step count is ignored. A case whose answer needs a D21
+  function is out of scope by the scope rule, not a failure, when its integrand mentions one; when
+  only the answer does, it is reported as unsolved, not failed.
+- **SymPy: structural, or semantic where the generator marks the case**, for results whose normal
+  form SymPy does not share with WL (partial-fraction order, factor order, sign normalization).
+
+**Imported cases do not replace regression cases.** When one catches a bug, the fix still adds a
+numbered `test/regress/` case (§7.4): a corpus can be re-pinned, and the regression corpus must not
+lose a case when it is.
+
+Each milestone records its in-scope pass count per source on completion (§10), as it records its
+benchmark baselines, in `corpus/passing/`'s commit history.
+
+### 7.9 The Wolfram documentation corpus
+
+The reference pages' examples are the largest body of expected WL behaviour there is, written by the
+language's owner. They are not open. Wolfram's Terms of Use forbid scraping and bulk downloading its
+websites (`references/papers/wolfram-language/wolfram_terms_of_use.html`), and the web pages carry
+each output only as an image. **So the corpus is extracted from the documentation notebooks that come
+with a Mathematica licence, and is never committed or distributed**
+(`references/papers/wolfram-language/wolfram_mathematica_license.html`; D27). A developer who wants
+it regenerates it from their own copy, as the `references/` corpus is re-fetched.
+
+**No Wolfram kernel is involved.** `corpus/tools/extract_wolfram_docs.py NOTEBOOK_DIR
+corpus/wolfram-docs` is Python, and uses Mathics3 where a kernel would parse and normalize. It:
+
+1. **Finds the reference pages by content.** A page is a notebook whose header cell reads
+   `BUILT-IN SYMBOL`, and its symbol is the first word of its window title (`Plus (+)`). Recognizing
+   pages by content rather than path lets the extractor read an installation's `Documentation/`
+   tree or the unpacked offline documentation installer, whose file names are opaque keys.
+2. **Reads each notebook** with a tolerant parser of its `Notebook[…]` expression, after removing
+   the file format's backslash-newline line continuations.
+3. **Splits the examples into sessions.** After the `PrimaryExamplesSection` cell, a session starts
+   at each `ExampleSection` or `ExampleSubsection` heading and at each `ExampleDelimiter`, whose
+   content is `$Line = 0`: the documentation's own fresh session. Outputs pair with inputs by
+   `CellLabel` (`In[k]:=`, `Out[k]=`), and messages by `During evaluation of In[k]:=`.
+4. **Flattens boxes to input text.** `RowBox` joins its tokens with spaces. `SuperscriptBox`,
+   `FractionBox`, `SqrtBox` and `RadicalBox` become `^`, `/`, `Sqrt` and a fractional power.
+   `StyleBox` and `AdjustmentBox` are transparent. `InterpretationBox` yields its second argument,
+   which is the expression itself rather than a display of it. A few long names (`\[ImaginaryI]`,
+   `\[ExponentialE]`, `\[LeftDoubleBracket]`) are spelled out. A multi-line input cell is one
+   `In[k]` with one `Out[k]`; when every line but the last ends in `;`, it becomes one
+   `CompoundExpression`, which has the same value. Every other box is unusable, and the box names
+   the reason. That covers graphics, `SubscriptBox`, `TraditionalForm`, grids, summary boxes, and
+   `TemplateBox` displays such as `Quantity`, `DateObject` and `Entity`.
+5. **Parses the text with Mathics3's parser and writes the input's FullForm.** Inputs are never
+   evaluated.
+6. **Normalizes each output.** Flattened boxes lose the canonical spelling: the output `1/2` parses
+   to `Times[1, Power[2, -1]]`, not `Rational[1, 2]`. So each output is evaluated once in Mathics3,
+   with every head except arithmetic (`Plus`, `Times`, `Power`, `Sqrt`, `Rational`, `Complex`,
+   `DirectedInfinity`, `List` and a few spellings of them) renamed to an inert copy that keeps only
+   the original's `Hold*` attributes. Only arithmetic re-canonicalizes, a held argument stays as
+   displayed, and Mathics3 cannot evaluate further an output that WL left unevaluated. An output is
+   unusable in any of these cases:
+   - a second evaluation changes it;
+   - normalization takes more than five seconds, or Mathics3 raises an error on it;
+   - its label names a display form other than `InputForm` or `FullForm` (`Out[k]//MatrixForm=`);
+   - it contains a `Module` local such as `x$123`, whose number depends on the history of the kernel
+     that built the page (§4.13).
+7. **Reads messages as `symbol::tag`** from their `MessageTemplate`. `Print` cells are counted, not
+   compared. A page still unfinished after five minutes, which only a hang inside compiled code
+   causes, is killed and counted as an extractor failure; `run.txt` lists each one.
+8. **Writes** `corpus/wolfram-docs/<Page>/<Section>[/<Subsection>]/<n>.in` and `.expected` for every
+   case whose inputs are all usable, plus `index.tsv` for every case and `run.txt` (the counts and
+   the reasons, tallied, and the documentation's version). `index.tsv` gives each case's ID,
+   status and counts, whether it holds an inexact number, the reasons, and the `System`` symbols
+   its inputs and outputs mention, which is what the scope rule (§7.8) reads. Mathics3 files a
+   System symbol it does not implement under `Global``, so "System" here means Mathics3's or any
+   symbol with a reference page. A System symbol with neither, such as `ChartElementData`, passes
+   for a user symbol; triage catches the rare case this lets into scope.
+
+   `<Page>` is the page's own documentation URL, not its title, because a few functions have
+   variant pages under one title (`blockchain/BlockchainData-Bitcoin` beside `BlockchainData`).
+   Three pages ship twice under one URL; the copy tagged with the `Mathematica` paclet is kept.
+
+A `.in` file holds one FullForm input per line. A `.expected` file holds, for each input, a line
+`Out[k]: <FullForm>`, or `Out[k]: -` for an input with no output, or `Out[k]: ?<reason>` for an
+unusable output, followed by one `Message[k]: symbol::tag` line per message. §7.4 fixes the golden
+format when `runScript` lands; if the two differ, the adapter translates this one.
+
+**The expected outputs are the published outputs, not re-evaluations.** Nothing runs an example's
+inputs; the only evaluation is the arithmetic normalization of step 6.
+
+**The normalization is Mathics3's arithmetic, not Wolfram's**; that is the cost of having no kernel
+(D27). It is confined to arithmetic applied to what was already a WL fixed point, but it is not the
+same system. A normalizer defect surfaces as a case that fails in Cassini and whose expected value,
+read against the page, is not what the page shows. Triage then fixes the extractor; it does not add
+a divergence entry.
+
+Because the output is FullForm, this corpus runs from 1a, before the infix parser exists. It also
+reaches what the web captures could not: a behaviour §4.13–§4.15 takes from prose alone can be
+checked against a documented output, wherever the pages carry an example of it. The tutorial
+notebooks (*Evaluation of Expressions* and its neighbours) are a second pass, which needs a page
+recognizer for tutorials; their examples overlap the §7.2 harvest, which keeps its hand-cited cases.
 
 ---
 
@@ -2868,7 +3048,9 @@ decisions in §11.2.
 **Stages are split where one criterion would hide most of the work.** Stage 1 carried one criterion
 that exercised a small part of its gating set, and Stage 2 one that said nothing about factorization
 or about what a user can type. The milestones within a stage gate in order. **Tracks** are the work
-that gates nothing, each stating what it waits for and when it is done.
+that gates nothing, each stating what it waits for and when it is done. **Milestone W** stands
+outside the stages: it builds test data, not code, and gates only in that 1a and later milestones
+triage against what it produces.
 
 ### Stage 0
 
@@ -2887,6 +3069,25 @@ everything already written.
   under both interning settings, over `Test/Gen.hs`'s `genExpr` and `shrinkExpr`; Cohen's order
   examples as unit tests.
 - Benchmark: §8.1's harness and §8.2 in full, with the provisional interning A/B recorded against D2.
+
+### Milestone W — the Wolfram documentation corpus
+
+Needs the documentation notebooks that come with a Mathematica licence, and Mathics3; it does not
+need Cassini or a Wolfram kernel. So it waits for nothing in the code and runs alongside Stage 0. It should: 1a is the first milestone that can use it, and it is more use as
+a corpus waiting there than as a corpus assembled afterwards.
+
+**Done when** `extract_wolfram_docs.py` (§7.9) has run over every reference page in the installed
+documentation, and `run.txt` accounts for every example on every page: extracted, or unusable with
+its reason. The goal is *as many examples as possible*, and this makes it countable. The measure is
+coverage of the documentation, not of Cassini: examples with a usable input and output, over all
+examples, recorded in D27's row with the Mathematica version.
+
+- The first-run corrections to §7.9's assumed cell styles and structure made, per D27.
+- `corpus/wolfram-docs/` confirmed untracked by `git status` after a run.
+- The tutorial notebooks' second pass is not gating.
+
+**Done 2026-09-28**, over Mathematica 14.1's documentation. Every example on all 6,552 pages is
+extracted or has a recorded reason, with no extractor failures; the counts are in D27's row.
 
 ### Stage 1
 
@@ -2916,6 +3117,11 @@ gating on.
   its 1a workload.
 - The oracle harness (§7.5) arrives here, with Mathics3: evaluator semantics are where it is most
   informative, and where this stage's behaviour is most easily got subtly wrong.
+- Corpus: `cassini-corpus` arrives (§7.8) with its scope rule, ratchet and divergence manifest, over
+  milestone W's corpus, which is FullForm and so needs no parser. Every in-scope failure on the
+  pages of this milestone's builtins (`Builtins.Arithmetic`, `.Assign`, `.Structural`, and the
+  attributes) is triaged: passing, a `divergences.txt` entry, or a fix with its regression case.
+  The in-scope pass count is recorded.
 
 #### 1b — the matcher
 
@@ -2930,6 +3136,8 @@ with six candidate mappings and exactly one match — and §4.5.4's `{g[x_], x_,
   variables.
 - Benchmark: §8.3 in full; the discrimination-net crossover recorded (§4.5.5), and the net built only
   if it says so; allocation per match on the sequence-variable grid recorded against D11.
+- Corpus: the Wolfram pages of `Builtins.Pattern` and the pattern objects (`Blank` and its
+  sequences, `Condition`, `Alternatives`, `Except`, `Verbatim`, `OneIdentity`) triaged as in 1a.
 
 #### 1c — calculus in the kernel
 
@@ -2946,6 +3154,9 @@ built-in function; the `Function` in it is why **pure-function application gates
   functions join with their track).
 - Benchmark: §8.4's deep-`D` and `//.` rows baselined; the §8.6 workload gains parsing, printing and
   differentiation.
+- Corpus: with the infix parser, Expreduce (vendored) and Mathics3 (fetched) join `cassini-corpus`
+  (§7.8), and every in-scope case from either, over 1a–1c's builtins, is triaged as in 1a. The
+  Wolfram pages of `D`, `Derivative` and `Function` are triaged too.
 
 #### Track: elementary functions (§4.11–§4.12)
 
@@ -2958,6 +3169,9 @@ Waits for 1c. **Done when** Cohen's Examples 7.15–7.18 simplify to 0 and Fig. 
 - Benchmark: §8.4's trigonometric expansion, baselined; §8.4's expression swell on `Expand`, which is
   `Cassini.Simplify.Rational`'s `algebraicExpand` (§4.12) and so arrives with this track. **D2 closes
   here**, on that workload, not at a stage boundary.
+- Corpus: every corpus's in-scope cases for `Builtins.Elementary` and `Builtins.Simplify`, triaged.
+  Expect D16, D18, D19 and D20 to account for most divergence entries here; one that none of them
+  explains is a finding.
 
 #### Track: control flow, logic and numbers (§4.13–§4.15)
 
@@ -2969,6 +3183,11 @@ pure function catches `Return`) and §4.15's infinity rows taken from memory.
 `Equal` is done here over §4.8's rational-only `isZero`, and gets stronger at 2a with no change to
 `Cassini.Builtins.Logic`: `(x + 1)^2 == x^2 + 2 x + 1` stays unevaluated until then, which is
 §4.14's contract working, not a gap in it.
+
+- Corpus: every corpus's in-scope cases for `Builtins.Control`, `.Logic` and `.Integer`, triaged.
+  Each behaviour listed above as taken from prose alone is checked against milestone W's corpus
+  where a page documents it, and a regression case that disagrees with a documented output is
+  corrected, not whitelisted.
 
 ### Stage 2
 
@@ -2991,6 +3210,9 @@ worked examples of `geddes_czapor_labahn1992_*.pdf` ch. 7 as unit tests — and 
 - Benchmark: §8.5 over rungs 1–3, against `poly`'s own operations; D1 checked against the profile;
   the §8.6 workload gains polynomial arithmetic.
 - The oracle gains SymPy.
+- Corpus: SymPy's generated cases for GCD, `Cancel`, `Together`, resultants and squarefree
+  decomposition vendored (§7.8); they and the Wolfram pages of this milestone's builtins are
+  triaged.
 
 #### 2b — modular methods and factorization
 
@@ -3007,6 +3229,8 @@ schedule slips.
 - Tests: the `Poly.Factor` row of §7.3; the `Poly` rows over all five rungs.
 - Benchmark: §8.5 across the ladder, with the subresultant/modular crossover recorded for the
   dispatcher; factorization at size in `cassini-slow`.
+- Corpus: SymPy's generated factorization cases and the Wolfram pages of `Factor` and `Apart`,
+  triaged.
 
 ### Stage 3
 
@@ -3027,12 +3251,14 @@ Waits for 2a. `integrateRational`, `RootSum` (§6.5) with `D` distributing over 
 dispatching to it. **Done when** `integrateRational` is complete for rational functions, verified by
 the `Integrate` row (`D ∘ ∫ ≡ id`) over generated rational functions and by Bronstein ch. 2's worked
 examples. `RootSum` resolves to explicit logarithms only as far as factorization over ℚ reaches:
-the rational-root interim before 2b, full `Factor` after.
+the rational-root interim before 2b, full `Factor` after. The rational integrands of the Rubi test
+suite's independent suites (§7.8) are all solved, each checked by `D ∘ ∫ ≡ id`: a complete
+algorithm has no excuse on a problem in its class.
 
 #### 3c — the tier-1 rule set (§6.2 tier 1)
 
 Waits for 1b and the elementary track. **Done when** `Cassini.Integrate.Rules` solves a committed
-problem list — **written before the rules**, drawn from the Rubi problem corpus (§7.5) for the
+problem list — **written before the rules**, drawn from the Rubi test suite (§7.8) for the
 families §6.2 names — with each answer checked by `D ∘ ∫ ≡ id` in `cassini-slow`. The number solved
 is the recorded number; conditional answers such as `∫xⁿ` wait on D22.
 
@@ -3044,6 +3270,8 @@ Buchberger, `GroebnerBasis` and `PolynomialReduce`. Waits for 2a. **Done when**
 `Groebner` row passes. Reaching `Simplify` itself waits on D17.
 
 - Benchmark: §8.5's Gröbner ideals in `cassini-slow`, with their timeout. The oracle gains Singular.
+- Corpus: the Wolfram pages of `GroebnerBasis` and `PolynomialReduce`, triaged. Basis order and
+  normalization follow WL's documented outputs or carry a divergence entry.
 
 #### Tracks
 
@@ -3087,6 +3315,9 @@ two-layer question by outsourcing it, and this project is the exercise of not do
 `vector-sized`/`singletons` for type-level arity (D13), which is also why `poly`'s `sparse` flag is
 off (§5.3).
 
+Outside cabal altogether: the corpus tools of §7.8–§7.9, which are Python scripts; two of them need
+Mathics3. They produce test data and are never built.
+
 ### 11.2 Deferred decisions
 
 Each is a decision with a trigger, not something to rediscover. When a trigger fires, the row gets an
@@ -3119,6 +3350,8 @@ answer, not a deletion.
 | D23 | **Answered 2026-09-25:** `Return` is `UReturn`, caught by the innermost loop or user-rule application, per `wolfram_ref_return.html` (§4.13) | the regression case for `Return` inside `If` in a compound body disagreeing with §4.13 |
 | D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
 | D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8). The unabsorbed terms are guarded against Cohen's cancellations, which would otherwise assume them finite; one case, an infinity-bearing base under non-numeric exponents, is left unmerged (§4.15) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
+| D26 | Imported corpora are vendored only when permissively licensed and small enough to commit; any other corpus is fetched at a pinned commit, and the repository holds only its case IDs (§7.8) | a corpus's licence changing; or the test suites being shipped in a package, where fetched corpora must stay optional |
+| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here |
 
 ### 11.3 Provenance
 
