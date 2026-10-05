@@ -468,10 +468,15 @@ module Cassini.Simplify.Automatic (simplify, isASAE) where
    (§7.6), under each `intern` setting
 5. `hlint --ignore-glob='lint/fixtures/**' .`, plus `lint/check-layering.sh` (§2.6)
 6. `ormolu --mode check $(git ls-files '*.hs')` — no `--no-cabal` (§2.5)
-7. `cabal haddock --haddock-quickjump`, with a scripted floor on haddock's documented-percentage
+7. `cabal haddock --haddock-quickjump`, with a scripted floor on haddock's documented-percentage:
+   `scripts/check-haddock.py`, at 100% for every module except `Cassini.Prelude`, whose exports are
+   relude's
 8. the benchmark gate (§8.6), from milestone 1a
 
-Steps 1–7 are Stage 0's exit condition (§10); step 8 needs an evaluator to measure. Step 2 names
+Steps 1–7 are Stage 0's exit condition (§10); step 8 needs an evaluator to measure. Every cabal
+command in the workflow takes the same `--enable-tests --enable-benchmarks --ghc-options=-Werror`,
+so that no step reconfigures the build and the `intern` build is held to `-Werror` too. The
+dependencies carry `^>=` bounds at the versions CI first resolved. Step 2 names
 its suite rather than `all`, which would pull the slow suite into every commit. A nightly job runs
 `cassini-oracle`, `cassini-slow`, `cassini-corpus` and the random-seed property run (§7.1, §7.3,
 §7.8). CI's `cassini-corpus` covers the vendored and fetched corpora only: the Wolfram documentation
