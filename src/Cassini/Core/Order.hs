@@ -19,6 +19,10 @@ import Cassini.Number (compareNumber)
 import Cassini.Structure (Kind (..), exprKind)
 import Data.Vector qualified as V
 
+-- $setup
+-- >>> import Cassini.Core.Expr (apply, mkSymbol)
+-- >>> import Cassini.Core.Symbol (globalSymbol, sPower, sTimes)
+
 -- | Cohen's ◁ as an 'Ordering', total on every 'Expr' and 'EQ' exactly on
 -- equal terms.
 --
