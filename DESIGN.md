@@ -3149,6 +3149,17 @@ everything already written.
   examples as unit tests.
 - Benchmark: §8.1's harness and §8.2 in full, with the provisional interning A/B recorded against D2.
 
+**Done 2026-10-04** (PR #10), with CI green on steps 1–7 under `-Werror` in both `intern`
+settings. The departures it found are recorded in their sections:
+- the warning set (§2.4);
+- hlint's extensions (§2.5);
+- the unsafety audit (§2.3, §3.2);
+- the boot-file cycle and where the traversal instances live (§3.4, §3.6);
+- `Ord Expr` and the O-T composition (§3.5);
+- heads as subexpressions (§3.7);
+- the doctest form (§7.6);
+- the provisional D2.
+
 ### Milestone W — the Wolfram documentation corpus
 
 Needs the documentation notebooks that come with a Mathematica licence, and Mathics3; it does not
