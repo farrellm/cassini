@@ -2941,10 +2941,11 @@ Compiled with `-O2` and `-with-rtsopts=-T`, so allocation and residency are repo
 For a term rewriter **allocation is the story**: regressions show up as bytes long before seconds,
 and allocation is deterministic for a given compiler and flags, where time is not.
 
-The flags are `--baseline`, `--fail-if-slower`, `--fail-if-faster` and `--csv` (spellings to confirm
-against the installed version). **`--fail-if-slower` thresholds time only**, though the CSV has an
-allocation column, so the allocation gate is ours: a small script diffing that column against the
-committed baseline (§8.6).
+The flags are `--baseline`, `--fail-if-slower`, `--fail-if-faster` and `--csv` (confirmed against
+`tasty-bench` 0.5.1). **`--fail-if-slower` thresholds time only**, though the CSV has an allocation
+column, so the allocation gate is ours: `bench/check-allocation.py BASELINE CURRENT`, which fails
+when a benchmark's `Allocated` exceeds its baseline by more than 10% (§8.6). Baselines are named
+`ghc-<version>-<hash|intern>.csv`, because the interning flag changes every allocation figure.
 
 ### 8.2 Core (Stage 0)
 
@@ -3400,7 +3401,7 @@ answer, not a deletion.
 | # | Decision | Trigger to revisit |
 | :--- | :--- | :--- |
 | D1 | `Integer` over a custom bignum (§3.1) | milestone 2a's polynomial benchmarks (§10) showing `Integer` overhead dominating |
-| D2 | Interning on or off (§3.4) | provisional at Stage 0 on the §8.2 proxy; decided when the elementary-functions track (§10) brings §8.4's `Expand`, with the numbers recorded here |
+| D2 | Interning on or off (§3.4). **Provisionally off, 2026-10-04**, on §8.2's proxy (GHC 9.12.4, `-O2`, one developer machine; `bench/baseline/ghc-9.12.4-{hash,intern}.csv`). The weak table loses the gate on both counts. For the `(a+b+c+d)^30` swell, hash-only takes 29 ms and allocates 34 MB, and the table takes 36 ms and allocates 66 MB. The table wins residency, with peak memory of 17 MB against 58 MB over the whole run, and it wins equality of equal terms built apart, 3 ns against 570 µs on a depth-14 tree. It also builds that tree in about the same time and deep-`substitute`s it in half the time, but it allocates twice as much doing either. Most of the table's allocation is one `IORef`, one `Weak` and one `HashMap` path copy per new node. | decided when the elementary-functions track (§10) brings §8.4's `Expand`, with the numbers recorded here |
 | D3 | `recursion-schemes` over `uniplate` (§3.6) | traversal showing up in the §8.4 profile |
 | D4 | QuickCheck over Hedgehog (§7.3) | shrinking quality becoming the reason counterexamples go uninvestigated |
 | D5 | `poly` over Kmett's `algebra` (§5.3) | Gröbner work at Stage 3 needing the `Numeric.Domain.*` chain |

@@ -139,7 +139,6 @@ benchmark cassini-bench
     , cassini
     , cassini:cassini-prelude
     , tasty-bench
-    , vector
 
   mixins:
     base hiding (Prelude),

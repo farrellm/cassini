@@ -49,25 +49,29 @@ internIO s = do
   h <- evaluate (hashShape s)
   modifyMVar internTable (insertOrFind h)
   where
-    insertOrFind h (Table next table) = do
-      (live, found) <- scan h (HashMap.findWithDefault [] h table)
+    insertOrFind h t@(Table next table) = do
+      let bucket = HashMap.findWithDefault [] h table
+      (found, dead) <- scan h bucket
+      -- Rebuild the bucket only when it held dead entries.
+      live <- if dead then filterM (fmap isJust . deRefWeak . snd) bucket else pure bucket
+      let table' = if dead then HashMap.insert h live table else table
       case found of
-        Just e -> pure (Table next (HashMap.insert h live table), e)
+        Just e -> pure (if dead then Table next table' else t, e)
         Nothing -> do
           key <- newIORef ()
           let e = Expr h next key s
           w <- weakOn key e (reap h next)
-          pure (Table (next + 1) (HashMap.insert h ((next, w) : live) table), e)
-    -- Keep the live entries; return the first whose node has this shape.
-    scan h = go [] Nothing
+          pure (Table (next + 1) (HashMap.insert h ((next, w) : live) table'), e)
+    -- The first live node with this shape, and whether any entry was dead.
+    scan h = go False
       where
-        go acc found [] = pure (reverse acc, found)
-        go acc found (entry@(_, w) : rest) =
+        go dead [] = pure (Nothing, dead)
+        go dead ((_, w) : rest) =
           deRefWeak w >>= \case
-            Nothing -> go acc found rest
+            Nothing -> go True rest
             Just e
-              | isNothing found && e.exprHash == h && e.exprShape == s -> go (entry : acc) (Just e) rest
-              | otherwise -> go (entry : acc) found rest
+              | e.exprHash == h && e.exprShape == s -> pure (Just e, dead)
+              | otherwise -> go dead rest
 
 -- | A weak pointer keyed on the 'IORef''s primitive 'MutVar#', as
 -- 'Data.IORef.mkWeakIORef' does, with the node as its value.

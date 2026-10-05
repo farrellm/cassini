@@ -1,0 +1,15 @@
+Name,Mean (ps),2*Stdev (ps),Allocated,Copied,Peak Memory
+All.Core.construct.tree depth 10,451160156,43432248,1310230,1332,6291456
+All.Core.construct.tree depth 14,7381881568,344476696,20973327,13590,6291456
+"All.Core.equality.equal, built apart",3256,104,0,0,6291456
+All.Core.equality.differing at the last leaf,2803,36,0,0,6291456
+All.Core.compareCanonical.depth 10,490358,42934,320,0,6291456
+All.Core.compareCanonical.depth 100,4958924,317438,3200,0,6291456
+All.Core.compareCanonical.depth 1000,53586952,2471854,97538,4,11534336
+All.Core.sortBy compareCanonical.10 arguments,3515788,347298,2792,0,11534336
+All.Core.sortBy compareCanonical.100 arguments,75752430,6274024,48125,26,11534336
+All.Core.sortBy compareCanonical.1000 arguments,1252629262,120940642,824979,3922,11534336
+"All.Core.substitute, deep tree",4651068325,343891490,16780414,12161,11534336
+All.Core.expression swell.(a+b+c+d)^10,1188209965,47953552,2786905,35601,11534336
+All.Core.expression swell.(a+b+c+d)^20,8471652825,525504372,19542348,474293,12582912
+All.Core.expression swell.(a+b+c+d)^30,36292888581,2439826988,69097160,2441088,17825792
