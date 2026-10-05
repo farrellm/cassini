@@ -78,8 +78,9 @@ design disagree, the design is the intent and the code is behind.
    - **relude re-exports mtl's `State`/`Reader` vocabulary** (`get`, `put`, `ask`, `local`, …), which
      collides name-for-name with `effectful`. Resolved once in `Cassini.Prelude` by subtraction, not
      per module by qualification; the same subtraction removes relude's `one` and `Undefined`, and
-     the list will grow (§2.3). relude also withholds `unsafePerformIO`, which is a feature: the
-     intern table's one `import System.IO.Unsafe` is a complete audit of the unsafety in the tree.
+     the list will grow (§2.3). relude also withholds `unsafePerformIO`, which is a feature:
+     `grep -rl System.IO.Unsafe src src-intern` finds the symbol table and the two intern tables,
+     and that is a complete audit of the unsafety in the tree.
    - **No `effectful` handler can enumerate matches.** `Effectful.NonDet` is `Maybe`-shaped by
      necessity, not by an old release, so the matcher uses `LogicT` over `Eff` inside the `MatchT`
      **newtype** in `Cassini.Pattern.Match`, the one module the `.hlint.yaml` rule lets import
