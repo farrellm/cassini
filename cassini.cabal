@@ -40,7 +40,7 @@ library cassini-prelude
   import:           warnings, extensions
   exposed-modules:  Cassini.Prelude
   hs-source-dirs:   prelude
-  build-depends:    relude
+  build-depends:    relude ^>=1.2.2
   mixins:
     relude (Relude as Prelude),
     relude
@@ -68,12 +68,12 @@ library
     hs-source-dirs: src-intern/hash
 
   build-depends:
-    , base
+    , base ^>=4.21.2.0
     , cassini:cassini-prelude
-    , hashable
-    , recursion-schemes
-    , unordered-containers
-    , vector
+    , hashable ^>=1.5.1
+    , recursion-schemes ^>=5.2.3
+    , unordered-containers ^>=0.2.21
+    , vector ^>=0.13.2
 
   mixins:
     base hiding (Prelude),
@@ -86,7 +86,7 @@ executable cassini
   main-is:          Main.hs
   hs-source-dirs:   app
   build-depends:
-    , base
+    , base ^>=4.21.2.0
     , cassini:cassini-prelude
 
   mixins:
@@ -109,16 +109,16 @@ test-suite cassini-test
     Test.Gen
 
   build-depends:
-    , base
+    , base ^>=4.21.2.0
     , cassini
     , cassini:cassini-prelude
-    , hashable
-    , QuickCheck
-    , recursion-schemes
-    , tasty
-    , tasty-hunit
-    , tasty-quickcheck
-    , vector
+    , hashable ^>=1.5.1
+    , QuickCheck ^>=2.19
+    , recursion-schemes ^>=5.2.3
+    , tasty ^>=1.5.4
+    , tasty-hunit ^>=0.10.2
+    , tasty-quickcheck ^>=0.11.1
+    , vector ^>=0.13.2
 
   mixins:
     base hiding (Prelude),
@@ -135,10 +135,10 @@ benchmark cassini-bench
   other-modules:    Bench.Core
   ghc-options:      -O2 -with-rtsopts=-T
   build-depends:
-    , base
+    , base ^>=4.21.2.0
     , cassini
     , cassini:cassini-prelude
-    , tasty-bench
+    , tasty-bench ^>=0.5.1
 
   mixins:
     base hiding (Prelude),
