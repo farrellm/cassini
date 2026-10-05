@@ -437,6 +437,11 @@ CI checks the config with fixture modules — at least one at `Test.Cassini.…`
 reported and `Cassini.Pattern.Match` is not; `Cassini.Zero` importing `Cassini.Simplify.Automatic`
 is reported and `Cassini.Builtins.Polynomial` is not.
 
+The fixtures are one-import modules in `lint/fixtures/reported/` and `lint/fixtures/allowed/`, and
+`lint/check-layering.sh` asserts that hlint reports every import in the first set and none in the
+second. They break the rules on purpose, so the tree-wide run excludes them:
+`hlint --ignore-glob='lint/fixtures/**' .`.
+
 ### 2.7 Documentation
 
 Haddock on every export. A module implementing a published algorithm names its source in the module
@@ -461,7 +466,7 @@ module Cassini.Simplify.Automatic (simplify, isASAE) where
    both implementations of `Cassini.Core.Intern` are compiled and tested on every commit
 4. doctests: `cabal repl --with-repl=doctest --repl-options=-Wno-missing-export-lists lib:cassini`
    (§7.6), under each `intern` setting
-5. `hlint .`, plus the §2.6 fixtures
+5. `hlint --ignore-glob='lint/fixtures/**' .`, plus `lint/check-layering.sh` (§2.6)
 6. `ormolu --mode check $(git ls-files '*.hs')` — no `--no-cabal` (§2.5)
 7. `cabal haddock --haddock-quickjump`, with a scripted floor on haddock's documented-percentage
 8. the benchmark gate (§8.6), from milestone 1a
