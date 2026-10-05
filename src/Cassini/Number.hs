@@ -19,6 +19,9 @@ module Cassini.Number
   )
 where
 
+-- $setup
+-- >>> import Data.Ratio ((%))
+
 -- | An exact number.
 data Number
   = -- | An integer.

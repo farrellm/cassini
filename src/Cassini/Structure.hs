@@ -29,6 +29,11 @@ import Cassini.Core.Expr (Expr, exprArity, exprHead, mkApp, pattern App, pattern
 import Cassini.Core.Symbol (sFactorial, sPlus, sPower, sTimes)
 import Data.Vector qualified as V
 
+-- $setup
+-- >>> import Cassini.Core.Expr (apply, mkNumber, mkSymbol)
+-- >>> import Cassini.Core.Symbol (globalSymbol)
+-- >>> import Cassini.Number (Number (NInt))
+
 -- | Cohen's kinds, extended with strings (O-K, §3.5).
 data Kind
   = KConstant
@@ -95,7 +100,7 @@ construct = mkApp
 
 -- | Whether no complete subexpression of @u@, heads included, is @t@.
 --
--- >>> let [a, b, c] = map (mkSymbol . globalSymbol) ["a", "b", "c"]
+-- >>> let a = mkSymbol (globalSymbol "a"); b = mkSymbol (globalSymbol "b"); c = mkSymbol (globalSymbol "c")
 -- >>> freeOf (apply sPlus [a, b, c]) (apply sPlus [a, b])
 -- True
 freeOf :: Expr -> Expr -> Bool

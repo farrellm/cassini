@@ -459,7 +459,8 @@ module Cassini.Simplify.Automatic (simplify, isASAE) where
 2. `cabal test cassini-test` (unit, property, golden)
 3. `cabal test -f intern cassini-test` — the same suite with the interning flag flipped (§3.4), so
    both implementations of `Cassini.Core.Intern` are compiled and tested on every commit
-4. doctests (§7.6)
+4. doctests: `cabal repl --with-repl=doctest --repl-options=-Wno-missing-export-lists lib:cassini`
+   (§7.6), under each `intern` setting
 5. `hlint .`, plus the §2.6 fixtures
 6. `ormolu --mode check $(git ls-files '*.hs')` — no `--no-cabal` (§2.5)
 7. `cabal haddock --haddock-quickjump`, with a scripted floor on haddock's documented-percentage
@@ -2505,8 +2506,6 @@ oracle/
 slow/
   Main.hs                     -- Gröbner, factorization, integration at size
   Test/Slow/...
-doctests/
-  Main.hs                     -- the doctest driver (§7.6)
 corpus/
   Main.hs                     -- the imported corpora (§7.8–§7.9)
 ```
@@ -2517,7 +2516,7 @@ times and different reasons to fail:
 | Suite | Contents | Runs |
 | :--- | :--- | :--- |
 | `cassini-test` | unit, property, golden | every commit, both interning settings; must take seconds |
-| `cassini-doctest` | Haddock examples | every commit |
+| doctests (not a suite; §7.6) | Haddock examples | every commit |
 | `cassini-oracle` | differential against external systems | nightly, and wherever the externals are present |
 | `cassini-corpus` | other systems' test cases and Wolfram's documentation examples, under a ratchet (§7.8) | nightly, over whichever corpora are present |
 | `cassini-slow` | Gröbner, factorization, integration at size | nightly |
@@ -2716,13 +2715,21 @@ down.
 
 Every exported function with non-obvious behaviour carries a runnable Haddock example, and those
 examples are tests — cheap, and the fix for expression examples that go stale when the normal form
-changes. They run on every commit as the `cassini-doctest` suite (§2.8, step 4).
+changes. They run on every commit (§2.8, step 4).
 
-**Risk to verify on first build:** `doctest` interprets sources through the GHC API, and a
-test-suite that invokes it does not automatically receive cabal's `mixins` renaming, without which
-`Prelude` does not resolve to `Cassini.Prelude`. If the suite cannot be given those flags, step 4
-becomes `cabal repl --with-compiler=doctest cassini`, which inherits cabal's own flags, and the
-`cassini-doctest` stanza is dropped.
+**They are not a test-suite stanza: the risk this section carried was real.** `doctest`
+interprets sources through the GHC API, and nothing hands an executable cabal's `mixins`
+renaming, without which `Prelude` does not resolve to `Cassini.Prelude`. Of the two ways of
+borrowing cabal's own flags, `cabal repl --with-compiler=doctest` fails: cabal then builds the
+internal `cassini-prelude` sublibrary with doctest as its compiler (*unrecognized option
+`--make'*). `cabal repl --with-repl=doctest lib:cassini`, which cabal 3.14 added for this purpose,
+swaps the program only for the repl session and works. Answered on the first build, with doctest
+0.25.0.
+
+`--repl-options=-Wno-missing-export-lists` is needed because each example's `import` line is
+compiled as an interactive module, which has no export list. The flag is the session's, not a
+module's, so §2.4's rule that the warning set is not relaxed per module still holds. Imports an
+example needs beyond its module's own go in a `-- $setup` block.
 
 ### 7.7 Coverage
 
@@ -3368,7 +3375,7 @@ document requires it.
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
 | `megaparsec` | surface syntax (§4.10) | L5 |
 | `poly`, `semirings` | polynomial substrate and coefficient classes (§5.3) | A |
-| `tasty`, `tasty-hunit`, `tasty-quickcheck`, `tasty-golden`, `tasty-bench`, `doctest` | §7, §8 | test |
+| `tasty`, `tasty-hunit`, `tasty-quickcheck`, `tasty-golden`, `tasty-bench` | §7, §8 | test |
 
 Deliberately *not* dependencies: `lens` (the structure operators are a dozen functions, not an optics
 library); `uniplate` (§3.6); `sbv` (D10); `symengine` (FFI to a fast external core would settle the
@@ -3376,8 +3383,9 @@ two-layer question by outsourcing it, and this project is the exercise of not do
 `vector-sized`/`singletons` for type-level arity (D13), which is also why `poly`'s `sparse` flag is
 off (§5.3).
 
-Outside cabal altogether: the corpus tools of §7.8–§7.9, which are Python scripts; two of them need
-Mathics3. They produce test data and are never built.
+Outside cabal altogether: `doctest`, an installed executable that `cabal repl --with-repl` runs
+(§7.6); and the corpus tools of §7.8–§7.9, which are Python scripts, two of which need Mathics3.
+None of them is a build dependency.
 
 ### 11.2 Deferred decisions
 
