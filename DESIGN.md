@@ -239,10 +239,9 @@ library cassini-prelude
   import:           warnings, extensions
   exposed-modules:  Cassini.Prelude
   hs-source-dirs:   prelude
-  build-depends:    base, relude
+  build-depends:    relude
   mixins:
-      base   hiding (Prelude)
-    , relude (Relude as Prelude)
+      relude (Relude as Prelude)
     , relude
   default-language: GHC2024
 
@@ -260,11 +259,14 @@ Every stanza that consumes the prelude carries the same two `mixins` lines. Veri
 
 - **`cassini:cassini-prelude`, not the bare name**, in both `build-depends` and `mixins`; cabal
   rejects the bare one as *unknown package*.
-- **The sublibrary needs all three of relude's recommended `mixins` lines.** Without
+- **The sublibrary depends on `relude` alone, through two `mixins` lines.** Without
   `relude (Relude as Prelude)`, GHC's implicit `import Prelude` has nothing to resolve to (*Could not
-  load module 'Prelude'*); leaving base's `Prelude` visible instead makes the re-export ambiguous,
-  because relude *redefines* `show`, `lines`, `error` and others. The bare `relude` line keeps
-  `import Relude hiding (…)` possible. Consumers need no third line.
+  load module 'Prelude'*); base's `Prelude` must not be visible beside it, because relude
+  *redefines* `show`, `lines`, `error` and others and the re-export becomes ambiguous. Relude's
+  third recommended line, `base hiding (Prelude)`, is unnecessary here: `Cassini.Prelude` imports
+  nothing from `base`, so `base` is not a dependency and its `Prelude` is not in scope at all.
+  The bare `relude` line keeps `import Relude hiding (…)` possible. Consumers, which do import
+  from `base`, carry `base hiding (Prelude)` instead of a third line.
 - **The subtraction survives.** Inside `Cassini.Prelude` the hidden names are back in scope via the
   implicit `Prelude`, but `module Relude` exports only names in scope qualified as `Relude.…`, which
   `hiding` denies. A consumer gets *Not in scope* for `put` and may define its own `one`.
@@ -289,7 +291,8 @@ import Relude hiding
 ```
 
 The list was checked against the export lists of `Relude.Monad.Reexport`, `Effectful.Reader.Static`
-and `Effectful.State.Static.Local`, and is grouped by reason. **The last group will grow**; where
+and `Effectful.State.Static.Local`, and is grouped by reason. In the source the grouping is a
+comment above the import, because ormolu sorts import lists. **The last group will grow**; where
 relude's meaning is unrelated to ours it is subtracted here, not dodged by renaming domain types.
 
 Consequences:
@@ -299,8 +302,10 @@ Consequences:
   the rendering path.
 - **No partial functions** — no `head`, `fromJust`, `!!`. Indexing (`Part`, argument access) returns
   `Either` with a message, as the language requires anyway (§4.7).
-- **No `unsafePerformIO`.** `Cassini.Core.Intern` (§3.4) imports `System.IO.Unsafe` explicitly, so
-  `grep -l System.IO.Unsafe src` is a complete audit of the tree's unsafety.
+- **No `unsafePerformIO`.** Two modules import `System.IO.Unsafe` explicitly: `Cassini.Core.Symbol`,
+  for the symbol table (§3.2), and `Cassini.Core.Intern`, in each of its two implementations (§3.4).
+  `grep -rl System.IO.Unsafe src src-intern` listing exactly those three files is a complete audit
+  of the tree's unsafety.
 
 ### 2.4 Compiler, warnings and extensions
 
@@ -313,10 +318,16 @@ common warnings
     -Wall -Wcompat -Widentities
     -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wmissing-export-lists -Wpartial-fields -Wredundant-constraints
-    -Wunused-packages
 ```
 
 CI adds `-Werror` from the command line (§2.8) rather than in the cabal file, which Hackage rejects.
+
+**`-Wunused-packages` is not in the set**, because under §2.3's prelude it cannot be satisfied.
+GHC decides it from import names before compiling, and misses two kinds of use: a package used
+only through the mixin-renamed implicit `Prelude` (`cassini-prelude`, in every stanza), and `base`
+used only through modules that GHC 9.12's `base` re-exports from `ghc-internal` (`Text.Show`,
+`System.IO.Unsafe`). Both are reported unused, and `-Werror` fails the build. Dependency hygiene
+is a review item until GHC resolves renamed and re-exported modules for this check.
 `-Wmissing-export-lists` is the load-bearing warning: every module states its interface, which is
 what makes §1.2's layering checkable and the `Internal` convention meaningful.
 
@@ -355,6 +366,10 @@ about in review, which is the whole value being bought. The `.ormolu` file it re
 `.cabal` file, resolving `common` stanza imports. With `--no-cabal` it parses `r.rName` without
 `OverloadedRecordDot` and *rewrites the source* to `r . rName`, silently changing its meaning.
 (Verified with ormolu 0.8.0.2.)
+
+**hlint does not read the cabal file at all**, so `.hlint.yaml` passes the project-wide
+extensions as `arguments`. Without them hlint parses `(f x).field` as composition and suggests
+`f x . field`, which changes the meaning.
 
 ### 2.6 Layering, enforced
 
@@ -543,8 +558,11 @@ context-first would sort every ``Global` `` symbol before every ``System` `` one
 `Text` code-point order agrees with O-2's `0-9 < A-Z < a-z` on ASCII.
 
 Symbols are interned unconditionally — cheap, obviously correct, and it buys `Int` comparison for
-every rule lookup. The table is a global `IORef (HashMap Text Symbol)` plus a counter behind
-`unsafePerformIO`/`NOINLINE`, append-only, so lookup-or-allocate is one `atomicModifyIORef'`.
+every rule lookup. The table is a global `IORef (HashMap (Text, Text) Symbol)` keyed on context and
+name, plus a counter, behind `unsafePerformIO`/`NOINLINE`. It is append-only, so
+lookup-or-allocate is one `atomicModifyIORef'`. This makes `Cassini.Core.Symbol` the second
+module that imports `System.IO.Unsafe` (§2.3), compiled with `-fno-full-laziness -fno-cse` as
+§3.4's table is.
 Contexts (``System`Plus``, ``Global`x``) are carried from the start; retrofitting a namespace means
 touching every rule key.
 
@@ -608,7 +626,12 @@ constructors, not at every call site, so §3.4 can change without a repository-w
 
 `SApp` stores the head apart from the arguments. `Part[expr, 0]` returns the head, but the head is
 read on every evaluation step and arguments are indexed far less often, so `exprHead` stays a field
-access; `Cassini.Structure.part` restores the 0-index convention at the API boundary.
+access; `Cassini.Structure.part` restores the 0-index convention at the API boundary. On an atom,
+`exprHead` is WL's `Head`: the symbol `Integer`, `Rational`, `String` or `Symbol`.
+
+`Int_` is bidirectional. `Rat_` matches only: building a fraction goes through
+`Cassini.Number.fromRational'`, which normalizes `4/2` to an integer. A bidirectional `Rat_` would
+build terms it does not match.
 
 Arguments are a boxed `Vector`: `Orderless`, `Flat` and `Listable` all want bulk operations with
 known lengths, and a list makes every arity check O(n). Consing onto the front becomes O(n), which
@@ -678,7 +701,16 @@ Also:
   module's only export.
 - **The switch is a cabal `manual` flag `intern`, default off**, selecting between two
   `hs-source-dirs` that implement the same one-function interface: hash-only (every node
-  `notInterned`) and the weak table. CI builds and tests both (§2.8).
+  `notInterned`) and the weak table. CI builds and tests both (§2.8). They are `src-intern/hash`
+  and `src-intern/weak`, and both hash with `Cassini.Core.Expr.Internal.hashShape`, so the hash
+  does not depend on the flag.
+- **`intern` forces the shape's hash before taking the `MVar`.** Hashing forces every child to
+  WHNF. A child left as a thunk is a pending `intern`, and forcing it inside the critical section
+  would deadlock on the table.
+- **`Cassini.Core.Intern` imports the representation through `Internal.hs-boot`.**
+  `Internal` must import `intern`, because §3.6's `embed` lives there, and `intern` builds
+  `Internal`'s types. The boot file declares the two types in full, and must be kept in step with
+  the module.
 - **The gate is a number.** §8.2 runs the same workload with the flag on and off. At Stage 0 the
   workload is a constructor-built expression-swell proxy; the decision closes when §8.4's real
   `Expand` workload exists, with the elementary-functions track (§10). Interning ships if it wins
@@ -719,9 +751,13 @@ product, sum, power, factorial, function.
 | O-12 | function vs symbol | if the function's name is `v`, then `v` first; else compare the name with `v` |
 | O-13 | otherwise | `not (v ◁ u)` — the swap |
 
-**O-3's and O-6's length tiebreaks are load-bearing.** Without O-6-2(c), `g[x]` against `g[x, y]`
-satisfies no rule, falls to O-13, and swaps back and forth forever. §7.3's totality property is what
-catches a dropped tiebreak.
+**O-3's and O-6's length tiebreaks are load-bearing in Cohen's text.** Without O-6-2(c), `g[x]`
+against `g[x, y]` satisfies no rule, falls to O-13, and swaps back and forth forever. The
+implementation below cannot diverge that way, because O-13 is applied by kind rank, at most once.
+A dropped tiebreak would then reach O-T, which orders by arity and gives the same answer. What
+§7.3's laws catch is rules that disagree with one another. Making products compare left to right
+among themselves, but right to left against other kinds, fails transitivity within a few hundred
+generated triples and on `everyKind`'s exhaustive triples.
 
 Cohen defines ◁ only for *distinct ASAEs* (Definition 3.26), but `compareCanonical` must be a total
 order on every `Expr`: step 9 sorts the arguments of any `Orderless` head, held or not, and `Ord
@@ -731,7 +767,7 @@ Expr` keys maps. The extension takes four additions, placed so the transcribed r
 | :--- | :--- | :--- |
 | O-S1 | both strings | lexicographic on the `Text` |
 | O-S2 | string vs any non-constant | the string first |
-| O-K | kind classification | `Plus`, `Times` and `Factorial` heads, and `Power` with exactly two arguments, have their Cohen kinds; any other application is a *function*, including one whose head is itself an application (`f[x][y]`) |
+| O-K | kind classification | `Plus` and `Times` heads, `Power` with exactly two arguments and `Factorial` with exactly one have their Cohen kinds; any other application is a *function*, including one whose head is itself an application (`f[x][y]`) |
 | O-T | the rules above say "equal" but the terms differ | a fixed structural order: kind rank, then arity, then arguments pairwise by `compareCanonical` |
 
 - **Strings.** Cohen has none, and with O-13 as fallback an uncovered pair does not answer wrongly —
@@ -740,11 +776,19 @@ Expr` keys maps. The extension takes four additions, placed so the transcribed r
   else, leaving O-7's slot for inexact numbers untouched.
 - **Kinds.** A curried head has no name, so O-6/O-12 compare heads with `compareCanonical` —
   well-founded, since the head is a strict subterm. A `Power` without exactly two arguments has no
-  base and exponent, so it is a function.
+  base and exponent, so it is a function, and likewise a `Factorial` without exactly one operand
+  for O-5.
 - **The tiebreak.** On non-ASAEs O-8 and O-9 equate distinct terms (`Times[x]` vs `x` compares `·x`
   with `·x`; `Power[x, 1]` vs `x` compares `x^1` with `x^1`), which would make `Ord Expr` disagree
   with `Eq` and a `Map Expr` conflate keys. O-T fires only then, so on ASAEs Cohen's order is
   unchanged.
+- **How the two compose.** `compareCanonical u v` is `cohen u v <> structural u v`. Here `cohen`
+  is O-1…O-13 and O-S1–O-S2, and it recurs into itself, not into `compareCanonical`. On non-ASAEs
+  it is therefore a *preorder*: `Times[x]` and `x` are equivalent, so `Plus[Times[x], y]` and
+  `Plus[x, y]` are too. O-T, which is itself a total order, refines it lexicographically. That
+  composition is transitive whenever `cohen` is a preorder, and recurring into `compareCanonical`
+  instead would mix the two orders inside one comparison and lose the argument. O-T's
+  "arguments pairwise" includes the head, and between atoms of one kind it compares their values.
 
 O-3 compares from the right, so `a·x² ◁ x³` and polynomials come out in increasing degree. O-13
 makes the table triangular; the implementation is one case per rule plus a `flip`-and-invert, not
@@ -752,6 +796,12 @@ every cell of the kind-by-kind table.
 
 `Ord Expr` is `compare = compareCanonical`, or it is not defined at all. There is no third option
 where both exist, because that is how the wrong one gets used.
+
+**Stage 0 does not define it.** The instance must sit with the type in
+`Cassini.Core.Expr.Internal`, since `-Wall`'s orphan warning is not relaxed per module (§2.4), and
+`compareCanonical` lives above that, in `Cassini.Core.Order`. Nothing in Stage 0 keys a map on
+`Expr`. The first `Map Expr` adds the instance to `Internal` through a `{-# SOURCE #-}` import of
+`compareCanonical`, the mechanism §3.4 already uses for `intern`.
 
 ### 3.6 Traversal
 
@@ -776,6 +826,10 @@ instance Corecursive Expr where
     SymbolF s -> mkSymbol s
     AppF h as -> mkApp h as
 ```
+
+**The instances and `ExprF` live in `Cassini.Core.Expr.Internal`**, not `Cassini.Core.Traversal`.
+Anywhere but the type's own module they are orphans (§2.4), and `embed` calls `intern` through the
+boot-file cycle §3.4 describes. `Cassini.Core.Traversal` re-exports `ExprF` and owns `rewriteM`.
 
 **`recursion-schemes` over `uniplate`** (D3), for one reason: `embed` goes through the smart
 constructors, so every `cata`/`ana`/`para` maintains the hash and the intern id. With `uniplate`'s
@@ -816,8 +870,14 @@ These are the Haskell API and the backing for WL's structural builtins: `Head`, 
 general case goes through the matcher in L4 (`ReplaceAll` lives in `Cassini.Builtins.Pattern`).
 
 `part` returns `Either` because `Part` out of range must produce a message, not a crash (§4.7).
-`substitute` compares complete subexpressions structurally, which is where interning pays: equal
-interned nodes compare by id, and unequal ones almost always by hash.
+Negative indices count from the end, as in WL. `substitute` compares complete subexpressions
+structurally, which is where interning pays: equal interned nodes compare by id, and unequal ones
+almost always by hash. Subtrees with no occurrence are returned as they are, not rebuilt.
+
+**One departure from Cohen: an application's head is a subexpression.** Cohen's operators are not
+operands, so `Free_of` and `Substitute` never look at them. WL's `FreeQ[f[x], f]` is `False` and
+`ReplaceAll` rewrites heads, and these functions are those builtins' fast path. So `freeOf` and
+`substitute` visit heads.
 
 ---
 
@@ -2992,7 +3052,8 @@ that addresses it:
 
 ### 9.2 Risks this design introduces
 
-- **The `unsafePerformIO` intern table.** Mitigations: `Cassini.Core.Intern` exports one function;
+- **The `unsafePerformIO` intern table**, and the symbol table beside it (§3.2), which has the same
+  idiom but no weak references. Mitigations: `Cassini.Core.Intern` exports one function;
   the module is compiled with `-fno-full-laziness -fno-cse`; `Eq` never trusts the table (§3.4), so
   a premature reap or lost race costs sharing, not correctness; both flag settings are tested on
   every commit. Residual risk: a GHC change to weak-pointer behaviour degrading sharing silently —
