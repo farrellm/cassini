@@ -115,7 +115,8 @@ Where the two disagree, the design is the intent and the code is behind.
      a person reads the diff, and the commit message says why the new output is right.
    - Regression cases are named for the behaviour, not the bug:
      `0002-builtin-upvalue-beats-user-downvalue`, not `0002-issue-17`.
-   - Unit tests are worked examples lifted from the sources, each citing where it came from.
+   - A unit test lifted from a source cites where it came from (§7.2). Edge-case and bug tests
+     are welcome too, with no citation; their name says what contract they check.
    - Benchmark baselines are committed per GHC version and `intern` setting, and regenerated
      deliberately, with the commit message saying why. From milestone 1a, an allocation regression
      fails CI (`bench/check-allocation.py`). Time is gated only against a baseline from the same CI

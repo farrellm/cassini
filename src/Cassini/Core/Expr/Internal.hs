@@ -22,8 +22,8 @@ module Cassini.Core.Expr.Internal
 where
 
 import Cassini.Core.Intern (intern)
-import Cassini.Core.Symbol (Symbol, symName)
-import Cassini.Number (Number (NInt, NRat))
+import Cassini.Core.Symbol (Symbol)
+import Cassini.Number (Number (NInt, NRat), normalize)
 import Data.Functor.Foldable (Base, Corecursive (embed), Recursive (project))
 import Data.Hashable (Hashable (hash))
 import Data.Vector qualified as V
@@ -85,7 +85,7 @@ instance Show Expr where
     SNumber (NRat r) ->
       showString "Rational[" . shows (numerator r) . showString ", " . shows (denominator r) . showChar ']'
     SString t -> shows t
-    SSymbol s -> showString (toString (symName s))
+    SSymbol s -> shows s
     SApp h as ->
       shows h . showChar '[' . commaSep (V.toList as) . showChar ']'
     where
@@ -123,7 +123,7 @@ instance Recursive Expr where
 instance Corecursive Expr where
   embed =
     intern . \case
-      NumberF n -> SNumber n
+      NumberF n -> SNumber (normalize n)
       StringF t -> SString t
       SymbolF s -> SSymbol s
       AppF h as -> SApp h as

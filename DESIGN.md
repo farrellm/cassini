@@ -390,7 +390,8 @@ extensions as `arguments`. Without them hlint parses `(f x).field` as compositio
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
                Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Main, Test.**, Bench.**]
     # 3. The algebra tower does not see Expr; Poly.Convert and Zero are the bridges.
-    - name: [Cassini.Core.Expr]
+    #    Every L1 module whose API is over Expr is named, not just the type's own.
+    - name: [Cassini.Core.Expr, Cassini.Core.Order, Cassini.Core.Traversal, Cassini.Structure]
       within: [Cassini.Core.**, Cassini.Structure, Cassini.Attributes,
                Cassini.Pattern.**, Cassini.Rules, Cassini.Eval.**,
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
@@ -642,7 +643,9 @@ access; `Cassini.Structure.part` restores the 0-index convention at the API boun
 
 `Int_` is bidirectional. `Rat_` matches only: building a fraction goes through
 `Cassini.Number.fromRational'`, which normalizes `4/2` to an integer. A bidirectional `Rat_` would
-build terms it does not match.
+build terms it does not match. `NRat` is still an exported constructor, so `mkNumber` and `embed`
+apply `Cassini.Number.normalize` as well: a raw `NRat (2 % 1)` would otherwise be a node unequal to
+`2` that `compareCanonical` calls `EQ` to it.
 
 Arguments are a boxed `Vector`: `Orderless`, `Flat` and `Listable` all want bulk operations with
 known lengths, and a list makes every arity check O(n). Consing onto the front becomes O(n), which

@@ -19,7 +19,11 @@ tests =
           testCase "a fraction is reduced, sign on the numerator" $
             fromRational' (2 % (-4)) @?= NRat ((-1) % 2),
           testCase "a sum of fractions can be an integer" $
-            add (NRat (1 % 2)) (NRat (1 % 2)) @?= NInt 1
+            add (NRat (1 % 2)) (NRat (1 % 2)) @?= NInt 1,
+          testCase "normalize restores the invariant on a raw NRat" $
+            normalize (NRat (4 % 2)) @?= NInt 2,
+          testCase "a raw zero NRat divisor is a zero divisor, not an exception" $
+            divide (NInt 1) (NRat (0 % 1)) @?= Nothing
         ],
       testGroup
         "order"

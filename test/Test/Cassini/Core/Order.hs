@@ -1,9 +1,12 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 -- | "Cassini.Core.Order": Cohen's worked examples, and the order laws over
 -- generated terms and over every pair of kinds (DESIGN.md §3.5, §7.3).
 module Test.Cassini.Core.Order (tests) where
 
-import Cassini.Core.Expr (Expr)
+import Cassini.Core.Expr (Expr, pattern Num)
 import Cassini.Core.Order (compareCanonical)
+import Cassini.Number (Number (NRat))
 import Data.Ratio ((%))
 import Test.Gen
 import Test.Tasty (TestTree, testGroup)
@@ -15,6 +18,9 @@ tests =
   testGroup
     "Core.Order"
     [ cohenExamples,
+      testCase "a raw NRat with denominator 1 is the integer" $
+        let raw = Num (NRat (2 % 1))
+         in (raw == int 2, compareCanonical raw (int 3)) @?= (True, LT),
       testGroup "every pair of kinds" kindPairs,
       testGroup
         "laws"
