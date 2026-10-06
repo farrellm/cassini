@@ -18,7 +18,7 @@ benchmarks =
         [bench ("tree depth " <> show d) $ nf tree d | d <- [10, 14]],
       bgroup
         "equality"
-        [ env (pure (tree 14, tree 14)) $ \ ~(u, v) ->
+        [ env (pure (tree 14, treeApart 14)) $ \ ~(u, v) ->
             bench "equal, built apart" $ whnf (uncurry (==)) (u, v),
           env (pure (tree 14, treeWithLeaf (int 1) 14)) $ \ ~(u, v) ->
             bench "differing at the last leaf" $ whnf (uncurry (==)) (u, v)
@@ -53,6 +53,12 @@ int = mkNumber . NInt
 -- expressions do.
 tree :: Int -> Expr
 tree = treeWithLeaf (sym "x")
+
+-- | 'tree', built again. Without @NOINLINE@, GHC shares @tree 14@ between the
+-- two halves of a pair, and '==' answers from the pointer test (§3.4).
+treeApart :: Int -> Expr
+treeApart = tree
+{-# NOINLINE treeApart #-}
 
 -- | 'tree' with its rightmost leaf replaced, so it differs from 'tree' only
 -- at the last leaf.

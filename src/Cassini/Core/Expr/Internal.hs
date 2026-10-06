@@ -1,3 +1,4 @@
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -- | The representation of 'Expr': node shape, cached hash, intern id, the
@@ -27,6 +28,7 @@ import Cassini.Number (Number (NInt, NRat), normalize)
 import Data.Functor.Foldable (Base, Corecursive (embed), Recursive (project))
 import Data.Hashable (Hashable (hash))
 import Data.Vector qualified as V
+import GHC.Exts (isTrue#, reallyUnsafePtrEquality#)
 import Text.Show (Show (showsPrec), showChar, showString, shows)
 
 -- | An expression node. Build one only through "Cassini.Core.Intern"'s
@@ -55,12 +57,19 @@ data Shape
 notInterned :: Int
 notInterned = -1
 
--- | Equal ids prove equality, unequal hashes prove inequality, and only a hash
--- collision or a duplicate node reaches the structural comparison. Never trusts
--- the table alone (§3.4).
+-- | The same heap object proves equality, equal ids prove equality, unequal
+-- hashes prove inequality, and only a hash collision or a duplicate node
+-- reaches the structural comparison. Never trusts the table alone (§3.4).
+--
+-- The pointer test can miss, never lie: a miss falls through to the rest. It
+-- runs at every level of the structural comparison, so shared subterms cost
+-- one comparison each, not a walk. The bangs keep '==' strict: the primop does
+-- not force its arguments, and without them every caller's strictness is lost
+-- and its arguments are passed as thunks.
 instance Eq Expr where
-  x == y =
-    (x.exprId == y.exprId && x.exprId /= notInterned)
+  !x == !y =
+    isTrue# (reallyUnsafePtrEquality# x y)
+      || (x.exprId == y.exprId && x.exprId /= notInterned)
       || (x.exprHash == y.exprHash && x.exprShape == y.exprShape)
 
 instance Hashable Expr where

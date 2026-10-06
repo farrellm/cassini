@@ -1,15 +1,15 @@
 Name,Mean (ps),2*Stdev (ps),Allocated,Copied,Peak Memory
-All.Core.construct.tree depth 10,222301299,1758466,613801,15266,6291456
-All.Core.construct.tree depth 14,7209990350,682512568,9832588,5057239,15728640
-"All.Core.equality.equal, built apart",569603026,51979500,524277,43,15728640
-All.Core.equality.differing at the last leaf,2518,134,0,0,26214400
-All.Core.compareCanonical.depth 10,541082,37986,320,0,26214400
-All.Core.compareCanonical.depth 100,5175392,322886,3200,0,26214400
-All.Core.compareCanonical.depth 1000,62734915,1442848,97541,5,27262976
-All.Core.sortBy compareCanonical.10 arguments,4056523,369414,3048,0,27262976
-All.Core.sortBy compareCanonical.100 arguments,108214747,3188718,59666,29,27262976
-All.Core.sortBy compareCanonical.1000 arguments,2125070900,144762956,1133589,4340,30408704
-"All.Core.substitute, deep tree",9077512600,509924344,10748602,5448156,54525952
-All.Core.expression swell.(a+b+c+d)^10,479474058,42830916,1219133,62818,54525952
-All.Core.expression swell.(a+b+c+d)^20,7462928518,464919926,9267956,5715322,56623104
-All.Core.expression swell.(a+b+c+d)^30,29006544400,1629723708,35387102,16349143,60817408
+All.Core.construct.tree depth 10,219173729,7741632,613821,15254,6291456
+All.Core.construct.tree depth 14,8269902978,80061212,9829967,4974378,15728640
+"All.Core.equality.equal, built apart",674371350,24160616,43,4,19922944
+All.Core.equality.differing at the last leaf,3333,278,0,0,33554432
+All.Core.compareCanonical.depth 10,508468,39964,0,0,33554432
+All.Core.compareCanonical.depth 100,4901245,409836,0,0,33554432
+All.Core.compareCanonical.depth 1000,54163108,4011570,65546,6,33554432
+All.Core.sortBy compareCanonical.10 arguments,3667568,119660,2264,0,33554432
+All.Core.sortBy compareCanonical.100 arguments,97400732,2773038,32845,16,34603008
+All.Core.sortBy compareCanonical.1000 arguments,1922652909,139527050,524114,2034,36700160
+"All.Core.substitute, deep tree",7713636512,187846648,9175179,5240623,68157440
+All.Core.expression swell.(a+b+c+d)^10,465590921,34314306,1240276,57295,68157440
+All.Core.expression swell.(a+b+c+d)^20,7107334362,458644542,9416117,5777765,68157440
+All.Core.expression swell.(a+b+c+d)^30,25940204475,565840690,35860172,17885182,85983232
