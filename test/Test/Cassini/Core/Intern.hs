@@ -5,13 +5,15 @@
 -- The one test module allowed to import the representation (§2.6, rule 4).
 module Test.Cassini.Core.Intern (tests) where
 
-import Cassini.Core.Expr (Expr)
+import Cassini.Core.Expr (Expr, apply, mkSymbol)
 import Cassini.Core.Expr.Internal (Expr (..), Shape (..))
+import Cassini.Core.Symbol (globalSymbol)
 import Data.Functor.Foldable (cata, embed)
 import Data.Hashable (hash)
 import Data.Vector qualified as V
 import Test.Gen (genExpr, genSubterm, shrinkExpr)
-import Test.Tasty (TestTree, testGroup)
+import Test.Tasty (TestTree, localOption, mkTimeout, testGroup)
+import Test.Tasty.HUnit (assertBool, testCase)
 import Test.Tasty.QuickCheck (Gen, Property, forAllShrink, oneof, sized, testProperty, (===), (==>))
 
 tests :: TestTree
@@ -24,8 +26,18 @@ tests =
         let x' = rebuild x in (x' == x, hash x') === (True, hash x),
       -- Hash-only, both ids are 'notInterned'; interned, x is live while x' is
       -- built, so the table returns x's node.
-      testProperty "a rebuilt term has the same id" $ forOne $ \x -> (rebuild x).exprId === x.exprId
+      testProperty "a rebuilt term has the same id" $ forOne $ \x -> (rebuild x).exprId === x.exprId,
+      -- Hash-only, every id is 'notInterned', so only the pointer test stops a
+      -- structural walk of 2^200 nodes. A regression hangs, hence the timeout.
+      localOption (mkTimeout 5_000_000) $
+        testCase "terms sharing a self-shared subterm compare in time linear in nodes" $
+          let t = tower 200
+           in assertBool "f[t, t] == f[t, t]" (apply f [t, t] == apply f [t, t])
     ]
+  where
+    f = globalSymbol "f"
+    tower :: Int -> Expr
+    tower n = foldl' (\u _ -> apply f [u, u]) (mkSymbol (globalSymbol "x")) [1 .. n]
 
 -- | Structural equality that looks at nothing the table maintains.
 refEq :: Expr -> Expr -> Bool

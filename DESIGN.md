@@ -304,8 +304,9 @@ Consequences:
   `Either` with a message, as the language requires anyway (§4.7).
 - **No `unsafePerformIO`.** Two modules import `System.IO.Unsafe` explicitly: `Cassini.Core.Symbol`,
   for the symbol table (§3.2), and `Cassini.Core.Intern`, in each of its two implementations (§3.4).
-  `grep -rl System.IO.Unsafe src src-intern` listing exactly those three files is a complete audit
-  of the tree's unsafety.
+  One more uses an unsafe primitive: `Cassini.Core.Expr.Internal`, whose `Eq` tests pointer
+  equality first (§3.4). `grep -rlE 'System.IO.Unsafe|reallyUnsafe' src src-intern` listing exactly
+  those four files is a complete audit of the tree's unsafety.
 
 ### 2.4 Compiler, warnings and extensions
 
@@ -678,16 +679,27 @@ intern :: Shape -> Expr
 the same whichever implementation is active:
 
 ```haskell
-x == y = exprId x == exprId y && exprId x /= notInterned   -- same interned node
-      || (exprHash x == exprHash y && exprShape x == exprShape y)  -- else hash, then structure
+!x == !y = isTrue# (reallyUnsafePtrEquality# x y)                   -- same heap object
+      || (exprId x == exprId y && exprId x /= notInterned)          -- same interned node
+      || (exprHash x == exprHash y && exprShape x == exprShape y)   -- else hash, then structure
 ```
 
-Equal ids prove equality, unequal hashes prove inequality, and only a hash collision or a duplicate
-node reaches the structural comparison. Ids alone would be wrong: `System.Mem.Weak` warns that weak
-pointers on ordinary Haskell values are "particularly fragile" — the compiler may duplicate or unbox
-the key — so an entry can be reaped while its node is live, and the next `intern` of that shape then
+The same heap object proves equality, equal ids prove equality, unequal hashes prove inequality, and
+only a hash collision or a duplicate node reaches the structural comparison. The pointer test can
+report a false "different" (the collector moves objects), never a false "same", so a miss only falls
+through. Ids alone would be wrong: `System.Mem.Weak` warns that weak pointers on ordinary Haskell
+values are "particularly fragile" — the compiler may duplicate or unbox the key — so an entry can be reaped while its node is live, and the next `intern` of that shape then
 gives an equal term a second id. With the definition above that costs a duplicate node, never an
 answer, and `Eq` does not depend on the flag.
+
+**The pointer test is for the hash-only build**, where every node is `notInterned`. Without it, a
+term compared with itself, or with a term sharing its subterms, is walked in full at every level,
+because the derived `Eq Shape` recurses through this `Eq`; a term built by repeated self-sharing
+costs time exponential in its node count. With it, each shared subterm costs one comparison. It does
+not help equal terms built apart, which stay the table's argument (D2). The bangs matter: the primop
+does not force its arguments, so without them `==` is lazy, every caller's strictness is lost, and
+`compareCanonical`'s arguments are passed as thunks; measured, that more than doubled its
+allocation. Forcing also keeps the test from missing on a thunk and its value.
 
 To make premature reaps rare as well as harmless, the weak pointer is keyed on a **primitive** object
 the node carries — `exprKey`, a unit `IORef` allocated by `intern` and reachable only through the
