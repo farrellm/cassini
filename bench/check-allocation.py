@@ -3,8 +3,12 @@
 
 DESIGN.md §8.1 and §8.6: tasty-bench's --fail-if-slower thresholds time only,
 so the allocation gate is this diff of the CSV's Allocated column. Allocation
-is deterministic for a given compiler and flags, so any machine's baseline is
-valid for the same GHC.
+depends on the compiler, the flags and the library's optimization level, not on
+the machine, so any machine's baseline is valid for the same GHC if it was built
+the same way: plain `cabal bench`, whose library is at cabal's default
+optimization. `cabal bench -O2` changes some figures by large factors. Under the
+`intern` flag allocation also varies by a few percent between runs, with
+garbage-collection timing; the threshold absorbs that.
 
     check-allocation.py BASELINE.csv CURRENT.csv [--threshold PERCENT] [--slack BYTES]
 

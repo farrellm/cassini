@@ -31,3 +31,9 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   * CI's Haddock step uses the same cabal flags as the other steps.
   * Tests that could not fail now can: the `Power[x]` kind test, the sort property, and the
     linear-time equality test.
+  * `lint/check-layering.sh` stops on a fixture hlint cannot parse, or when hlint is missing,
+    instead of passing an allowed fixture vacuously.
+  * DESIGN.md §8.1 and `bench/check-allocation.py` say how baselines are built (plain
+    `cabal bench`), and that allocation under the `intern` flag varies by a few percent.
+  * Both benchmark baselines are regenerated with plain `cabal bench` at the current code, and
+    D2's figures are rewritten from them. The decision, provisionally off, stands.
