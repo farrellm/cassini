@@ -2979,6 +2979,14 @@ iteration, or a few bytes of stack growth, and against 0 any allocation is an in
 Baselines are named
 `ghc-<version>-<hash|intern>.csv`, because the interning flag changes every allocation figure.
 
+**Baselines come from plain `cabal bench`.** The stanza's `-O2` covers the benchmark code only;
+the library is built at cabal's default optimization, as in every other build. A library built at
+`-O2` (`cabal bench -O2`) can move allocation figures by large factors: on one Stage 0 build,
+equality of equal terms built apart allocated 43 bytes per iteration at `-O2` and 512 KiB at the
+default, so a baseline from one setting fails the gate under the other. Under the `intern` flag
+allocation also varies by a few percent from run to run, with garbage-collection timing, which the
+10% threshold absorbs.
+
 ### 8.2 Core (Stage 0)
 
 The suite that decides interning (§3.4), and so the first written:
@@ -3444,7 +3452,7 @@ answer, not a deletion.
 | # | Decision | Trigger to revisit |
 | :--- | :--- | :--- |
 | D1 | `Integer` over a custom bignum (§3.1) | milestone 2a's polynomial benchmarks (§10) showing `Integer` overhead dominating |
-| D2 | Interning on or off (§3.4). **Provisionally off, 2026-10-04**, on §8.2's proxy (GHC 9.12.4, `-O2`, one developer machine; `bench/baseline/ghc-9.12.4-{hash,intern}.csv`). The weak table loses the gate on both counts. For the `(a+b+c+d)^30` swell, hash-only takes 29 ms and allocates 34 MB, and the table takes 36 ms and allocates 66 MB. The table wins residency, with peak memory of 17 MB against 58 MB over the whole run, and it wins equality of equal terms built apart, 3 ns against 570 µs on a depth-14 tree. It also builds that tree in about the same time and deep-`substitute`s it in half the time, but it allocates twice as much doing either. Most of the table's allocation is one `IORef`, one `Weak` and one `HashMap` path copy per new node. | decided when the elementary-functions track (§10) brings §8.4's `Expand`, with the numbers recorded here |
+| D2 | Interning on or off (§3.4). **Provisionally off, 2026-10-04**, on §8.2's proxy (GHC 9.12.4, plain `cabal bench` as §8.1 requires, one developer machine; figures from `bench/baseline/ghc-9.12.4-{hash,intern}.csv` as regenerated 2026-10-06). The weak table loses the gate on both counts. For the `(a+b+c+d)^30` swell, hash-only takes 26 ms and allocates 31 MiB, and the table takes 36 ms and allocates 70 MiB. The table wins residency, with peak memory of 16 MiB against 82 MiB over the whole run, and it wins equality of equal terms built apart, 2.5 ns against 784 µs on a depth-14 tree. It also builds that tree in about the same time and deep-`substitute`s it in under 60% of the time, but it allocates about twice as much doing either. Most of the table's allocation is one `IORef`, one `Weak` and one `HashMap` path copy per new node. | decided when the elementary-functions track (§10) brings §8.4's `Expand`, with the numbers recorded here |
 | D3 | `recursion-schemes` over `uniplate` (§3.6) | traversal showing up in the §8.4 profile |
 | D4 | QuickCheck over Hedgehog (§7.3) | shrinking quality becoming the reason counterexamples go uninvestigated |
 | D5 | `poly` over Kmett's `algebra` (§5.3) | Gröbner work at Stage 3 needing the `Numeric.Domain.*` chain |

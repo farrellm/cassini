@@ -4,11 +4,23 @@
 # lint/fixtures/allowed. Run from the repository root.
 set -euo pipefail
 
+command -v hlint >/dev/null || {
+  echo "check-layering: hlint not found" >&2
+  exit 2
+}
+
 status=0
 restricted() {
   # hlint exits non-zero when it finds hints, so read its output, not its status.
+  # A fixture hlint cannot parse reports nothing, which would pass an allowed
+  # fixture vacuously, so a parse error stops the check.
   local out
-  out=$(hlint --hint=.hlint.yaml "$1" || true)
+  out=$(hlint --hint=.hlint.yaml "$1" 2>&1 || true)
+  if [[ $out == *"Parse error"* ]]; then
+    echo "ERROR   hlint could not parse $1:" >&2
+    echo "$out" >&2
+    exit 2
+  fi
   [[ $out == *"Avoid restricted module"* ]]
 }
 for f in lint/fixtures/reported/*.hs; do
