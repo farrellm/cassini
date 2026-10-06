@@ -37,8 +37,8 @@ where
 
 import Cassini.Core.Expr.Internal (Expr (exprShape), Shape (..))
 import Cassini.Core.Intern (intern)
-import Cassini.Core.Symbol (Symbol, systemSymbol)
-import Cassini.Number (Number (NInt, NRat))
+import Cassini.Core.Symbol (Symbol, sInteger, sRational, sString, sSymbol)
+import Cassini.Number (Number (NInt, NRat), normalize)
 import Data.Vector qualified as V
 
 -- | A number.
@@ -78,9 +78,10 @@ pattern Int_ i <- (exprShape -> SNumber (NInt i))
 pattern Rat_ :: Rational -> Expr
 pattern Rat_ r <- (exprShape -> SNumber (NRat r))
 
--- | A number node.
+-- | A number node. Normalizes, so a raw @NRat (4 % 2)@ is the integer node
+-- and derived 'Eq' on 'Number' stays value equality inside every 'Expr'.
 mkNumber :: Number -> Expr
-mkNumber = intern . SNumber
+mkNumber = intern . SNumber . normalize
 
 -- | A string node.
 mkString :: Text -> Expr
@@ -102,10 +103,10 @@ apply f xs = mkApp (mkSymbol f) (V.fromList xs)
 -- the symbol naming its type (@Integer@, @Rational@, @String@, @Symbol@).
 exprHead :: Expr -> Expr
 exprHead = \case
-  Int_ _ -> mkSymbol (systemSymbol "Integer")
-  Num _ -> mkSymbol (systemSymbol "Rational")
-  Str _ -> mkSymbol (systemSymbol "String")
-  Sym _ -> mkSymbol (systemSymbol "Symbol")
+  Int_ _ -> mkSymbol sInteger
+  Num _ -> mkSymbol sRational
+  Str _ -> mkSymbol sString
+  Sym _ -> mkSymbol sSymbol
   App h _ -> h
 
 -- | An application's arguments; empty for an atom.

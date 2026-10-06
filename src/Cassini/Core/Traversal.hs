@@ -21,9 +21,19 @@ import Data.Functor.Foldable (Corecursive (embed), Recursive (project))
 --
 -- Direct recursion over 'project' and 'embed', because the step is monadic:
 -- the callers that want this are the ones whose rewrite step evaluates (§4.3).
+--
+-- Subtrees in which nothing is rewritten are returned as they are, not
+-- rebuilt, as in "Cassini.Structure"'s substitutions.
 rewriteM :: (Monad m) => (Expr -> m (Maybe Expr)) -> Expr -> m Expr
-rewriteM f = go
+rewriteM f e0 = fromMaybe e0 <$> go e0
   where
+    -- 'Nothing' means unchanged, so unchanged subtrees keep their nodes.
     go e = do
-      e' <- embed <$> traverse go (project e)
-      f e' >>= maybe (pure e') go
+      children <- traverse (\c -> (c,) <$> go c) (project e)
+      let rebuilt
+            | all (isNothing . snd) children = Nothing
+            | otherwise = Just (embed (uncurry fromMaybe <$> children))
+          e' = fromMaybe e rebuilt
+      f e' >>= \case
+        Nothing -> pure rebuilt
+        Just r -> Just . fromMaybe r <$> go r

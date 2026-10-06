@@ -15,6 +15,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# An explicit bash runs with -o pipefail, so a failing `cabal haddock` fails
+# its step even though check-haddock.py at the end of the pipe exits 0.
+defaults:
+  run:
+    shell: bash
+
 env:
   GHC_VERSION: "9.12.4"
   CABAL_VERSION: "3.16.1.0"

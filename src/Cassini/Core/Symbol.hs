@@ -25,6 +25,10 @@ module Cassini.Core.Symbol
     sPower,
     sFactorial,
     sList,
+    sInteger,
+    sRational,
+    sString,
+    sSymbol,
   )
 where
 
@@ -59,7 +63,9 @@ instance Show Symbol where
   showsPrec _ x = showString (toString x.symName)
 
 -- | Cohen's O-2: the only symbol comparison any output may depend on. Names
--- first, context second, so that @x@ sorts before @Pi@ whatever their contexts.
+-- first, context second: context first would sort every @Global`@ symbol
+-- before every @System`@ one. Names compare by code point, so @Pi@ sorts
+-- before @x@.
 --
 -- >>> compareSymbolName (globalSymbol "x") (systemSymbol "Pi")
 -- GT
@@ -118,3 +124,19 @@ sFactorial = systemSymbol "Factorial"
 -- | @System`List@.
 sList :: Symbol
 sList = systemSymbol "List"
+
+-- | @System`Integer@, the head of an integer.
+sInteger :: Symbol
+sInteger = systemSymbol "Integer"
+
+-- | @System`Rational@, the head of a fraction.
+sRational :: Symbol
+sRational = systemSymbol "Rational"
+
+-- | @System`String@, the head of a string.
+sString :: Symbol
+sString = systemSymbol "String"
+
+-- | @System`Symbol@, the head of a symbol.
+sSymbol :: Symbol
+sSymbol = systemSymbol "Symbol"

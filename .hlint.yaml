@@ -21,7 +21,8 @@
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
                Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Main, Test.**, Bench.**]
     # 3. The algebra tower does not see Expr; Poly.Convert and Zero are the bridges.
-    - name: [Cassini.Core.Expr]
+    #    Every L1 module whose API is over Expr is named, not just the type's own.
+    - name: [Cassini.Core.Expr, Cassini.Core.Order, Cassini.Core.Traversal, Cassini.Structure]
       within: [Cassini.Core.**, Cassini.Structure, Cassini.Attributes,
                Cassini.Pattern.**, Cassini.Rules, Cassini.Eval.**,
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,

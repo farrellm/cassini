@@ -8,6 +8,7 @@ module Cassini.Number
   ( Number (NInt, NRat),
     fromInteger',
     fromRational',
+    normalize,
     toRational',
     isInteger,
     compareNumber,
@@ -58,6 +59,16 @@ fromRational' r
   | denominator r == 1 = NInt (numerator r)
   | otherwise = NRat r
 
+-- | Restore the 'NRat' invariant on a number built with the raw
+-- constructor: an integral fraction becomes 'NInt'.
+--
+-- >>> normalize (NRat (4 % 2))
+-- NInt 2
+normalize :: Number -> Number
+normalize = \case
+  NRat r -> fromRational' r
+  n -> n
+
 -- | The value as a 'Rational'.
 toRational' :: Number -> Rational
 toRational' = \case
@@ -94,13 +105,13 @@ neg = \case
   NInt a -> NInt (negate a)
   NRat r -> NRat (negate r)
 
--- | Exact quotient; 'Nothing' on a zero divisor.
+-- | Exact quotient; 'Nothing' on a zero divisor, however it was built.
 --
 -- >>> divide (NInt 1) (NInt 0)
 -- Nothing
 divide :: Number -> Number -> Maybe Number
 divide a b
-  | b == NInt 0 = Nothing
+  | toRational' b == 0 = Nothing
   | otherwise = Just (fromRational' (toRational' a / toRational' b))
 
 -- | Exact integer power; 'Nothing' for a negative power of zero. @0^0@ is 1,

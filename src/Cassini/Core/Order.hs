@@ -40,9 +40,9 @@ cohen u v
   | u == v = EQ
   | otherwise = case compare ru rv of
       EQ -> sameKind ku u v
-      LT -> crossKind ku kv u v
+      LT -> crossKind ku u v
       -- O-13: the rules are stated for the upper triangle of Figure 3.9.
-      GT -> invert (crossKind kv ku v u)
+      GT -> invert (crossKind kv v u)
   where
     ku = exprKind u
     kv = exprKind v
@@ -82,9 +82,9 @@ sameKind k u v = case k of
   -- Unreachable: exprKind agreed on k for both terms.
   _ -> EQ
 
--- | O-7 … O-12 and O-S2: @rank ku < rank kv@.
-crossKind :: Kind -> Kind -> Expr -> Expr -> Ordering
-crossKind ku _ u v = case ku of
+-- | O-7 … O-12 and O-S2: @u@, of kind @ku@, against a @v@ of higher rank.
+crossKind :: Kind -> Expr -> Expr -> Ordering
+crossKind ku u v = case ku of
   -- O-7
   KConstant -> LT
   -- O-S2
