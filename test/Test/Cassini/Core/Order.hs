@@ -11,7 +11,7 @@ import Data.Ratio ((%))
 import Test.Gen
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (assertBool, testCase, (@?=))
-import Test.Tasty.QuickCheck (Gen, Property, counterexample, forAllShrink, listOf, shrinkList, sized, testProperty, (.&&.), (===))
+import Test.Tasty.QuickCheck (Gen, Property, counterexample, forAllShrink, liftShrink2, listOf, shrinkList, sized, testProperty, (.&&.), (===))
 
 tests :: TestTree
 tests =
@@ -31,10 +31,14 @@ tests =
           testProperty "transitive, small terms" $ forAll3 (genExpr 5) transitive,
           testProperty "EQ exactly on equal terms" $ forAll2 $ \x y ->
             (compareCanonical x y == EQ) === (x == y),
-          testProperty "sorting is a permutation" $
+          -- A permutation by construction; what is checked is that a merge sort,
+          -- which compares only some pairs, still leaves every adjacent pair in order.
+          testProperty "sorting yields an ordered permutation" $
             forAllShrink (listOf gen) (shrinkList shrinkExpr) $ \xs ->
               let ys = sortBy compareCanonical xs
-               in length ys === length xs .&&. all (\e -> count e xs == count e ys) xs
+               in length ys === length xs
+                    .&&. all (\e -> count e xs == count e ys) xs
+                    .&&. counterexample (show ys) (and (zipWith (\u v -> compareCanonical u v /= GT) ys (drop 1 ys)))
         ]
     ]
   where
@@ -113,7 +117,7 @@ gen :: Gen Expr
 gen = sized (genExpr . min 30)
 
 forAll2 :: (Expr -> Expr -> Property) -> Property
-forAll2 f = forAllShrink ((,) <$> gen <*> gen) (liftShrink2' shrinkExpr) (uncurry f)
+forAll2 f = forAllShrink ((,) <$> gen <*> gen) (liftShrink2 shrinkExpr shrinkExpr) (uncurry f)
 
 forAll3 :: Gen Expr -> (Expr -> Expr -> Expr -> Property) -> Property
 forAll3 g f =
@@ -121,6 +125,3 @@ forAll3 g f =
   where
     shrink3 (u, v, w) =
       [(u', v, w) | u' <- shrinkExpr u] ++ [(u, v', w) | v' <- shrinkExpr v] ++ [(u, v, w') | w' <- shrinkExpr w]
-
-liftShrink2' :: (a -> [a]) -> (a, a) -> [(a, a)]
-liftShrink2' s (u, v) = [(u', v) | u' <- s u] ++ [(u, v') | v' <- s v]

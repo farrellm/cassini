@@ -75,11 +75,14 @@ toRational' = \case
   NInt i -> fromIntegral i
   NRat r -> r
 
--- | Whether the number is an integer.
+-- | Whether the number is an integer, however it was built.
+--
+-- >>> isInteger (NRat (4 % 2))
+-- True
 isInteger :: Number -> Bool
 isInteger = \case
   NInt _ -> True
-  NRat _ -> False
+  NRat r -> denominator r == 1
 
 -- | Numeric comparison across both constructors (Cohen's O-1).
 --
@@ -99,11 +102,14 @@ mul :: Number -> Number -> Number
 mul (NInt a) (NInt b) = NInt (a * b)
 mul a b = fromRational' (toRational' a * toRational' b)
 
--- | Negation.
+-- | Negation, normalized like every other result.
+--
+-- >>> neg (NRat (4 % 2))
+-- NInt (-2)
 neg :: Number -> Number
 neg = \case
   NInt a -> NInt (negate a)
-  NRat r -> NRat (negate r)
+  NRat r -> fromRational' (negate r)
 
 -- | Exact quotient; 'Nothing' on a zero divisor, however it was built.
 --

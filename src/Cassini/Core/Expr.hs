@@ -15,7 +15,8 @@
 --
 -- and build through them or the @mk*@ functions, which compute the hash and
 -- consult the intern table. That is the point: the interning decision (§3.4)
--- lives in four constructors, not at every call site.
+-- lives in one place, "Cassini.Core.Expr.Internal"'s @mkNode@, which these
+-- constructors and the folds' 'Data.Functor.Foldable.embed' share.
 module Cassini.Core.Expr
   ( Expr,
     pattern Num,
@@ -35,10 +36,9 @@ module Cassini.Core.Expr
   )
 where
 
-import Cassini.Core.Expr.Internal (Expr (exprShape), Shape (..))
-import Cassini.Core.Intern (intern)
+import Cassini.Core.Expr.Internal (Expr (exprShape), Shape (..), mkNode)
 import Cassini.Core.Symbol (Symbol, sInteger, sRational, sString, sSymbol)
-import Cassini.Number (Number (NInt, NRat), normalize)
+import Cassini.Number (Number (NInt, NRat))
 import Data.Vector qualified as V
 
 -- | A number.
@@ -81,19 +81,19 @@ pattern Rat_ r <- (exprShape -> SNumber (NRat r))
 -- | A number node. Normalizes, so a raw @NRat (4 % 2)@ is the integer node
 -- and derived 'Eq' on 'Number' stays value equality inside every 'Expr'.
 mkNumber :: Number -> Expr
-mkNumber = intern . SNumber . normalize
+mkNumber = mkNode . SNumber
 
 -- | A string node.
 mkString :: Text -> Expr
-mkString = intern . SString
+mkString = mkNode . SString
 
 -- | A symbol node.
 mkSymbol :: Symbol -> Expr
-mkSymbol = intern . SSymbol
+mkSymbol = mkNode . SSymbol
 
 -- | An application node.
 mkApp :: Expr -> V.Vector Expr -> Expr
-mkApp h as = intern (SApp h as)
+mkApp h as = mkNode (SApp h as)
 
 -- | @apply f xs@ is @f[xs]@ with a symbol head.
 apply :: Symbol -> [Expr] -> Expr

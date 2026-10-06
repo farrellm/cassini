@@ -1,7 +1,8 @@
 -- | "Cassini.Structure": Cohen's structural operators (DESIGN.md §3.7, §7.3).
 module Test.Cassini.Structure (tests) where
 
-import Cassini.Core.Expr (exprHead)
+import Cassini.Core.Expr (apply, exprHead)
+import Cassini.Core.Symbol (sFactorial, sPower)
 import Cassini.Structure
 import Test.Gen
 import Test.Tasty (TestTree, testGroup)
@@ -24,7 +25,10 @@ tests =
         ],
       testGroup
         "kind"
-        [ testCase "Power[x] is a function" $ exprKind (fn "Power" [x]) @?= KFunction,
+        [ testCase "Power[x, 2] is a power" $ exprKind (power x (int 2)) @?= KPower,
+          testCase "Power[x] is a function" $ exprKind (apply sPower [x]) @?= KFunction,
+          testCase "Factorial[] is a function" $ exprKind (apply sFactorial []) @?= KFunction,
+          testCase "Global`Power[x, 2] is a function" $ exprKind (fn "Power" [x, int 2]) @?= KFunction,
           testCase "f[x][y] is a function" $ exprKind <$> lookupKind "curried-head function" @?= Just KFunction
         ],
       -- Source: cohen2002 §3.3, Example 3.29 (the cases that need no simplification).

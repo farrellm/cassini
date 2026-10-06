@@ -87,7 +87,7 @@ jobs:
 
       # 7
       - name: Haddock, with a coverage floor
-        run: cabal haddock --haddock-quickjump lib:cassini 2>&1 | python3 scripts/check-haddock.py
+        run: cabal haddock $CABAL_FLAGS --haddock-quickjump lib:cassini 2>&1 | python3 scripts/check-haddock.py
 
       # 3: both implementations of Cassini.Core.Intern, on every commit (§3.4)
       - name: Build and test with the intern flag, with -Werror

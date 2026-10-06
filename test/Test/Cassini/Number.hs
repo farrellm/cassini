@@ -23,7 +23,11 @@ tests =
           testCase "normalize restores the invariant on a raw NRat" $
             normalize (NRat (4 % 2)) @?= NInt 2,
           testCase "a raw zero NRat divisor is a zero divisor, not an exception" $
-            divide (NInt 1) (NRat (0 % 1)) @?= Nothing
+            divide (NInt 1) (NRat (0 % 1)) @?= Nothing,
+          testCase "negating a raw integral NRat gives an integer" $
+            neg (NRat (4 % 2)) @?= NInt (-2),
+          testCase "a raw integral NRat is an integer" $
+            isInteger (NRat (4 % 2)) @?= True
         ],
       testGroup
         "order"
