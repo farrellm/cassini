@@ -399,8 +399,12 @@ extensions as `arguments`. Without them hlint parses `(f x).field` as compositio
                Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Cassini.Poly.Convert,
                Main, Test.**, Bench.**]
     # 4. The representation is private to the core, and to the interning-agreement test.
+    #    The intern table builds nodes, so it is private to the core outright: only
+    #    Internal's mkNode calls it.
     - name: Cassini.Core.Expr.Internal
       within: [Cassini.Core.**, Test.Cassini.Core.Intern]
+    - name: Cassini.Core.Intern
+      within: [Cassini.Core.**]
     # 5. L4 and L5 are the top: nothing below them, and nothing in A, may import them.
     - name: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Syntax.**, Cassini.REPL]
       within: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
@@ -435,7 +439,8 @@ The hlint behaviours this depends on (checked against fixture modules and hlint'
 
 CI checks the config with fixture modules — at least one at `Test.Cassini.…` depth, where the
 `*`/`**` mistake hides: `Cassini.Poly.Uni` importing `Cassini.Core.Expr` is reported and
-`Cassini.Poly.Convert` is not; `Cassini.Pattern.Commutative` importing `Control.Monad.Logic` is
+`Cassini.Poly.Convert` is not; `Cassini.Poly.Uni` importing `Cassini.Core.Intern` is reported;
+`Cassini.Pattern.Commutative` importing `Control.Monad.Logic` is
 reported and `Cassini.Pattern.Match` is not; `Cassini.Zero` importing `Cassini.Simplify.Automatic`
 is reported and `Cassini.Builtins.Polynomial` is not.
 
@@ -644,9 +649,11 @@ access; `Cassini.Structure.part` restores the 0-index convention at the API boun
 
 `Int_` is bidirectional. `Rat_` matches only: building a fraction goes through
 `Cassini.Number.fromRational'`, which normalizes `4/2` to an integer. A bidirectional `Rat_` would
-build terms it does not match. `NRat` is still an exported constructor, so `mkNumber` and `embed`
-apply `Cassini.Number.normalize` as well: a raw `NRat (2 % 1)` would otherwise be a node unequal to
-`2` that `compareCanonical` calls `EQ` to it.
+build terms it does not match. `NRat` is still an exported constructor, so node construction
+applies `Cassini.Number.normalize` as well: a raw `NRat (2 % 1)` would otherwise be a node unequal to
+`2` that `compareCanonical` calls `EQ` to it. That happens once, in `Internal`'s `mkNode`, which
+the `mk*` constructors and §3.6's `embed` both call: two copies of the construction policy would
+let a fold build a node `mkNumber` never would.
 
 Arguments are a boxed `Vector`: `Orderless`, `Flat` and `Listable` all want bulk operations with
 known lengths, and a list makes every arity check O(n). Consing onto the front becomes O(n), which
@@ -855,7 +862,9 @@ instance Corecursive Expr where
 
 **The instances and `ExprF` live in `Cassini.Core.Expr.Internal`**, not `Cassini.Core.Traversal`.
 Anywhere but the type's own module they are orphans (§2.4), and `embed` calls `intern` through the
-boot-file cycle §3.4 describes. `Cassini.Core.Traversal` re-exports `ExprF` and owns `rewriteM`.
+boot-file cycle §3.4 describes. So `embed` cannot call `mkNumber` and the rest, which live above
+`Internal`; it calls `Internal`'s `mkNode` (§3.3), as they do, which is the same thing.
+`Cassini.Core.Traversal` re-exports `ExprF` and owns `rewriteM`.
 
 **`recursion-schemes` over `uniplate`** (D3), for one reason: `embed` goes through the smart
 constructors, so every `cata`/`ana`/`para` maintains the hash and the intern id. With `uniplate`'s
@@ -2964,7 +2973,10 @@ and allocation is deterministic for a given compiler and flags, where time is no
 The flags are `--baseline`, `--fail-if-slower`, `--fail-if-faster` and `--csv` (confirmed against
 `tasty-bench` 0.5.1). **`--fail-if-slower` thresholds time only**, though the CSV has an allocation
 column, so the allocation gate is ours: `bench/check-allocation.py BASELINE CURRENT`, which fails
-when a benchmark's `Allocated` exceeds its baseline by more than 10% (§8.6). Baselines are named
+when a benchmark's `Allocated` exceeds its baseline by more than 10% and by more than 1 KiB (§8.6).
+The absolute slack is for the near-zero baselines: several benchmarks allocate nothing per
+iteration, or a few bytes of stack growth, and against 0 any allocation is an infinite percentage.
+Baselines are named
 `ghc-<version>-<hash|intern>.csv`, because the interning flag changes every allocation figure.
 
 ### 8.2 Core (Stage 0)

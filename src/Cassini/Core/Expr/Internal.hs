@@ -19,6 +19,7 @@ module Cassini.Core.Expr.Internal
     ExprF (..),
     notInterned,
     hashShape,
+    mkNode,
   )
 where
 
@@ -31,8 +32,8 @@ import Data.Vector qualified as V
 import GHC.Exts (isTrue#, reallyUnsafePtrEquality#)
 import Text.Show (Show (showsPrec), showChar, showString, shows)
 
--- | An expression node. Build one only through "Cassini.Core.Intern"'s
--- @intern@, which "Cassini.Core.Expr"'s smart constructors call.
+-- | An expression node. Build one only through 'mkNode', which
+-- "Cassini.Core.Expr"'s smart constructors call.
 data Expr = Expr
   { -- | Cached structural hash: equal shapes have equal hashes.
     exprHash :: {-# UNPACK #-} !Int,
@@ -127,12 +128,21 @@ instance Recursive Expr where
     SSymbol s -> SymbolF s
     SApp h as -> AppF h as
 
--- | Rebuilds through 'intern', as the smart constructors do, so every fold
--- maintains the hash and the id.
+-- | Interns a shape, normalizing a number first: the one place a node is
+-- built. The smart constructors in "Cassini.Core.Expr" and 'embed' both call
+-- it, so a fold cannot build a node they would not.
+mkNode :: Shape -> Expr
+mkNode =
+  intern . \case
+    SNumber n -> SNumber (normalize n)
+    s -> s
+
+-- | Rebuilds through 'mkNode', as the smart constructors do, so every fold
+-- maintains the hash, the id and normalization.
 instance Corecursive Expr where
   embed =
-    intern . \case
-      NumberF n -> SNumber (normalize n)
+    mkNode . \case
+      NumberF n -> SNumber n
       StringF t -> SString t
       SymbolF s -> SSymbol s
       AppF h as -> SApp h as

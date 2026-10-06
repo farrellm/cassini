@@ -29,8 +29,12 @@
                Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Cassini.Poly.Convert,
                Main, Test.**, Bench.**]
     # 4. The representation is private to the core, and to the interning-agreement test.
+    #    The intern table builds nodes, so it is private to the core outright: only
+    #    Internal's mkNode calls it.
     - name: Cassini.Core.Expr.Internal
       within: [Cassini.Core.**, Test.Cassini.Core.Intern]
+    - name: Cassini.Core.Intern
+      within: [Cassini.Core.**]
     # 5. L4 and L5 are the top: nothing below them, and nothing in A, may import them.
     - name: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Syntax.**, Cassini.REPL]
       within: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
