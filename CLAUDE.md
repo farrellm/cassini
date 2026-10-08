@@ -3,9 +3,10 @@
 A computer algebra system for Haskell: a Wolfram-Language-style term rewriting kernel over an exact
 numeric and polynomial substrate.
 
-**The repository is at the design stage.** `src/` is still `cabal init` output; the research is
-complete and validated, and [`DESIGN.md`](./DESIGN.md) is the architecture. Where the code and the
-design disagree, the design is the intent and the code is behind.
+**Stage 0 is built**: exact numbers, symbols, `Expr` with switchable interning, canonical order,
+traversal and structural operators, under the tooling that enforces the rules below. Stage 1, the
+evaluator, is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and it is ahead of the code.
+Where the two disagree, the design is the intent and the code is behind.
 
 | Path | What it is |
 | :--- | :--- |
@@ -13,7 +14,11 @@ design disagree, the design is the intent and the code is behind.
 | [`notes/`](./notes/) | The reading-and-building guide and its bibliography. Has its own `CLAUDE.md` with strict editing rules. |
 | [`references/`](./references/) | The document corpus the notes cite, indexed, with per-file defect annotations; its totals are in `references/CLAUDE.md`. Gitignored; see rule 6. |
 | `cassini.cabal` | Package definition. GHC2024, `base ^>=4.21.2.0`. |
-| `src/`, `app/`, `test/` | Library, executable, tests. Currently the `cabal init` skeleton. |
+| `src/`, `src-intern/` | The library. `src-intern/{hash,weak}` are the two implementations of `Cassini.Core.Intern`, selected by the `intern` flag (§3.4). |
+| `prelude/` | `Cassini.Prelude`, the internal `cassini-prelude` sublibrary (§2.3). |
+| `app/`, `test/`, `bench/` | The executable (a stub until the REPL), the fast suite `cassini-test`, and `cassini-bench` with its committed baselines (§7, §8). |
+| `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker, and the Haddock coverage floor. |
+| `.github/workflows/ci.yml` | CI, §2.8 steps 1–7. |
 | `corpus/` | Imported test corpora (`DESIGN.md` §7.8–§7.9). So far only `tools/extract_wolfram_docs.py`; `fetched/` and `wolfram-docs/` are gitignored. |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release. |
 
@@ -60,26 +65,31 @@ design disagree, the design is the intent and the code is behind.
      siblings hold the API.
    - No partial functions. `head`, `fromJust` and `!!` are not in scope; indexing returns `Either`
      with a message, which the language semantics require anyway.
-   - The warning set (§2.4) is not relaxed per module, and CI builds with `-Werror` — once CI
-     exists (see Toolchain).
+   - The warning set (§2.4) is not relaxed per module, and CI builds with `-Werror`. That includes
+     `-Worphans`: an instance goes with its type, through an `hs-boot` import if a cycle is in the
+     way, as `Cassini.Core.Expr.Internal` does (§3.4, §3.6).
    - Extensions are declared per module, except `OverloadedRecordDot` and `OverloadedStrings`, which
      are project-wide in a `common extensions` stanza. Never re-declare those two or anything
      GHC2024 already has; a redundant pragma is invisible noise.
    - **Record dot syntax is preferred**: `s.symName`, not `symName s`. Prefix selector application
      wants a reason (composition, passing the selector as a function, a section).
-   - `ormolu` and `hlint`, both to be checked in CI (see Toolchain). Ormolu has no style config,
-     and that is the point. It reads `default-extensions` from the cabal file, so **never pass `--no-cabal`**: without it
-     ormolu rewrites `r.field` to `r . field`.
+   - `ormolu` and `hlint`, both checked in CI. Ormolu has no style config, and that is the point.
+     It reads `default-extensions` from the cabal file, so **never pass `--no-cabal`**: without it
+     ormolu rewrites `r.field` to `r . field`. hlint does not read the cabal file at all, so
+     `.hlint.yaml` passes those extensions itself. Without them hlint suggests `f x . field` for
+     `(f x).field` (§2.5).
    - **Module layering is a lint rule, not a convention** (§2.6). Imports go down the layer stack;
-     `.hlint.yaml` fails a violation, once it exists (see Toolchain).
+     `.hlint.yaml` fails a violation, and `lint/check-layering.sh` checks the rules themselves.
 
    Two traps already found, so they are not rediscovered:
 
    - **relude re-exports mtl's `State`/`Reader` vocabulary** (`get`, `put`, `ask`, `local`, …), which
      collides name-for-name with `effectful`. Resolved once in `Cassini.Prelude` by subtraction, not
      per module by qualification; the same subtraction removes relude's `one` and `Undefined`, and
-     the list will grow (§2.3). relude also withholds `unsafePerformIO`, which is a feature: the
-     intern table's one `import System.IO.Unsafe` is a complete audit of the unsafety in the tree.
+     the list will grow (§2.3). relude also withholds `unsafePerformIO`, which is a feature:
+     `grep -rlE 'System.IO.Unsafe|reallyUnsafe' src src-intern` finds the symbol table, the two
+     intern tables and `Eq Expr`'s pointer test, and that is a complete audit of the unsafety in
+     the tree.
    - **No `effectful` handler can enumerate matches.** `Effectful.NonDet` is `Maybe`-shaped by
      necessity, not by an old release, so the matcher uses `LogicT` over `Eff` inside the `MatchT`
      **newtype** in `Cassini.Pattern.Match`, the one module the `.hlint.yaml` rule lets import
@@ -106,10 +116,12 @@ design disagree, the design is the intent and the code is behind.
      a person reads the diff, and the commit message says why the new output is right.
    - Regression cases are named for the behaviour, not the bug:
      `0002-builtin-upvalue-beats-user-downvalue`, not `0002-issue-17`.
-   - Unit tests are worked examples lifted from the sources, each citing where it came from.
-   - Benchmark baselines are committed per GHC version and regenerated deliberately, with the commit
-     message saying why. Once the gate exists (see Toolchain), an allocation regression fails CI;
-     time is gated only against a baseline from the same CI runner class (§8.6).
+   - A unit test lifted from a source cites where it came from (§7.2). Edge-case and bug tests
+     are welcome too, with no citation; their name says what contract they check.
+   - Benchmark baselines are committed per GHC version and `intern` setting, and regenerated
+     deliberately, with the commit message saying why. From milestone 1a, an allocation regression
+     fails CI (`bench/check-allocation.py`). Time is gated only against a baseline from the same CI
+     runner class (§8.6).
 
 6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git, and neither
    are the `*.txt` OCR sidecars for the two image-only PDFs, which are the only way to `grep` those
@@ -129,27 +141,27 @@ design disagree, the design is the intent and the code is behind.
 
 ## Toolchain
 
-GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`; `ormolu` and `hlint` are installed
-locally.
+GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`. Installed locally: `ormolu` 0.8.0.2,
+`hlint` 3.10, and `doctest` 0.25.0 (`cabal install doctest`). CI pins the same versions.
 
-**Nothing enforces the rules above yet.** There is no CI workflow, no `.hlint.yaml`, no benchmark
-suite and no `intern` flag, and `cassini.cabal` carries only `-Wall`. All of them, as `DESIGN.md`
-§2.4–§2.8 specify them, are Stage 0's exit condition (§10), except the §8.6 benchmark gate, which is
-on from milestone 1a. Until then, run the checks by hand and do not read a clean run as the gate
-having passed.
+CI (`.github/workflows/ci.yml`) runs `DESIGN.md` §2.8 steps 1–7 on every push and PR. Step 8, the
+§8.6 benchmark gate, arrives with milestone 1a. To run the same checks by hand:
 
-Works today:
-
-- Build: `cabal build --enable-tests all`
-- Tests: `cabal test cassini-test`
+- Build, with CI's warnings: `cabal build all --enable-tests --enable-benchmarks --ghc-options=-Werror`
+- Tests: `cabal test cassini-test`, and again with `-f intern` for the weak intern table
+- Doctests: `cabal repl --with-repl=doctest --repl-options=-Wno-missing-export-lists lib:cassini`.
+  This is not a test suite, because an executable cannot see the `mixins` renaming (§7.6), and
+  `--with-compiler=doctest` does not work either.
+- Lint: `hlint --ignore-glob='lint/fixtures/**' .` and `lint/check-layering.sh`
 - Format: `ormolu --mode check $(git ls-files '*.hs')`
+- Haddock floor: `cabal haddock lib:cassini 2>&1 | python3 scripts/check-haddock.py`
+- Benchmarks: `cabal bench --benchmark-options='--csv out.csv'`. Compare allocation with
+  `python3 bench/check-allocation.py bench/baseline/ghc-9.12.4-hash.csv out.csv`, or against
+  `-intern.csv` after a `-f intern` run.
 - The Wolfram documentation corpus (milestone W, `DESIGN.md` §7.9):
   `python corpus/tools/extract_wolfram_docs.py <notebook-dir> corpus/wolfram-docs`, in a Python
   environment with `Mathics3` installed. It takes about ten minutes on eight cores.
 
-Once §2.8 lands (and not before, because each is currently a silent no-op):
-
-- `--enable-benchmarks` on the build, and — from milestone 1a — the §8.6 gate
-- `cabal test -f intern cassini-test` — cabal accepts an undeclared flag without complaint, so
-  today this reruns the same build and tests nothing about interning (§3.4)
-- `hlint .` as the layering check — without `.hlint.yaml` it checks style only, not §2.6's rules
+Two cabal behaviours to know. cabal accepts an undeclared `-f` flag silently, so a misspelt
+`-f intren` tests nothing. And `-Wunused-packages` is deliberately absent from the warning set:
+under the mixins prelude it reports false positives, and `-Werror` would fail the build (§2.4).

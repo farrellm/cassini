@@ -1,50 +1,147 @@
 cabal-version:      3.14
 name:               cassini
 version:            0.1.0.0
--- synopsis:
--- description:
+synopsis:           A computer algebra system: a term rewriting kernel over exact numbers
+description:
+  A Wolfram-Language-style term rewriting kernel over an exact numeric and
+  polynomial substrate. See DESIGN.md.
+
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Matthew Farrell
 maintainer:         farrellm@alum.mit.edu
--- copyright:
 category:           Math
 build-type:         Simple
 extra-doc-files:    CHANGELOG.md
--- extra-source-files:
+tested-with:        GHC ==9.12.4
 
+-- DESIGN.md §3.4: off is hash-only, on is the weak intern table. CI builds and
+-- tests both (§2.8).
+flag intern
+  description: Hash-cons Expr nodes through a global weak table
+  default:     False
+  manual:      True
+
+-- DESIGN.md §2.4. CI adds -Werror from the command line.
 common warnings
-    ghc-options: -Wall
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wmissing-export-lists -Wpartial-fields
+    -Wredundant-constraints
+
+common extensions
+  default-extensions:
+    OverloadedRecordDot
+    OverloadedStrings
+
+-- DESIGN.md §2.3: relude minus the names that collide with effectful or with
+-- this project's vocabulary.
+library cassini-prelude
+  import:           warnings, extensions
+  exposed-modules:  Cassini.Prelude
+  hs-source-dirs:   prelude
+  build-depends:    relude ^>=1.2.2
+  mixins:
+    relude (Relude as Prelude),
+    relude
+
+  default-language: GHC2024
 
 library
-    import:           warnings
-    exposed-modules:  MyLib
-    -- other-modules:
-    -- other-extensions:
-    build-depends:    base ^>=4.21.2.0
-    hs-source-dirs:   src
-    default-language: GHC2024
+  import:           warnings, extensions
+  exposed-modules:
+    Cassini.Core.Expr
+    Cassini.Core.Expr.Internal
+    Cassini.Core.Order
+    Cassini.Core.Symbol
+    Cassini.Core.Traversal
+    Cassini.Number
+    Cassini.Structure
+
+  other-modules:    Cassini.Core.Intern
+  hs-source-dirs:   src
+
+  if flag(intern)
+    hs-source-dirs: src-intern/weak
+
+  else
+    hs-source-dirs: src-intern/hash
+
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini:cassini-prelude
+    , hashable ^>=1.5.1
+    , recursion-schemes ^>=5.2.3
+    , unordered-containers ^>=0.2.21
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini:cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
 
 executable cassini
-    import:           warnings
-    main-is:          Main.hs
-    -- other-modules:
-    -- other-extensions:
-    build-depends:
-        base ^>=4.21.2.0,
-        cassini
+  import:           warnings, extensions
+  main-is:          Main.hs
+  hs-source-dirs:   app
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini:cassini-prelude
 
-    hs-source-dirs:   app
-    default-language: GHC2024
+  mixins:
+    base hiding (Prelude),
+    cassini:cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
 
 test-suite cassini-test
-    import:           warnings
-    default-language: GHC2024
-    -- other-modules:
-    -- other-extensions:
-    type:             exitcode-stdio-1.0
-    hs-source-dirs:   test
-    main-is:          Main.hs
-    build-depends:
-        base ^>=4.21.2.0,
-        cassini
+  import:           warnings, extensions
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  other-modules:
+    Test.Cassini.Core.Intern
+    Test.Cassini.Core.Order
+    Test.Cassini.Core.Traversal
+    Test.Cassini.Number
+    Test.Cassini.Structure
+    Test.Gen
+
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini
+    , cassini:cassini-prelude
+    , hashable ^>=1.5.1
+    , QuickCheck ^>=2.19
+    , recursion-schemes ^>=5.2.3
+    , tasty ^>=1.5.4
+    , tasty-hunit ^>=0.10.2
+    , tasty-quickcheck ^>=0.11.1
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini:cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
+
+-- DESIGN.md §8.1.
+benchmark cassini-bench
+  import:           warnings, extensions
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   bench
+  main-is:          Main.hs
+  other-modules:    Bench.Core
+  ghc-options:      -O2 -with-rtsopts=-T
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini
+    , cassini:cassini-prelude
+    , tasty-bench ^>=0.5.1
+
+  mixins:
+    base hiding (Prelude),
+    cassini:cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
