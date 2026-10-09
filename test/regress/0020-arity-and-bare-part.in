@@ -1,0 +1,4 @@
+(* Corpus triage: Head and Length take one argument (Head::argx); Part with no index is its argument. *)
+Head[Sequence[a, b]]
+Length[a, b]
+Part[f[a]]

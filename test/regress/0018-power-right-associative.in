@@ -1,0 +1,3 @@
+(* Corpus triage: Power with more than two arguments is right-associative. *)
+Power[x, y, z]
+Power[2, 1, 3]
