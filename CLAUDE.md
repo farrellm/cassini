@@ -124,8 +124,15 @@ Where the two disagree, the design is the intent and the code is behind.
    - A unit test lifted from a source cites where it came from (§7.2). Edge-case and bug tests
      are welcome too, with no citation; their name says what contract they check.
    - A new regression case is also an oracle case: run `cassini-oracle` before committing it.
-   - When the oracle disagrees, `corpus/wolfram-docs/` often documents WL's answer; cite that case
-     ID in `oracle/divergences.txt`. If no example documents it, drop the input; don't pin a guess.
+   - When the oracle disagrees, or is inconclusive because Mathics3 crashes, `corpus/wolfram-docs/`
+     often documents WL's answer; cite that case ID in `oracle/divergences.txt` or the regression
+     case's comment. Failing that, mathematica.stackexchange.com often quotes WL's real output,
+     messages included; cite the question or answer URL. Search it through the Stack Exchange API
+     (`api.stackexchange.com/2.3`, `site=mathematica`), not a web search engine, which barely
+     indexes it. `search/excerpts` covers answers as well as questions but drops `::`, so search
+     the bare tag (`pkspec1`), then fetch the hits' full bodies (`questions/{ids}` or
+     `answers/{ids}`, `filter=withbody`) and grep them. If neither documents it, drop the input;
+     don't pin a guess.
    - A fix commit adds its `CHANGELOG.md` line in the same commit.
    - Benchmark baselines are committed per GHC version and `intern` setting, and regenerated
      deliberately, with the commit message saying why. From milestone 1a, an allocation regression
