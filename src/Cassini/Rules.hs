@@ -80,7 +80,8 @@ newtype Specificity = Specificity (Int, Int)
   deriving newtype (Eq, Ord, Show)
 
 -- | The specificity of a left-hand side. A sequence blank counts as more
--- general than a single one, and a condition as one more literal node.
+-- general than a single one, and a blank's head constraint and a condition
+-- each as one more literal node, so @f[x_Integer]@ precedes @f[x_]@.
 specificity :: Expr -> Specificity
 specificity e = let (b, l) = go e in Specificity (b, negate l)
   where
@@ -90,13 +91,14 @@ specificity e = let (b, l) = go e in Specificity (b, negate l)
     go u = case u of
       App (Sym h) as
         | h == sPattern, [_, p] <- V.toList as -> go p
-        | h == sBlank -> (1, 0)
-        | h == sBlankSequence -> (2, 0)
-        | h == sBlankNullSequence -> (3, 0)
+        | h == sBlank -> (1, constrained as)
+        | h == sBlankSequence -> (2, constrained as)
+        | h == sBlankNullSequence -> (3, constrained as)
         | h == sCondition, [p, _] <- V.toList as -> second (+ 1) (go p)
       App h as -> foldl' add (second (+ 1) (go h)) (V.map go as)
       _ -> (0, 1)
     add (a, b) (c, d) = (a + c, b + d)
+    constrained as = min 1 (V.length as)
     size = \case
       App h as -> 1 + size h + sum (V.map size as)
       _ -> 1 :: Int

@@ -1,0 +1,12 @@
+Out[1]: -
+Out[2]: -
+Out[3]: -
+Out[4]: List[HoldAll, Protected]
+Out[5]: $Failed
+Message[5]: SetDelayed::write
+Out[6]: -
+Out[7]: List[Protected]
+Out[8]: -
+Out[9]: -
+Message[9]: Attributes::locked
+Out[10]: List[Locked, Protected]

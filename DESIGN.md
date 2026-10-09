@@ -1033,7 +1033,9 @@ since step 2 evaluates `h` by a recursive `evaluate`.
 
 `insertRule` orders each table by specificity at definition time, insertion order breaking ties.
 Specificity is a coarse structural measure (fewer blanks, more literal structure) and does not claim
-WL's exact behaviour: where it cannot decide, definition order does, and that is documented.
+WL's exact behaviour: where it cannot decide, definition order does, and that is documented. A
+blank's head constraint is literal structure, so `f[x_Integer]` is tried before `f[x_]` whichever
+was defined first, as in WL.
 
 ### 4.3 The kernel effect
 

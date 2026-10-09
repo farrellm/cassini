@@ -96,8 +96,8 @@ import Cassini.Eval.Kernel
     unwind,
     withFuel,
   )
-import Cassini.Pattern (applySubst)
-import Cassini.Pattern.Match (matchOne)
+import Cassini.Pattern (applySubst, viewPattern)
+import Cassini.Pattern.Match (liftMatch, match, observeFirst)
 import Cassini.Rules (BuiltinId, Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), applicableRules, ladder)
 import Data.Vector qualified as V
 import Effectful (Eff, IOE, (:>))
@@ -140,8 +140,10 @@ evalSequence = fixpoint step
               evalStep9Order n' >>= evalStepIndet >>= \case
                 Left indeterminate -> pure (Round indeterminate False)
                 Right n'' -> do
-                  fired <- firstJustM ($ n'') [evalStep10UserUp, evalStep11BuiltinUp, evalStep12UserDown, evalStep13BuiltinDown]
-                  pure (fromMaybe (Round (restoreUneval n'') True) fired)
+                  -- Built once for the four rungs, not once per rung.
+                  let e' = nodeExpr n''
+                  fired <- firstJustM (\r -> r n'' e') [userUp, builtinUp, userDown, builtinDown]
+                  pure (fromMaybe (Round (if null n''.nodeStripped then e' else restoreUneval n'') True) fired)
       | otherwise = pure (Round e True)
 
 -- | One round's result, and whether it is already a fixed point of the
@@ -200,8 +202,7 @@ evalStep0Own s = do
   where
     ownRule e r = case r.ruleBody of
       Native bid -> runNative bid e
-      Immediate body -> fmap (`applySubst` body) <$> matchOne r.ruleLhs e
-      Delayed body -> fmap (`applySubst` body) <$> matchOne r.ruleLhs e
+      _ -> instantiate r e
 
 -- | Step 2: evaluate the head, and read its attributes.
 evalStep2Head :: (Kernel :> es) => Expr -> V.Vector Expr -> Eff es Node
@@ -345,30 +346,37 @@ evalStepIndet n
 
 -- | Step 10: unless @HoldAllComplete@, user upvalues.
 evalStep10UserUp :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep10UserUp = rung 0 "10 UserUpValue"
+evalStep10UserUp n = userUp n (nodeExpr n)
 
 -- | Step 11: unless @HoldAllComplete@, built-in upvalues.
 evalStep11BuiltinUp :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep11BuiltinUp = rung 1 "11 BuiltinUpValue"
+evalStep11BuiltinUp n = builtinUp n (nodeExpr n)
 
 -- | Step 12: user downvalues, or subvalues for @h[…][…]@.
 evalStep12UserDown :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep12UserDown = rung 2 "12 UserDownValue"
+evalStep12UserDown n = userDown n (nodeExpr n)
 
 -- | Step 13: built-in downvalues, or subvalues for @h[…][…]@.
 evalStep13BuiltinDown :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep13BuiltinDown = rung 3 "13 BuiltinDownValue"
+evalStep13BuiltinDown n = builtinDown n (nodeExpr n)
+
+-- | Steps 10–13 on a node and the expression it stands for, which the
+-- sequence builds once for all four.
+userUp, builtinUp, userDown, builtinDown :: (Kernel :> es) => Node -> Expr -> Eff es (Maybe Round)
+userUp = rung 0 "10 UserUpValue"
+builtinUp = rung 1 "11 BuiltinUpValue"
+userDown = rung 2 "12 UserDownValue"
+builtinDown = rung 3 "13 BuiltinDownValue"
 
 -- | The @i@th rung of 'ladder', which is the only list of rungs: each named
 -- step reads its rung from it rather than restating it (§4.2).
-rung :: (Kernel :> es) => Int -> Text -> Node -> Eff es (Maybe Round)
-rung i name n = case drop i (ladder e) of
+rung :: (Kernel :> es) => Int -> Text -> Node -> Expr -> Eff es (Maybe Round)
+rung i name n e = case drop i (ladder e) of
   (UpValue, _) : _ | holdAllComplete n.nodeAttrs -> pure Nothing
   (UpValue, o) : _ -> firstJustM (\s -> fromTable s (UpValue, o)) (ordNub (mapMaybe tagSymbol (V.toList n.nodeArgs)))
   (k, o) : _ -> maybe (pure Nothing) (\s -> fromTable s (k, o)) (tagSymbol e)
   [] -> pure Nothing
   where
-    e = nodeExpr n
     fromTable s r = do
       info <- lookupSymbol s
       firstJustM (\rule -> applyRule name rule e) (toList (applicableRules info r e))
@@ -390,29 +398,36 @@ tagSymbol = \case
 applyRule :: (Kernel :> es) => Text -> Rule -> Expr -> Eff es (Maybe Round)
 applyRule name r e = case r.ruleBody of
   Native bid -> runNative bid e >>= \fired -> (`Round` False) <$> fired <$ for_ fired (traceStep name)
-  Immediate body -> user body
-  Delayed body -> user body
+  _ -> instantiate r e >>= traverse fire
   where
-    user body =
-      matchOne r.ruleLhs e >>= \case
-        Nothing -> pure Nothing
-        Just sigma -> case body of
-          -- lhs :> rhs /; test: the rule applies only where the test,
-          -- under the match's bindings, evaluates to True.
-          App (Sym c) xs
-            | c == sCondition,
-              [rhs, test] <- V.toList xs ->
-                evaluate (applySubst sigma test) >>= \case
-                  Sym t | t == sTrue -> fire sigma rhs
-                  _ -> pure Nothing
-          _ -> fire sigma body
-    fire sigma body = do
-      let rhs = applySubst sigma body
+    fire rhs = do
       traceStep name rhs
       catchUnwind (evaluate rhs) >>= \case
-        Right v -> pure (Just (Round v True))
-        Left (UReturn v) -> pure (Just (Round v True))
+        Right v -> pure (Round v True)
+        Left (UReturn v) -> pure (Round v True)
         Left u -> unwind u
+
+-- | A user rule's right-hand side, instantiated by the first match under
+-- which it applies. @lhs :> rhs /; test@ applies only where the test, under
+-- the match's bindings, evaluates to @True@; where it does not, the next
+-- match is tried, as a condition on the left-hand side would be. 'Nothing'
+-- for a 'Native' rule, which is never matched.
+instantiate :: (Kernel :> es) => Rule -> Expr -> Eff es (Maybe Expr)
+instantiate r e = case r.ruleBody of
+  Native _ -> pure Nothing
+  Immediate body -> firstApplying body
+  Delayed body -> firstApplying body
+  where
+    firstApplying body = observeFirst $ do
+      sigma <- match (viewPattern r.ruleLhs) e mempty
+      case body of
+        App (Sym c) xs
+          | c == sCondition,
+            [rhs, test] <- V.toList xs ->
+              liftMatch (evaluate (applySubst sigma test)) >>= \case
+                Sym t | t == sTrue -> pure (applySubst sigma rhs)
+                _ -> empty
+        _ -> pure (applySubst sigma body)
 
 -- | Run a builtin. It fires only if it changes the expression, so step 6's
 -- restoration and the trace stay honest.

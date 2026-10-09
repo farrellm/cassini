@@ -35,8 +35,8 @@ definitions =
     define "TagSetDelayed" [HoldAll, Protected, SequenceHold] [down (tagAssignment "TagSetDelayed" Delayed)],
     define "Unset" [HoldFirst, Listable, Protected, ReadProtected] [down unset],
     define "Attributes" [HoldAll, Listable, Protected] [down attributes],
-    define "SetAttributes" [HoldFirst, Protected] [down (changeAttributes "SetAttributes" Attributes.insert)],
-    define "ClearAttributes" [HoldFirst, Protected] [down (changeAttributes "ClearAttributes" Attributes.delete)],
+    define "SetAttributes" [HoldFirst, Protected] [down (changeAttributes Attributes.insert)],
+    define "ClearAttributes" [HoldFirst, Protected] [down (changeAttributes Attributes.delete)],
     define "Protect" [HoldAll, Protected] [down (protection "Protect" True)],
     define "Unprotect" [HoldAll, Protected] [down (protection "Unprotect" False)],
     define "$Failed" [Protected] []
@@ -103,7 +103,7 @@ write name lhs body = case target lhs of
 
 -- | @Set@ and @SetDelayed@. @Set@ returns its (evaluated) right-hand side,
 -- and @SetDelayed@ returns @Null@, or @$Failed@ when the write is refused.
--- @{x, y} = {1, 2}@ assigns elementwise.
+-- @{x, {y, z}} = {1, {2, 3}}@ assigns elementwise, at every depth.
 assignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
 assignment name body e = case args e of
   [App (Sym p) xs, rhs]
@@ -113,13 +113,8 @@ assignment name body e = case args e of
         Just rhs <$ partAssignment s is rhs
   [App (Sym l) ls, rhs]
     | l == sList,
-      name == "Set" -> case rhs of
-        App (Sym l') rs
-          | l' == sList,
-            V.length rs == V.length ls -> do
-              V.zipWithM_ (\x v -> prepareLhs x >>= \x' -> write name x' (body v)) ls rs
-              pure (Just rhs)
-        _ -> Just rhs <$ message name "shape" [apply sList (V.toList ls), rhs]
+      name == "Set" ->
+        Just rhs <$ elementwise ls rhs
   [lhs, rhs] -> do
     lhs' <- prepareLhs lhs
     ok <- write name lhs' (body rhs)
@@ -130,6 +125,15 @@ assignment name body e = case args e of
       | name == "Set" = rhs
       | ok = sNullE
       | otherwise = sFailedE
+    elementwise ls rhs = case rhs of
+      App (Sym l') rs
+        | l' == sList,
+          V.length rs == V.length ls ->
+            V.zipWithM_ one ls rs
+      _ -> message name "shape" [apply sList (V.toList ls), rhs]
+    one x v = case x of
+      App (Sym l) xs | l == sList -> elementwise xs v
+      _ -> prepareLhs x >>= \x' -> void (write name x' (body v))
 
 -- | @s[[i, …]] = v@: replace a part of @s@'s own value, which must exist.
 -- An index is an integer (negative from the end, 0 the head) or a list of
@@ -154,7 +158,8 @@ partAssignment s is0 rhs = do
 setPart :: Expr -> [Expr] -> Expr -> Maybe Expr
 setPart x is v = case is of
   [] -> Just v
-  Int_ i : rest -> setAt x (fromInteger i) rest v
+  -- An index beyond a machine integer is out of range, not wrapped.
+  Int_ i : rest -> toIntegralSized i >>= \k -> setAt x k rest v
   App (Sym l) js : rest | l == sList -> do
     ks <- traverse index (V.toList js)
     let vs = case v of
@@ -164,7 +169,7 @@ setPart x is v = case is of
   _ -> Nothing
   where
     index = \case
-      Int_ i -> Just (fromInteger i)
+      Int_ i -> toIntegralSized i
       _ -> Nothing
     setAt y k rest w = case y of
       App h as
@@ -248,8 +253,8 @@ attributes e = case args e of
 
 -- | @SetAttributes@ and @ClearAttributes@: one symbol or a list, and one
 -- attribute or a list. A @Locked@ symbol refuses with @Attributes::locked@.
-changeAttributes :: (Kernel :> es) => Text -> (Attribute -> Attributes.AttributeSet -> Attributes.AttributeSet) -> Expr -> Eff es (Maybe Expr)
-changeAttributes _ f e = case args e of
+changeAttributes :: (Kernel :> es) => (Attribute -> Attributes.AttributeSet -> Attributes.AttributeSet) -> Expr -> Eff es (Maybe Expr)
+changeAttributes f e = case args e of
   -- HoldFirst: step 3 has already evaluated the attributes.
   [ss, as] ->
     case (symbolList ss, traverse attributeOf (listOf as)) of
