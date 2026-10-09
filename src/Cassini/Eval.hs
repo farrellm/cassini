@@ -195,7 +195,7 @@ evalStep0Own :: (Kernel :> es) => Symbol -> Eff es Expr
 evalStep0Own s = do
   let e = Sym s
   info <- lookupSymbol s
-  fired <- firstJustM (\o -> firstJustM (ownRule e) (toList (applicableRules info (OwnValue, o) e))) [User, Builtin]
+  fired <- firstJustM (\o -> firstJustM (ownRule e) (applicableRules info (OwnValue, o) e)) [User, Builtin]
   case fired of
     Just v -> v <$ traceStep "0 OwnValue" v
     Nothing -> pure e
@@ -379,7 +379,7 @@ rung i name n e = case drop i (ladder e) of
   where
     fromTable s r = do
       info <- lookupSymbol s
-      firstJustM (\rule -> applyRule name rule e) (toList (applicableRules info r e))
+      firstJustM (\rule -> applyRule name rule e) (applicableRules info r e)
 
 -- | The symbol an expression's rules are keyed on: the symbol itself, or the
 -- innermost head symbol of an application (@f@ for @f[x][y]@).

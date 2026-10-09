@@ -17,7 +17,7 @@ module Cassini.Builtins
   )
 where
 
-import Cassini.Attributes (Attribute (..), attributeSet)
+import Cassini.Attributes (Attribute (..), attributeName, attributeSet)
 import Cassini.Builtins.Arithmetic qualified as Arithmetic
 import Cassini.Builtins.Assign qualified as Assign
 import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down)
@@ -37,7 +37,12 @@ standardState = install definitions emptyState
 
 -- | Every builtin definition, in installation order.
 definitions :: [Definition]
-definitions = kernel <> Arithmetic.definitions <> Structural.definitions <> Assign.definitions
+definitions = kernel <> attributeSymbols <> Arithmetic.definitions <> Structural.definitions <> Assign.definitions
+
+-- | The attribute names as @System`@ symbols, so that the @Flat@ a user
+-- writes is the @Flat@ that @Attributes@ returns.
+attributeSymbols :: [Definition]
+attributeSymbols = [define (attributeName a) [Protected] [] | a <- universe]
 
 -- | The symbols the evaluator and the matcher give meaning to. They have
 -- attributes and, for @Evaluate@, one rule; the meaning is in the steps of

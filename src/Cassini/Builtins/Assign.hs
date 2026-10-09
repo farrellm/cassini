@@ -20,6 +20,7 @@ import Cassini.Builtins.Define (Definition, args, define, down, message, sFailed
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkString, pattern App, pattern Int_, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sList, sPattern, sPatternTest, symName, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol, modifySymbol)
+import Cassini.Pattern (unholdPattern)
 import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), hasRules, insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -45,12 +46,11 @@ definitions =
 -- | Which table an assignment writes.
 data Target = Target !Symbol !ValueKind
 
--- | The table a left-hand side belongs in, seen through @HoldPattern@.
+-- | The table a left-hand side belongs in, seen through @HoldPattern@ and a
+-- condition.
 target :: Expr -> Maybe Target
-target lhs = case unholdPattern lhs of
+target lhs = case lhsCore lhs of
   Sym s -> Just (Target s OwnValue)
-  -- f[x_] /; test := rhs is a rule for f.
-  App (Sym c) as | c == sCondition, [p, _] <- V.toList as -> target p
   App (Sym f) _ -> Just (Target f DownValue)
   App h@(App _ _) _ -> (`Target` SubValue) <$> tagSymbol h
   _ -> Nothing
@@ -70,10 +70,20 @@ tagSymbol = \case
   App h _ -> tagSymbol h
   _ -> Nothing
 
-unholdPattern :: Expr -> Expr
-unholdPattern = \case
-  App (Sym h) as | h == sHoldPattern, [x] <- V.toList as -> unholdPattern x
-  e -> e
+-- | The left-hand side seen through @HoldPattern@ and any condition on it:
+-- @f[x_] /; test := rhs@ is a rule for @f@, and @g /: f[g[x_]] /; test := rhs@
+-- an upvalue for @g@, whose argument tags are @f[g[x_]]@'s.
+lhsCore :: Expr -> Expr
+lhsCore e = case unholdPattern e of
+  App (Sym c) as | c == sCondition, [p, _] <- V.toList as -> lhsCore p
+  e' -> e'
+
+-- | The tags of the left-hand side's arguments, which upvalues go on.
+argumentTags :: Expr -> [Symbol]
+argumentTags = mapMaybe tagSymbol . V.toList . exprArgs . lhsCore
+
+sPart :: Symbol
+sPart = systemSymbol "Part"
 
 -- | Evaluate the left-hand side's arguments, as WL does, unless the head
 -- holds them or the whole is in @HoldPattern@. The head is not evaluated.
@@ -107,7 +117,7 @@ write name lhs body = case target lhs of
 assignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
 assignment name body e = case args e of
   [App (Sym p) xs, rhs]
-    | p == systemSymbol "Part",
+    | p == sPart,
       name == "Set",
       Sym s : is@(_ : _) <- V.toList xs ->
         Just rhs <$ partAssignment s is rhs
@@ -144,7 +154,7 @@ partAssignment :: (Kernel :> es) => Symbol -> [Expr] -> Expr -> Eff es ()
 partAssignment s is0 rhs = do
   info <- lookupSymbol s
   is <- traverse evaluate is0
-  let lhs = apply (systemSymbol "Part") (Sym s : is)
+  let lhs = apply sPart (Sym s : is)
   case [v | r <- ruleSetToList (rulesOf OwnValue info), r.ruleOrigin == User, Immediate v <- [r.ruleBody]] of
     current : _
       | isProtected info.siAttributes -> message "Set" "wrsym" [Sym s]
@@ -186,7 +196,7 @@ upAssignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (
 upAssignment name body e = case args e of
   [lhs, rhs] -> do
     lhs' <- prepareLhs lhs
-    case ordNub (mapMaybe tagSymbol (V.toList (exprArgs (unholdPattern lhs')))) of
+    case ordNub (argumentTags lhs') of
       [] -> Just sFailedE <$ message name "nosym" [lhs']
       tags -> do
         for_ tags $ \s -> do
@@ -206,7 +216,7 @@ tagAssignment name body e = case args e of
     rhs <- if name == "TagSet" then evaluate rhs0 else pure rhs0
     lhs' <- prepareLhs lhs
     let own = target lhs'
-        argTags = mapMaybe tagSymbol (V.toList (exprArgs (unholdPattern lhs')))
+        argTags = argumentTags lhs'
         result = if name == "TagSet" then rhs else sNullE
     case own of
       Just (Target t _) | t == s -> do
