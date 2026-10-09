@@ -1,0 +1,9 @@
+Out[1]: List[List[11, 12, 13], List[21, 22, 23]]
+Out[2]: List[11, 21, 4]
+Out[3]: List[List[List[11, 21, 4], 12, 13], List[List[11, 21, 4], 22, 23]]
+Out[4]: List[p, q]
+Out[5]: List[List[p, 12, 13], List[q, 22, 23]]
+Out[6]: 0
+Out[7]: List[0, 0]
+Out[8]: 0
+Message[8]: Set::noval

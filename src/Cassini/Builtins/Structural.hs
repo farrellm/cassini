@@ -15,7 +15,7 @@
 module Cassini.Builtins.Structural (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Definition, args, define, down, message, sFalseE, sTrueE, sub)
+import Cassini.Builtins.Define (Definition, PartSpec (..), args, define, down, message, partSpec, sFalseE, sTrueE, sub)
 import Cassini.Core.Expr (Expr, apply, exprArgs, exprArity, exprHead, mkApp, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sList, systemSymbol)
 import Cassini.Eval.Kernel (Kernel)
@@ -58,39 +58,34 @@ operatorForm = \case
   _ -> Nothing
 
 -- | @Part[expr, i, j, …]@: each index an integer, a list of integers, or
--- @All@. Out of range is @Part::partw@ on an expression, @{}@ included, and
--- @Part::partd@ on an atom, and the input stays unevaluated (§4.7).
+-- @All@. Every index is checked before any part is taken, so one that is not
+-- a part specification is @Part::pkspec1@ even on an atom. Out of range is
+-- @Part::partw@ on an expression, @{}@ included, and @Part::partd@ on an
+-- atom. Either way the input stays unevaluated (§4.7).
 partRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 partRule e = case args e of
   [x] -> pure (Just x)
-  x : is@(_ : _) -> case go x is of
-    Right r -> pure (Just r)
-    Left (Just (target, i)) -> case target of
-      App _ _ -> Nothing <$ message "Part" "partw" [Int_ i, target]
-      _ -> Nothing <$ message "Part" "partd" [e]
-    Left Nothing -> Nothing <$ message "Part" "pkspec" [e]
+  x : is@(_ : _) -> case traverse partSpec is of
+    Left j -> Nothing <$ message "Part" "pkspec1" [j]
+    Right specs -> case go x specs of
+      Right r -> pure (Just r)
+      Left (target, i) -> case target of
+        App _ _ -> Nothing <$ message "Part" "partw" [Int_ i, target]
+        _ -> Nothing <$ message "Part" "partd" [e]
   _ -> pure Nothing
   where
-    -- 'Left Nothing' is an index that is not a part specification.
     go x = \case
       [] -> Right x
-      Int_ i : rest -> at x i >>= (`go` rest)
-      Sym a : rest | a == sAll -> parts x (V.toList (exprArgs x)) (`go` rest)
-      App (Sym l) js : rest
-        | l == sList,
-          Just ks <- traverse intIndex (V.toList js) ->
-            parts x ks (at x >=> (`go` rest))
-      _ -> Left Nothing
+      Index i : rest -> at x i >>= (`go` rest)
+      AllParts : rest -> parts x (V.toList (exprArgs x)) (`go` rest)
+      Indices ks : rest -> parts x ks (at x >=> (`go` rest))
     -- Several parts of x, under its head. An atom has none, even for All or
     -- {}: Part::partd, as for an integer index (the index is not reported).
     parts x is f = case x of
       App h _ -> mkApp h . V.fromList <$> traverse f is
-      _ -> Left (Just (x, 0))
+      _ -> Left (x, 0)
     -- An index beyond a machine integer is out of range, not wrapped.
-    at x i = maybe (Left (Just (x, i))) (first (const (Just (x, i))) . part x) (toIntegralSized i)
-    intIndex = \case
-      Int_ i -> Just i
-      _ -> Nothing
+    at x i = maybe (Left (x, i)) (first (const (x, i)) . part x) (toIntegralSized i)
 
 -- | @Apply[f, expr, spec]@: replace the head of every part at the levels
 -- given, by default level 0 only. Atoms have no head to replace.

@@ -48,3 +48,9 @@
 0030-protected-guards-values-not-attributes 9 Mathics3
 # Mathics3: Condition is HoldRest there; WL's is HoldAll (from memory).
 attributes 13 Mathics3
+# Mathics3: an index that is not a part specification is Part::pspec there;
+# WL's is Part::pkspec1 (wolfram/Part/PropertiesAndRelations/4).
+0040-part-bad-spec 1 Mathics3
+0040-part-bad-spec 2 Mathics3
+0040-part-bad-spec 3 Mathics3
+0040-part-bad-spec 4 Mathics3

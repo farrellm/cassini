@@ -22,12 +22,14 @@ module Cassini.Builtins.Define
     sTrueE,
     sFalseE,
     sFailedE,
+    PartSpec (..),
+    partSpec,
   )
 where
 
 import Cassini.Attributes (Attribute)
-import Cassini.Core.Expr (Expr, exprArgs, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sFalse, sNull, sTrue, systemSymbol)
+import Cassini.Core.Expr (Expr, exprArgs, pattern App, pattern Int_, pattern Sym)
+import Cassini.Core.Symbol (Symbol, sFalse, sList, sNull, sTrue, systemSymbol)
 import Cassini.Eval.Kernel (BuiltinFn (..), Kernel, emitMessage)
 import Cassini.Eval.Message (MessageTag (..))
 import Cassini.Rules (ValueKind (..))
@@ -87,3 +89,21 @@ sNullE = Sym sNull
 sTrueE = Sym sTrue
 sFalseE = Sym sFalse
 sFailedE = sym "$Failed"
+
+-- | One index of @Part@ or of a part assignment.
+data PartSpec = Index !Integer | Indices ![Integer] | AllParts
+
+-- | An index as a part specification, or the index itself when it is not one
+-- (@Part::pkspec1@, @Set::pkspec1@).
+partSpec :: Expr -> Either Expr PartSpec
+partSpec = \case
+  Int_ i -> Right (Index i)
+  Sym a | a == sAll -> Right AllParts
+  j@(App (Sym l) js)
+    | l == sList -> maybeToRight j (Indices <$> traverse intIndex (V.toList js))
+  j -> Left j
+  where
+    sAll = systemSymbol "All"
+    intIndex = \case
+      Int_ i -> Just i
+      _ -> Nothing
