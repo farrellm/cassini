@@ -3423,8 +3423,8 @@ gating on.
   attributes) is triaged: passing, a `divergences.txt` entry, or a fix with its regression case.
   The in-scope pass count is recorded.
 
-**Done 2026-10-09** (branch `stage-1a`). CI steps 1–8 pass locally under `-Werror` in both `intern`
-settings. Step 8's `bench` job has not yet run on a CI runner.
+**Done 2026-10-09** (PR #12), with CI green on steps 1–8 under `-Werror` in both `intern`
+settings, step 8's allocation gate included.
 
 Corpus and oracle at completion:
 
