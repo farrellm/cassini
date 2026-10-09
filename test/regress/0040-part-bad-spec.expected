@@ -1,0 +1,10 @@
+Out[1]: Part[List[a, b, c], x]
+Message[1]: Part::pkspec1
+Out[2]: Part[List[a, b, c], 5, x]
+Message[2]: Part::pkspec1
+Out[3]: Part[y, x]
+Message[3]: Part::pkspec1
+Out[4]: Part[List[a, b, c], List[1, x]]
+Message[4]: Part::pkspec1
+Out[5]: Part[y, 1]
+Message[5]: Part::partd

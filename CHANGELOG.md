@@ -71,6 +71,10 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
       splices it out of that position, so its messages are emitted once.
   * Fix: a part assignment whose index is not a part specification, such as `m[[x]] = 1`, is
     `Set::pkspec1`, not `Set::partw` (regression case 0039).
+  * Fix: an index that is not a part specification is `Part::pkspec1`, not `Part::pkspec`, and
+    `Part` and part assignment check every index before taking a part, so it wins over an index
+    out of range or an atom (regression cases 0039–0040).
+  * Part assignment takes `All` (regression case 0041).
   * `cassini-corpus` and `cassini-oracle` no longer count two different outputs as equal because
     neither reads as FullForm.
   * The Wolfram documentation extractor holds the arguments of a symbol the example gave a hold
