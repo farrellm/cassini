@@ -165,7 +165,9 @@ assignment name body e = case args e of
 -- An index is an integer (negative from the end, 0 the head) or a list of
 -- them; a list of indices takes a list of values of the same length,
 -- elementwise, or one value for every index. Out of range is @Set::partw@,
--- and no own value is @Set::noval@; either way the value is unchanged.
+-- an index that is not a part specification is @Set::pkspec1@, and no own
+-- value is @Set::noval@; in each case the value is unchanged. Indices are
+-- checked left to right, so the first bad one names the message.
 partAssignment :: (Kernel :> es) => Symbol -> [Expr] -> Expr -> Eff es ()
 partAssignment s is0 rhs = do
   info <- lookupSymbol s
@@ -174,38 +176,46 @@ partAssignment s is0 rhs = do
   case [v | r <- ruleSetToList (rulesOf OwnValue info), r.ruleOrigin == User, Immediate v <- [r.ruleBody]] of
     current : _
       | isProtected info.siAttributes -> message "Set" "wrsym" [Sym s]
-      | Just new <- setPart current is rhs ->
-          modifySymbol s (modifyRules OwnValue (insertRule (mkRule User (Sym s) (Immediate new))))
-      | otherwise -> message "Set" "partw" [lhs]
+      | otherwise -> case setPart current is rhs of
+          Right new -> modifySymbol s (modifyRules OwnValue (insertRule (mkRule User (Sym s) (Immediate new))))
+          Left OutOfRange -> message "Set" "partw" [lhs]
+          Left (NotASpec i) -> message "Set" "pkspec1" [i]
     [] -> message "Set" "noval" [Sym s, lhs]
 
--- | Replace the part at a sequence of indices; 'Nothing' when one is out of
--- range or is not an index.
-setPart :: Expr -> [Expr] -> Expr -> Maybe Expr
+-- | Why a part assignment failed.
+data PartFailure
+  = -- | An index past the end of its expression, or into an atom.
+    OutOfRange
+  | -- | An index that is not an integer or a list of integers.
+    NotASpec !Expr
+
+-- | Replace the part at a sequence of indices.
+setPart :: Expr -> [Expr] -> Expr -> Either PartFailure Expr
 setPart x is v = case is of
-  [] -> Just v
+  [] -> Right v
   -- An index beyond a machine integer is out of range, not wrapped.
-  Int_ i : rest -> toIntegralSized i >>= \k -> setAt x k rest v
-  App (Sym l) js : rest | l == sList -> do
-    ks <- traverse index (V.toList js)
+  Int_ i : rest -> maybeToRight OutOfRange (toIntegralSized i) >>= \k -> setAt x k rest v
+  j@(App (Sym l) js) : rest | l == sList -> do
+    ks <- maybeToRight (NotASpec j) (traverse index (V.toList js))
     let vs = case v of
           App (Sym l') ws | l' == sList, V.length ws == length ks -> V.toList ws
           _ -> map (const v) ks
     foldlM (\acc (k, w) -> setAt acc k rest w) x (zip ks vs)
-  _ -> Nothing
+  j : _ -> Left (NotASpec j)
   where
+    -- A list element beyond a machine integer is out of range at setAt.
     index = \case
-      Int_ i -> toIntegralSized i
+      Int_ i -> Just (fromMaybe maxBound (toIntegralSized i))
       _ -> Nothing
     setAt y k rest w = case y of
       App h as
         | k == 0 -> (`mkApp` as) <$> setPart h rest w
         | otherwise -> do
             let pos = if k < 0 then V.length as + k else k - 1
-            a <- as V.!? pos
+            a <- maybeToRight OutOfRange (as V.!? pos)
             a' <- setPart a rest w
-            Just (mkApp h (as V.// [(pos, a')]))
-      _ -> Nothing
+            Right (mkApp h (as V.// [(pos, a')]))
+      _ -> Left OutOfRange
 
 -- | @UpSet@ and @UpSetDelayed@: an upvalue for the tag of every argument.
 upAssignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
