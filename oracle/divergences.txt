@@ -32,5 +32,14 @@
 # (wolfram/Sequence/PossibleIssues/1 documents Head::argx).
 0020-arity-and-bare-part 1 Mathics3
 0020-arity-and-bare-part 2 Mathics3
+# Mathics3: Protect returns Null, as above.
+0023-unset-protected-symbol 3 Mathics3
+# Mathics3: Unset ignores Protected; WL answers Unset::wrsym (from memory).
+0023-unset-protected-symbol 4 Mathics3
+0023-unset-protected-symbol 5 Mathics3
+0023-unset-protected-symbol 6 Mathics3
+# Mathics3: restores Unevaluated on every equal argument; WL puts each
+# wrapper back where it was (from memory).
+0024-unevaluated-restored-in-place 1 Mathics3
 # Mathics3: Condition is HoldRest there; WL's is HoldAll (from memory).
 attributes 13 Mathics3

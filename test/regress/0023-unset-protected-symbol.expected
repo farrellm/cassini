@@ -1,0 +1,8 @@
+Out[1]: 1
+Out[2]: -
+Out[3]: List["h", "k"]
+Out[4]: $Failed
+Message[4]: Unset::wrsym
+Out[5]: $Failed
+Message[5]: Unset::write
+Out[6]: List[1, 2]

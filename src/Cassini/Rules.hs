@@ -123,9 +123,11 @@ ruleSetToList :: RuleSet -> [Rule]
 ruleSetToList (RuleSet rs) = toList rs
 
 -- | Insert by specificity, after every rule at least as specific, so
--- definition order breaks ties. A user rule with an equal left-hand side
--- is replaced in place, as redefinition does in WL. Built-in rules are never
--- replaced: their left-hand sides only record where they live.
+-- definition order breaks ties. A user rule with an equal left-hand side and
+-- an equal right-hand-side condition is replaced in place, as redefinition
+-- does in WL; @f[x_] := a /; p[x]@ and @f[x_] := b /; q[x]@ are two rules.
+-- Built-in rules are never replaced: their left-hand sides only record where
+-- they live.
 insertRule :: Rule -> RuleSet -> RuleSet
 insertRule r (RuleSet rs) = case Seq.findIndexL same rs of
   Just i -> RuleSet (Seq.update i r rs)
@@ -133,9 +135,26 @@ insertRule r (RuleSet rs) = case Seq.findIndexL same rs of
     let (before, after) = Seq.spanl (\x -> x.ruleSpecificity <= r.ruleSpecificity) rs
      in RuleSet (before <> (r Seq.<| after))
   where
-    same x = r.ruleOrigin == User && x.ruleOrigin == User && x.ruleLhs == r.ruleLhs
+    same x =
+      r.ruleOrigin == User
+        && x.ruleOrigin == User
+        && x.ruleLhs == r.ruleLhs
+        && bodyCondition x.ruleBody == bodyCondition r.ruleBody
 
--- | Remove the user rule with this left-hand side, if there is one.
+-- | The test of a right-hand side @rhs /; test@, if it has one.
+bodyCondition :: RuleBody -> Maybe Expr
+bodyCondition = \case
+  Immediate b -> condition b
+  Delayed b -> condition b
+  Native _ -> Nothing
+  where
+    condition = \case
+      App (Sym c) as | c == sCondition, [_, t] <- V.toList as -> Just t
+      _ -> Nothing
+
+-- | Remove every user rule with this left-hand side, if there is one.
+-- Unlike 'insertRule', this ignores right-hand-side conditions: @Unset@
+-- names a left-hand side only, so it removes all the conditional rules on it.
 removeRule :: Expr -> RuleSet -> (Bool, RuleSet)
 removeRule lhs (RuleSet rs) =
   let rs' = Seq.filter (\x -> not (x.ruleOrigin == User && x.ruleLhs == lhs)) rs

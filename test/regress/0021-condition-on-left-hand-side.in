@@ -1,0 +1,3 @@
+(* lhs /; test := rhs is a downvalue of the lhs's head, not a write to Condition. *)
+SetDelayed[Condition[f[Pattern[x, Blank[]]], FreeQ[x, y]], 1]
+List[f[2], f[y]]

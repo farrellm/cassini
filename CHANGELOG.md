@@ -37,6 +37,13 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     `aeson` dependency.
   * Fix: a message from an unevaluated subterm was emitted again each time a sibling changed its
     parent (regression case 0013).
+  * Fixes from the review of the milestone 1a PR, each with a regression case (0021–0025):
+    * a condition on an assignment's left-hand side defines a rule for its head;
+    * rules with one left-hand side and different right-hand-side conditions coexist, and `Unset`
+      removes them all;
+    * `Unset` refuses a protected symbol;
+    * `Unevaluated` is restored on the argument it came from.
+  * `SetAttributes` and `ClearAttributes` no longer evaluate their attributes twice.
 * Stage 0 (DESIGN.md §3, §10):
   * Exact numbers (`Cassini.Number`).
   * Interned symbols (`Cassini.Core.Symbol`).

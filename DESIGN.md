@@ -1239,8 +1239,10 @@ plus ordinary definitions, and a patch adding such a branch is a bug. Two things
 - **Step 6 is `Unevaluated`'s implementation**, the one step that names it. (Its argument arrives
   unevaluated because `Unevaluated` has `HoldAllComplete`, not because a step special-cases it.)
   Step 6 records what it stripped, and **if no rule in steps 10–13 fires, the wrappers are
-  restored**, so `f[Unevaluated[1+1]]` evaluates to itself. Steps 7–9 may reorder arguments, so it
-  tracks values, not positions.
+  restored**, so `f[Unevaluated[1+1]]` evaluates to itself. It records each value with its
+  position, and restores by position while every value is still where it was, so
+  `f[a, Unevaluated[a]]` keeps its wrapper on the second argument. Once steps 7–9 have moved
+  arguments, it restores by value, on the first equal argument.
 - **The two limits *construct* `Hold`** (§4.3). Building the wrapper is not branching on it.
 
 **Two more things the list leaves implicit:**

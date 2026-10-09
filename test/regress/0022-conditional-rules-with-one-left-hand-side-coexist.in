@@ -1,0 +1,6 @@
+(* f[x_] := a /; p and f[x_] := b /; q are two rules; redefining with the same condition replaces. *)
+SetDelayed[g[Pattern[x, Blank[]]], Condition[a, FreeQ[x, y]]]
+SetDelayed[g[Pattern[x, Blank[]]], Condition[b, FreeQ[x, z]]]
+List[g[y], g[z]]
+SetDelayed[g[Pattern[x, Blank[]]], Condition[c, FreeQ[x, z]]]
+List[g[y], g[z]]
