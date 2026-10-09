@@ -38,8 +38,8 @@ where
 
 import Cassini.Attributes (AttributeSet)
 import Cassini.Core.Expr (Expr, pattern App, pattern Sym)
-import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sPattern)
-import Cassini.Pattern (isPatternFree)
+import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sPattern)
+import Cassini.Pattern (isPatternFree, unholdPattern)
 import Cassini.Pattern.Net qualified as Net
 import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
@@ -82,6 +82,7 @@ newtype Specificity = Specificity (Int, Int)
 -- | The specificity of a left-hand side. A sequence blank counts as more
 -- general than a single one, and a blank's head constraint and a condition
 -- each as one more literal node, so @f[x_Integer]@ precedes @f[x_]@.
+-- @HoldPattern@ counts as nothing: it only stops evaluation.
 specificity :: Expr -> Specificity
 specificity e = let (b, l) = go e in Specificity (b, negate l)
   where
@@ -91,6 +92,7 @@ specificity e = let (b, l) = go e in Specificity (b, negate l)
     go u = case u of
       App (Sym h) as
         | h == sPattern, [_, p] <- V.toList as -> go p
+        | h == sHoldPattern, [p] <- V.toList as -> go p
         | h == sBlank -> (1, constrained as)
         | h == sBlankSequence -> (2, constrained as)
         | h == sBlankNullSequence -> (3, constrained as)
@@ -128,6 +130,8 @@ ruleSetToList (RuleSet rs) = toList rs
 -- definition order breaks ties. A user rule with an equal left-hand side and
 -- an equal right-hand-side condition is replaced in place, as redefinition
 -- does in WL; @f[x_] := a /; p[x]@ and @f[x_] := b /; q[x]@ are two rules.
+-- Left-hand sides are compared through @HoldPattern@, so @f[2] = a@ and
+-- @HoldPattern[f[2]] = b@ are one rule.
 -- Built-in rules are never replaced: their left-hand sides only record where
 -- they live.
 insertRule :: Rule -> RuleSet -> RuleSet
@@ -140,7 +144,7 @@ insertRule r (RuleSet rs) = case Seq.findIndexL same rs of
     same x =
       r.ruleOrigin == User
         && x.ruleOrigin == User
-        && x.ruleLhs == r.ruleLhs
+        && sameLhs x.ruleLhs r.ruleLhs
         && bodyCondition x.ruleBody == bodyCondition r.ruleBody
 
 -- | The test of a right-hand side @rhs /; test@, if it has one.
@@ -159,8 +163,12 @@ bodyCondition = \case
 -- names a left-hand side only, so it removes all the conditional rules on it.
 removeRule :: Expr -> RuleSet -> (Bool, RuleSet)
 removeRule lhs (RuleSet rs) =
-  let rs' = Seq.filter (\x -> not (x.ruleOrigin == User && x.ruleLhs == lhs)) rs
+  let rs' = Seq.filter (\x -> not (x.ruleOrigin == User && sameLhs x.ruleLhs lhs)) rs
    in (Seq.length rs' /= Seq.length rs, RuleSet rs')
+
+-- | Whether two left-hand sides are one, seen through @HoldPattern@.
+sameLhs :: Expr -> Expr -> Bool
+sameLhs a b = unholdPattern a == unholdPattern b
 
 -- | A symbol's four tables. A record, not a map keyed by 'ValueKind', so
 -- that there is no key order to walk by mistake: a map's order would put
@@ -219,8 +227,9 @@ ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
       _ -> DownValue
 
 -- | The candidate rules of one rung, in table order. Specificity has ordered
--- them within the table; the origin selects the rung.
-applicableRules :: SymbolInfo -> (ValueKind, Origin) -> Expr -> Seq Rule
+-- them within the table; the origin selects the rung. A lazy list, so the
+-- caller, which stops at the first rule that fires, filters no further.
+applicableRules :: SymbolInfo -> (ValueKind, Origin) -> Expr -> [Rule]
 applicableRules si (k, o) e =
   let RuleSet rs = rulesOf k si
-   in Seq.filter (\r -> r.ruleOrigin == o) (Net.candidates (Net.fromSeq rs) e)
+   in filter (\r -> r.ruleOrigin == o) (toList (Net.candidates (Net.fromSeq rs) e))

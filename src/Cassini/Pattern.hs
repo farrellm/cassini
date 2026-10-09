@@ -14,6 +14,7 @@ module Cassini.Pattern
   ( PatternView (..),
     viewPattern,
     isPatternFree,
+    unholdPattern,
     Binding (..),
     Subst,
     bindingExpr,
@@ -119,6 +120,14 @@ isPatternFree = \case
     isPatternHead h n =
       h `elem` [sBlank, sBlankSequence, sBlankNullSequence, sAlternatives, sRepeated, sRepeatedNull, sOptional, sExcept, sHoldPattern, sVerbatim]
         || (h `elem` [sPattern, sCondition, sPatternTest] && n == 2)
+
+-- | A pattern seen through any @HoldPattern@ wrapping it whole. @HoldPattern@
+-- only stops evaluation, so @HoldPattern[f[x_]]@ and @f[x_]@ are one
+-- left-hand side to the matcher, to rule identity and to specificity.
+unholdPattern :: Expr -> Expr
+unholdPattern = \case
+  App (Sym h) as | h == sHoldPattern, [x] <- V.toList as -> unholdPattern x
+  e -> e
 
 -- | What a pattern variable is bound to: one expression, or a run of
 -- arguments for a sequence variable.

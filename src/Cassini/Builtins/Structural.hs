@@ -58,16 +58,16 @@ operatorForm = \case
   _ -> Nothing
 
 -- | @Part[expr, i, j, …]@: each index an integer, a list of integers, or
--- @All@. Out of range is @Part::partw@ on an expression and @Part::partd@ on
--- an atom, and the input stays unevaluated (§4.7).
+-- @All@. Out of range is @Part::partw@ on an expression, @{}@ included, and
+-- @Part::partd@ on an atom, and the input stays unevaluated (§4.7).
 partRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 partRule e = case args e of
   [x] -> pure (Just x)
   x : is@(_ : _) -> case go x is of
     Right r -> pure (Just r)
-    Left (Just (target, i))
-      | exprArity target == 0 -> Nothing <$ message "Part" "partd" [e]
-      | otherwise -> Nothing <$ message "Part" "partw" [Int_ i, target]
+    Left (Just (target, i)) -> case target of
+      App _ _ -> Nothing <$ message "Part" "partw" [Int_ i, target]
+      _ -> Nothing <$ message "Part" "partd" [e]
     Left Nothing -> Nothing <$ message "Part" "pkspec" [e]
   _ -> pure Nothing
   where

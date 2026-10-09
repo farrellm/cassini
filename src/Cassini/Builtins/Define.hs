@@ -17,7 +17,6 @@ module Cassini.Builtins.Define
     sub,
     args,
     message,
-    symbolHeaded,
     sym,
     sNullE,
     sTrueE,
@@ -27,7 +26,7 @@ module Cassini.Builtins.Define
 where
 
 import Cassini.Attributes (Attribute)
-import Cassini.Core.Expr (Expr, exprArgs, pattern App, pattern Sym)
+import Cassini.Core.Expr (Expr, exprArgs, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sFalse, sNull, sTrue, systemSymbol)
 import Cassini.Eval.Kernel (BuiltinFn (..), Kernel, emitMessage)
 import Cassini.Eval.Message (MessageTag (..))
@@ -77,12 +76,6 @@ args = V.toList . exprArgs
 -- | Emit @System`symbol::tag@.
 message :: (Kernel :> es) => Text -> Text -> [Expr] -> Eff es ()
 message s t = emitMessage (systemSymbol s) (MessageTag t)
-
--- | Whether the expression is an application of this symbol.
-symbolHeaded :: Symbol -> Expr -> Bool
-symbolHeaded s = \case
-  App (Sym h) _ -> h == s
-  _ -> False
 
 -- | A @System`@ symbol as an expression.
 sym :: Text -> Expr
