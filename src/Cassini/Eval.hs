@@ -42,6 +42,7 @@ module Cassini.Eval
     evalStep12UserDown,
     evalStep13BuiltinDown,
     restoreUneval,
+    Round (..),
     fixpoint,
   )
 where
@@ -114,14 +115,15 @@ nodeExpr :: Node -> Expr
 nodeExpr n = mkApp n.nodeHead n.nodeArgs
 
 -- | The evaluation sequence, to a fixed point: every time the expression
--- changes, start over.
+-- changes, start over, unless the round's result is known to be a fixed point
+-- already (see 'Round').
 evalSequence :: (Kernel :> es) => Expr -> Eff es Expr
 evalSequence = fixpoint step
   where
     -- Steps 1 and 0 are guards on the other twelve, not stages before them.
     step e
-      | evalStep1Raw e = pure e
-      | Sym s <- e = evalStep0Own s
+      | evalStep1Raw e = pure (Round e True)
+      | Sym s <- e = (`Round` False) <$> evalStep0Own s
       | App h as <- e = do
           n <-
             evalStep2Head h as
@@ -130,20 +132,36 @@ evalSequence = fixpoint step
               >>= evalStep6Uneval
               >>= evalStep7Flat
           evalStep8List n >>= \case
-            Left threaded -> pure threaded
+            Left threaded -> pure (Round threaded False)
             Right n' ->
               evalStep9Order n' >>= evalStepIndet >>= \case
-                Left indeterminate -> pure indeterminate
+                Left indeterminate -> pure (Round indeterminate False)
                 Right n'' -> do
                   fired <- firstJustM ($ n'') [evalStep10UserUp, evalStep11BuiltinUp, evalStep12UserDown, evalStep13BuiltinDown]
-                  pure (fromMaybe (restoreUneval n'') fired)
-      | otherwise = pure e
+                  pure (fromMaybe (Round (restoreUneval n'') True) fired)
+      | otherwise = pure (Round e True)
+
+-- | One round's result, and whether it is already a fixed point of the
+-- sequence. It is when no rule fired: steps 2–9 only evaluated the parts and
+-- rearranged them, and another round would evaluate the same parts and try
+-- the same rules on the same expression. It is when a user rule fired: its
+-- rung evaluated the right-hand side to a fixed point itself (§4.4). A
+-- built-in's result, an own value, a threaded list and @Indeterminate@ are
+-- new expressions, and go round again.
+--
+-- Skipping the round that can change nothing is not D14's marker. It keeps
+-- an unevaluated subterm that emits a message, such as @Part[{1, 2}, 3]@,
+-- from emitting it again each time a sibling changes its parent.
+data Round = Round
+  { roundExpr :: !Expr,
+    roundSettled :: !Bool
+  }
 
 -- | The fixed point, fuelled: one iteration per round, from a fresh budget
 -- restored on exit. On exhaustion, @$IterationLimit::itlim@ and the
 -- expression in @Hold@: non-termination is a user error, so it gets a
 -- message, not an exception (§4.4).
-fixpoint :: (Kernel :> es) => (Expr -> Eff es Expr) -> Expr -> Eff es Expr
+fixpoint :: (Kernel :> es) => (Expr -> Eff es Round) -> Expr -> Eff es Expr
 fixpoint f e0 = do
   cfg <- kernelConfig
   let go e = do
@@ -154,8 +172,8 @@ fixpoint f e0 = do
             pure (apply sHold [e])
           else do
             spendIteration
-            e' <- f e
-            if e' == e then pure e else go e'
+            Round e' settled <- f e
+            if settled || e' == e then pure e' else go e'
   withFuel cfg.iterationLimit (go e0)
 
 -- | Step 1: a raw object (number, string) is left unchanged.
@@ -316,24 +334,24 @@ evalStepIndet n
     indeterminate = Sym sIndeterminate
 
 -- | Step 10: unless @HoldAllComplete@, user upvalues.
-evalStep10UserUp :: (Kernel :> es) => Node -> Eff es (Maybe Expr)
+evalStep10UserUp :: (Kernel :> es) => Node -> Eff es (Maybe Round)
 evalStep10UserUp = rung 0 "10 UserUpValue"
 
 -- | Step 11: unless @HoldAllComplete@, built-in upvalues.
-evalStep11BuiltinUp :: (Kernel :> es) => Node -> Eff es (Maybe Expr)
+evalStep11BuiltinUp :: (Kernel :> es) => Node -> Eff es (Maybe Round)
 evalStep11BuiltinUp = rung 1 "11 BuiltinUpValue"
 
 -- | Step 12: user downvalues, or subvalues for @h[…][…]@.
-evalStep12UserDown :: (Kernel :> es) => Node -> Eff es (Maybe Expr)
+evalStep12UserDown :: (Kernel :> es) => Node -> Eff es (Maybe Round)
 evalStep12UserDown = rung 2 "12 UserDownValue"
 
 -- | Step 13: built-in downvalues, or subvalues for @h[…][…]@.
-evalStep13BuiltinDown :: (Kernel :> es) => Node -> Eff es (Maybe Expr)
+evalStep13BuiltinDown :: (Kernel :> es) => Node -> Eff es (Maybe Round)
 evalStep13BuiltinDown = rung 3 "13 BuiltinDownValue"
 
 -- | The @i@th rung of 'ladder', which is the only list of rungs: each named
 -- step reads its rung from it rather than restating it (§4.2).
-rung :: (Kernel :> es) => Int -> Text -> Node -> Eff es (Maybe Expr)
+rung :: (Kernel :> es) => Int -> Text -> Node -> Eff es (Maybe Round)
 rung i name n = case drop i (ladder e) of
   (UpValue, _) : _ | holdAllComplete n.nodeAttrs -> pure Nothing
   (UpValue, o) : _ -> firstJustM (\s -> fromTable s (UpValue, o)) (ordNub (mapMaybe tagSymbol (V.toList n.nodeArgs)))
@@ -359,9 +377,9 @@ tagSymbol = \case
 -- built-in rule is Haskell, and returns as the list says. The trace records
 -- what the rule produced: a built-in's result, a user rule's right-hand side
 -- before it is evaluated.
-applyRule :: (Kernel :> es) => Text -> Rule -> Expr -> Eff es (Maybe Expr)
+applyRule :: (Kernel :> es) => Text -> Rule -> Expr -> Eff es (Maybe Round)
 applyRule name r e = case r.ruleBody of
-  Native bid -> runNative bid e >>= \fired -> fired <$ for_ fired (traceStep name)
+  Native bid -> runNative bid e >>= \fired -> (`Round` False) <$> fired <$ for_ fired (traceStep name)
   Immediate body -> user body
   Delayed body -> user body
   where
@@ -372,8 +390,8 @@ applyRule name r e = case r.ruleBody of
           let rhs = applySubst sigma body
           traceStep name rhs
           catchUnwind (evaluate rhs) >>= \case
-            Right v -> pure (Just v)
-            Left (UReturn v) -> pure (Just v)
+            Right v -> pure (Just (Round v True))
+            Left (UReturn v) -> pure (Just (Round v True))
             Left u -> unwind u
 
 -- | Run a builtin. It fires only if it changes the expression, so step 6's
