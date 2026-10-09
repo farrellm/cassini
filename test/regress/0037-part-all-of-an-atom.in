@@ -1,0 +1,5 @@
+(* All and a list of indices take parts, and an atom has none: partd, not the atom's head applied to nothing. *)
+Part[5, All]
+Part[5, List[]]
+Part[List[1, 2], 1, All]
+Part[List[List[1, 2], List[3, 4]], All, 1]
