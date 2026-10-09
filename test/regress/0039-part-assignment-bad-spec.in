@@ -1,0 +1,10 @@
+(* A part assignment whose index is not a part specification is Set::pkspec1, not Set::partw; the first bad index, read left to right, names the message, and the value is unchanged. Mathics3 fails on these inputs; WL's Set::pkspec1 for A[[u, All, All]] = … with u unbound is quoted in mathematica.stackexchange.com/q/292520. *)
+Set[m, List[a, b, c]]
+Set[Part[m, x], 1]
+Set[Part[m, List[1, x]], 1]
+Set[Part[m, "s"], 1]
+Set[Part[m, 1, x], 1]
+Set[Part[m, x, 7], 1]
+Set[Part[m, 7, x], 1]
+Set[Part[m, List[2, 7]], 1]
+m

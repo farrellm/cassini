@@ -1,0 +1,16 @@
+Out[1]: List[a, b, c]
+Out[2]: 1
+Message[2]: Set::pkspec1
+Out[3]: 1
+Message[3]: Set::pkspec1
+Out[4]: 1
+Message[4]: Set::pkspec1
+Out[5]: 1
+Message[5]: Set::pkspec1
+Out[6]: 1
+Message[6]: Set::pkspec1
+Out[7]: 1
+Message[7]: Set::partw
+Out[8]: 1
+Message[8]: Set::partw
+Out[9]: List[a, b, c]

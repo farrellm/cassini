@@ -69,6 +69,8 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
       applied to nothing;
     * an argument `Evaluate` forced in a held position is not evaluated again when a `Sequence`
       splices it out of that position, so its messages are emitted once.
+  * Fix: a part assignment whose index is not a part specification, such as `m[[x]] = 1`, is
+    `Set::pkspec1`, not `Set::partw` (regression case 0039).
   * `cassini-corpus` and `cassini-oracle` no longer count two different outputs as equal because
     neither reads as FullForm.
   * The Wolfram documentation extractor holds the arguments of a symbol the example gave a hold
