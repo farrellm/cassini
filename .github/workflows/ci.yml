@@ -1,6 +1,6 @@
 # DESIGN.md §2.8. One GHC, because base ^>=4.21.2.0 admits only 9.12 (D12).
 # Steps 1–7 are Stage 0's exit condition; step 8, the benchmark gate (§8.6),
-# arrives with milestone 1a.
+# arrived with milestone 1a and is the bench job.
 name: CI
 
 on:
@@ -98,6 +98,43 @@ jobs:
       # 4, under the intern flag
       - name: Doctest with the intern flag
         run: cabal repl $CABAL_FLAGS -f intern --with-repl=doctest --repl-options=-Wno-missing-export-lists lib:cassini
+
+  # 8: the allocation gate on the end-to-end workload (§8.6), under each intern
+  # setting against its own baseline. Allocation does not depend on the
+  # machine, so a developer machine's baseline holds here. Time is reported,
+  # not gated, until a baseline from this runner class is committed.
+  bench:
+    name: Benchmark gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
+          cabal-update: true
+
+      - name: Resolve the build plan
+        run: cabal build all $CABAL_FLAGS --dry-run
+
+      - name: Restore the cabal store
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          restore-keys: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-
+
+      - name: Allocation gate
+        run: |
+          cabal bench $CABAL_FLAGS --benchmark-options="-p EndToEnd --csv out-hash.csv"
+          python3 bench/check-allocation.py --only All.EndToEnd bench/baseline/ghc-9.12.4-hash.csv out-hash.csv
+
+      - name: Allocation gate with the intern flag
+        run: |
+          cabal bench $CABAL_FLAGS -f intern --benchmark-options="-p EndToEnd --csv out-intern.csv"
+          python3 bench/check-allocation.py --only All.EndToEnd bench/baseline/ghc-9.12.4-intern.csv out-intern.csv
 
   lint:
     name: Lint and format

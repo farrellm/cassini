@@ -18,6 +18,10 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   * FullForm, read and printed (`Cassini.Syntax.FullForm`).
   * Script mode: `runScript`, `traceScript`, and `cassini --script`/`--trace` (`Cassini.REPL`).
   * The regression corpus and golden traces (`test/regress/`, `test/trace/`).
+  * Benchmarks of the fixed point, automatic simplification and the end-to-end workload, and CI
+    step 8, the allocation gate on the end-to-end workload (`bench/check-allocation.py --only`).
+  * Fix: a message from an unevaluated subterm was emitted again each time a sibling changed its
+    parent (regression case 0013).
 * Stage 0 (DESIGN.md §3, §10):
   * Exact numbers (`Cassini.Number`).
   * Interned symbols (`Cassini.Core.Symbol`).

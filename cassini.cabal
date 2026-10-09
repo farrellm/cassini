@@ -170,13 +170,21 @@ benchmark cassini-bench
   type:             exitcode-stdio-1.0
   hs-source-dirs:   bench
   main-is:          Main.hs
-  other-modules:    Bench.Core
+  other-modules:
+    Bench.Core
+    Bench.EndToEnd
+    Bench.Eval
+    Bench.Simplify
+
   ghc-options:      -O2 -with-rtsopts=-T
   build-depends:
     , base ^>=4.21.2.0
     , cassini
     , cassini:cassini-prelude
+    , effectful-core ^>=2.6.1.0
     , tasty-bench ^>=0.5.1
+    , text ^>=2.1.4
+    , vector ^>=0.13.2
 
   mixins:
     base hiding (Prelude),

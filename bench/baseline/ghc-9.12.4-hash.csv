@@ -1,15 +1,31 @@
 Name,Mean (ps),2*Stdev (ps),Allocated,Copied,Peak Memory
-All.Core.construct.tree depth 10,244004041,15015198,540190,13287,6291456
-All.Core.construct.tree depth 14,7067911487,216816026,8650904,3824803,17825792
-"All.Core.equality.equal, built apart",784370801,11327494,524279,42,19922944
-All.Core.equality.differing at the last leaf,2822,180,0,0,33554432
-All.Core.compareCanonical.depth 10,546197,20806,320,0,33554432
-All.Core.compareCanonical.depth 100,5480001,355218,3200,0,33554432
-All.Core.compareCanonical.depth 1000,62678785,1644124,97536,4,33554432
-All.Core.sortBy compareCanonical.10 arguments,3919374,266184,3048,0,33554432
-All.Core.sortBy compareCanonical.100 arguments,104635504,6253220,59680,32,34603008
-All.Core.sortBy compareCanonical.1000 arguments,2122286028,62180270,1133418,4360,36700160
-"All.Core.substitute, deep tree",8013092406,683803772,10092167,5538342,68157440
-All.Core.expression swell.(a+b+c+d)^10,455702337,21778722,1107190,50470,68157440
-All.Core.expression swell.(a+b+c+d)^20,6942438781,399786592,8506354,5598217,70254592
-All.Core.expression swell.(a+b+c+d)^30,26051102950,187107068,32954693,17065314,85983232
+All.Core.construct.tree depth 10,192343079,5299094,540171,12889,6291456
+All.Core.construct.tree depth 14,6576516650,486991344,8651791,4033695,17825792
+"All.Core.equality.equal, built apart",603890345,42321198,524359,91,19922944
+All.Core.equality.differing at the last leaf,2570,236,0,0,33554432
+All.Core.compareCanonical.depth 10,512467,49248,320,0,33554432
+All.Core.compareCanonical.depth 100,4679180,365290,3201,0,33554432
+All.Core.compareCanonical.depth 1000,57099734,4753782,97539,9,33554432
+All.Core.sortBy compareCanonical.10 arguments,3576879,116874,3048,0,33554432
+All.Core.sortBy compareCanonical.100 arguments,94919497,7790218,59681,36,34603008
+All.Core.sortBy compareCanonical.1000 arguments,1963598743,125285476,1133453,4419,37748736
+"All.Core.substitute, deep tree",7097084187,626575036,10092446,5502711,68157440
+All.Core.expression swell.(a+b+c+d)^10,390954757,26349334,1107219,50466,68157440
+All.Core.expression swell.(a+b+c+d)^20,6383861050,554001534,8506390,5603116,70254592
+All.Core.expression swell.(a+b+c+d)^30,22695079275,1525105188,32954839,17083582,85983232
+All.Eval.fixed point.1 rounds,9127847,326920,38520,22,85983232
+All.Eval.fixed point.5 rounds,12577221,849076,52921,36,85983232
+All.Eval.fixed point.20 rounds,24680822,811672,106923,59,85983232
+All.Simplify.sum.10 terms.distinct,8140400,637106,23761,4,85983232
+All.Simplify.sum.10 terms.like terms,6054848,551644,19833,5,85983232
+All.Simplify.sum.100 terms.distinct,452096962,26150444,1324847,528,85983232
+All.Simplify.sum.100 terms.like terms,89176731,1721182,299198,141,85983232
+All.Simplify.sum.1000 terms.distinct,52453190050,961037530,123650514,324131,85983232
+All.Simplify.sum.1000 terms.like terms,889316987,75432312,3093003,1520,85983232
+All.Simplify.product.10 terms.distinct,9338542,412722,27057,5,85983232
+All.Simplify.product.10 terms.like terms,6328573,580910,23657,7,85983232
+All.Simplify.product.100 terms.distinct,459442075,8135602,1325900,562,85983232
+All.Simplify.product.100 terms.like terms,97045840,4450542,341820,183,85983232
+All.Simplify.product.1000 terms.distinct,50016476200,3310053214,120234050,450398,85983232
+All.Simplify.product.1000 terms.like terms,1031763390,32909574,3663163,2026,85983232
+All.EndToEnd.1a workload,5712899275,195060930,21930084,230090,85983232
