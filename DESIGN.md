@@ -190,8 +190,9 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Simplify.Rational` | Algebraic expansion, `Expand_main_op`, rationalization, numerator and denominator over ASAEs (§4.12). |
 | `Cassini.Simplify.Trig` | Trigonometric expansion, contraction and `Simplify_trig`, circular and hyperbolic (§4.12). |
 | `Cassini.Simplify.Numeric` | Radical normalization of rational bases and the infinity pass for `Plus`/`Times`/`Power` (§4.15). |
-| `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed. |
-| `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL). Comparison is `Builtins.Logic`'s. |
+| `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed, and the attribute-only symbols the evaluator relies on (`Hold` and its relatives, `Sequence`, `Unevaluated`, `Function`, the pattern heads, the atom heads). |
+| `Cassini.Builtins.Define` | The `Definition` each builtin module exports (a symbol, its attributes, its native rules), and the helpers they share. |
+| `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Minus`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL), and the infinities as symbols: `ComplexInfinity` evaluates to `DirectedInfinity[]` and `Infinity` to `DirectedInfinity[1]`, as WL's outputs show. Comparison is `Builtins.Logic`'s. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
 | `Cassini.Builtins.List` | List construction and manipulation. |
 | `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `RuleDelayed`. |
@@ -1038,6 +1039,9 @@ data Kernel :: Effect where
   Iterations     :: Kernel m Int              -- ^ remaining fuel in this fixed point
   SpendIteration :: Kernel m ()
   WithFuel       :: Int -> m a -> Kernel m a  -- ^ run with a fresh budget, then restore
+  LookupBuiltin  :: BuiltinId -> Kernel m (Maybe BuiltinFn)  -- ^ resolve a Native rule
+  TraceStep      :: Text -> Expr -> Kernel m ()              -- ^ a golden-trace entry
+  KernelConfig   :: Kernel m EvalConfig                      -- ^ the limits, for fixpoint
 type instance DispatchOf Kernel = Dynamic
 
 evaluate :: (Kernel :> es) => Expr -> Eff es Expr
@@ -1046,6 +1050,16 @@ evaluate = send . Evaluate
 
 Kernel code is constraint-polymorphic over what it needs, e.g.
 `matchOne :: (Kernel :> es) => Expr -> Expr -> Eff es (Maybe Subst)`.
+
+**Three operations were added when the code was written.** `LookupBuiltin` resolves a `Native`
+rule's id. `KernelState` holds the implementations (§4.2), and the rung that finds the rule has
+only the effect to reach them through. A dangling id answers `Nothing`, and no rule fires.
+`TraceStep` is the recording point for §7.4's golden traces. It is a no-op unless
+`EvalConfig.trace` is set. `KernelConfig` gives `fixpoint` the iteration limit to seed
+`WithFuel` with. An implementation is a `newtype BuiltinFn = BuiltinFn (forall es.
+(Kernel :> es) => Expr -> Eff es (Maybe Expr))`, which answers `Nothing` when it does not apply.
+The interpreters also discharge the `Unwind`/`CatchUnwind` pair of §4.13 from the start, because a
+user rule's rung catches `Return` (§4.4).
 
 **`Evaluate` is what makes §1.2's layering hold.** The matcher (`/;`, `?f`) and `Cassini.Zero` must
 evaluate but may not import the sequence (§2.6, rule 1), and a constraint grants the effect's
@@ -1089,6 +1103,16 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   `$RecursionLimit::reclim` and returns `Hold[e]` unevaluated, and evaluation continues outward: `x =
   x + 1; x` yields a partial result with a `Hold` at the cut — the source's "computations limited by
   `$RecursionLimit` … build up large intermediate structures" — rather than aborting.
+  **The cut is idempotent.** At the limit, an expression that evaluates to itself comes back as it
+  is: a raw atom, a symbol with no own value, or a `Hold[…]` the cut already built. Only anything
+  else is wrapped, with the message. Without this, every fixed point near the limit re-evaluates its
+  own result, and that crosses the limit again. Heads, `1` and `Hold` itself get wrapped, the cuts
+  compound, and `x = x + 1` ran out of memory before it returned (regression case 0010).
+- **Where the two counters live.** Depth is in the handler's own `Reader`, changed with `local`,
+  which restores it however the inner evaluation exits: §4.13's second option. Fuel is
+  handler-local `State`, not `KernelState`, because it belongs to the fixed point being run, not to
+  the session. `WithFuel` saves it, runs the inner computation under `tryError`, restores it and
+  rethrows.
 
 **`Abort` is for `Abort[]` and interrupts**, which happen in production, and the REPL reports one
 as `$Aborted`. An interrupt is polled for, not thrown asynchronously (§4.13). `Throw`, `Break`, `Continue` and `Return` travel the same `Error` channel, as
@@ -1204,6 +1228,30 @@ plus ordinary definitions, and a patch adding such a branch is a bug. Two things
   tracks values, not positions.
 - **The two limits *construct* `Hold`** (§4.3). Building the wrapper is not branching on it.
 
+**Two more things the list leaves implicit:**
+
+- **`Evaluate` overrides a hold.** Step 3 evaluates a held argument anyway when it is
+  `Evaluate[…]`, unless `h` has `HoldAllComplete`. So `Hold[Evaluate[1+1]]` is `Hold[2]` and
+  `HoldComplete[Evaluate[1+1]]` stays. This keys on the wrapper, as step 6 keys on `Unevaluated`.
+  It is not a branch on `Hold`.
+- **Steps 8 and `evalStepIndet` can finish early.** A threaded list, or `Indeterminate`, is a new
+  expression. The step returns it, the rungs do not run, and the fixed point evaluates it next
+  round.
+
+**What the golden trace records** (§7.4). A step is recorded when it applies, with the expression
+it leaves:
+
+- step 2 when the head changed, step 3 when an argument changed, and step 4 when anything is held;
+- steps 5 and 6 when they splice or strip;
+- steps 7 and 9 whenever `h` has the attribute, even when nothing moves;
+- step 8 when it threads, and `evalStepIndet` when it fires;
+- a rung when a rule fires: a built-in's result, or a user rule's right-hand side before the rung
+  evaluates it.
+
+Recording 7 and 9 unconditionally is what lets a trace show the step order on `Plus[a, Plus[b, a]]`,
+which flattens to an already sorted list. Each entry carries its evaluation depth, so subterm
+evaluations nest.
+
 **The fixed point is fuelled.** `fixpoint` opens its own `WithFuel` (§4.3), spends one iteration per
 round, and on exhaustion emits `$IterationLimit::itlim` and returns the expression in `Hold` — the
 language's behaviour. Non-termination is a user error, so it gets a message, not an exception.
@@ -1224,9 +1272,9 @@ matcher:
 ```haskell
 -- | Cassini.Pattern
 data PatternView
-  = PBlank      !(Maybe Symbol)               -- ^ _h
-  | PBlankSeq   !(Maybe Symbol)               -- ^ __h  (one or more)
-  | PBlankNull  !(Maybe Symbol)               -- ^ ___h (zero or more)
+  = PBlank      !(Maybe Expr)                 -- ^ _h
+  | PBlankSeq   !(Maybe Expr)                 -- ^ __h  (one or more)
+  | PBlankNull  !(Maybe Expr)                 -- ^ ___h (zero or more)
   | PNamed      !Symbol !PatternView          -- ^ x:patt, x_
   | PCondition  !PatternView !Expr            -- ^ patt /; test
   | PTest       !PatternView !Expr            -- ^ patt ? f
@@ -1244,6 +1292,9 @@ viewPattern :: Expr -> PatternView
 
 `Subst` is a `Map Symbol Binding`, where a binding is one expression or a sequence, because
 sequence variables bind runs of arguments.
+
+A blank's head constraint is an `Expr`, not a `Symbol`. `_h` compares `h` with the subject's
+`Head`, and a head can be compound (`_f[x]`).
 
 `HoldPattern[p]` matches as `p` does; its point is evaluation, not matching — `HoldPattern` has
 `HoldAll`, so a rule's left side keeps the structure the user wrote ("you need to wrap HoldPattern
@@ -1291,6 +1342,26 @@ matchAll p s = observeAll (match (viewPattern p) s mempty)
 
 `deriving newtype` needs no pragma: `GeneralisedNewtypeDeriving` is in GHC2021 and
 `DerivingStrategies` in GHC2024.
+
+**The matchers are written by open recursion, so none of them imports `MatchT`.**
+`Cassini.Pattern` defines a record of what a matcher needs from its monad:
+
+```haskell
+data MatchOps m = MatchOps
+  { recur    :: PatternView -> Expr -> Subst -> m Subst  -- ^ hand a subpattern back
+  , evalM    :: Expr -> m Expr                           -- ^ side conditions
+  , matchesM :: PatternView -> Expr -> Subst -> m Bool   -- ^ for Except; commits to nothing
+  }
+
+matchSyntactic :: (MonadPlus m) => MatchOps m -> PatternView -> Expr -> Subst -> m Subst
+```
+
+`match` in `Cassini.Pattern.Match` ties the knot: `match = matchSyntactic ops`, with
+`recur = match`. Two other designs were rejected. If the matchers imported `MatchT`, then `match`
+dispatching to them would be an import cycle. A boot file for the cycle would need to name
+`LogicT` outside the one module rule 6 allows. The open recursion also makes containment stronger
+than the newtype alone: no matcher can name `logict`'s types, because no matcher sees the monad.
+1b's `Sequence` and `Commutative` take the same record, and `match` dispatches among them.
 
 **Those three functions and five instances are the whole surface a replacement backend must
 reproduce** (D11, §9.2). Laziness is part of it: `matchOne` stops at the first success rather than
@@ -1432,6 +1503,22 @@ and `1·x` are **not** ASAEs, while `(x·y)^(1/2)` and `(x^(1/2))^(1/2)` are.
 - For a basic algebraic expression `u`, `simplify u` is an ASAE or `Undefined`.
 - **For an ASAE `u`, `simplify u` returns `u`.** Stronger than `simplify . simplify ≡ simplify`,
   because it also asserts that `isASAE` and `simplify` agree about what "simplified" means.
+
+**Two departures from the source, both found when the code was written:**
+
+- **SPOW-2 is restricted to numeric exponents.** Cohen makes `0^w` `Undefined` for every `w` that
+  is not a positive number, so `0^x` would be `Undefined`. WL leaves `0^x` alone, and a symbolic
+  exponent is not known to be non-positive. So `simplifyPower` decides `0^w` only for a numeric `w`.
+  `isASAE` admits `0^w` for a non-numeric `w`, against ASAE-6-4, so that both contracts still hold
+  of the pair. A property test found the disagreement.
+- **MPRD-3-2 can leave two constants.** It adjoins a merged factor where the merge happened. Two
+  radicals of one base can merge to a number behind an existing coefficient, as in
+  `3·2^(1/2)·2^(1/2)`, whose merge gives `[3, 2]` against ASAE-4-2. `simplifyProduct` multiplies
+  the constants of a merged list into one leading constant. Before §4.15's radicals this is rare,
+  because only a product of radicals with one base reaches it.
+
+`base` and `exponent` are exported as `powerBase` and `powerExponent`, and `const` as
+`constPart`, because the prelude has an `exponent` and `const`.
 
 **Where this attaches to the evaluator.** The built-in downvalues for `Plus`, `Times` and `Power`
 (step 13) call `simplifySum`, `simplifyProduct` and `simplifyPower` on their arguments — **not** the
@@ -1923,7 +2010,9 @@ interrupt is then an `Abort[]` at the next evaluation step, and every guarantee 
 A long pure computation below the kernel, such as `factorInteger` or a Gröbner basis, never reaches
 a poll. So a **second** Ctrl-C while the flag is still set is thrown asynchronously. The REPL
 reports that it skipped `Block` restoration, and the session state is not guaranteed.
-`runKernelPure` has no interrupts.
+`runKernelPure` has no interrupts. **The polling arrives with the REPL (milestone 1c).** Script mode,
+1a's only front end, installs no interrupt handler, and `Interrupt` exists as an `Abort` constructor
+only.
 
 **`Return` is a fourth unwind, `UReturn Expr`** (D23, answered). `wolfram_ref_return.html`:
 "Return[expr] exits control structures within the definition of a function, and gives the value
@@ -2678,8 +2767,11 @@ test/regress/
   ...
 ```
 
-Each `.in` is a script of FullForm expressions; each `.expected` is the FullForm output plus
-messages. `Test/Golden.hs` discovers cases with `findByExtension` and runs them through
+Each `.in` is a script of FullForm expressions, one per line. A whole-line WL comment `(* … *)` is
+not an input, so a case can cite its source. Each `.expected` is **§7.9's format**, which
+`runScript` adopted when it landed: `Out[k]: <FullForm>`, or `Out[k]: -` for `Null`, then one
+`Message[k]: symbol::tag` line per message. The corpus adapter therefore needs no translation.
+Trace cases add `Trace[k]: <step>: <FullForm>` lines before each output, indented by depth (§4.4). `Test/Golden.hs` discovers cases with `findByExtension` and runs them through
 `Cassini.REPL.runScript` (§4.10), so a case exercises the FullForm reader, the evaluator and the
 printer together, and adding one is adding two files. FullForm, not pretty output, so that printer
 improvements invalidate nothing.
@@ -2694,13 +2786,23 @@ improvements invalidate nothing.
 3. **Cases are named for the behaviour, not the bug** — `0002-builtin-upvalue-beats-user-downvalue`,
    not `0002-issue-17`.
 
-**Golden evaluation traces.** A second set records the *step sequence* for chosen expressions:
+**One test-only builtin.** Every golden case runs against the standard builtins plus a built-in
+upvalue on ``Test`up``, which answers `"builtin upvalue"` for any expression with a ``Test`up[…]``
+argument. 1a's builtins have no upvalue of their own, and
+`0002-builtin-upvalue-beats-user-downvalue` needs one. `Test/Golden.hs` installs it through
+`runScriptWith`. The unit test of the rung order installs one built-in rule on each rung the same
+way.
+
+**Golden evaluation traces.** A second set, `test/trace/`, records the *step sequence* for chosen
+expressions:
 which of the thirteen steps fired, in order, and the expression after each. A refactor that reorders
 `Flat` and `Orderless` gives correct-looking answers for most inputs and a visibly wrong trace for
 all of them.
 
 **Seeded corpus.** Every §7.2 worked example that spans more than one module goes in as a golden case
-from the start, so the suite has something to regress against before the first bug.
+from the start, so the suite has something to regress against before the first bug. The trace set
+seeds with the `Trace` inputs of *Evaluation of Expressions* that 1a's builtins cover. Its outputs
+are images, so those traces were read by hand against the page's prose.
 
 ### 7.5 Differential testing against external systems
 
@@ -3222,9 +3324,10 @@ Three milestones, each a working evaluator a size larger than the last, then tra
 
 Attributes (§4.1), the rule tables and ladder (§4.2), the `Kernel` effect and both interpreters
 (§4.3), the evaluation sequence (§4.4), the syntactic matcher (§4.5.3, step 1), automatic
-simplification (§4.6), messages (§4.7), `Builtins.Assign`, and `Cassini.Syntax.FullForm` with
-`runScript` (§4.10) — the last so that the regression corpus (§7.4) starts here, with the code it
-guards.
+simplification (§4.6), messages (§4.7), `Builtins.Arithmetic`, `.Structural` and `.Assign`, and
+`Cassini.Syntax.FullForm` with `runScript` (§4.10). The last is here so that the regression corpus
+(§7.4) starts with the code it guards. `Builtins.Arithmetic` and `.Structural` were missing from this
+list, though the corpus triage below names both and the criterion needs `Plus`.
 
 **Done when** `Plus[a, Plus[b, a]]` flattens, sorts and collects to `2a + b`, and its golden trace
 shows step 7 before step 9.
@@ -3425,9 +3528,9 @@ document requires it.
 | Package | For | Layer |
 | :--- | :--- | :--- |
 | `relude` | the prelude (§2.3) | all |
-| `effectful` | the kernel effect and its interpreters (§4.3) | L2+ |
+| `effectful-core` | the kernel effect and its interpreters (§4.3). The core package, not `effectful`: everything used (dynamic dispatch, static `Reader`, `State` and `Error`) is in it | L2+ |
 | `text`, `vector`, `containers`, `unordered-containers`, `hashable`, `deepseq` | representation; `NFData` for benchmarks | L0–L2 |
-| `enummapset` | the `EnumMap ValueKind RuleSet` of the rule tables (§4.2) | L3 |
+| `enummapset` | the `EnumMap ValueKind RuleSet` of the rule tables (§4.2). Since 0.7.3 it depends on `aeson`, which became the largest dependency of the kernel; four keys would also fit in a record, if that footprint matters | L3 |
 | `logict` | matcher nondeterminism, confined to one module (§4.5.2) | L2 |
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
 | `megaparsec` | surface syntax (§4.10) | L5 |

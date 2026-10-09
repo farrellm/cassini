@@ -1,0 +1,178 @@
+{-# LANGUAGE PatternSynonyms #-}
+
+-- | Rules, the four rule tables and the ladder (DESIGN.md §4.2).
+--
+-- Four tables, one per 'ValueKind', keyed by symbol. Rule application is a
+-- four-rung ladder, not two sort keys: user upvalues, built-in upvalues, user
+-- downvalues (or subvalues), built-in downvalues (or subvalues). Specificity
+-- orders rules within a rung, never across, and 'ladder' is the only list the
+-- evaluator may walk.
+module Cassini.Rules
+  ( -- * Rules
+    Rule (..),
+    RuleBody (..),
+    BuiltinId (..),
+    Specificity,
+    specificity,
+    mkRule,
+
+    -- * Tables
+    ValueKind (..),
+    Origin (..),
+    RuleSet,
+    ruleSetToList,
+    insertRule,
+    removeRule,
+    SymbolInfo (..),
+    emptyInfo,
+    rulesOf,
+    modifyRules,
+
+    -- * The ladder
+    ladder,
+    applicableRules,
+  )
+where
+
+import Cassini.Attributes (AttributeSet)
+import Cassini.Core.Expr (Expr, pattern App, pattern Sym)
+import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sPattern)
+import Cassini.Pattern (isPatternFree)
+import Cassini.Pattern.Net qualified as Net
+import Data.EnumMap.Strict (EnumMap)
+import Data.EnumMap.Strict qualified as EnumMap
+import Data.Sequence qualified as Seq
+import Data.Vector qualified as V
+
+-- | A rule: a pattern, what it rewrites to, where it ranks, and which rung of
+-- the ladder it is on.
+data Rule = Rule
+  { -- | The pattern.
+    ruleLhs :: !Expr,
+    ruleBody :: !RuleBody,
+    ruleSpecificity :: !Specificity,
+    -- | Which rung of the ladder the rule is on.
+    ruleOrigin :: !Origin
+  }
+  deriving stock (Show)
+
+-- | What a rule rewrites to.
+data RuleBody
+  = -- | From @=@ (@Set@): the right-hand side, evaluated once, at definition.
+    Immediate !Expr
+  | -- | From @:=@ (@SetDelayed@): the right-hand side, evaluated per
+    -- application.
+    Delayed !Expr
+  | -- | A Haskell implementation, on the 'Builtin' origin only. An id, not a
+    -- function, because a function would mention the kernel effect, whose
+    -- module imports this one; the kernel state resolves it (§4.3).
+    Native !BuiltinId
+  deriving stock (Show)
+
+-- | Names a builtin implementation held in the kernel state.
+newtype BuiltinId = BuiltinId Int
+  deriving newtype (Eq, Ord, Show)
+
+-- | A coarse structural measure: fewer blanks first, then more literal
+-- structure first. Not WL's exact behaviour; where it cannot decide,
+-- definition order does (§4.2).
+newtype Specificity = Specificity (Int, Int)
+  deriving newtype (Eq, Ord, Show)
+
+-- | The specificity of a left-hand side. A sequence blank counts as more
+-- general than a single one, and a condition as one more literal node.
+specificity :: Expr -> Specificity
+specificity e = let (b, l) = go e in Specificity (b, negate l)
+  where
+    go :: Expr -> (Int, Int)
+    go u
+      | isPatternFree u = (0, size u)
+    go u = case u of
+      App (Sym h) as
+        | h == sPattern, [_, p] <- V.toList as -> go p
+        | h == sBlank -> (1, 0)
+        | h == sBlankSequence -> (2, 0)
+        | h == sBlankNullSequence -> (3, 0)
+        | h == sCondition, [p, _] <- V.toList as -> second (+ 1) (go p)
+      App h as -> foldl' add (second (+ 1) (go h)) (V.map go as)
+      _ -> (0, 1)
+    add (a, b) (c, d) = (a + c, b + d)
+    size = \case
+      App h as -> 1 + size h + sum (V.map size as)
+      _ -> 1 :: Int
+
+-- | A rule with its specificity computed.
+mkRule :: Origin -> Expr -> RuleBody -> Rule
+mkRule o lhs body = Rule {ruleLhs = lhs, ruleBody = body, ruleSpecificity = specificity lhs, ruleOrigin = o}
+
+-- | The four tables. Derived 'Ord'/'Enum' is 'EnumMap' key order, /not/ the
+-- ladder's: never walk 'siValues' in key order.
+data ValueKind = OwnValue | DownValue | UpValue | SubValue
+  deriving stock (Eq, Ord, Show, Enum, Bounded)
+
+-- | Whose rule it is.
+data Origin = User | Builtin
+  deriving stock (Eq, Ord, Show, Enum, Bounded)
+
+-- | One table's rules, ordered: first applicable wins.
+newtype RuleSet = RuleSet (Seq Rule)
+  deriving newtype (Show)
+
+-- | The rules, in table order.
+ruleSetToList :: RuleSet -> [Rule]
+ruleSetToList (RuleSet rs) = toList rs
+
+-- | Insert by specificity, after every rule at least as specific, so
+-- definition order breaks ties. A user rule with an equal left-hand side
+-- is replaced in place, as redefinition does in WL. Built-in rules are never
+-- replaced: their left-hand sides only record where they live.
+insertRule :: Rule -> RuleSet -> RuleSet
+insertRule r (RuleSet rs) = case Seq.findIndexL same rs of
+  Just i -> RuleSet (Seq.update i r rs)
+  Nothing ->
+    let (before, after) = Seq.spanl (\x -> x.ruleSpecificity <= r.ruleSpecificity) rs
+     in RuleSet (before <> (r Seq.<| after))
+  where
+    same x = r.ruleOrigin == User && x.ruleOrigin == User && x.ruleLhs == r.ruleLhs
+
+-- | Remove the user rule with this left-hand side, if there is one.
+removeRule :: Expr -> RuleSet -> (Bool, RuleSet)
+removeRule lhs (RuleSet rs) =
+  let rs' = Seq.filter (\x -> not (x.ruleOrigin == User && x.ruleLhs == lhs)) rs
+   in (Seq.length rs' /= Seq.length rs, RuleSet rs')
+
+-- | What the kernel knows about one symbol.
+data SymbolInfo = SymbolInfo
+  { siAttributes :: !AttributeSet,
+    siValues :: !(EnumMap ValueKind RuleSet)
+  }
+  deriving stock (Show)
+
+-- | A symbol with no attributes and no rules.
+emptyInfo :: SymbolInfo
+emptyInfo = SymbolInfo mempty EnumMap.empty
+
+-- | One table.
+rulesOf :: ValueKind -> SymbolInfo -> RuleSet
+rulesOf k si = fromMaybe (RuleSet Seq.empty) (EnumMap.lookup k si.siValues)
+
+-- | Change one table.
+modifyRules :: ValueKind -> (RuleSet -> RuleSet) -> SymbolInfo -> SymbolInfo
+modifyRules k f si = si {siValues = EnumMap.insert k (f (rulesOf k si)) si.siValues}
+
+-- | Steps 10–13 (§4.4), in order. The lower rungs read @SubValues@ for
+-- @h[…][…]@ and @DownValues@ otherwise, never both, which is why the ladder
+-- takes the expression.
+ladder :: Expr -> [(ValueKind, Origin)]
+ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
+  where
+    down = case e of
+      App (App _ _) _ -> SubValue
+      _ -> DownValue
+
+-- | The candidate rules of one rung, in table order. Specificity has ordered
+-- them within the table; the origin selects the rung.
+applicableRules :: SymbolInfo -> (ValueKind, Origin) -> Expr -> Seq Rule
+applicableRules si (k, o) e =
+  let RuleSet rs = rulesOf k si
+   in Seq.filter (\r -> r.ruleOrigin == o) (Net.candidates (Net.fromSeq rs) e)

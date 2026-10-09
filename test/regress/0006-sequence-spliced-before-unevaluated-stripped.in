@@ -1,0 +1,4 @@
+f[Sequence[a, b], c]
+f[Unevaluated[Sequence[a, b]]]
+SetAttributes[h, SequenceHold]
+h[Sequence[a, b]]

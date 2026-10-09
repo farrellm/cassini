@@ -1,0 +1,8 @@
+Trace[1]: 7 Flat: Plus[y, x, y]
+Trace[1]: 9 Orderless: Plus[x, y, y]
+Trace[1]: 13 BuiltinDownValue: Plus[x, Times[2, y]]
+Trace[1]:   7 Flat: Times[2, y]
+Trace[1]:   9 Orderless: Times[2, y]
+Trace[1]: 7 Flat: Plus[x, Times[2, y]]
+Trace[1]: 9 Orderless: Plus[x, Times[2, y]]
+Out[1]: Plus[x, Times[2, y]]

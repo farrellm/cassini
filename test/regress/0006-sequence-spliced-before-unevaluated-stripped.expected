@@ -1,0 +1,4 @@
+Out[1]: f[a, b, c]
+Out[2]: f[Unevaluated[Sequence[a, b]]]
+Out[3]: -
+Out[4]: h[Sequence[a, b]]

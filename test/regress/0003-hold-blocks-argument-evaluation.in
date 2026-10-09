@@ -1,0 +1,3 @@
+Hold[Plus[1, 1]]
+HoldComplete[Evaluate[Plus[1, 1]]]
+Hold[Evaluate[Plus[1, 1]]]

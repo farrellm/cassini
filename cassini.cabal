@@ -50,13 +50,30 @@ library cassini-prelude
 library
   import:           warnings, extensions
   exposed-modules:
+    Cassini.Attributes
+    Cassini.Builtins
+    Cassini.Builtins.Arithmetic
+    Cassini.Builtins.Assign
+    Cassini.Builtins.Define
+    Cassini.Builtins.Structural
     Cassini.Core.Expr
     Cassini.Core.Expr.Internal
     Cassini.Core.Order
     Cassini.Core.Symbol
     Cassini.Core.Traversal
+    Cassini.Eval
+    Cassini.Eval.Kernel
+    Cassini.Eval.Message
     Cassini.Number
+    Cassini.Pattern
+    Cassini.Pattern.Match
+    Cassini.Pattern.Net
+    Cassini.Pattern.Syntactic
+    Cassini.REPL
+    Cassini.Rules
+    Cassini.Simplify.Automatic
     Cassini.Structure
+    Cassini.Syntax.FullForm
 
   other-modules:    Cassini.Core.Intern
   hs-source-dirs:   src
@@ -70,8 +87,14 @@ library
   build-depends:
     , base ^>=4.21.2.0
     , cassini:cassini-prelude
+    , containers ^>=0.7
+    , effectful-core ^>=2.6.1.0
+    , enummapset ^>=0.7.3.0
     , hashable ^>=1.5.1
+    , logict ^>=0.8.2.0
+    , megaparsec ^>=9.8.1
     , recursion-schemes ^>=5.2.3
+    , text ^>=2.1.4
     , unordered-containers ^>=0.2.21
     , vector ^>=0.13.2
 
@@ -87,6 +110,7 @@ executable cassini
   hs-source-dirs:   app
   build-depends:
     , base ^>=4.21.2.0
+    , cassini
     , cassini:cassini-prelude
 
   mixins:
@@ -101,23 +125,37 @@ test-suite cassini-test
   hs-source-dirs:   test
   main-is:          Main.hs
   other-modules:
+    Test.Cassini.Attributes
     Test.Cassini.Core.Intern
     Test.Cassini.Core.Order
     Test.Cassini.Core.Traversal
+    Test.Cassini.Eval
     Test.Cassini.Number
+    Test.Cassini.Pattern.Syntactic
+    Test.Cassini.Rules
+    Test.Cassini.Simplify.Automatic
     Test.Cassini.Structure
+    Test.Cassini.Syntax
     Test.Gen
+    Test.Golden
+    Test.Kernel
+    Test.Numeric
 
   build-depends:
     , base ^>=4.21.2.0
     , cassini
     , cassini:cassini-prelude
+    , containers ^>=0.7
+    , effectful-core ^>=2.6.1.0
+    , filepath ^>=1.5.5.0
     , hashable ^>=1.5.1
     , QuickCheck ^>=2.19
     , recursion-schemes ^>=5.2.3
     , tasty ^>=1.5.4
+    , tasty-golden ^>=2.3.5
     , tasty-hunit ^>=0.10.2
     , tasty-quickcheck ^>=0.11.1
+    , text ^>=2.1.4
     , vector ^>=0.13.2
 
   mixins:

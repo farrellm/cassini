@@ -1,0 +1,23 @@
+Trace[1]: 7 Flat: Plus[1, 1]
+Trace[1]: 9 Orderless: Plus[1, 1]
+Trace[1]: 13 BuiltinDownValue: 2
+Out[1]: 2
+Trace[2]:   13 BuiltinDownValue: 8
+Trace[2]: 3 Arguments: Plus[8, 4]
+Trace[2]: 7 Flat: Plus[8, 4]
+Trace[2]: 9 Orderless: Plus[4, 8]
+Trace[2]: 13 BuiltinDownValue: 12
+Out[2]: 12
+Trace[3]:   13 BuiltinDownValue: 8
+Trace[3]:   13 BuiltinDownValue: 16
+Trace[3]: 3 Arguments: Plus[8, 16, 1]
+Trace[3]: 7 Flat: Plus[8, 16, 1]
+Trace[3]: 9 Orderless: Plus[1, 8, 16]
+Trace[3]: 13 BuiltinDownValue: 25
+Out[3]: 25
+Trace[4]:   13 BuiltinDownValue: 9
+Trace[4]: 3 Arguments: Plus[1, 9]
+Trace[4]: 7 Flat: Plus[1, 9]
+Trace[4]: 9 Orderless: Plus[1, 9]
+Trace[4]: 13 BuiltinDownValue: 10
+Out[4]: 10

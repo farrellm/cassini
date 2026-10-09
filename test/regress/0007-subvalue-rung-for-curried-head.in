@@ -1,0 +1,5 @@
+SetDelayed[f[Pattern[x, Blank[]]][Pattern[y, Blank[]]], List[x, y]]
+f[1][2]
+f[1]
+SetDelayed[g[Pattern[x, Blank[]]], x]
+g[1][2]

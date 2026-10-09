@@ -1,0 +1,2 @@
+(* Milestone 1a (DESIGN.md §10): step 7 (Flat) before step 9 (Orderless), then the collection. *)
+Plus[a, Plus[b, a]]
