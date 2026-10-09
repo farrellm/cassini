@@ -1528,6 +1528,9 @@ and `1·x` are **not** ASAEs, while `(x·y)^(1/2)` and `(x^(1/2))^(1/2)` are.
   the constants of a merged list into one leading constant. Before §4.15's radicals this is rare,
   because only a product of radicals with one base reaches it.
 
+**And one divergence from WL, kept because it is Cohen's:** a number does not distribute over a
+sum (`2·(a + b)` stays). WL's normal form distributes, and the corpus shows it. D29.
+
 `base` and `exponent` are exported as `powerBase` and `powerExponent`, and `const` as
 `constPart`, because the prelude has an `exponent` and `const`.
 
@@ -2922,7 +2925,7 @@ corpus/
   fetched/                    -- gitignored
   wolfram-docs/               -- gitignored (§7.9)
   passing/<source>.txt        -- the ratchet: IDs of the cases known to pass
-  divergences.txt             -- case ID, and the D-number that explains it
+  divergences.txt             -- case ID, and the D-number (or "pending §N") that explains it
 ```
 
 The tools are Python scripts: the Wolfram documentation extractor (§7.9), Mathics3's pytest reader
@@ -2954,6 +2957,14 @@ reading it, with the same discipline as goldens (§7.4). A case that fails for a
 goes in `divergences.txt` with its D-number and is reported as a divergence, not a failure; this is
 §7.5's whitelist, kept per case. When a D-number is answered, its divergence entries are
 re-examined in the same change.
+
+**A failure can also be scheduled.** Triage meets cases whose behaviour a later milestone or track
+implements: radicals and infinities are §4.15's, but their pages mention only 1a's builtins, so
+they are in scope at 1a. They are not divergences, and leaving them unlisted would hide them among
+failures nobody has looked at. So `divergences.txt` also takes the reason `pending §N`, naming the
+section whose work implements the behaviour. The report counts these entries with the
+divergences. When that work lands, its pending entries are re-examined in the same change, and
+each is either removed or turned into a D-number.
 
 **Comparison, per corpus:**
 
@@ -3037,6 +3048,15 @@ corpus/wolfram-docs` is Python, and uses Mathics3 where a kernel would parse and
    `<Page>` is the page's own documentation URL, not its title, because a few functions have
    variant pages under one title (`blockchain/BlockchainData-Bitcoin` beside `BlockchainData`).
    Three pages ship twice under one URL; the copy tagged with the `Mathematica` paclet is kept.
+
+**What the adapter translates** (§7.4 fixed the golden format to be this one):
+
+- An expected file numbers its inputs as the documentation page did, so a one-input case can
+  hold `Out[67]`. Every input has exactly one `Out` line, so the adapter pairs the *k*-th label
+  in order with input *k*.
+- Message symbols are written as the notebook displays them, so `Infinity::indet` arrives as
+  `\[Infinity]::indet`. That is a normalizer defect, and D27's row records it. The adapter
+  rewrites it until the next extractor run fixes it.
 
 A `.in` file holds one FullForm input per line. A `.expected` file holds, for each input, a line
 `Out[k]: <FullForm>`, or `Out[k]: -` for an input with no output, or `Out[k]: ?<reason>` for an
@@ -3598,8 +3618,9 @@ answer, not a deletion.
 | D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
 | D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8). The unabsorbed terms are guarded against Cohen's cancellations, which would otherwise assume them finite; one case, an infinity-bearing base under non-numeric exponents, is left unmerged (§4.15) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
 | D26 | Imported corpora are vendored only when permissively licensed and small enough to commit; any other corpus is fetched at a pinned commit, and the repository holds only its case IDs (§7.8) | a corpus's licence changing; or the test suites being shipped in a package, where fetched corpora must stay optional |
-| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here |
+| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway |
 | D28 | `structural` (O-T) recurs through `compareCanonical`, so each level re-runs `cohen` over a child its parent's `cohen` has just walked (§3.5). Two distinct terms that Cohen's rules call equal, differing d levels down, cost O(n·d), not O(n). Only unsimplified terms reach O-T. The likely fix keeps the relation: O-T has already checked equal kind and arity, and for those every kind's rule compares all child pairs, so a parent's `EQ` means every child pair is Cohen-equal and O-T can recur into `structural` directly. That needs the invariant stated in `Cassini.Core.Order` and a property checking the two versions agree | `compareCanonical` prominent in a §8.4 profile, or deep unsimplified terms in matching or `Orderless` sorting |
+| D29 | A rational number does not distribute over a sum. `2·(a + b)` and `-(c + d)` stay as products, as Cohen's ASAE has them (ASAE-4 admits a sum among the factors). WL distributes: `a + b - (c + d)` evaluates to `a + b - c - d`. Distributing would put an expansion rule into automatic simplification, which §4.6 keeps to exactly Cohen's operators. Expansion is `Expand`'s job (§4.12) | `Expand` arriving with the elementary-functions track, when the two normal forms can be compared on real workloads; or this entry's corpus and oracle divergences becoming the dominant kind |
 
 ### 11.3 Provenance
 

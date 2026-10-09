@@ -45,9 +45,14 @@ definitions =
   where
     flatOrderless = [Flat, Listable, NumericFunction, Orderless, Protected]
     numeric = [Listable, NumericFunction, Protected]
+    -- Power[x, y, z] is Power[x, Power[y, z]]: right-associative, as WL's.
     powerRule e = case args e of
       [v, w] -> fromSimplified e (simplifyPower v w)
+      v : w : rest@(_ : _) -> pure (Just (apply sPower [v, nest w rest]))
       _ -> pure Nothing
+    nest y = \case
+      [] -> y
+      z : zs -> apply sPower [y, nest z zs]
     rewrite1 f e = pure $ case args e of
       [a] -> Just (f a)
       _ -> Nothing

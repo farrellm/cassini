@@ -63,12 +63,14 @@ import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Int
 import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol
   ( Symbol,
+    sCondition,
     sEvaluate,
     sFunction,
     sHold,
     sIndeterminate,
     sList,
     sSequence,
+    sTrue,
     sUnevaluated,
     symName,
     systemSymbol,
@@ -238,9 +240,16 @@ evalStep3Args held n = do
   when (as' /= n.nodeArgs) $ traceStep "3 Arguments" (nodeExpr n')
   pure n'
   where
+    -- Evaluate[x] in a held position is x evaluated, not Evaluate[x]
+    -- evaluated: step 6 would strip an Unevaluated inside it otherwise.
+    -- Several arguments become their Sequence, which step 5 splices.
     arg h a
       | not h = evaluate a
-      | not (holdAllComplete n.nodeAttrs), App (Sym s) _ <- a, s == sEvaluate = evaluate a
+      | not (holdAllComplete n.nodeAttrs),
+        App (Sym s) xs <- a,
+        s == sEvaluate = case V.toList xs of
+          [x] -> evaluate x
+          ys -> evaluate (apply sSequence ys)
       | otherwise = pure a
 
 -- | Steps 3 and 4, one pass: step 4 is a gate on step 3, not a stage after
@@ -386,13 +395,23 @@ applyRule name r e = case r.ruleBody of
     user body =
       matchOne r.ruleLhs e >>= \case
         Nothing -> pure Nothing
-        Just sigma -> do
-          let rhs = applySubst sigma body
-          traceStep name rhs
-          catchUnwind (evaluate rhs) >>= \case
-            Right v -> pure (Just (Round v True))
-            Left (UReturn v) -> pure (Just (Round v True))
-            Left u -> unwind u
+        Just sigma -> case body of
+          -- lhs :> rhs /; test: the rule applies only where the test,
+          -- under the match's bindings, evaluates to True.
+          App (Sym c) xs
+            | c == sCondition,
+              [rhs, test] <- V.toList xs ->
+                evaluate (applySubst sigma test) >>= \case
+                  Sym t | t == sTrue -> fire sigma rhs
+                  _ -> pure Nothing
+          _ -> fire sigma body
+    fire sigma body = do
+      let rhs = applySubst sigma body
+      traceStep name rhs
+      catchUnwind (evaluate rhs) >>= \case
+        Right v -> pure (Just (Round v True))
+        Left (UReturn v) -> pure (Just (Round v True))
+        Left u -> unwind u
 
 -- | Run a builtin. It fires only if it changes the expression, so step 6's
 -- restoration and the trace stay honest.

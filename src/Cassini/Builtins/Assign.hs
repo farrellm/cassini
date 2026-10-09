@@ -17,10 +17,11 @@ module Cassini.Builtins.Assign (definitions) where
 import Cassini.Attributes (Attribute (..), attributeFromName, attributeList, attributeName, holdsArgument, isProtected)
 import Cassini.Attributes qualified as Attributes
 import Cassini.Builtins.Define (Definition, args, define, down, message, sFailedE, sNullE)
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkString, pattern App, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sList, sPattern, sPatternTest, symName, systemSymbol)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkString, pattern App, pattern Int_, pattern Str, pattern Sym)
+import Cassini.Core.Symbol (Symbol, globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sList, sPattern, sPatternTest, symName, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol, modifySymbol)
-import Cassini.Rules (Origin (..), RuleBody (..), SymbolInfo (..), ValueKind (..), insertRule, mkRule, modifyRules, removeRule, rulesOf)
+import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
+import Data.EnumMap.Strict qualified as EnumMap
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 
@@ -104,6 +105,11 @@ write name lhs body = case target lhs of
 -- @{x, y} = {1, 2}@ assigns elementwise.
 assignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
 assignment name body e = case args e of
+  [App (Sym p) xs, rhs]
+    | p == systemSymbol "Part",
+      name == "Set",
+      Sym s : is@(_ : _) <- V.toList xs ->
+        Just rhs <$ partAssignment s is rhs
   [App (Sym l) ls, rhs]
     | l == sList,
       name == "Set" -> case rhs of
@@ -123,6 +129,51 @@ assignment name body e = case args e of
       | name == "Set" = rhs
       | ok = sNullE
       | otherwise = sFailedE
+
+-- | @s[[i, …]] = v@: replace a part of @s@'s own value, which must exist.
+-- An index is an integer (negative from the end, 0 the head) or a list of
+-- them; a list of indices takes a list of values of the same length,
+-- elementwise, or one value for every index. Out of range is @Set::partw@,
+-- and no own value is @Set::noval@; either way the value is unchanged.
+partAssignment :: (Kernel :> es) => Symbol -> [Expr] -> Expr -> Eff es ()
+partAssignment s is0 rhs = do
+  info <- lookupSymbol s
+  is <- traverse evaluate is0
+  let lhs = apply (systemSymbol "Part") (Sym s : is)
+  case [v | r <- ruleSetToList (rulesOf OwnValue info), r.ruleOrigin == User, Immediate v <- [r.ruleBody]] of
+    current : _
+      | isProtected info.siAttributes -> message "Set" "wrsym" [Sym s]
+      | Just new <- setPart current is rhs ->
+          modifySymbol s (modifyRules OwnValue (insertRule (mkRule User (Sym s) (Immediate new))))
+      | otherwise -> message "Set" "partw" [lhs]
+    [] -> message "Set" "noval" [Sym s, lhs]
+
+-- | Replace the part at a sequence of indices; 'Nothing' when one is out of
+-- range or is not an index.
+setPart :: Expr -> [Expr] -> Expr -> Maybe Expr
+setPart x is v = case is of
+  [] -> Just v
+  Int_ i : rest -> setAt x (fromInteger i) rest v
+  App (Sym l) js : rest | l == sList -> do
+    ks <- traverse index (V.toList js)
+    let vs = case v of
+          App (Sym l') ws | l' == sList, V.length ws == length ks -> V.toList ws
+          _ -> map (const v) ks
+    foldlM (\acc (k, w) -> setAt acc k rest w) x (zip ks vs)
+  _ -> Nothing
+  where
+    index = \case
+      Int_ i -> Just (fromInteger i)
+      _ -> Nothing
+    setAt y k rest w = case y of
+      App h as
+        | k == 0 -> (`mkApp` as) <$> setPart h rest w
+        | otherwise -> do
+            let pos = if k < 0 then V.length as + k else k - 1
+            a <- as V.!? pos
+            a' <- setPart a rest w
+            Just (mkApp h (as V.// [(pos, a')]))
+      _ -> Nothing
 
 -- | @UpSet@ and @UpSetDelayed@: an upvalue for the tag of every argument.
 upAssignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
@@ -212,25 +263,35 @@ changeAttributes _ f e = case args e of
 -- | @Protect@ and @Unprotect@: the names of the symbols whose protection
 -- changed, as strings.
 protection :: (Kernel :> es) => Text -> Bool -> Expr -> Eff es (Maybe Expr)
-protection name protect e = case traverse symbolOf (args e) of
-  Just syms -> do
-    changed <- fmap catMaybes . forM syms $ \s -> do
-      info <- lookupSymbol s
-      let was = isProtected info.siAttributes
-      if Attributes.member Locked info.siAttributes
-        then Nothing <$ message name "locked" [Sym s]
-        else
-          if was == protect
-            then pure Nothing
-            else do
-              modifySymbol s (\si -> si {siAttributes = (if protect then Attributes.insert else Attributes.delete) Protected si.siAttributes})
-              pure (Just (mkString s.symName))
-    pure (Just (apply sList changed))
-  Nothing -> pure Nothing
+protection name protect e =
+  traverse symbolsOf (args e) >>= \xs -> case sequence xs of
+    Just symss -> do
+      let syms = concat symss
+      changed <- fmap catMaybes . forM syms $ \s -> do
+        info <- lookupSymbol s
+        let was = isProtected info.siAttributes
+        if Attributes.member Locked info.siAttributes
+          then Nothing <$ message name "locked" [Sym s]
+          else
+            if was == protect
+              then pure Nothing
+              else do
+                modifySymbol s (\si -> si {siAttributes = (if protect then Attributes.insert else Attributes.delete) Protected si.siAttributes})
+                pure (Just (mkString s.symName))
+      pure (Just (apply sList changed))
+    Nothing -> pure Nothing
   where
-    symbolOf = \case
-      Sym s -> Just s
-      _ -> Nothing
+    -- A symbol, a name, or a list of them. A name is the System` symbol if
+    -- the kernel knows one, else the Global` one.
+    symbolsOf = \case
+      Sym s -> pure (Just [s])
+      Str t -> Just . pure <$> named t
+      App (Sym l) xs | l == sList -> fmap concat . sequence <$> traverse symbolsOf (V.toList xs)
+      _ -> pure Nothing
+    named t = do
+      info <- lookupSymbol (systemSymbol t)
+      pure $ if hasDefinitions info then systemSymbol t else globalSymbol t
+    hasDefinitions info = info.siAttributes /= mempty || not (EnumMap.null info.siValues)
 
 symbolList :: Expr -> Maybe [Symbol]
 symbolList = traverse (\case Sym s -> Just s; _ -> Nothing) . listOf
