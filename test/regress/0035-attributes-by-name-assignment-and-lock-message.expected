@@ -1,0 +1,11 @@
+Out[1]: List[HoldFirst, Protected, SequenceHold]
+Out[2]: List[List[HoldFirst, Protected, SequenceHold], List[HoldAll, Protected]]
+Out[3]: List[Listable, Protected]
+Out[4]: List[Listable, Protected]
+Out[5]: List[HoldAll]
+Out[6]: List[HoldAll]
+Out[7]: -
+Out[8]: List[]
+Message[8]: Protect::locked
+Out[9]: List[]
+Message[9]: Protect::locked

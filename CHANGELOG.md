@@ -51,6 +51,21 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   * Fix: automatic simplification nested a product in a product, or a sum in a sum, when like
     factors or terms collected into one (unit tests in `Test.Cassini.Simplify.Automatic`).
   * `SetAttributes` and `ClearAttributes` no longer evaluate their attributes twice.
+  * Fixes from the third review of the milestone 1a PR, each with a regression case (0031–0034):
+    * a condition on an upvalue's or tag assignment's left-hand side no longer hides its
+      arguments' tags;
+    * `HoldPattern` neither makes a rule more specific nor makes `f[2]` and `HoldPattern[f[2]]`
+      two rules;
+    * the attribute names are `System`` symbols;
+    * `Part` of `{}` or `f[]` is `Part::partw`, not `Part::partd`.
+  * Fixes from triaging the corpus cases the attribute names brought into scope, each with a
+    regression case (0035–0036):
+    * `Attributes` takes a name, and `Attributes[s] = {…}` replaces the attributes;
+    * `Unprotect` on a `Locked` symbol is `Protect::locked`;
+    * a `Sequence` spliced under `HoldFirst` or `HoldRest` goes round again, so an argument it
+      moves out of the held position is evaluated.
+  * The Wolfram documentation extractor holds the arguments of a symbol the example gave a hold
+    attribute, rather than evaluating them while normalizing (D27).
 * Stage 0 (DESIGN.md §3, §10):
   * Exact numbers (`Cassini.Number`).
   * Interned symbols (`Cassini.Core.Symbol`).

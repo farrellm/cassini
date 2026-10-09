@@ -1,0 +1,10 @@
+(* Attributes takes a symbol's name, Attributes[s] = {...} replaces the attributes, and Unprotect on a Locked symbol answers Protect::locked. *)
+Attributes["Set"]
+Attributes[List["Set", Hold]]
+Set[Attributes[f], List[Listable, Protected]]
+Attributes[f]
+Set[Attributes[f], List[HoldAll]]
+Attributes[f]
+SetAttributes[g, List[Locked, Protected]]
+Unprotect[g]
+Protect[g]

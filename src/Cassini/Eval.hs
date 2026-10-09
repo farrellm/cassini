@@ -105,12 +105,14 @@ import Effectful (Eff, IOE, (:>))
 -- | An application part-way through the sequence: its evaluated head, its
 -- arguments as the steps leave them, the head's attributes, and the values
 -- step 6 stripped of their @Unevaluated@ wrappers, with their 0-based
--- positions.
+-- positions, and whether step 5 moved a held argument into an unheld
+-- position.
 data Node = Node
   { nodeHead :: !Expr,
     nodeArgs :: !(V.Vector Expr),
     nodeAttrs :: !AttributeSet,
-    nodeStripped :: ![(Int, Expr)]
+    nodeStripped :: ![(Int, Expr)],
+    nodeUnheld :: !Bool
   }
 
 -- | The expression the node stands for now.
@@ -143,13 +145,16 @@ evalSequence = fixpoint step
                   -- Built once for the four rungs, not once per rung.
                   let e' = nodeExpr n''
                   fired <- firstJustM (\r -> r n'' e') [userUp, builtinUp, userDown, builtinDown]
-                  pure (fromMaybe (Round (if null n''.nodeStripped then e' else restoreUneval n'') True) fired)
+                  pure (fromMaybe (Round (if null n''.nodeStripped then e' else restoreUneval n'') (not n''.nodeUnheld)) fired)
       | otherwise = pure (Round e True)
 
 -- | One round's result, and whether it is already a fixed point of the
 -- sequence. It is when no rule fired: steps 2–9 only evaluated the parts and
 -- rearranged them, and another round would evaluate the same parts and try
--- the same rules on the same expression. It is when a user rule fired: its
+-- the same rules on the same expression. Unless step 5 moved a held argument
+-- into an unheld position, as splicing a @Sequence@ under @HoldFirst@ or
+-- @HoldRest@ can: the next round evaluates it there, so @f[Sequence[1+1,
+-- 2+2], 3+3]@ with @HoldFirst@ is @f[1+1, 4, 6]@. It is when a user rule fired: its
 -- rung evaluated the right-hand side to a fixed point itself (§4.4). A
 -- built-in's result, an own value, a threaded list and @Indeterminate@ are
 -- new expressions, and go round again.
@@ -210,7 +215,7 @@ evalStep2Head h as = do
   h' <- evaluate h
   when (h' /= h) $ traceStep "2 Head" (mkApp h' as)
   attrs <- headAttributes h'
-  pure Node {nodeHead = h', nodeArgs = as, nodeAttrs = attrs, nodeStripped = []}
+  pure Node {nodeHead = h', nodeArgs = as, nodeAttrs = attrs, nodeStripped = [], nodeUnheld = False}
 
 -- | "The attributes of @h@" for steps 4–9: a symbol's own; for
 -- @Function[_, _, attrs]@, @attrs@, one attribute or a list (§4.13); none
@@ -264,16 +269,22 @@ evalStep34ArgsHold n = do
   evalStep3Args held n
 
 -- | Step 5: unless @SequenceHold@ or @HoldAllComplete@, splice @Sequence@
--- arguments.
+-- arguments. Splicing shifts positions, so it records whether an argument
+-- step 3 held now sits where step 4 would not hold it ('Round').
 evalStep5Seq :: (Kernel :> es) => Node -> Eff es Node
 evalStep5Seq n
   | sequenceHold n.nodeAttrs || not (V.any isSequence n.nodeArgs) = pure n
-  | otherwise = changed "5 Sequence" n {nodeArgs = V.concatMap splice n.nodeArgs}
+  | otherwise = changed "5 Sequence" n {nodeArgs = V.map fst spliced, nodeUnheld = unheld}
   where
     isSequence = \case
       App (Sym s) _ -> s == sSequence
       _ -> False
+    k = V.length n.nodeArgs
+    -- Each spliced argument, with whether its position before splicing held it.
+    spliced = V.concat [V.map (,holdsArgument n.nodeAttrs (i + 1) k) (splice a) | (i, a) <- zip [0 ..] (V.toList n.nodeArgs)]
     splice a = if isSequence a then exprArgs a else V.singleton a
+    k' = V.length spliced
+    unheld = V.or (V.imap (\j (_, wasHeld) -> wasHeld && not (holdsArgument n.nodeAttrs (j + 1) k')) spliced)
 
 -- | Step 6: unless @HoldAllComplete@, strip the outermost @Unevaluated@ from
 -- each argument, recording the value. If no rule fires, 'restoreUneval' puts

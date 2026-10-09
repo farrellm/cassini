@@ -38,8 +38,8 @@ definitions =
     define "Attributes" [HoldAll, Listable, Protected] [down attributes],
     define "SetAttributes" [HoldFirst, Protected] [down (changeAttributes Attributes.insert)],
     define "ClearAttributes" [HoldFirst, Protected] [down (changeAttributes Attributes.delete)],
-    define "Protect" [HoldAll, Protected] [down (protection "Protect" True)],
-    define "Unprotect" [HoldAll, Protected] [down (protection "Unprotect" False)],
+    define "Protect" [HoldAll, Protected] [down (protection True)],
+    define "Unprotect" [HoldAll, Protected] [down (protection False)],
     define "$Failed" [Protected] []
   ]
 
@@ -82,8 +82,9 @@ lhsCore e = case unholdPattern e of
 argumentTags :: Expr -> [Symbol]
 argumentTags = mapMaybe tagSymbol . V.toList . exprArgs . lhsCore
 
-sPart :: Symbol
+sPart, sAttributes :: Symbol
 sPart = systemSymbol "Part"
+sAttributes = systemSymbol "Attributes"
 
 -- | Evaluate the left-hand side's arguments, as WL does, unless the head
 -- holds them or the whole is in @HoldPattern@. The head is not evaluated.
@@ -125,6 +126,12 @@ assignment name body e = case args e of
     | l == sList,
       name == "Set" ->
         Just rhs <$ elementwise ls rhs
+  [App (Sym a) xs, rhs]
+    | a == sAttributes,
+      name == "Set",
+      [Sym s] <- V.toList xs,
+      Just attrs <- traverse attributeOf (listOf rhs) ->
+        Just rhs <$ replaceAttributes s attrs
   [lhs, rhs] -> do
     lhs' <- prepareLhs lhs
     ok <- write name lhs' (body rhs)
@@ -254,12 +261,28 @@ unset e = case args e of
   _ -> pure Nothing
 
 -- | @Attributes[s]@: the list of attribute names, in WL's order (by name).
+-- The symbol may be given by name, as @Attributes["Set"]@.
 attributes :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 attributes e = case args e of
-  [Sym s] -> do
+  [x] | Just s0 <- symbolOrName x -> do
+    s <- s0
     info <- lookupSymbol s
     pure (Just (apply sList [Sym (systemSymbol (attributeName a)) | a <- attributeList info.siAttributes]))
   _ -> pure Nothing
+  where
+    symbolOrName = \case
+      Sym s -> Just (pure s)
+      Str t -> Just (named t)
+      _ -> Nothing
+
+-- | @Attributes[s] = {…}@: replace the symbol's attributes. A @Locked@
+-- symbol refuses with @Attributes::locked@, as @SetAttributes@ does.
+replaceAttributes :: (Kernel :> es) => Symbol -> [Attribute] -> Eff es ()
+replaceAttributes s attrs = do
+  info <- lookupSymbol s
+  if Attributes.member Locked info.siAttributes
+    then message "Attributes" "locked" [Sym s]
+    else modifySymbol s (\si -> si {siAttributes = foldr Attributes.insert mempty attrs})
 
 -- | @SetAttributes@ and @ClearAttributes@: one symbol or a list, and one
 -- attribute or a list. A @Locked@ symbol refuses with @Attributes::locked@.
@@ -277,15 +300,12 @@ changeAttributes f e = case args e of
         pure (Just sNullE)
       _ -> pure Nothing
   _ -> pure Nothing
-  where
-    attributeOf = \case
-      Sym a -> attributeFromName a.symName
-      _ -> Nothing
 
 -- | @Protect@ and @Unprotect@: the names of the symbols whose protection
--- changed, as strings.
-protection :: (Kernel :> es) => Text -> Bool -> Expr -> Eff es (Maybe Expr)
-protection name protect e =
+-- changed, as strings. A @Locked@ symbol refuses with @Protect::locked@,
+-- for @Unprotect@ too, as WL's message does.
+protection :: (Kernel :> es) => Bool -> Expr -> Eff es (Maybe Expr)
+protection protect e =
   traverse symbolsOf (args e) >>= \xs -> case sequence xs of
     Just symss -> do
       let syms = concat symss
@@ -293,7 +313,7 @@ protection name protect e =
         info <- lookupSymbol s
         let was = isProtected info.siAttributes
         if Attributes.member Locked info.siAttributes
-          then Nothing <$ message name "locked" [Sym s]
+          then Nothing <$ message "Protect" "locked" [Sym s]
           else
             if was == protect
               then pure Nothing
@@ -303,17 +323,24 @@ protection name protect e =
       pure (Just (apply sList changed))
     Nothing -> pure Nothing
   where
-    -- A symbol, a name, or a list of them. A name is the System` symbol if
-    -- the kernel knows one, else the Global` one.
+    -- A symbol, a name, or a list of them.
     symbolsOf = \case
       Sym s -> pure (Just [s])
       Str t -> Just . pure <$> named t
       App (Sym l) xs | l == sList -> fmap concat . sequence <$> traverse symbolsOf (V.toList xs)
       _ -> pure Nothing
-    named t = do
-      info <- lookupSymbol (systemSymbol t)
-      pure $ if hasDefinitions info then systemSymbol t else globalSymbol t
-    hasDefinitions info = info.siAttributes /= mempty || hasRules info
+
+-- | The symbol a name means: the System` symbol if the kernel knows one,
+-- else the Global` one.
+named :: (Kernel :> es) => Text -> Eff es Symbol
+named t = do
+  info <- lookupSymbol (systemSymbol t)
+  pure $ if info.siAttributes /= mempty || hasRules info then systemSymbol t else globalSymbol t
+
+attributeOf :: Expr -> Maybe Attribute
+attributeOf = \case
+  Sym a -> attributeFromName a.symName
+  _ -> Nothing
 
 symbolList :: Expr -> Maybe [Symbol]
 symbolList = traverse (\case Sym s -> Just s; _ -> Nothing) . listOf
