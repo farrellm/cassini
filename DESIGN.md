@@ -1281,7 +1281,11 @@ definitions epoch. Stage 1 ships the literal version; the marker is D14.
 
 **One round is skipped, because it cannot change anything.** A round reports whether its result is
 already a fixed point. It is one in two cases. If no rule fired, steps 2–9 only evaluated the parts
-and rearranged them, and another round would try the same rules on the same expression. If a user
+and rearranged them, and another round would try the same rules on the same expression, unless
+step 5 moved a held argument into an unheld position. A `Sequence` spliced under `HoldFirst` or
+`HoldRest` shifts positions, and the next round evaluates what now sits unheld: WL answers
+`f[1+1, 4, 6]` for `f[Sequence[1+1, 2+2], 3+3]` with `HoldFirst`
+(`wolfram/HoldFirst/PropertiesAndRelations/5`, regression case 0036). If a user
 rule fired, its rung evaluated the right-hand side to a fixed point itself. A built-in's result, an
 own value, a threaded list and `Indeterminate` still go round again. This is not D14's marker. It
 was forced by a visible bug, not by cost. An unevaluated subterm that emits a message, such as
@@ -3063,9 +3067,11 @@ corpus/wolfram-docs` is Python, and uses Mathics3 where a kernel would parse and
    to `Times[1, Power[2, -1]]`, not `Rational[1, 2]`. So each output is evaluated once in Mathics3,
    with every head except arithmetic (`Plus`, `Times`, `Power`, `Sqrt`, `Rational`, `Complex`,
    `DirectedInfinity`, `List` and a few spellings of them) renamed to an inert copy that keeps only
-   the original's `Hold*` attributes. Only arithmetic re-canonicalizes, a held argument stays as
-   displayed, and Mathics3 cannot evaluate further an output that WL left unevaluated. An output is
-   unusable in any of these cases:
+   the original's `Hold*` attributes. A symbol the example's own inputs give a hold attribute
+   (`SetAttributes[h, HoldFirst]`, or `Attributes[h] = {…}`) is `HoldAll` there: Mathics3 does not
+   know the page's attributes, and WL's output already evaluated what it did not hold. Only
+   arithmetic re-canonicalizes, a held argument stays as displayed, and Mathics3 cannot evaluate
+   further an output that WL left unevaluated. An output is unusable in any of these cases:
    - a second evaluation changes it;
    - normalization takes more than five seconds, or Mathics3 raises an error on it;
    - its label names a display form other than `InputForm` or `FullForm` (`Out[k]//MatrixForm=`);
@@ -3432,11 +3438,13 @@ settings, step 8's allocation gate included.
 
 Corpus and oracle at completion:
 
-- **Corpus:** 624 of the 111,806 Wolfram documentation cases are in scope. 526 pass and are the
-  ratchet; 16 are in `divergences.txt` (D14, D20, D25, D29, and `pending §4.15`); 82 fail. Of
-  those, 65 are on pages outside this milestone. The other 17 came into scope when the attribute
-  names became `System`` symbols, after the review that found that, and are not yet triaged.
-- **Oracle:** 160 of 189 inputs agree with Mathics3 10.0.1. 21 are listed and 8 are inconclusive,
+- **Corpus:** 624 of the 111,806 Wolfram documentation cases are in scope. 535 pass and are the
+  ratchet; 24 are in `divergences.txt` (D14, D20, D25, D29, and `pending` §4.5.3, §4.11, §4.13 and
+  §4.15); 65 fail on pages outside this milestone. 47 of the 624 came into scope when the
+  attribute names became `System`` symbols, after a PR review found they were not; their triage
+  fixed an evaluator bug (§4.4's settled round), three gaps in `Attributes` and `Unprotect`, and a
+  normalizer defect (D27).
+- **Oracle:** 173 of 204 inputs agree with Mathics3 10.0.1. 23 are listed and 8 are inconclusive,
   all from Mathics3's own exceptions.
 
 The departures it found are recorded in their sections:
@@ -3669,7 +3677,7 @@ answer, not a deletion.
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation per match dominating on the sequence-variable grid |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
-| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated. That is §4.4's bug fix for repeated messages, not the marker | §8.4's fixed-point benchmark showing re-evaluation dominating |
+| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 moved a held argument into an unheld position. That is §4.4's bug fix for repeated messages, not the marker | §8.4's fixed-point benchmark showing re-evaluation dominating |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
 | D16 | No `Sin[x]/Cos[x] → Tan[x]` in automatic evaluation, unlike WL: it would undo `Trig_substitute` inside `Simplify` (§4.11) | wanting WL's `Tan` spelling in output — answered first by a rewrite in `Cassini.Syntax.Pretty`, not by an evaluation rule |
 | D17 | `Simplify` is Cohen's `Simplify_trig`, one fixed strategy, not WL's search under a complexity measure (§4.12) | a second strategy existing — Gröbner side relations (§6.1), or Cohen's `Simplify_exp` (`cohen2002_*.pdf` §7.2 Exercise 4) — so that choosing between them needs a measure |
@@ -3682,7 +3690,7 @@ answer, not a deletion.
 | D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
 | D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8). The unabsorbed terms are guarded against Cohen's cancellations, which would otherwise assume them finite; one case, an infinity-bearing base under non-numeric exponents, is left unmerged (§4.15) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
 | D26 | Imported corpora are vendored only when permissively licensed and small enough to commit; any other corpus is fetched at a pinned commit, and the repository holds only its case IDs (§7.8) | a corpus's licence changing; or the test suites being shipped in a package, where fetched corpora must stay optional |
-| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway |
+| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway. **Fired again 2026-10-09 (1a triage, after the attribute names became `System`` symbols):** the normalizer evaluated arithmetic held by an attribute the example set on its own symbol, so `SetAttributes[h, HoldFirst]; h[1+1, 2+2, 3+3]` was expected as `h[2, 4, 6]`. Fixed in the extractor (§7.9 step 6) and re-run over the same 14.1 notebooks, under Mathics3 10.0.1 and CPython 3.14: 38,160 examples ok and 85,558 usable outputs (from 38,157 and 85,555). Of the 29 changed files, 13 are that fix (the `Hold*`, `NHold*`, `SetAttributes`, `MapApply`, `ComapApply`, `Complex` and `Rational` pages), and 16 are run-to-run variation: three outputs that timed out before, memory addresses or a version string in eleven garbage outputs, and two `Plus` terms ordered differently by the new Python |
 | D28 | `structural` (O-T) recurs through `compareCanonical`, so each level re-runs `cohen` over a child its parent's `cohen` has just walked (§3.5). Two distinct terms that Cohen's rules call equal, differing d levels down, cost O(n·d), not O(n). Only unsimplified terms reach O-T. The likely fix keeps the relation: O-T has already checked equal kind and arity, and for those every kind's rule compares all child pairs, so a parent's `EQ` means every child pair is Cohen-equal and O-T can recur into `structural` directly. That needs the invariant stated in `Cassini.Core.Order` and a property checking the two versions agree | `compareCanonical` prominent in a §8.4 profile, or deep unsimplified terms in matching or `Orderless` sorting |
 | D29 | A rational number does not distribute over a sum. `2·(a + b)` and `-(c + d)` stay as products, as Cohen's ASAE has them (ASAE-4 admits a sum among the factors). WL distributes: `a + b - (c + d)` evaluates to `a + b - c - d`. Distributing would put an expansion rule into automatic simplification, which §4.6 keeps to exactly Cohen's operators. Expansion is `Expand`'s job (§4.12) | `Expand` arriving with the elementary-functions track, when the two normal forms can be compared on real workloads; or this entry's corpus and oracle divergences becoming the dominant kind |
 | D30 | The recursion limit cuts in place, as `Hold[e]`, and evaluation continues outward (§4.3). WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input | an oracle or corpus case that pins down which enclosing evaluation WL replaces; or `Block` (§4.13), whose own example ends in `TerminatedEvaluation`, needing the same unwinding |

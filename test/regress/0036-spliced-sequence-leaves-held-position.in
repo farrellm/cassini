@@ -1,0 +1,7 @@
+(* A Sequence spliced under HoldFirst or HoldRest can move a held argument into an unheld position, where the next round evaluates it; under HoldAll nothing moves out of hold. *)
+SetAttributes[f, HoldFirst]
+f[Sequence[Plus[1, 1], Plus[2, 2]], Plus[3, 3]]
+SetAttributes[g, HoldRest]
+g[Plus[1, 1], Sequence[Plus[1, 1], Plus[2, 2]]]
+g[Sequence[], Plus[1, 1], Plus[2, 2]]
+Hold[Sequence[Plus[1, 1], Plus[2, 2]], Plus[3, 3]]

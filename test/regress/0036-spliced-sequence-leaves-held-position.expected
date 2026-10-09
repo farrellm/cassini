@@ -1,0 +1,6 @@
+Out[1]: -
+Out[2]: f[Plus[1, 1], 4, 6]
+Out[3]: -
+Out[4]: g[2, Plus[1, 1], Plus[2, 2]]
+Out[5]: g[2, Plus[2, 2]]
+Out[6]: Hold[Plus[1, 1], Plus[2, 2], Plus[3, 3]]

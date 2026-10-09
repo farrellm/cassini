@@ -32,3 +32,20 @@ wolfram/Divide/PossibleIssues/1 pending §4.15
 wolfram/Indeterminate/BasicExamples/1 pending §4.15
 wolfram/Indeterminate/Scope/3 pending §4.15
 wolfram/DirectedInfinity/PossibleIssues/3 pending §4.15
+
+# Pure functions (§4.13): Function's evaluation and its attributes argument,
+# with the track for control flow, logic and numbers.
+wolfram/Function/GeneralizationsAndExtensions/3 pending §4.13
+wolfram/HoldAll/PropertiesAndRelations/8 pending §4.13
+wolfram/HoldFirst/PropertiesAndRelations/4 pending §4.13
+wolfram/HoldRest/PropertiesAndRelations/2 pending §4.13
+
+# A Flat head's arguments grouped to fit a pattern, with the sequence matcher (§4.5.3, milestone 1b).
+wolfram/Flat/PropertiesAndRelations/2 pending §4.5.3
+
+# Radicals of rationals (§4.15), as above.
+wolfram/Map/PropertiesAndRelations/5 pending §4.15
+
+# Pi and its attributes, with the elementary functions (§4.11).
+wolfram/SymbolName/PropertiesAndRelations/2 pending §4.11
+wolfram/Symbol/PropertiesAndRelations/5 pending §4.11

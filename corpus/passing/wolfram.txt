@@ -19,6 +19,8 @@ wolfram/Apply/Scope/LevelSpecifications/8
 wolfram/Apply/Scope/LevelSpecifications/9
 wolfram/Apply/Scope/TypesOfExpressions/1
 wolfram/Attributes/BasicExamples/1
+wolfram/Attributes/BasicExamples/2
+wolfram/Attributes/Scope/1
 wolfram/BarChart/Options/Chartlayout/5
 wolfram/BoxWhiskerChart/Options/Frame/1
 wolfram/BoxWhiskerChart/Options/Frame/2
@@ -118,10 +120,15 @@ wolfram/HoldComplete/BasicExamples/1
 wolfram/HoldComplete/PropertiesAndRelations/1
 wolfram/HoldComplete/PropertiesAndRelations/2
 wolfram/HoldComplete/PropertiesAndRelations/5
+wolfram/HoldFirst/BasicExamples/1
 wolfram/HoldFirst/PropertiesAndRelations/3
+wolfram/HoldFirst/PropertiesAndRelations/5
 wolfram/HoldForm/BasicExamples/1
 wolfram/HoldForm/BasicExamples/2
 wolfram/HoldPattern/BasicExamples/2
+wolfram/HoldRest/BasicExamples/1
+wolfram/HoldRest/PropertiesAndRelations/1
+wolfram/HoldRest/PropertiesAndRelations/3
 wolfram/Identity/PropertiesAndRelations/3
 wolfram/Indeterminate/Scope/1
 wolfram/Integer/Scope/1
@@ -469,8 +476,10 @@ wolfram/Set/GeneralizationsAndExtensions/1
 wolfram/Set/GeneralizationsAndExtensions/2
 wolfram/Set/Scope/LeftHandSides/5
 wolfram/Set/Scope/LeftHandSides/6
+wolfram/SetAttributes/BasicExamples/1
 wolfram/SetAttributes/BasicExamples/2
 wolfram/SetAttributes/PropertiesAndRelations/3
+wolfram/SetAttributes/PropertiesAndRelations/5
 wolfram/SetAttributes/Scope/1
 wolfram/SetAttributes/Scope/2
 wolfram/SetAttributes/Scope/3
