@@ -33,6 +33,8 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     * `Part` with no index.
   * `cassini-oracle`, differential testing against Mathics3, with its whitelist
     (`oracle/divergences.txt`); D30 registered for the recursion cut.
+  * The four rule tables are a record, not an `EnumMap`, which drops `enummapset` and its
+    `aeson` dependency.
   * Fix: a message from an unevaluated subterm was emitted again each time a sibling changed its
     parent (regression case 0013).
 * Stage 0 (DESIGN.md §3, §10):

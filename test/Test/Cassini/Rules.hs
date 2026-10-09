@@ -29,8 +29,6 @@ tests =
         forAll (genExpr 6) $ \e ->
           let k = if curried e then SubValue else DownValue
            in ladder e === [(UpValue, User), (UpValue, Builtin), (k, User), (k, Builtin)],
-      testCase "the ladder is not the tables' key order" $
-        (([minBound .. maxBound] :: [ValueKind]) == map fst (ladder (fn "f" []))) @?= False,
       testGroup "evaluation walks the rungs in ladder order" rungOrder,
       testCase "a more specific user rule is tried first, whatever the definition order" $
         evalStd

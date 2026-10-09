@@ -20,8 +20,7 @@ import Cassini.Builtins.Define (Definition, args, define, down, message, sFailed
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkString, pattern App, pattern Int_, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sList, sPattern, sPatternTest, symName, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol, modifySymbol)
-import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
-import Data.EnumMap.Strict qualified as EnumMap
+import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), hasRules, insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 
@@ -291,7 +290,7 @@ protection name protect e =
     named t = do
       info <- lookupSymbol (systemSymbol t)
       pure $ if hasDefinitions info then systemSymbol t else globalSymbol t
-    hasDefinitions info = info.siAttributes /= mempty || not (EnumMap.null info.siValues)
+    hasDefinitions info = info.siAttributes /= mempty || hasRules info
 
 symbolList :: Expr -> Maybe [Symbol]
 symbolList = traverse (\case Sym s -> Just s; _ -> Nothing) . listOf

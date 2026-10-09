@@ -977,8 +977,7 @@ data RuleBody
 newtype BuiltinId = BuiltinId Int
   deriving newtype (Eq, Ord)
 
--- | Steps 10-13 (§4.4), in order. 'Ord'/'Enum' on 'ValueKind' is EnumMap key
--- order, *not* this order: never walk 'siValues' in key order.
+-- | Steps 10-13 (§4.4), in order: the only order the tables are visited in.
 ladder :: Expr -> [(ValueKind, Origin)]
 ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
   where
@@ -987,16 +986,19 @@ ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
       _               -> DownValue  -- h[e1, ...]
 
 data ValueKind = OwnValue | DownValue | UpValue | SubValue
-  deriving stock (Eq, Ord, Enum, Bounded)
+  deriving stock (Eq)
 
 data Origin = User | Builtin
   deriving stock (Eq, Ord, Enum, Bounded)
 
 newtype RuleSet = RuleSet (Seq Rule)     -- ^ ordered; first applicable wins
 
+data Values = Values      -- ^ one field per ValueKind
+  { ownValues, downValues, upValues, subValues :: !RuleSet }
+
 data SymbolInfo = SymbolInfo
   { siAttributes :: !AttributeSet
-  , siValues     :: !(EnumMap ValueKind RuleSet)
+  , siValues     :: !Values
   }
 ```
 
@@ -1012,9 +1014,15 @@ dangling id is a construction bug, not a user-reachable failure.
 **The ladder is four rungs, not two axes.** Sorting a table by specificity alone would let a specific
 *user* downvalue beat a general *built-in* upvalue, the inversion steps 11–12 forbid. So
 `applicableRules` takes one `(ValueKind, Origin)` rung and scans only that origin's rules;
-specificity orders rules *within* a rung, never across. Derived `Ord ValueKind` puts `DownValue`
-first, so walking `siValues` in key order *is* the inversion; `ladder` is the only list steps 10–13
+specificity orders rules *within* a rung, never across. `ladder` is the only list steps 10–13
 may iterate (§7.3 checks it).
+
+**The tables are a record, not a map keyed by `ValueKind`.** The first version was an
+`EnumMap ValueKind RuleSet`. A map has a key order, and derived `Ord` put `DownValue` before
+`UpValue`, so walking the map in key order *was* the inversion. That order could be warned
+against, never removed. A record has no order, and `rulesOf`/`modifyRules` select a field by
+`ValueKind`. Four keys never needed a map. The map also cost a dependency: `enummapset` 0.7.3
+depends on `aeson`, which had become the largest dependency of the kernel.
 
 **Which tables a rung reads.** The upvalue rungs consult, in argument order, the `UpValues` of each
 argument's head symbol (or of the argument, if it is a symbol). The lower rungs read `DownValues[h]`
@@ -2732,7 +2740,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Core.Traversal` | `cata embed ≡ id` | a traversal that does not rebuild through the smart constructors |
 | `Structure` | `substitute u t t ≡ u`; `freeOf u t` implies `substitute u t r ≡ u` | subexpression comparison errors |
 | `Attributes` | `AttributeSet` is a commutative idempotent monoid; `holdsArgument` agrees with a naive reference on every (attributes, index, arity) | `HoldFirst`/`HoldRest` off-by-one |
-| `Rules` | `insertRule` keeps the set sorted by specificity with insertion order breaking ties; `applicableRules` visits rungs in `ladder` order | rule shadowing ("my definition is ignored"); the `Ord ValueKind` inversion (§4.2) |
+| `Rules` | `insertRule` keeps the set sorted by specificity with insertion order breaking ties; `applicableRules` visits rungs in `ladder` order | rule shadowing ("my definition is ignored"); a rung visited out of ladder order, the inversion of §4.2 |
 | `Simplify` | `simplifyRNE` agrees with `Rational`, and is `Nothing` exactly on division by zero | normalization and sign errors |
 | `Simplify` | `simplify u` satisfies `isASAE` or is `Left` | the postcondition, directly |
 | `Simplify` | **for an ASAE `u`, `simplify u ≡ u`** | the source's own contract; stronger than idempotence |
@@ -3619,14 +3627,14 @@ document requires it.
 | `relude` | the prelude (§2.3) | all |
 | `effectful-core` | the kernel effect and its interpreters (§4.3). The core package, not `effectful`: everything used (dynamic dispatch, static `Reader`, `State` and `Error`) is in it | L2+ |
 | `text`, `vector`, `containers`, `unordered-containers`, `hashable`, `deepseq` | representation; `NFData` for benchmarks | L0–L2 |
-| `enummapset` | the `EnumMap ValueKind RuleSet` of the rule tables (§4.2). Since 0.7.3 it depends on `aeson`, which became the largest dependency of the kernel; four keys would also fit in a record, if that footprint matters | L3 |
 | `logict` | matcher nondeterminism, confined to one module (§4.5.2) | L2 |
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
 | `megaparsec` | surface syntax (§4.10) | L5 |
 | `poly`, `semirings` | polynomial substrate and coefficient classes (§5.3) | A |
 | `tasty`, `tasty-hunit`, `tasty-quickcheck`, `tasty-golden`, `tasty-bench` | §7, §8 | test |
 
-Deliberately *not* dependencies: `lens` (the structure operators are a dozen functions, not an optics
+Deliberately *not* dependencies: `enummapset`, whose `EnumMap` held the four rule tables until a
+record replaced it (§4.2); `lens` (the structure operators are a dozen functions, not an optics
 library); `uniplate` (§3.6); `sbv` (D10); `symengine` (FFI to a fast external core would settle the
 two-layer question by outsourcing it, and this project is the exercise of not doing that);
 `vector-sized`/`singletons` for type-level arity (D13), which is also why `poly`'s `sparse` flag is
