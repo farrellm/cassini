@@ -49,6 +49,8 @@ data Target = Target !Symbol !ValueKind
 target :: Expr -> Maybe Target
 target lhs = case unholdPattern lhs of
   Sym s -> Just (Target s OwnValue)
+  -- f[x_] /; test := rhs is a rule for f.
+  App (Sym c) as | c == sCondition, [p, _] <- V.toList as -> target p
   App (Sym f) _ -> Just (Target f DownValue)
   App h@(App _ _) _ -> (`Target` SubValue) <$> tagSymbol h
   _ -> Nothing
@@ -215,7 +217,8 @@ tagAssignment name body e = case args e of
   _ -> pure Nothing
 
 -- | @Unset[lhs]@: remove the user rule with this left-hand side. @Null@, or
--- @$Failed@ with @Unset::norep@ when there is none.
+-- @$Failed@ with @Unset::norep@ when there is none, and with @Unset::wrsym@
+-- or @Unset::write@, as 'write' refuses, when the tag is protected.
 unset :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 unset e = case args e of
   [lhs] -> do
@@ -225,9 +228,14 @@ unset e = case args e of
       Just (Target s k) -> do
         info <- lookupSymbol s
         let (removed, rules') = removeRule lhs' (rulesOf k info)
-        if removed
-          then Just sNullE <$ modifySymbol s (modifyRules k (const rules'))
-          else Just sFailedE <$ message "Unset" "norep" [lhs']
+        if isProtected info.siAttributes
+          then do
+            if k == OwnValue then message "Unset" "wrsym" [Sym s] else message "Unset" "write" [Sym s, lhs']
+            pure (Just sFailedE)
+          else
+            if removed
+              then Just sNullE <$ modifySymbol s (modifyRules k (const rules'))
+              else Just sFailedE <$ message "Unset" "norep" [lhs']
   _ -> pure Nothing
 
 -- | @Attributes[s]@: the list of attribute names, in WL's order (by name).
@@ -242,8 +250,8 @@ attributes e = case args e of
 -- attribute or a list. A @Locked@ symbol refuses with @Attributes::locked@.
 changeAttributes :: (Kernel :> es) => Text -> (Attribute -> Attributes.AttributeSet -> Attributes.AttributeSet) -> Expr -> Eff es (Maybe Expr)
 changeAttributes _ f e = case args e of
-  [ss, as0] -> do
-    as <- evaluate as0
+  -- HoldFirst: step 3 has already evaluated the attributes.
+  [ss, as] ->
     case (symbolList ss, traverse attributeOf (listOf as)) of
       (Just syms, Just attrs) -> do
         for_ syms $ \s -> do

@@ -17,7 +17,7 @@ module Cassini.Builtins.Structural (definitions) where
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, message, sFalseE, sTrueE, sub, sym)
 import Cassini.Core.Expr (Expr, apply, exprArgs, exprArity, exprHead, mkApp, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (sList)
+import Cassini.Core.Symbol (sDirectedInfinity, sList)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Pattern (isPatternFree)
 import Cassini.Pattern.Match (matchOne)
@@ -137,7 +137,7 @@ levelSpec spec = case spec of
   where
     bound = \case
       Int_ n -> Just (Level n)
-      App (Sym d) xs | Sym d == sym "DirectedInfinity", [Int_ 1] <- V.toList xs -> Just Infinite
+      App (Sym d) xs | d == sDirectedInfinity, [Int_ 1] <- V.toList xs -> Just Infinite
       _ -> Nothing
 
 -- | Whether a part at level @p@ with depth @d@ is in the specification: a

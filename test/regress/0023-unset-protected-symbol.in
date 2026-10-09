@@ -1,0 +1,7 @@
+(* Unset refuses a protected tag, as Set does, and the value stays. *)
+Set[h, 1]
+SetDelayed[k[1], 2]
+Protect[h, k]
+Unset[h]
+Unset[k[1]]
+List[h, k[1]]

@@ -104,12 +104,13 @@ import Effectful (Eff, IOE, (:>))
 
 -- | An application part-way through the sequence: its evaluated head, its
 -- arguments as the steps leave them, the head's attributes, and the values
--- step 6 stripped of their @Unevaluated@ wrappers.
+-- step 6 stripped of their @Unevaluated@ wrappers, with their 0-based
+-- positions.
 data Node = Node
   { nodeHead :: !Expr,
     nodeArgs :: !(V.Vector Expr),
     nodeAttrs :: !AttributeSet,
-    nodeStripped :: ![Expr]
+    nodeStripped :: ![(Int, Expr)]
   }
 
 -- | The expression the node stands for now.
@@ -285,7 +286,7 @@ evalStep6Uneval n
       App (Sym s) xs | s == sUnevaluated, [x] <- V.toList xs -> Just x
       _ -> Nothing
     strip a = fromMaybe a (unevaluated a)
-    stripped = mapMaybe unevaluated (V.toList n.nodeArgs)
+    stripped = [(i, x) | (i, a) <- zip [0 ..] (V.toList n.nodeArgs), Just x <- [unevaluated a]]
 
 -- | Step 7: if @h@ has @Flat@, flatten nested expressions with head @h@.
 -- Traced whenever the attribute applies, so a trace shows the step order
@@ -421,12 +422,16 @@ runNative bid e =
     Nothing -> pure Nothing
     Just (BuiltinFn f) -> (\r -> r >>= \x -> if x == e then Nothing else Just x) <$> f e
 
--- | No rung fired: put back the @Unevaluated@ wrappers step 6 stripped, by
--- value, since steps 7–9 may have moved the arguments.
+-- | No rung fired: put back the @Unevaluated@ wrappers step 6 stripped. By
+-- position while every stripped value is still where step 6 found it, so
+-- @f[a, Unevaluated[a]]@ keeps its wrapper on the second argument; by value
+-- once steps 7–9 have moved the arguments.
 restoreUneval :: Node -> Expr
 restoreUneval n
   | null n.nodeStripped = nodeExpr n
-  | otherwise = mkApp n.nodeHead (V.fromList (go n.nodeStripped (V.toList n.nodeArgs)))
+  | all (\(i, x) -> n.nodeArgs V.!? i == Just x) n.nodeStripped =
+      mkApp n.nodeHead (n.nodeArgs V.// [(i, apply sUnevaluated [x]) | (i, x) <- n.nodeStripped])
+  | otherwise = mkApp n.nodeHead (V.fromList (go (map snd n.nodeStripped) (V.toList n.nodeArgs)))
   where
     go [] as = as
     go _ [] = []
