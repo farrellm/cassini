@@ -1260,6 +1260,15 @@ language's behaviour. Non-termination is a user error, so it gets a message, not
 round, walking whole subtrees. WL avoids this by marking expressions evaluated against a global
 definitions epoch. Stage 1 ships the literal version; the marker is D14.
 
+**One round is skipped, because it cannot change anything.** A round reports whether its result is
+already a fixed point. It is one in two cases. If no rule fired, steps 2–9 only evaluated the parts
+and rearranged them, and another round would try the same rules on the same expression. If a user
+rule fired, its rung evaluated the right-hand side to a fixed point itself. A built-in's result, an
+own value, a threaded list and `Indeterminate` still go round again. This is not D14's marker. It
+was forced by a visible bug, not by cost. An unevaluated subterm that emits a message, such as
+`Part[{1, 2}, 3]`, emitted it again every time a sibling's evaluation changed the parent. The 1a
+end-to-end workload showed `Part::partw` twice, and regression case 0013 pins it.
+
 ### 4.5 Pattern matching
 
 The hard engineering, and the part with no off-the-shelf Haskell answer.
@@ -3567,7 +3576,7 @@ answer, not a deletion.
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation per match dominating on the sequence-variable grid |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
-| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4) | §8.4's fixed-point benchmark showing re-evaluation dominating |
+| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated. That is §4.4's bug fix for repeated messages, not the marker | §8.4's fixed-point benchmark showing re-evaluation dominating |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
 | D16 | No `Sin[x]/Cos[x] → Tan[x]` in automatic evaluation, unlike WL: it would undo `Trig_substitute` inside `Simplify` (§4.11) | wanting WL's `Tan` spelling in output — answered first by a rewrite in `Cassini.Syntax.Pretty`, not by an evaluation rule |
 | D17 | `Simplify` is Cohen's `Simplify_trig`, one fixed strategy, not WL's search under a complexity measure (§4.12) | a second strategy existing — Gröbner side relations (§6.1), or Cohen's `Simplify_exp` (`cohen2002_*.pdf` §7.2 Exercise 4) — so that choosing between them needs a measure |
