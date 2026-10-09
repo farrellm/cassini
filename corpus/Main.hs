@@ -1,5 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 -- | @cassini-corpus@: other systems' test cases and Wolfram's documentation
 -- examples, under a ratchet (DESIGN.md §7.8).
 --
@@ -21,21 +19,15 @@
 --   diff against the ratchet.
 module Main (main) where
 
-import Cassini.Attributes (isOrderless)
-import Cassini.Builtins (standardState, systemNames)
-import Cassini.Core.Expr (Expr, mkApp, pattern App, pattern Sym)
-import Cassini.Core.Order (compareCanonical)
-import Cassini.Eval.Kernel (KernelState (..))
-import Cassini.REPL (resolveName, runScript)
-import Cassini.Rules (SymbolInfo (..))
-import Cassini.Syntax.FullForm (parseFullForm)
+import Cassini.Builtins (systemNames)
+import Cassini.REPL (runScript)
 import Data.HashSet qualified as HashSet
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
-import Data.Vector qualified as V
 import System.Directory (doesFileExist)
 import System.Timeout (timeout)
 import Test.Corpus.Wolfram (Case (..), casePath, inScope, loadCases)
+import Test.Script (Entries, entries, sameOutput)
 
 data Options = Options
   { pages :: ![Text],
@@ -132,7 +124,7 @@ compareScripts expected actual =
 -- | The expected file numbers its inputs as the documentation page did
 -- (@Out[67]@ for a one-input case), and a script numbers them from 1. Each
 -- input has exactly one @Out@ line, so the @k@th label in order is input @k@.
-renumber :: Map (Int, Text) [Text] -> Map (Int, Text) [Text]
+renumber :: Entries -> Entries
 renumber m = Map.mapKeys (first (\k -> fromMaybe k (Map.lookup k ordinal))) m
   where
     ordinal = Map.fromList (zip (ordNub (map fst (Map.keys m))) [1 ..])
@@ -142,31 +134,3 @@ renumber m = Map.mapKeys (first (\k -> fromMaybe k (Map.lookup k ordinal))) m
 -- (§7.9) the adapter translates.
 translate :: Text -> Text
 translate = T.replace "\\[Infinity]::" "Infinity::"
-
--- | @Label[k]: text@ lines, grouped by input number and label.
-entries :: Text -> Map (Int, Text) [Text]
-entries = Map.fromListWith (flip (<>)) . mapMaybe entry . lines
-  where
-    entry line = do
-      let (label, rest) = T.breakOn "[" line
-      (k, body) <- case T.breakOn "]: " (T.drop 1 rest) of
-        (n, b) | not (T.null b) -> (,T.drop 3 b) <$> readMaybe (toString n)
-        _ -> Nothing
-      pure ((k, label), [body])
-
--- | Equal as printed, or equal once each is read and put in canonical
--- order under Orderless heads, without evaluating either (§7.8).
-sameOutput :: Text -> Text -> Bool
-sameOutput e a = e == a || (canonical <$> parse e) == (canonical <$> parse a)
-  where
-    parse t = rightToMaybe (parseFullForm resolveName t)
-
-canonical :: Expr -> Expr
-canonical = \case
-  App h as ->
-    let as' = V.map canonical as
-        sorted = case h of
-          Sym s | Just si <- Map.lookup s standardState.ksSymbols, isOrderless si.siAttributes -> V.fromList (sortBy compareCanonical (V.toList as'))
-          _ -> as'
-     in mkApp (canonical h) sorted
-  e -> e
