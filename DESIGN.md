@@ -3432,10 +3432,11 @@ settings, step 8's allocation gate included.
 
 Corpus and oracle at completion:
 
-- **Corpus:** 577 of the 111,806 Wolfram documentation cases are in scope. 496 pass and are the
-  ratchet; 16 are in `divergences.txt` (D14, D20, D25, D29, and `pending §4.15`); 65 fail on
-  pages outside this milestone.
-- **Oracle:** 107 of 127 inputs agree with Mathics3 10.0.1. 15 are listed and 5 are inconclusive,
+- **Corpus:** 624 of the 111,806 Wolfram documentation cases are in scope. 526 pass and are the
+  ratchet; 16 are in `divergences.txt` (D14, D20, D25, D29, and `pending §4.15`); 82 fail. Of
+  those, 65 are on pages outside this milestone. The other 17 came into scope when the attribute
+  names became `System`` symbols, after the review that found that, and are not yet triaged.
+- **Oracle:** 160 of 189 inputs agree with Mathics3 10.0.1. 21 are listed and 8 are inconclusive,
   all from Mathics3's own exceptions.
 
 The departures it found are recorded in their sections:
