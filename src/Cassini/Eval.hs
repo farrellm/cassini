@@ -103,14 +103,16 @@ import Data.Vector qualified as V
 import Effectful (Eff, IOE, (:>))
 
 -- | An application part-way through the sequence: its evaluated head, its
--- arguments as the steps leave them, the head's attributes, and the values
--- step 6 stripped of their @Unevaluated@ wrappers, with their 0-based
--- positions, and whether step 5 moved a held argument into an unheld
--- position.
+-- arguments as the steps leave them, the head's attributes, the 0-based
+-- positions of the held arguments step 3 evaluated anyway because they were
+-- wrapped in @Evaluate@ (read by step 5 only), the values step 6 stripped of
+-- their @Unevaluated@ wrappers, with their 0-based positions, and whether
+-- step 5 moved an unevaluated argument into an unheld position.
 data Node = Node
   { nodeHead :: !Expr,
     nodeArgs :: !(V.Vector Expr),
     nodeAttrs :: !AttributeSet,
+    nodeForced :: ![Int],
     nodeStripped :: ![(Int, Expr)],
     nodeUnheld :: !Bool
   }
@@ -215,7 +217,7 @@ evalStep2Head h as = do
   h' <- evaluate h
   when (h' /= h) $ traceStep "2 Head" (mkApp h' as)
   attrs <- headAttributes h'
-  pure Node {nodeHead = h', nodeArgs = as, nodeAttrs = attrs, nodeStripped = [], nodeUnheld = False}
+  pure Node {nodeHead = h', nodeArgs = as, nodeAttrs = attrs, nodeForced = [], nodeStripped = [], nodeUnheld = False}
 
 -- | "The attributes of @h@" for steps 4–9: a symbol's own; for
 -- @Function[_, _, attrs]@, @attrs@, one attribute or a list (§4.13); none
@@ -243,7 +245,7 @@ evalStep4Hold n = V.generate k (\i -> holdsArgument n.nodeAttrs (i + 1) k)
 evalStep3Args :: (Kernel :> es) => V.Vector Bool -> Node -> Eff es Node
 evalStep3Args held n = do
   as' <- V.zipWithM arg held n.nodeArgs
-  let n' = n {nodeArgs = as'}
+  let n' = n {nodeArgs = as', nodeForced = forcedAt}
   when (as' /= n.nodeArgs) $ traceStep "3 Arguments" (nodeExpr n')
   pure n'
   where
@@ -252,12 +254,16 @@ evalStep3Args held n = do
     -- Several arguments become their Sequence, which step 5 splices.
     arg h a
       | not h = evaluate a
-      | not (holdAllComplete n.nodeAttrs),
-        App (Sym s) xs <- a,
-        s == sEvaluate = case V.toList xs of
+      | forced a = case V.toList (exprArgs a) of
           [x] -> evaluate x
           ys -> evaluate (apply sSequence ys)
       | otherwise = pure a
+    forced = \case
+      App (Sym s) _ -> s == sEvaluate && not (holdAllComplete n.nodeAttrs)
+      _ -> False
+    forcedAt
+      | V.or held = [i | (i, True, a) <- zip3 [0 ..] (V.toList held) (V.toList n.nodeArgs), forced a]
+      | otherwise = []
 
 -- | Steps 3 and 4, one pass: step 4 is a gate on step 3, not a stage after
 -- it. Evaluating everything and then deciding what was held would give
@@ -270,18 +276,21 @@ evalStep34ArgsHold n = do
 
 -- | Step 5: unless @SequenceHold@ or @HoldAllComplete@, splice @Sequence@
 -- arguments. Splicing shifts positions, so it records whether an argument
--- step 3 held now sits where step 4 would not hold it ('Round').
+-- step 3 left unevaluated now sits where step 4 would not hold it ('Round').
+-- One that @Evaluate@ forced was evaluated, and does not count.
 evalStep5Seq :: (Kernel :> es) => Node -> Eff es Node
 evalStep5Seq n
   | sequenceHold n.nodeAttrs || not (V.any isSequence n.nodeArgs) = pure n
-  | otherwise = changed "5 Sequence" n {nodeArgs = V.map fst spliced, nodeUnheld = unheld}
+  | otherwise = changed "5 Sequence" n {nodeArgs = V.map fst spliced, nodeForced = [], nodeUnheld = unheld}
   where
     isSequence = \case
       App (Sym s) _ -> s == sSequence
       _ -> False
     k = V.length n.nodeArgs
-    -- Each spliced argument, with whether its position before splicing held it.
-    spliced = V.concat [V.map (,holdsArgument n.nodeAttrs (i + 1) k) (splice a) | (i, a) <- zip [0 ..] (V.toList n.nodeArgs)]
+    -- Each spliced argument, with whether step 3 left it unevaluated: its
+    -- position held it, and no Evaluate forced it.
+    spliced = V.concat [V.map (,unevaluated i) (splice a) | (i, a) <- zip [0 ..] (V.toList n.nodeArgs)]
+    unevaluated i = holdsArgument n.nodeAttrs (i + 1) k && i `notElem` n.nodeForced
     splice a = if isSequence a then exprArgs a else V.singleton a
     k' = V.length spliced
     unheld = V.or (V.imap (\j (_, wasHeld) -> wasHeld && not (holdsArgument n.nodeAttrs (j + 1) k')) spliced)

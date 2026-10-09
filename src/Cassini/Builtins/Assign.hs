@@ -112,6 +112,15 @@ write name lhs body = case target lhs of
         pure False
       else True <$ modifySymbol s (modifyRules k (insertRule (mkRule User lhs body)))
 
+-- | Write one user upvalue on a tag, unless the tag is protected. 'True'
+-- when it was written.
+writeUp :: (Kernel :> es) => Text -> Symbol -> Expr -> RuleBody -> Eff es Bool
+writeUp name s lhs body = do
+  info <- lookupSymbol s
+  if isProtected info.siAttributes
+    then False <$ message name "write" [Sym s, lhs]
+    else True <$ modifySymbol s (modifyRules UpValue (insertRule (mkRule User lhs body)))
+
 -- | @Set@ and @SetDelayed@. @Set@ returns its (evaluated) right-hand side,
 -- and @SetDelayed@ returns @Null@, or @$Failed@ when the write is refused.
 -- @{x, {y, z}} = {1, {2, 3}}@ assigns elementwise, at every depth.
@@ -206,11 +215,7 @@ upAssignment name body e = case args e of
     case ordNub (argumentTags lhs') of
       [] -> Just sFailedE <$ message name "nosym" [lhs']
       tags -> do
-        for_ tags $ \s -> do
-          info <- lookupSymbol s
-          if isProtected info.siAttributes
-            then message name "write" [Sym s, lhs']
-            else modifySymbol s (modifyRules UpValue (insertRule (mkRule User lhs' (body rhs))))
+        for_ tags $ \s -> writeUp name s lhs' (body rhs)
         pure (Just (if name == "UpSet" then rhs else sNullE))
   _ -> pure Nothing
 
@@ -231,10 +236,8 @@ tagAssignment name body e = case args e of
         pure (Just (if ok then result else sFailedE))
       _
         | s `elem` argTags -> do
-            info <- lookupSymbol s
-            if isProtected info.siAttributes
-              then Just sFailedE <$ message name "write" [Sym s, lhs']
-              else Just result <$ modifySymbol s (modifyRules UpValue (insertRule (mkRule User lhs' (body rhs))))
+            ok <- writeUp name s lhs' (body rhs)
+            pure (Just (if ok then result else sFailedE))
         | otherwise -> Just sFailedE <$ message name "tagnf" [Sym s, lhs']
   _ -> pure Nothing
 

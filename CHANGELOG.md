@@ -64,6 +64,13 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     * `Unprotect` on a `Locked` symbol is `Protect::locked`;
     * a `Sequence` spliced under `HoldFirst` or `HoldRest` goes round again, so an argument it
       moves out of the held position is evaluated.
+  * Fixes from the fourth review of the milestone 1a PR, each with a regression case (0037–0038):
+    * `Part` with `All` or a list of indices on an atom is `Part::partd`, not the atom's head
+      applied to nothing;
+    * an argument `Evaluate` forced in a held position is not evaluated again when a `Sequence`
+      splices it out of that position, so its messages are emitted once.
+  * `cassini-corpus` and `cassini-oracle` no longer count two different outputs as equal because
+    neither reads as FullForm.
   * The Wolfram documentation extractor holds the arguments of a symbol the example gave a hold
     attribute, rather than evaluating them while normalizing (D27).
 * Stage 0 (DESIGN.md §3, §10):

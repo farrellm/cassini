@@ -19,8 +19,8 @@ import Cassini.Builtins.Define (Definition, args, define, down, message, sFalseE
 import Cassini.Core.Expr (Expr, apply, exprArgs, exprArity, exprHead, mkApp, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sList, systemSymbol)
 import Cassini.Eval.Kernel (Kernel)
-import Cassini.Pattern (isPatternFree)
-import Cassini.Pattern.Match (matchOne)
+import Cassini.Pattern (isPatternFree, viewPattern)
+import Cassini.Pattern.Match (match, observeFirst)
 import Cassini.Structure (freeOf, part)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -75,12 +75,17 @@ partRule e = case args e of
     go x = \case
       [] -> Right x
       Int_ i : rest -> at x i >>= (`go` rest)
-      Sym a : rest | a == sAll -> mkApp (exprHead x) <$> traverse (`go` rest) (exprArgs x)
+      Sym a : rest | a == sAll -> parts x (V.toList (exprArgs x)) (`go` rest)
       App (Sym l) js : rest
         | l == sList,
           Just ks <- traverse intIndex (V.toList js) ->
-            mkApp (exprHead x) . V.fromList <$> traverse (at x >=> (`go` rest)) ks
+            parts x ks (at x >=> (`go` rest))
       _ -> Left Nothing
+    -- Several parts of x, under its head. An atom has none, even for All or
+    -- {}: Part::partd, as for an integer index (the index is not reported).
+    parts x is f = case x of
+      App h _ -> mkApp h . V.fromList <$> traverse f is
+      _ -> Left (Just (x, 0))
     -- An index beyond a machine integer is out of range, not wrapped.
     at x i = maybe (Left (Just (x, i))) (first (const (Just (x, i))) . part x) (toIntegralSized i)
     intIndex = \case
@@ -181,10 +186,14 @@ freeQRule e = case args e of
     | otherwise -> Just . bool sFalseE sTrueE <$> noneMatch form x
   _ -> pure Nothing
   where
-    noneMatch form x = do
-      here <- isJust <$> matchOne form x
-      if here
-        then pure False
-        else case x of
-          App h as -> allM (noneMatch form) (h : V.toList as)
-          _ -> pure True
+    -- The form is read once, not once per subexpression.
+    noneMatch form = go
+      where
+        p = viewPattern form
+        go x = do
+          here <- isJust <$> observeFirst (match p x mempty)
+          if here
+            then pure False
+            else case x of
+              App h as -> allM go (h : V.toList as)
+              _ -> pure True

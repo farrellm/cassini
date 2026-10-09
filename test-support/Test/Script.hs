@@ -41,8 +41,13 @@ entries = Map.fromListWith (flip (<>)) . mapMaybe entry . lines
 -- | Equal as printed, or equal once each is read and put in canonical order
 -- under @Orderless@ heads, without evaluating either: the order of
 -- arguments is D8's known divergence, not worth an entry per case (§7.8).
+-- Two different texts that do not both read are different: an unreadable
+-- output (a real, Null's @-@) is equal only to itself.
 sameOutput :: Text -> Text -> Bool
-sameOutput e a = e == a || (canonical <$> parse e) == (canonical <$> parse a)
+sameOutput e a =
+  e == a || case (parse e, parse a) of
+    (Just x, Just y) -> canonical x == canonical y
+    _ -> False
   where
     parse t = rightToMaybe (parseFullForm resolveName t)
 
