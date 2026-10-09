@@ -36,7 +36,10 @@
 0023-unset-protected-symbol 3 Mathics3
 0035-attributes-by-name-assignment-and-lock-message 8 Mathics3
 0035-attributes-by-name-assignment-and-lock-message 9 Mathics3
-# Mathics3: Unset ignores Protected; WL answers Unset::wrsym (from memory).
+# Mathics3: Unset ignores Protected. WL answers Unset::write and $Failed for a
+# protected tag (mathematica.stackexchange.com/q/89944); Unset::wrsym for a
+# protected symbol is from memory, by analogy with Clear::wrsym
+# (wolfram/Clear/PossibleIssues/1).
 0023-unset-protected-symbol 4 Mathics3
 0023-unset-protected-symbol 5 Mathics3
 0023-unset-protected-symbol 6 Mathics3
@@ -46,7 +49,8 @@
 # Mathics3: SetAttributes on a Locked symbol answers SetAttributes::locked;
 # WL answers Attributes::locked (wolfram/Locked/PropertiesAndRelations/2).
 0030-protected-guards-values-not-attributes 9 Mathics3
-# Mathics3: Condition is HoldRest there; WL's is HoldAll (from memory).
+# Mathics3: Condition is HoldRest there; WL's is {HoldAll, Protected}
+# (mathematica.stackexchange.com/a/314496).
 attributes 13 Mathics3
 # Mathics3: an index that is not a part specification is Part::pspec there;
 # WL's is Part::pkspec1 (wolfram/Part/PropertiesAndRelations/4).
