@@ -24,7 +24,9 @@ module Cassini.Rules
     insertRule,
     removeRule,
     SymbolInfo (..),
+    Values,
     emptyInfo,
+    hasRules,
     rulesOf,
     modifyRules,
 
@@ -39,8 +41,6 @@ import Cassini.Core.Expr (Expr, pattern App, pattern Sym)
 import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sPattern)
 import Cassini.Pattern (isPatternFree)
 import Cassini.Pattern.Net qualified as Net
-import Data.EnumMap.Strict (EnumMap)
-import Data.EnumMap.Strict qualified as EnumMap
 import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
 
@@ -105,10 +105,10 @@ specificity e = let (b, l) = go e in Specificity (b, negate l)
 mkRule :: Origin -> Expr -> RuleBody -> Rule
 mkRule o lhs body = Rule {ruleLhs = lhs, ruleBody = body, ruleSpecificity = specificity lhs, ruleOrigin = o}
 
--- | The four tables. Derived 'Ord'/'Enum' is 'EnumMap' key order, /not/ the
--- ladder's: never walk 'siValues' in key order.
+-- | The four tables. They have no order of their own: 'ladder' is the only
+-- order in which steps 10–13 visit them.
 data ValueKind = OwnValue | DownValue | UpValue | SubValue
-  deriving stock (Eq, Ord, Show, Enum, Bounded)
+  deriving stock (Eq, Show)
 
 -- | Whose rule it is.
 data Origin = User | Builtin
@@ -141,24 +141,51 @@ removeRule lhs (RuleSet rs) =
   let rs' = Seq.filter (\x -> not (x.ruleOrigin == User && x.ruleLhs == lhs)) rs
    in (Seq.length rs' /= Seq.length rs, RuleSet rs')
 
+-- | A symbol's four tables. A record, not a map keyed by 'ValueKind', so
+-- that there is no key order to walk by mistake: a map's order would put
+-- downvalues before upvalues, the inversion steps 11–12 forbid (§4.2).
+data Values = Values
+  { ownValues :: !RuleSet,
+    downValues :: !RuleSet,
+    upValues :: !RuleSet,
+    subValues :: !RuleSet
+  }
+  deriving stock (Show)
+
 -- | What the kernel knows about one symbol.
 data SymbolInfo = SymbolInfo
   { siAttributes :: !AttributeSet,
-    siValues :: !(EnumMap ValueKind RuleSet)
+    siValues :: !Values
   }
   deriving stock (Show)
 
 -- | A symbol with no attributes and no rules.
 emptyInfo :: SymbolInfo
-emptyInfo = SymbolInfo mempty EnumMap.empty
+emptyInfo = SymbolInfo mempty (Values none none none none)
+  where
+    none = RuleSet Seq.empty
 
 -- | One table.
 rulesOf :: ValueKind -> SymbolInfo -> RuleSet
-rulesOf k si = fromMaybe (RuleSet Seq.empty) (EnumMap.lookup k si.siValues)
+rulesOf k si = case k of
+  OwnValue -> si.siValues.ownValues
+  DownValue -> si.siValues.downValues
+  UpValue -> si.siValues.upValues
+  SubValue -> si.siValues.subValues
 
 -- | Change one table.
 modifyRules :: ValueKind -> (RuleSet -> RuleSet) -> SymbolInfo -> SymbolInfo
-modifyRules k f si = si {siValues = EnumMap.insert k (f (rulesOf k si)) si.siValues}
+modifyRules k f si = si {siValues = set si.siValues}
+  where
+    set vs = case k of
+      OwnValue -> vs {ownValues = f vs.ownValues}
+      DownValue -> vs {downValues = f vs.downValues}
+      UpValue -> vs {upValues = f vs.upValues}
+      SubValue -> vs {subValues = f vs.subValues}
+
+-- | Whether the symbol has any rule, in any table.
+hasRules :: SymbolInfo -> Bool
+hasRules si = any (\k -> not (null (ruleSetToList (rulesOf k si)))) [OwnValue, DownValue, UpValue, SubValue]
 
 -- | Steps 10–13 (§4.4), in order. The lower rungs read @SubValues@ for
 -- @h[…][…]@ and @DownValues@ otherwise, never both, which is why the ladder
