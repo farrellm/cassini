@@ -1,0 +1,4 @@
+(* {p, {q, r}} = {1, {2, 3}} assigns at every depth; a shape mismatch inside is Set::shape. *)
+Set[List[p, List[q, r]], List[1, List[2, 3]]]
+List[p, q, r]
+Set[List[u, List[v, w]], List[1, 2]]

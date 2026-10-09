@@ -122,7 +122,11 @@ simplificationExamples =
       testCase "0^0 is undefined" $ simplify (power (int 0) (int 0)) @?= Left ZeroToZero,
       testCase "0^x stays, as in WL (a departure from SPOW-2)" $ simplify (power (int 0) x) @?= Right (power (int 0) x),
       testCase "a merged radical joins the coefficient: 3·2^(1/2)·2^(1/2) → 6" $
-        simplify (times [int 3, power (int 2) half, power (int 2) half]) @?= Right (int 6)
+        simplify (times [int 3, power (int 2) half, power (int 2) half]) @?= Right (int 6),
+      testCase "powers of a product collect into its factors: c·(a·b)^(1/2)·(a·b)^(1/2) → a·b·c" $
+        simplify (times [c, power (times [a, b]) half, power (times [a, b]) half]) @?= Right (times [a, b, c]),
+      testCase "multiples of a sum collect into its terms: d + 2(a+b) - (a+b) → a + b + d" $
+        simplify (plus [d, times [int 2, plus [a, b]], times [int (-1), plus [a, b]]]) @?= Right (plus [a, b, d])
     ]
 
 half :: Expr

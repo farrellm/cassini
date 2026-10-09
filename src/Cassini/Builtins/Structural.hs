@@ -15,13 +15,13 @@
 module Cassini.Builtins.Structural (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Definition, args, define, down, message, sFalseE, sTrueE, sub, sym)
+import Cassini.Builtins.Define (Definition, args, define, down, message, sFalseE, sTrueE, sub)
 import Cassini.Core.Expr (Expr, apply, exprArgs, exprArity, exprHead, mkApp, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (sDirectedInfinity, sList)
+import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sList, systemSymbol)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Pattern (isPatternFree)
 import Cassini.Pattern.Match (matchOne)
-import Cassini.Structure (PartError (..), freeOf, part)
+import Cassini.Structure (freeOf, part)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 
@@ -65,25 +65,26 @@ partRule e = case args e of
   [x] -> pure (Just x)
   x : is@(_ : _) -> case go x is of
     Right r -> pure (Just r)
-    Left (Just (PartError target i))
+    Left (Just (target, i))
       | exprArity target == 0 -> Nothing <$ message "Part" "partd" [e]
-      | otherwise -> Nothing <$ message "Part" "partw" [Int_ (toInteger i), target]
+      | otherwise -> Nothing <$ message "Part" "partw" [Int_ i, target]
     Left Nothing -> Nothing <$ message "Part" "pkspec" [e]
   _ -> pure Nothing
   where
     -- 'Left Nothing' is an index that is not a part specification.
     go x = \case
       [] -> Right x
-      Int_ i : rest -> at x (fromInteger i) >>= (`go` rest)
-      Sym a : rest | Sym a == sym "All" -> mkApp (exprHead x) <$> traverse (`go` rest) (exprArgs x)
+      Int_ i : rest -> at x i >>= (`go` rest)
+      Sym a : rest | a == sAll -> mkApp (exprHead x) <$> traverse (`go` rest) (exprArgs x)
       App (Sym l) js : rest
         | l == sList,
           Just ks <- traverse intIndex (V.toList js) ->
             mkApp (exprHead x) . V.fromList <$> traverse (at x >=> (`go` rest)) ks
       _ -> Left Nothing
-    at x i = first Just (part x i)
+    -- An index beyond a machine integer is out of range, not wrapped.
+    at x i = maybe (Left (Just (x, i))) (first (const (Just (x, i))) . part x) (toIntegralSized i)
     intIndex = \case
-      Int_ i -> Just (fromInteger i)
+      Int_ i -> Just i
       _ -> Nothing
 
 -- | @Apply[f, expr, spec]@: replace the head of every part at the levels
@@ -121,6 +122,9 @@ levelRule e = case args e of
           d = 1 + foldl' (\acc (_, k) -> max acc k) 0 below
        in (concatMap fst below ++ [x | keep p d], d)
 
+sAll :: Symbol
+sAll = systemSymbol "All"
+
 -- | One bound of a level specification.
 data Bound = Level !Integer | Infinite
 
@@ -132,7 +136,7 @@ levelSpec spec = case spec of
     [n] -> (\b -> (b, b)) <$> bound n
     [m, n] -> (,) <$> bound m <*> bound n
     _ -> Nothing
-  Sym a | Sym a == sym "All" -> Just (Level 0, Infinite)
+  Sym a | a == sAll -> Just (Level 0, Infinite)
   _ -> (Level 1,) <$> bound spec
   where
     bound = \case

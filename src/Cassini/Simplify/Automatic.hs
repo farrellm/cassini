@@ -20,6 +20,12 @@
 --   radicals of one base can merge to a constant behind an existing
 --   coefficient (@3·2^(1/2)·2^(1/2)@ gives @[3, 2]@). 'simplifyProduct'
 --   multiplies such constants together, which ASAE-4-2 requires.
+--
+-- And one repair, because ASAE-4-3 and ASAE-5-3 require it: SPRDREC-1-3
+-- can collect two powers of a product into the product itself, and the
+-- sum counterpart two multiples of a sum into the sum. Each pair rule
+-- returns the operands of such a result, and the merges merge them into
+-- the rest, rather than nest a product in a product or a sum in a sum.
 module Cassini.Simplify.Automatic
   ( -- * The procedure
     simplify,
@@ -222,13 +228,16 @@ productPair u1 u2
     b1 == b2 = do
       s <- simplifySum (V.fromList (catMaybes [powerExponent u1, powerExponent u2]))
       p <- simplifyPower b1 s
-      Right [p | not (isOne p)]
+      -- (a·b)^(1/2)·(a·b)^(1/2) is a·b: its factors, not a nested product.
+      Right (if isOne p then [] else factors p)
   -- 4
   | compareCanonical u2 u1 == LT = Right [u2, u1]
   -- 5
   | otherwise = Right [u1, u2]
 
 -- | Cohen's @Merge_products@ (MPRD): two ordered operand lists into one.
+-- A pair that merges into several factors (see 'productPair') is merged
+-- into the rest, which MPRD-3, expecting at most one, does not provide.
 mergeProducts :: [Expr] -> [Expr] -> Either Undefined [Expr]
 mergeProducts p q = case (p, q) of
   -- MPRD-1, 2
@@ -239,8 +248,10 @@ mergeProducts p q = case (p, q) of
     simplifyProductRec [p1, q1] >>= \case
       [] -> mergeProducts ps qs
       [h1] -> (h1 :) <$> mergeProducts ps qs
-      [h1, _] | h1 == p1 -> (p1 :) <$> mergeProducts ps q
-      _ -> (q1 :) <$> mergeProducts p qs
+      [h1, h2]
+        | h1 == p1 && h2 == q1 -> (p1 :) <$> mergeProducts ps q
+        | h1 == q1 && h2 == p1 -> (q1 :) <$> mergeProducts p qs
+      hs -> mergeProducts ps qs >>= mergeProducts hs
 
 -- | Cohen's @Simplify_sum@, the counterpart of SPRD (Exercise 7).
 simplifySum :: V.Vector Expr -> Either Undefined Expr
@@ -275,11 +286,13 @@ sumPair u1 u2
     t1 == t2 = do
       s <- simplifySum (V.fromList (catMaybes [constPart u1, constPart u2]))
       p <- simplifyProduct (V.fromList (s : t1))
-      Right [p | not (isZero p)]
+      -- 2·(a+b) + (-1)·(a+b) is a+b: its terms, not a nested sum.
+      Right (if isZero p then [] else summands p)
   | compareCanonical u2 u1 == LT = Right [u2, u1]
   | otherwise = Right [u1, u2]
 
--- | The counterpart of MPRD for sums.
+-- | The counterpart of MPRD for sums, merging a pair that collects into
+-- several terms into the rest, as 'mergeProducts' does.
 mergeSums :: [Expr] -> [Expr] -> Either Undefined [Expr]
 mergeSums p q = case (p, q) of
   (_, []) -> Right p
@@ -288,8 +301,10 @@ mergeSums p q = case (p, q) of
     simplifySumRec [p1, q1] >>= \case
       [] -> mergeSums ps qs
       [h1] -> (h1 :) <$> mergeSums ps qs
-      [h1, _] | h1 == p1 -> (p1 :) <$> mergeSums ps q
-      _ -> (q1 :) <$> mergeSums p qs
+      [h1, h2]
+        | h1 == p1 && h2 == q1 -> (p1 :) <$> mergeSums ps q
+        | h1 == q1 && h2 == p1 -> (q1 :) <$> mergeSums p qs
+      hs -> mergeSums ps qs >>= mergeSums hs
 
 -- | Cohen's @Simplify_quotient@: @u · v^(-1)@.
 simplifyQuotient :: Expr -> Expr -> Either Undefined Expr

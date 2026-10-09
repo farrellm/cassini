@@ -1,0 +1,8 @@
+Out[1]: Part[List[a, b], 18446744073709551617]
+Message[1]: Part::partw
+Out[2]: Part[List[a, b], -18446744073709551617]
+Message[2]: Part::partw
+Out[3]: List[1, 2, 3]
+Out[4]: 9
+Message[4]: Set::partw
+Out[5]: List[1, 2, 3]

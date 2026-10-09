@@ -43,6 +43,13 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
       removes them all;
     * `Unset` refuses a protected symbol;
     * `Unevaluated` is restored on the argument it came from.
+  * Fixes from the second review of the milestone 1a PR, each with a regression case (0026–0029):
+    * a right-hand-side condition that fails tries the next match, and own values honour one;
+    * a `Part` index beyond a machine integer is out of range, not wrapped;
+    * a blank's head constraint makes a rule more specific, so `f[x_Integer]` precedes `f[x_]`;
+    * list assignment recurses into nested lists.
+  * Fix: automatic simplification nested a product in a product, or a sum in a sum, when like
+    factors or terms collected into one (unit tests in `Test.Cassini.Simplify.Automatic`).
   * `SetAttributes` and `ClearAttributes` no longer evaluate their attributes twice.
 * Stage 0 (DESIGN.md §3, §10):
   * Exact numbers (`Cassini.Number`).
