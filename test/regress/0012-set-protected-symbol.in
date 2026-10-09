@@ -1,0 +1,8 @@
+Set[Plus, 1]
+Set[Plus[a, b], 1]
+SetDelayed[Times[Pattern[x, Blank[]]], x]
+Unprotect[Plus]
+Set[Plus[a, b], 1]
+Plus[a, b]
+Protect[Plus]
+Attributes[Plus]

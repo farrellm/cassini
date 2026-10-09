@@ -1,0 +1,6 @@
+(* Source: references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html, "Tracing Evaluation" and "The Evaluation Stack"; the page shows inputs only, its outputs being images. *)
+(* a[1] = a[2]; a[2] = a[3]; a[3] = a[4]; Trace[a[1]] *)
+Set[a[1], a[2]]
+Set[a[2], a[3]]
+Set[a[3], a[4]]
+a[1]

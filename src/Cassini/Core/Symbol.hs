@@ -29,6 +29,34 @@ module Cassini.Core.Symbol
     sRational,
     sString,
     sSymbol,
+
+    -- * Kernel symbols
+    sHold,
+    sSequence,
+    sUnevaluated,
+    sEvaluate,
+    sIndeterminate,
+    sComplexInfinity,
+    sDirectedInfinity,
+    sTrue,
+    sFalse,
+    sNull,
+    sFunction,
+    sRule,
+    sRuleDelayed,
+    sHoldPattern,
+    sBlank,
+    sBlankSequence,
+    sBlankNullSequence,
+    sPattern,
+    sCondition,
+    sPatternTest,
+    sAlternatives,
+    sRepeated,
+    sRepeatedNull,
+    sOptional,
+    sExcept,
+    sVerbatim,
   )
 where
 
@@ -140,3 +168,107 @@ sString = systemSymbol "String"
 -- | @System`Symbol@, the head of a symbol.
 sSymbol :: Symbol
 sSymbol = systemSymbol "Symbol"
+
+-- | @System`Hold@, the evaluator wraps a cut-off result in it (§4.3).
+sHold :: Symbol
+sHold = systemSymbol "Hold"
+
+-- | @System`Sequence@, spliced into argument lists (step 5).
+sSequence :: Symbol
+sSequence = systemSymbol "Sequence"
+
+-- | @System`Unevaluated@, stripped by step 6.
+sUnevaluated :: Symbol
+sUnevaluated = systemSymbol "Unevaluated"
+
+-- | @System`Evaluate@, forces a held argument (step 4).
+sEvaluate :: Symbol
+sEvaluate = systemSymbol "Evaluate"
+
+-- | @System`Indeterminate@, absorbs numeric functions (§4.15).
+sIndeterminate :: Symbol
+sIndeterminate = systemSymbol "Indeterminate"
+
+-- | @System`ComplexInfinity@, the result of @1/0@ (§4.7).
+sComplexInfinity :: Symbol
+sComplexInfinity = systemSymbol "ComplexInfinity"
+
+-- | @System`DirectedInfinity@, an infinity with a direction (§4.15).
+sDirectedInfinity :: Symbol
+sDirectedInfinity = systemSymbol "DirectedInfinity"
+
+-- | @System`True@.
+sTrue :: Symbol
+sTrue = systemSymbol "True"
+
+-- | @System`False@.
+sFalse :: Symbol
+sFalse = systemSymbol "False"
+
+-- | @System`Null@.
+sNull :: Symbol
+sNull = systemSymbol "Null"
+
+-- | @System`Function@, a pure function, whose third argument gives attributes (§4.13).
+sFunction :: Symbol
+sFunction = systemSymbol "Function"
+
+-- | @System`Rule@.
+sRule :: Symbol
+sRule = systemSymbol "Rule"
+
+-- | @System`RuleDelayed@.
+sRuleDelayed :: Symbol
+sRuleDelayed = systemSymbol "RuleDelayed"
+
+-- | @System`HoldPattern@, a pattern held unevaluated (§4.5.1).
+sHoldPattern :: Symbol
+sHoldPattern = systemSymbol "HoldPattern"
+
+-- | @System`Blank@.
+sBlank :: Symbol
+sBlank = systemSymbol "Blank"
+
+-- | @System`BlankSequence@.
+sBlankSequence :: Symbol
+sBlankSequence = systemSymbol "BlankSequence"
+
+-- | @System`BlankNullSequence@.
+sBlankNullSequence :: Symbol
+sBlankNullSequence = systemSymbol "BlankNullSequence"
+
+-- | @System`Pattern@.
+sPattern :: Symbol
+sPattern = systemSymbol "Pattern"
+
+-- | @System`Condition@.
+sCondition :: Symbol
+sCondition = systemSymbol "Condition"
+
+-- | @System`PatternTest@.
+sPatternTest :: Symbol
+sPatternTest = systemSymbol "PatternTest"
+
+-- | @System`Alternatives@.
+sAlternatives :: Symbol
+sAlternatives = systemSymbol "Alternatives"
+
+-- | @System`Repeated@.
+sRepeated :: Symbol
+sRepeated = systemSymbol "Repeated"
+
+-- | @System`RepeatedNull@.
+sRepeatedNull :: Symbol
+sRepeatedNull = systemSymbol "RepeatedNull"
+
+-- | @System`Optional@.
+sOptional :: Symbol
+sOptional = systemSymbol "Optional"
+
+-- | @System`Except@.
+sExcept :: Symbol
+sExcept = systemSymbol "Except"
+
+-- | @System`Verbatim@.
+sVerbatim :: Symbol
+sVerbatim = systemSymbol "Verbatim"

@@ -1,0 +1,3 @@
+(* Source: references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html, "Tracing Evaluation" and "The Evaluation Stack"; the page shows inputs only, its outputs being images. *)
+(* Trace[y + x + y] *)
+Plus[y, x, y]

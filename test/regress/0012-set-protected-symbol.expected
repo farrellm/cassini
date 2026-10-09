@@ -1,0 +1,11 @@
+Out[1]: 1
+Message[1]: Set::wrsym
+Out[2]: 1
+Message[2]: Set::write
+Out[3]: $Failed
+Message[3]: SetDelayed::write
+Out[4]: List["Plus"]
+Out[5]: 1
+Out[6]: 1
+Out[7]: List["Plus"]
+Out[8]: List[Flat, Listable, NumericFunction, OneIdentity, Orderless, Protected]

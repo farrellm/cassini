@@ -1,0 +1,22 @@
+Trace[1]: 4 Hold: Set[a, 7]
+Trace[1]: 13 BuiltinDownValue: 7
+Out[1]: 7
+Trace[2]:     0 OwnValue: 7
+Trace[2]:   3 Arguments: Times[2, 7, x]
+Trace[2]:   7 Flat: Times[2, 7, x]
+Trace[2]:   9 Orderless: Times[2, 7, x]
+Trace[2]:   13 BuiltinDownValue: Times[14, x]
+Trace[2]:   7 Flat: Times[14, x]
+Trace[2]:   9 Orderless: Times[14, x]
+Trace[2]:     0 OwnValue: 7
+Trace[2]:   3 Arguments: Power[7, 2]
+Trace[2]:   13 BuiltinDownValue: 49
+Trace[2]: 3 Arguments: Plus[Times[14, x], 49, 1]
+Trace[2]: 7 Flat: Plus[Times[14, x], 49, 1]
+Trace[2]: 9 Orderless: Plus[1, 49, Times[14, x]]
+Trace[2]: 13 BuiltinDownValue: Plus[50, Times[14, x]]
+Trace[2]:   7 Flat: Times[14, x]
+Trace[2]:   9 Orderless: Times[14, x]
+Trace[2]: 7 Flat: Plus[50, Times[14, x]]
+Trace[2]: 9 Orderless: Plus[50, Times[14, x]]
+Out[2]: Plus[50, Times[14, x]]

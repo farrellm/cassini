@@ -1,0 +1,4 @@
+Power[0, -1]
+Times[1, Power[0, -1]]
+Power[0, 0]
+Divide[a, 0]

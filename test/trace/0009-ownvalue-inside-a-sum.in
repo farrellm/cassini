@@ -1,0 +1,4 @@
+(* Source: references/papers/wolfram-language/wolfram_ref_evaluation_of_expressions.html, "Tracing Evaluation" and "The Evaluation Stack"; the page shows inputs only, its outputs being images. *)
+(* a = 7; Trace[2 a x + a^2 + 1] *)
+Set[a, 7]
+Plus[Times[2, a, x], Power[a, 2], 1]
