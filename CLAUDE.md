@@ -123,6 +123,10 @@ Where the two disagree, the design is the intent and the code is behind.
      `0002-builtin-upvalue-beats-user-downvalue`, not `0002-issue-17`.
    - A unit test lifted from a source cites where it came from (§7.2). Edge-case and bug tests
      are welcome too, with no citation; their name says what contract they check.
+   - A new regression case is also an oracle case: run `cassini-oracle` before committing it.
+   - When the oracle disagrees, `corpus/wolfram-docs/` often documents WL's answer; cite that case
+     ID in `oracle/divergences.txt`. If no example documents it, drop the input; don't pin a guess.
+   - A fix commit adds its `CHANGELOG.md` line in the same commit.
    - Benchmark baselines are committed per GHC version and `intern` setting, and regenerated
      deliberately, with the commit message saying why. From milestone 1a, an allocation regression
      fails CI (`bench/check-allocation.py`). Time is gated only against a baseline from the same CI
@@ -175,6 +179,13 @@ CI (`.github/workflows/ci.yml`) runs `DESIGN.md` §2.8 steps 1–7 on every push
 - The Wolfram documentation corpus (milestone W, `DESIGN.md` §7.9):
   `python corpus/tools/extract_wolfram_docs.py <notebook-dir> corpus/wolfram-docs`, in a Python
   environment with `Mathics3` installed. It takes about ten minutes on eight cores.
+- Re-extracting needs the notebooks unpacked from the offline installer's `.cab` files with
+  `7z x`, about 9.4 GB; `run.txt`'s `source:` line says where. For a trial run, use
+  `--only Sym1,Sym2` into the scratchpad, then `diff -r`.
+- A corpus `.expected` output has been normalised by Mathics3, so it isn't raw WL. When one looks
+  wrong, read the notebook cell before blaming the evaluator or the extractor.
+- To compare corpus failures across commits, `git worktree add` the old commit, symlink
+  `corpus/wolfram-docs` into it, and diff the `FAIL` lines of each binary's `--verbose` output.
 
 Two cabal behaviours to know. cabal accepts an undeclared `-f` flag silently, so a misspelt
 `-f intren` tests nothing. And `-Wunused-packages` is deliberately absent from the warning set:
