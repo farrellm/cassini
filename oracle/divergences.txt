@@ -41,5 +41,8 @@
 # Mathics3: restores Unevaluated on every equal argument; WL puts each
 # wrapper back where it was (from memory).
 0024-unevaluated-restored-in-place 1 Mathics3
+# Mathics3: SetAttributes on a Locked symbol answers SetAttributes::locked;
+# WL answers Attributes::locked (wolfram/Locked/PropertiesAndRelations/2).
+0030-protected-guards-values-not-attributes 9 Mathics3
 # Mathics3: Condition is HoldRest there; WL's is HoldAll (from memory).
 attributes 13 Mathics3
