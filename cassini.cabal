@@ -169,9 +169,12 @@ test-suite cassini-test
 test-suite cassini-corpus
   import:           warnings, extensions
   type:             exitcode-stdio-1.0
-  hs-source-dirs:   corpus
+  hs-source-dirs:   corpus test-support
   main-is:          Main.hs
-  other-modules:    Test.Corpus.Wolfram
+  other-modules:
+    Test.Corpus.Wolfram
+    Test.Script
+
   build-depends:
     , base ^>=4.21.2.0
     , cassini
@@ -181,6 +184,31 @@ test-suite cassini-corpus
     , filepath ^>=1.5.5.0
     , text ^>=2.1.4
     , unordered-containers ^>=0.2.21
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini:cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
+
+-- DESIGN.md §7.5: differential testing against Mathics3. Skips unless
+-- CASSINI_MATHICS_PYTHON names an interpreter with Mathics3.
+test-suite cassini-oracle
+  import:           warnings, extensions
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   oracle test-support
+  main-is:          Main.hs
+  other-modules:    Test.Script
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini
+    , cassini:cassini-prelude
+    , containers ^>=0.7
+    , directory ^>=1.3.10.1
+    , filepath ^>=1.5.5.0
+    , process ^>=1.6.26.1
+    , text ^>=2.1.4
     , vector ^>=0.13.2
 
   mixins:

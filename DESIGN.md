@@ -1105,6 +1105,11 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   `$RecursionLimit::reclim` and returns `Hold[e]` unevaluated, and evaluation continues outward: `x =
   x + 1; x` yields a partial result with a `Hold` at the cut — the source's "computations limited by
   `$RecursionLimit` … build up large intermediate structures" — rather than aborting.
+  **WL 14.1 does not do this.** Its documentation corpus shows `x = x + 1` evaluating to
+  `Plus[1, TerminatedEvaluation["RecursionLimit"]]`: the runaway evaluation is replaced whole, and
+  there is no `Hold` at the cut (`wolfram/$RecursionLimit/BasicExamples/1`). The quotation above is
+  from the older tutorial. The `Hold` cut stays, as D30, because WL's unwinding rule cannot be
+  read off three examples.
   **The cut is idempotent.** At the limit, an expression that evaluates to itself comes back as it
   is: a raw atom, a symbol with no own value, or a `Hold[…]` the cut already built. Only anything
   else is wrapped, with the message. Without this, every fixed point near the limit re-evaluates its
@@ -2856,6 +2861,27 @@ harness whitelists all three kinds.
 **The externals arrive with the milestones they check** (§10): Mathics3 with 1a, SymPy with 2a,
 Singular with 3d.
 
+**The Mathics3 harness, as built at 1a.** `cassini-oracle` runs every script in `oracle/cases/` and
+every regression case in `test/regress/` twice. Cassini runs it through `runScript`.
+`oracle/mathics_eval.py` runs it in one Mathics3 session, under the interpreter
+`CASSINI_MATHICS_PYTHON` names, and writes the same script format (§7.4). Cases that need a
+test-only builtin are skipped. Each input gets one verdict:
+
+- **agree:** structurally equal up to `Orderless` order, or a difference that Cassini evaluates
+  to 0;
+- **disagree:** the difference is a nonzero number, or the message names differ;
+- **inconclusive:** anything else. Until 2a's zero test that includes every symbolic difference,
+  and also an input on which Mathics3 raises a Python exception. Mathics3 10.0.1 raises on an
+  endless own-value chain (`RecursionError`), and its `Part` assignment fails on a list of indices.
+
+`oracle/divergences.txt` lists known disagreements by case and input. Its reason is a D-number, or
+`Mathics3` where Mathics3 departs from WL. Such an entry cites the corpus case documenting WL's
+answer, or says the answer is from memory. Only an unlisted disagreement fails the suite. At 1a,
+over 127 inputs, 107 agree, 15 are listed and 5 are inconclusive, all from Mathics3's own failures.
+Eleven of the 15 are Mathics3 departing from WL's documented behaviour (`Protect`'s result,
+`Evaluate` inside `Hold`, `Power[x, y, z]`, `argx`). That is why the corpus is the higher authority
+for 1a's builtins.
+
 The Rubi problem corpus is the aspirational end state for `Integrate`; its size and timings are
 vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system. §7.8
 imports its test suite, which is a static corpus and not an oracle: the answers are already written
@@ -3389,6 +3415,31 @@ gating on.
   attributes) is triaged: passing, a `divergences.txt` entry, or a fix with its regression case.
   The in-scope pass count is recorded.
 
+**Done 2026-10-09** (branch `stage-1a`). CI steps 1–8 pass locally under `-Werror` in both `intern`
+settings. Step 8's `bench` job has not yet run on a CI runner.
+
+Corpus and oracle at completion:
+
+- **Corpus:** 577 of the 111,806 Wolfram documentation cases are in scope. 496 pass and are the
+  ratchet; 16 are in `divergences.txt` (D14, D20, D25, D29, and `pending §4.15`); 65 fail on
+  pages outside this milestone.
+- **Oracle:** 107 of 127 inputs agree with Mathics3 10.0.1. 15 are listed and 5 are inconclusive,
+  all from Mathics3's own exceptions.
+
+The departures it found are recorded in their sections:
+
+- the three added kernel operations, the idempotent recursion cut, and where depth and fuel live
+  (§4.3);
+- the skipped settled round, `Evaluate` in a held position, what the trace records, and rule
+  conditions (§4.4, D14);
+- `MatchOps` open recursion and the `Expr` head constraint (§4.5.1–§4.5.2);
+- SPOW-2 and `isASAE` on `0^w`, MPRD's second constant, and D29 (§4.6);
+- the golden format and the test-only upvalue (§7.4);
+- the oracle harness (§7.5);
+- `pending §N` entries and the adapter's translations (§7.8–§7.9, D27);
+- the quadratic merge on unsorted input (§8.4);
+- D30, WL's `TerminatedEvaluation`.
+
 #### 1b — the matcher
 
 The sequence and commutative matchers (§4.5.3 steps 2–3, §4.5.4), side conditions through the
@@ -3621,6 +3672,7 @@ answer, not a deletion.
 | D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway |
 | D28 | `structural` (O-T) recurs through `compareCanonical`, so each level re-runs `cohen` over a child its parent's `cohen` has just walked (§3.5). Two distinct terms that Cohen's rules call equal, differing d levels down, cost O(n·d), not O(n). Only unsimplified terms reach O-T. The likely fix keeps the relation: O-T has already checked equal kind and arity, and for those every kind's rule compares all child pairs, so a parent's `EQ` means every child pair is Cohen-equal and O-T can recur into `structural` directly. That needs the invariant stated in `Cassini.Core.Order` and a property checking the two versions agree | `compareCanonical` prominent in a §8.4 profile, or deep unsimplified terms in matching or `Orderless` sorting |
 | D29 | A rational number does not distribute over a sum. `2·(a + b)` and `-(c + d)` stay as products, as Cohen's ASAE has them (ASAE-4 admits a sum among the factors). WL distributes: `a + b - (c + d)` evaluates to `a + b - c - d`. Distributing would put an expansion rule into automatic simplification, which §4.6 keeps to exactly Cohen's operators. Expansion is `Expand`'s job (§4.12) | `Expand` arriving with the elementary-functions track, when the two normal forms can be compared on real workloads; or this entry's corpus and oracle divergences becoming the dominant kind |
+| D30 | The recursion limit cuts in place, as `Hold[e]`, and evaluation continues outward (§4.3). WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input | an oracle or corpus case that pins down which enclosing evaluation WL replaces; or `Block` (§4.13), whose own example ends in `TerminatedEvaluation`, needing the same unwinding |
 
 ### 11.3 Provenance
 

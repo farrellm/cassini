@@ -1,0 +1,13 @@
+(* The standard evaluation sequence: holds, Sequence, Unevaluated, Flat, Listable, Orderless. *)
+Hold[Plus[1, 1]]
+Hold[Evaluate[Plus[1, 1]]]
+f[Sequence[a, b], c]
+f[Unevaluated[Plus[1, 1]]]
+Length[Unevaluated[Plus[a, b, c]]]
+SetAttributes[h, Flat]
+h[a, h[b, h[c]]]
+SetAttributes[k, Listable]
+k[List[1, 2], 3]
+SetAttributes[o, Orderless]
+o[c, a, b]
+Plus[List[1, 2], List[a, b]]
