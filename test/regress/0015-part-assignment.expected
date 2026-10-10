@@ -1,0 +1,14 @@
+Out[1]: List[a, b, c, d]
+Out[2]: x
+Out[3]: List[a, x, c, d]
+Out[4]: List[s, t]
+Out[5]: List[s, x, t, d]
+Out[6]: z
+Out[7]: List[s, x, t, z]
+Out[8]: Plus[1, Power[x, 5]]
+Out[9]: 7
+Out[10]: Plus[1, Power[x, 7]]
+Out[11]: y
+Message[11]: Set::partw
+Out[12]: y
+Message[12]: Set::noval

@@ -1,0 +1,9 @@
+(* HoldPattern only stops evaluation: it does not make a rule more specific, and HoldPattern[g[2]] is the left-hand side g[2]. *)
+SetDelayed[HoldPattern[f[Pattern[x, Blank[]]]], "general"]
+SetDelayed[f[Pattern[x, Blank[Integer]]], "integer"]
+f[3]
+Set[g[2], 3]
+Set[HoldPattern[g[2]], 4]
+g[2]
+Unset[g[2]]
+g[2]

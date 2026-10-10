@@ -1,0 +1,3 @@
+(* With no rule and no reordering, each Unevaluated wrapper goes back where it was, not on the first equal argument. *)
+f[a, Unevaluated[a]]
+f[Unevaluated[a], b, Unevaluated[a]]

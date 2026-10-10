@@ -1,0 +1,5 @@
+(* Unset[lhs] removes every rule with that left-hand side, whatever the conditions on their right-hand sides. *)
+SetDelayed[g[Pattern[x, Blank[]]], Condition[a, FreeQ[x, y]]]
+SetDelayed[g[Pattern[x, Blank[]]], Condition[b, FreeQ[x, z]]]
+Unset[g[Pattern[x, Blank[]]]]
+List[g[y], g[z]]

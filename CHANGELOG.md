@@ -4,6 +4,83 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Milestone 1a, the evaluator (DESIGN.md §4, §10):
+  * Attributes as a bitmask (`Cassini.Attributes`).
+  * Rules, the four tables and the ladder (`Cassini.Rules`).
+  * The `Kernel` effect with its pure and `IO` interpreters (`Cassini.Eval.Kernel`), and messages
+    (`Cassini.Eval.Message`).
+  * The standard evaluation sequence, step by step, with its fixed point and both limits
+    (`Cassini.Eval`).
+  * The pattern view and the syntactic matcher, over `logict` inside `MatchT`
+    (`Cassini.Pattern`, `.Match`, `.Syntactic`), and the `RuleIndex` interface (`.Net`).
+  * Cohen's automatic simplification (`Cassini.Simplify.Automatic`).
+  * The arithmetic, structural and assignment builtins, and the registry (`Cassini.Builtins.*`).
+  * FullForm, read and printed (`Cassini.Syntax.FullForm`).
+  * Script mode: `runScript`, `traceScript`, and `cassini --script`/`--trace` (`Cassini.REPL`).
+  * The regression corpus and golden traces (`test/regress/`, `test/trace/`).
+  * Benchmarks of the fixed point, automatic simplification and the end-to-end workload, and CI
+    step 8, the allocation gate on the end-to-end workload (`bench/check-allocation.py --only`).
+  * `cassini-corpus` over the Wolfram documentation corpus: the scope rule, the ratchet
+    (`corpus/passing/wolfram.txt`) and the divergence manifest (`corpus/divergences.txt`).
+  * Fixes from the corpus triage, each with a regression case (0014–0020):
+    * level specifications and operator forms for `Map`, `Apply` and `Level`;
+    * part assignment;
+    * `Evaluate` inside a hold;
+    * conditions on a rule's right-hand side;
+    * multi-argument `Power`;
+    * names and lists in `Protect` and `Unprotect`;
+    * arity messages for `Head` and `Length`;
+    * `Part` with no index.
+  * `cassini-oracle`, differential testing against Mathics3, with its whitelist
+    (`oracle/divergences.txt`); D30 registered for the recursion cut.
+  * The four rule tables are a record, not an `EnumMap`, which drops `enummapset` and its
+    `aeson` dependency.
+  * Fix: a message from an unevaluated subterm was emitted again each time a sibling changed its
+    parent (regression case 0013).
+  * Fixes from the review of the milestone 1a PR, each with a regression case (0021–0025):
+    * a condition on an assignment's left-hand side defines a rule for its head;
+    * rules with one left-hand side and different right-hand-side conditions coexist, and `Unset`
+      removes them all;
+    * `Unset` refuses a protected symbol;
+    * `Unevaluated` is restored on the argument it came from.
+  * Fixes from the second review of the milestone 1a PR, each with a regression case (0026–0029):
+    * a right-hand-side condition that fails tries the next match, and own values honour one;
+    * a `Part` index beyond a machine integer is out of range, not wrapped;
+    * a blank's head constraint makes a rule more specific, so `f[x_Integer]` precedes `f[x_]`;
+    * list assignment recurses into nested lists.
+  * Fix: automatic simplification nested a product in a product, or a sum in a sum, when like
+    factors or terms collected into one (unit tests in `Test.Cassini.Simplify.Automatic`).
+  * `SetAttributes` and `ClearAttributes` no longer evaluate their attributes twice.
+  * Fixes from the third review of the milestone 1a PR, each with a regression case (0031–0034):
+    * a condition on an upvalue's or tag assignment's left-hand side no longer hides its
+      arguments' tags;
+    * `HoldPattern` neither makes a rule more specific nor makes `f[2]` and `HoldPattern[f[2]]`
+      two rules;
+    * the attribute names are `System`` symbols;
+    * `Part` of `{}` or `f[]` is `Part::partw`, not `Part::partd`.
+  * Fixes from triaging the corpus cases the attribute names brought into scope, each with a
+    regression case (0035–0036):
+    * `Attributes` takes a name, and `Attributes[s] = {…}` replaces the attributes;
+    * `Unprotect` on a `Locked` symbol is `Protect::locked`;
+    * a `Sequence` spliced under `HoldFirst` or `HoldRest` goes round again, so an argument it
+      moves out of the held position is evaluated.
+  * Fixes from the fourth review of the milestone 1a PR, each with a regression case (0037–0038):
+    * `Part` with `All` or a list of indices on an atom is `Part::partd`, not the atom's head
+      applied to nothing;
+    * an argument `Evaluate` forced in a held position is not evaluated again when a `Sequence`
+      splices it out of that position, so its messages are emitted once.
+  * Fix: a part assignment whose index is not a part specification, such as `m[[x]] = 1`, is
+    `Set::pkspec1`, not `Set::partw` (regression case 0039).
+  * Fix: an index that is not a part specification is `Part::pkspec1`, not `Part::pkspec`, and
+    `Part` and part assignment check every index before taking a part, so it wins over an index
+    out of range or an atom (regression cases 0039–0040).
+  * Part assignment takes `All` (regression case 0041).
+  * The `Kernel` effect's operations are generated by `effectful-th`'s `makeEffect`, not written
+    by hand; their signatures gain `HasCallStack`.
+  * `cassini-corpus` and `cassini-oracle` no longer count two different outputs as equal because
+    neither reads as FullForm.
+  * The Wolfram documentation extractor holds the arguments of a symbol the example gave a hold
+    attribute, rather than evaluating them while normalizing (D27).
 * Stage 0 (DESIGN.md §3, §10):
   * Exact numbers (`Cassini.Number`).
   * Interned symbols (`Cassini.Core.Symbol`).

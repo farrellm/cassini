@@ -1,0 +1,51 @@
+# Corpus cases that fail for a known reason (DESIGN.md §7.8): the case ID,
+# then the reason. A D-number is a deliberate divergence (§11.2). "pending §N"
+# names the section whose track implements the behaviour; such entries are
+# re-examined, and removed, when that track lands. Only case IDs and reasons
+# are kept here, never a case's content (D26-D27).
+
+# D14: WL emits Thread::tdlen twice for Power[{a, b, c}, {1, 2}], from a round
+# this evaluator knows cannot change the result and skips (§4.4).
+wolfram/Listable/PossibleIssues/1 D14
+
+# D20: no complex numbers.
+wolfram/Power/Scope/NumericalEvaluation/3 D20
+wolfram/Sqrt/BasicExamples/3 D20
+wolfram/I/BasicExamples/2 D20
+
+# D25: infinities absorb only numbers.
+wolfram/DirectedInfinity/PossibleIssues/1 D25
+
+# D29: a number does not distribute over a sum.
+wolfram/Minus/BasicExamples/1 D29
+wolfram/Subtract/BasicExamples/2 D29
+
+# Radicals of rationals (§4.15), with the track for control flow, logic and numbers.
+wolfram/Listable/Scope/3 pending §4.15
+wolfram/Sqrt/BasicExamples/2 pending §4.15
+
+# The infinity pass and DirectedInfinity's own rules (§4.15), with the same track.
+wolfram/ComplexInfinity/Scope/3 pending §4.15
+wolfram/Sqrt/Scope/SpecificValues/3 pending §4.15
+wolfram/Infinity/BasicExamples/2 pending §4.15
+wolfram/Divide/PossibleIssues/1 pending §4.15
+wolfram/Indeterminate/BasicExamples/1 pending §4.15
+wolfram/Indeterminate/Scope/3 pending §4.15
+wolfram/DirectedInfinity/PossibleIssues/3 pending §4.15
+
+# Pure functions (§4.13): Function's evaluation and its attributes argument,
+# with the track for control flow, logic and numbers.
+wolfram/Function/GeneralizationsAndExtensions/3 pending §4.13
+wolfram/HoldAll/PropertiesAndRelations/8 pending §4.13
+wolfram/HoldFirst/PropertiesAndRelations/4 pending §4.13
+wolfram/HoldRest/PropertiesAndRelations/2 pending §4.13
+
+# A Flat head's arguments grouped to fit a pattern, with the sequence matcher (§4.5.3, milestone 1b).
+wolfram/Flat/PropertiesAndRelations/2 pending §4.5.3
+
+# Radicals of rationals (§4.15), as above.
+wolfram/Map/PropertiesAndRelations/5 pending §4.15
+
+# Pi and its attributes, with the elementary functions (§4.11).
+wolfram/SymbolName/PropertiesAndRelations/2 pending §4.11
+wolfram/Symbol/PropertiesAndRelations/5 pending §4.11

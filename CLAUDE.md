@@ -3,9 +3,12 @@
 A computer algebra system for Haskell: a Wolfram-Language-style term rewriting kernel over an exact
 numeric and polynomial substrate.
 
-**Stage 0 is built**: exact numbers, symbols, `Expr` with switchable interning, canonical order,
-traversal and structural operators, under the tooling that enforces the rules below. Stage 1, the
-evaluator, is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and it is ahead of the code.
+**Stage 0 and milestone 1a are built.** Stage 0 is the foundations: exact numbers, symbols, `Expr`
+with switchable interning, canonical order, traversal and structural operators, under the tooling
+that enforces the rules below. 1a is the evaluator: attributes, the rule tables, the `Kernel` effect,
+the standard evaluation sequence, the syntactic matcher, Cohen's automatic simplification, the
+arithmetic, structural and assignment builtins, FullForm and script mode. Milestone 1b, the
+sequence and commutative matchers, is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and it is ahead of the code.
 Where the two disagree, the design is the intent and the code is behind.
 
 | Path | What it is |
@@ -16,10 +19,12 @@ Where the two disagree, the design is the intent and the code is behind.
 | `cassini.cabal` | Package definition. GHC2024, `base ^>=4.21.2.0`. |
 | `src/`, `src-intern/` | The library. `src-intern/{hash,weak}` are the two implementations of `Cassini.Core.Intern`, selected by the `intern` flag (§3.4). |
 | `prelude/` | `Cassini.Prelude`, the internal `cassini-prelude` sublibrary (§2.3). |
-| `app/`, `test/`, `bench/` | The executable (a stub until the REPL), the fast suite `cassini-test`, and `cassini-bench` with its committed baselines (§7, §8). |
+| `app/`, `test/`, `bench/` | The executable (`--script`/`--trace` until the REPL), the fast suite `cassini-test` with the regression corpus `test/regress/` and golden traces `test/trace/`, and `cassini-bench` with its committed baselines (§7, §8). |
+| `oracle/` | `cassini-oracle`: differential testing against Mathics3 (§7.5), its cases, its Python side and its whitelist. |
+| `test-support/` | `Test.Script`, the script-format comparison `cassini-corpus` and `cassini-oracle` share. |
 | `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker, and the Haddock coverage floor. |
-| `.github/workflows/ci.yml` | CI, §2.8 steps 1–7. |
-| `corpus/` | Imported test corpora (`DESIGN.md` §7.8–§7.9). So far only `tools/extract_wolfram_docs.py`; `fetched/` and `wolfram-docs/` are gitignored. |
+| `.github/workflows/ci.yml` | CI, §2.8 steps 1–8. |
+| `corpus/` | Imported test corpora (`DESIGN.md` §7.8–§7.9): the `cassini-corpus` suite, its ratchet `passing/` and its manifest `divergences.txt`, and `tools/extract_wolfram_docs.py`. `fetched/` and `wolfram-docs/` are gitignored. |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release. |
 
 ## Rules
@@ -118,6 +123,17 @@ Where the two disagree, the design is the intent and the code is behind.
      `0002-builtin-upvalue-beats-user-downvalue`, not `0002-issue-17`.
    - A unit test lifted from a source cites where it came from (§7.2). Edge-case and bug tests
      are welcome too, with no citation; their name says what contract they check.
+   - A new regression case is also an oracle case: run `cassini-oracle` before committing it.
+   - When the oracle disagrees, or is inconclusive because Mathics3 crashes, `corpus/wolfram-docs/`
+     often documents WL's answer; cite that case ID in `oracle/divergences.txt` or the regression
+     case's comment. Failing that, mathematica.stackexchange.com often quotes WL's real output,
+     messages included; cite the question or answer URL. Search it through the Stack Exchange API
+     (`api.stackexchange.com/2.3`, `site=mathematica`), not a web search engine, which barely
+     indexes it. `search/excerpts` covers answers as well as questions but drops `::`, so search
+     the bare tag (`pkspec1`), then fetch the hits' full bodies (`questions/{ids}` or
+     `answers/{ids}`, `filter=withbody`) and grep them. If neither documents it, drop the input;
+     don't pin a guess.
+   - A fix commit adds its `CHANGELOG.md` line in the same commit.
    - Benchmark baselines are committed per GHC version and `intern` setting, and regenerated
      deliberately, with the commit message saying why. From milestone 1a, an allocation regression
      fails CI (`bench/check-allocation.py`). Time is gated only against a baseline from the same CI
@@ -157,10 +173,26 @@ CI (`.github/workflows/ci.yml`) runs `DESIGN.md` §2.8 steps 1–7 on every push
 - Haddock floor: `cabal haddock lib:cassini 2>&1 | python3 scripts/check-haddock.py`
 - Benchmarks: `cabal bench --benchmark-options='--csv out.csv'`. Compare allocation with
   `python3 bench/check-allocation.py bench/baseline/ghc-9.12.4-hash.csv out.csv`, or against
-  `-intern.csv` after a `-f intern` run.
+  `-intern.csv` after a `-f intern` run. CI's step 8 gates only the end-to-end workload:
+  `--benchmark-options='-p EndToEnd --csv out.csv'`, then `check-allocation.py --only All.EndToEnd`.
+- Script mode, for trying the evaluator: `cabal run cassini -- --script FILE` (or `--trace FILE`),
+  one FullForm input per line.
+- The corpus ratchet: `cabal test cassini-corpus` (skips without `corpus/wolfram-docs/`). For
+  triage, run its binary (`cabal list-bin cassini-corpus --enable-tests`) with `--page NAME`,
+  `--verbose`, and `--write-passing FILE` to diff against `corpus/passing/wolfram.txt`.
+- The oracle: `CASSINI_MATHICS_PYTHON=$PWD/.venv/bin/python cabal test cassini-oracle`, with
+  Mathics3 installed in the gitignored `.venv` (`.venv/bin/pip install Mathics3`). It skips
+  without the variable.
 - The Wolfram documentation corpus (milestone W, `DESIGN.md` §7.9):
   `python corpus/tools/extract_wolfram_docs.py <notebook-dir> corpus/wolfram-docs`, in a Python
   environment with `Mathics3` installed. It takes about ten minutes on eight cores.
+- Re-extracting needs the notebooks unpacked from the offline installer's `.cab` files with
+  `7z x`, about 9.4 GB; `run.txt`'s `source:` line says where. For a trial run, use
+  `--only Sym1,Sym2` into the scratchpad, then `diff -r`.
+- A corpus `.expected` output has been normalised by Mathics3, so it isn't raw WL. When one looks
+  wrong, read the notebook cell before blaming the evaluator or the extractor.
+- To compare corpus failures across commits, `git worktree add` the old commit, symlink
+  `corpus/wolfram-docs` into it, and diff the `FAIL` lines of each binary's `--verbose` output.
 
 Two cabal behaviours to know. cabal accepts an undeclared `-f` flag silently, so a misspelt
 `-f intren` tests nothing. And `-Wunused-packages` is deliberately absent from the warning set:

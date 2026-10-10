@@ -1,0 +1,7 @@
+Out[1]: Part[5, All]
+Message[1]: Part::partd
+Out[2]: Part[5, List[]]
+Message[2]: Part::partd
+Out[3]: Part[List[1, 2], 1, All]
+Message[3]: Part::partd
+Out[4]: List[1, 3]

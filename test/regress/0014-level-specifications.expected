@@ -1,0 +1,8 @@
+Out[1]: List[a, h3[a], h2[h3[a]], h1[h2[h3[a]]], h0[h1[h2[h3[a]]]]]
+Out[2]: List[List[a], List[List[a]], List[List[List[a]]]]
+Out[3]: List[List[f[a], f[b]], List[f[c]]]
+Out[4]: h1[f[h2[f[h3[f[x]]]]]]
+Out[5]: List[f[a, b], f[c, d]]
+Out[6]: List[a, "s", 3]
+Out[7]: List[f[a], f[b]]
+Out[8]: f[a, b]

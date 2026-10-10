@@ -1,0 +1,4 @@
+(* Re-evaluating a settled subterm emitted its message again whenever a sibling changed the parent: Part::partw came out twice. *)
+List[Plus[1, 1], Part[List[1, 2], 3]]
+SetDelayed[f[], List[Part[List[1], 2], Plus[1, 1]]]
+f[]

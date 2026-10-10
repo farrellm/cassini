@@ -1,0 +1,11 @@
+(* Protected blocks definitions but not attribute changes; Locked blocks attribute changes. *)
+SetDelayed[f[Pattern[x, Blank[]]], Power[x, 2]]
+SetAttributes[f, Protected]
+SetAttributes[f, HoldAll]
+Attributes[f]
+SetDelayed[f[Pattern[x, Blank[]]], Power[x, 3]]
+ClearAttributes[f, HoldAll]
+Attributes[f]
+SetAttributes[g, List[Locked, Protected]]
+SetAttributes[g, HoldAll]
+Attributes[g]

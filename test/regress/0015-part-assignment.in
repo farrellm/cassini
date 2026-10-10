@@ -1,0 +1,13 @@
+(* Corpus triage: assigning to a part of an own value, by index, by a list of indices, out of range, and with no value. *)
+Set[m, List[a, b, c, d]]
+Set[Part[m, 2], x]
+m
+Set[Part[m, List[1, 3]], List[s, t]]
+m
+Set[Part[m, -1], z]
+m
+Set[v, Plus[1, Power[x, 5]]]
+Set[Part[v, 2, 2], 7]
+v
+Set[Part[m, 9], y]
+Set[Part[w, 1], y]

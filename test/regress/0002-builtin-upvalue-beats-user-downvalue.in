@@ -1,0 +1,3 @@
+SetDelayed[f[Pattern[x, Blank[]]], "user downvalue"]
+f[Test`up[]]
+f[1]

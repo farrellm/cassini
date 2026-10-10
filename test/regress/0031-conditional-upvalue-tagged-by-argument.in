@@ -1,0 +1,4 @@
+(* A condition on an upvalue's left-hand side does not hide its arguments' tags. *)
+TagSetDelayed[g, Condition[f[g[Pattern[x, Blank[]]]], True], x]
+UpSetDelayed[Condition[k[m[Pattern[y, Blank[]]]], True], y]
+List[f[g[3]], k[m[4]]]

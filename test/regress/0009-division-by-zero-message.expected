@@ -1,0 +1,8 @@
+Out[1]: DirectedInfinity[]
+Message[1]: Power::infy
+Out[2]: DirectedInfinity[]
+Message[2]: Power::infy
+Out[3]: Indeterminate
+Message[3]: Power::indet
+Out[4]: Times[DirectedInfinity[], a]
+Message[4]: Power::infy

@@ -1,0 +1,2 @@
+Out[1]: f[a, Unevaluated[a]]
+Out[2]: f[Unevaluated[a], b, Unevaluated[a]]

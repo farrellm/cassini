@@ -1,0 +1,109 @@
+{-# LANGUAGE PatternSynonyms #-}
+
+-- | The shape every builtin module exports, and the helpers they share.
+--
+-- A builtin is a symbol's attributes and its native rules. Each module of
+-- @Cassini.Builtins.*@ exports a list of 'Definition's, and
+-- "Cassini.Builtins" assembles them into one kernel state, numbering the
+-- implementations (§4.2: a rule holds a 'Cassini.Rules.BuiltinId', not a
+-- function).
+module Cassini.Builtins.Define
+  ( Definition (..),
+    NativeRule (..),
+    define,
+    down,
+    up,
+    own,
+    sub,
+    args,
+    message,
+    sym,
+    sNullE,
+    sTrueE,
+    sFalseE,
+    sFailedE,
+    PartSpec (..),
+    partSpec,
+  )
+where
+
+import Cassini.Attributes (Attribute)
+import Cassini.Core.Expr (Expr, exprArgs, pattern App, pattern Int_, pattern Sym)
+import Cassini.Core.Symbol (Symbol, sFalse, sList, sNull, sTrue, systemSymbol)
+import Cassini.Eval.Kernel (BuiltinFn (..), Kernel, emitMessage)
+import Cassini.Eval.Message (MessageTag (..))
+import Cassini.Rules (ValueKind (..))
+import Data.Vector qualified as V
+import Effectful (Eff, (:>))
+
+-- | One native rule: which table it goes in, and its implementation. A
+-- native rule is never matched by pattern: its implementation decides, and
+-- answers 'Nothing' when it does not apply.
+data NativeRule = NativeRule
+  { nrKind :: !ValueKind,
+    nrFn :: !BuiltinFn
+  }
+
+-- | A builtin symbol: its attributes and its native rules, in order.
+data Definition = Definition
+  { defSymbol :: !Symbol,
+    defAttributes :: ![Attribute],
+    defRules :: ![NativeRule]
+  }
+
+-- | A @System`@ symbol with attributes and rules.
+define :: Text -> [Attribute] -> [NativeRule] -> Definition
+define name = Definition (systemSymbol name)
+
+-- | A built-in downvalue.
+down :: (forall es. (Kernel :> es) => Expr -> Eff es (Maybe Expr)) -> NativeRule
+down f = NativeRule DownValue (BuiltinFn f)
+
+-- | A built-in upvalue.
+up :: (forall es. (Kernel :> es) => Expr -> Eff es (Maybe Expr)) -> NativeRule
+up f = NativeRule UpValue (BuiltinFn f)
+
+-- | A built-in own value.
+own :: (forall es. (Kernel :> es) => Expr -> Eff es (Maybe Expr)) -> NativeRule
+own f = NativeRule OwnValue (BuiltinFn f)
+
+-- | A built-in subvalue.
+sub :: (forall es. (Kernel :> es) => Expr -> Eff es (Maybe Expr)) -> NativeRule
+sub f = NativeRule SubValue (BuiltinFn f)
+
+-- | The arguments, as a list.
+args :: Expr -> [Expr]
+args = V.toList . exprArgs
+
+-- | Emit @System`symbol::tag@.
+message :: (Kernel :> es) => Text -> Text -> [Expr] -> Eff es ()
+message s t = emitMessage (systemSymbol s) (MessageTag t)
+
+-- | A @System`@ symbol as an expression.
+sym :: Text -> Expr
+sym = Sym . systemSymbol
+
+-- | @Null@, @True@, @False@ and @$Failed@.
+sNullE, sTrueE, sFalseE, sFailedE :: Expr
+sNullE = Sym sNull
+sTrueE = Sym sTrue
+sFalseE = Sym sFalse
+sFailedE = sym "$Failed"
+
+-- | One index of @Part@ or of a part assignment.
+data PartSpec = Index !Integer | Indices ![Integer] | AllParts
+
+-- | An index as a part specification, or the index itself when it is not one
+-- (@Part::pkspec1@, @Set::pkspec1@).
+partSpec :: Expr -> Either Expr PartSpec
+partSpec = \case
+  Int_ i -> Right (Index i)
+  Sym a | a == sAll -> Right AllParts
+  j@(App (Sym l) js)
+    | l == sList -> maybeToRight j (Indices <$> traverse intIndex (V.toList js))
+  j -> Left j
+  where
+    sAll = systemSymbol "All"
+    intIndex = \case
+      Int_ i -> Just i
+      _ -> Nothing

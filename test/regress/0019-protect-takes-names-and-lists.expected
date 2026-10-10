@@ -1,0 +1,5 @@
+Out[1]: List["Sqrt"]
+Out[2]: List["Sqrt"]
+Out[3]: List[]
+Out[4]: List["Sqrt", "Plus"]
+Out[5]: List["Sqrt", "Plus"]

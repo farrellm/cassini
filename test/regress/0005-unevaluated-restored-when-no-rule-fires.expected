@@ -1,0 +1,4 @@
+Out[1]: f[Unevaluated[Plus[1, 1]]]
+Out[2]: 3
+Out[3]: -
+Out[4]: Hold[Plus[1, 1]]

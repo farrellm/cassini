@@ -1,0 +1,60 @@
+# Disagreements with Mathics3 that are known and explained (DESIGN.md §7.5):
+# the case, the input number, and the reason. A D-number is a deliberate
+# divergence from WL (§11.2). "Mathics3" means Mathics3 departs from WL;
+# where the Wolfram documentation corpus documents WL's answer, its case ID
+# is given, and otherwise the entry says the WL answer is from memory.
+
+# D25: infinities absorb only numbers, so a·ComplexInfinity stays a product.
+0009-division-by-zero-message 4 D25
+# D30: the recursion cut is Hold[e] in place; Mathics3 aborts the input, and
+# WL 14.1 answers Plus[1, TerminatedEvaluation["RecursionLimit"]]
+# (wolfram/$RecursionLimit/BasicExamples/1).
+0010-recursion-limit-holds 1 D30
+
+# Mathics3: Indeterminate^0 is 1 there; WL's NumericFunction rule makes it
+# Indeterminate (§4.15, wolfram_ref_indeterminate.html).
+0008-indeterminate-not-collected 3 Mathics3
+# Mathics3: Protect and Unprotect return Null; WL returns the names changed
+# (wolfram/Protect/Applications/1).
+0012-set-protected-symbol 4 Mathics3
+0012-set-protected-symbol 7 Mathics3
+0019-protect-takes-names-and-lists 1 Mathics3
+0019-protect-takes-names-and-lists 2 Mathics3
+0019-protect-takes-names-and-lists 3 Mathics3
+0019-protect-takes-names-and-lists 4 Mathics3
+0019-protect-takes-names-and-lists 5 Mathics3
+# Mathics3: Evaluate inside Hold strips Unevaluated
+# (wolfram/Unevaluated/PropertiesAndRelations/2).
+0016-evaluate-keeps-unevaluated-inside-hold 1 Mathics3
+# Mathics3: Power[x, y, z] drops z (wolfram/Power/Scope/SpecificValues/3).
+0018-power-right-associative 1 Mathics3
+# Mathics3: no argx messages for Head and Length
+# (wolfram/Sequence/PossibleIssues/1 documents Head::argx).
+0020-arity-and-bare-part 1 Mathics3
+0020-arity-and-bare-part 2 Mathics3
+# Mathics3: Protect returns Null, as above.
+0023-unset-protected-symbol 3 Mathics3
+0035-attributes-by-name-assignment-and-lock-message 8 Mathics3
+0035-attributes-by-name-assignment-and-lock-message 9 Mathics3
+# Mathics3: Unset ignores Protected. WL answers Unset::write and $Failed for a
+# protected tag (mathematica.stackexchange.com/q/89944); Unset::wrsym for a
+# protected symbol is from memory, by analogy with Clear::wrsym
+# (wolfram/Clear/PossibleIssues/1).
+0023-unset-protected-symbol 4 Mathics3
+0023-unset-protected-symbol 5 Mathics3
+0023-unset-protected-symbol 6 Mathics3
+# Mathics3: restores Unevaluated on every equal argument; WL puts each
+# wrapper back where it was (from memory).
+0024-unevaluated-restored-in-place 1 Mathics3
+# Mathics3: SetAttributes on a Locked symbol answers SetAttributes::locked;
+# WL answers Attributes::locked (wolfram/Locked/PropertiesAndRelations/2).
+0030-protected-guards-values-not-attributes 9 Mathics3
+# Mathics3: Condition is HoldRest there; WL's is {HoldAll, Protected}
+# (mathematica.stackexchange.com/a/314496).
+attributes 13 Mathics3
+# Mathics3: an index that is not a part specification is Part::pspec there;
+# WL's is Part::pkspec1 (wolfram/Part/PropertiesAndRelations/4).
+0040-part-bad-spec 1 Mathics3
+0040-part-bad-spec 2 Mathics3
+0040-part-bad-spec 3 Mathics3
+0040-part-bad-spec 4 Mathics3

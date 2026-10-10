@@ -1,0 +1,3 @@
+SetDelayed[p, q]
+SetDelayed[q, p]
+p
