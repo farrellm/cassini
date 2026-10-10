@@ -1470,6 +1470,13 @@ same code as the rule tables. `matchRuleOrRun` adds `Flat`'s runs (§4.5.3). `ma
 `MatchConfig`, whose one knob turns off §4.5.4's steps 1–2 for §8.3's measurement; evaluation never
 sets it.
 
+**A sequence binding splices where it is substituted.** `applySubst` puts a `__` variable's run
+into the argument list it lands in, not `Sequence[…]` for evaluation to splice later, and keeps
+`Sequence[…]` only where the variable is the whole replacement, as WL does
+(`mathematica.stackexchange.com/q/1929` and its answer a/1933, with WL's outputs). Until 1b's
+end-to-end workload found it, `ReplaceRepeated`, which does not evaluate between rounds, stopped
+matching after one round (regression case 0049).
+
 **Those three functions and five instances are the whole surface a replacement backend must
 reproduce** (D11, §9.2). Laziness is part of it: `matchOne` stops at the first success rather than
 computing every match, and matches are exponential in number in general.

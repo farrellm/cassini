@@ -30,7 +30,7 @@ module Cassini.Pattern
 where
 
 import Cassini.Attributes (AttributeSet)
-import Cassini.Core.Expr (Expr, apply, pattern App, pattern Int_, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, mkApp, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
     sAlternatives,
@@ -54,7 +54,6 @@ import Cassini.Core.Symbol
     sTrue,
     sVerbatim,
   )
-import Cassini.Structure (substituteAll)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 
@@ -181,12 +180,30 @@ bindingExpr = \case
   BOne x -> x
   BSeq xs -> apply sSequence (V.toList xs)
 
--- | Replace every bound variable by its binding, all at once. Not yet aware of
+-- | Replace every bound variable by its binding, all at once. A sequence
+-- binding in an argument list is spliced into it there and then, as WL
+-- does, so @f[a, b] /. f[x__] :> Hold[g[x]]@ is @Hold[g[a, b]]@ even though
+-- nothing evaluates inside @Hold@; anywhere else it is @Sequence[…]@.
+-- Subtrees with no bound variable keep their nodes. Not yet aware of
 -- scoping constructs; that arrives with @Function@ (§4.13).
 applySubst :: Subst -> Expr -> Expr
 applySubst s u
   | Map.null s = u
-  | otherwise = substituteAll u [(Sym x, bindingExpr b) | (x, b) <- Map.toList s]
+  | otherwise = fromMaybe u (go u)
+  where
+    -- 'Nothing' means unchanged.
+    go = \case
+      Sym x -> bindingExpr <$> Map.lookup x s
+      App h as ->
+        let h' = go h
+            as' = V.map arg as
+         in if isNothing h' && V.all isNothing as'
+              then Nothing
+              else Just (mkApp (fromMaybe h h') (V.concat (V.toList (V.zipWith (fromMaybe . V.singleton) as as'))))
+      _ -> Nothing
+    arg = \case
+      Sym x | Just (BSeq xs) <- Map.lookup x s -> Just xs
+      a -> V.singleton <$> go a
 
 -- | Bind a name, or check it against its binding: one name means one value
 -- across a pattern.
