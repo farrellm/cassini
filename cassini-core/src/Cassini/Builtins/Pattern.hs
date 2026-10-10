@@ -17,12 +17,13 @@
 module Cassini.Builtins.Pattern (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Bound (..), Definition, args, define, down, firstJustM, inLevel, levelSpec, message, sFalseE, sTrueE, sub)
+import Cassini.Builtins.Define (Bound (..), Definition, args, define, down, inLevel, levelParts, levelSpec, message, rebuildM, sFalseE, sTrueE, sub)
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (sList, sRule, sRuleDelayed)
+import Cassini.Eval (firstJustM)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Pattern (viewPattern)
-import Cassini.Pattern.Match (match, matchRule, matchRuleOrRun, observeAll, observeFirst)
+import Cassini.Pattern.Match (match, matchRule, matchRuleOrRun, observeAll, observeFirst, observeMany)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 
@@ -105,15 +106,18 @@ matchQRule e = case args e of
 -- Heads are searched too.
 replaceAllRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 replaceAllRule e = case args e of
-  [x, rules] -> withReplacements "ReplaceAll" rules (`go` x)
+  [x, rules] -> withReplacements "ReplaceAll" rules (`replaceAllOnce` x)
   _ -> pure Nothing
-  where
-    go rs x =
-      applyWithRuns rs x >>= \case
-        Just r -> pure r
-        Nothing -> case x of
-          App h as -> mkApp <$> go rs h <*> V.mapM (go rs) as
-          _ -> pure x
+
+-- | One pass of @ReplaceAll@: top down, the first rule that applies to a
+-- subexpression replaces it, and the replacement is not searched again.
+replaceAllOnce :: (Kernel :> es) => [Replacement] -> Expr -> Eff es Expr
+replaceAllOnce rs x =
+  applyWithRuns rs x >>= \case
+    Just r -> pure r
+    Nothing -> case x of
+      App h as -> mkApp <$> replaceAllOnce rs h <*> V.mapM (replaceAllOnce rs) as
+      _ -> pure x
 
 -- | @Replace[expr, rules, levelspec]@: by default the whole expression only;
 -- with a level specification, bottom up over the parts at those levels,
@@ -138,24 +142,27 @@ replaceRepeatedRule e = case args e of
     go rs k x
       | k >= limit = x <$ message "ReplaceRepeated" "rrlim" [x, Int_ (toInteger limit)]
       | otherwise = do
-          x' <- replaceOnce rs x
+          x' <- replaceAllOnce rs x
           if x' == x then pure x else go rs (k + 1) x'
-    replaceOnce rs x =
-      applyWithRuns rs x >>= \case
-        Just r -> pure r
-        Nothing -> case x of
-          App h as -> mkApp <$> replaceOnce rs h <*> V.mapM (replaceOnce rs) as
-          _ -> pure x
 
 -- | @ReplaceList[expr, rules, n]@: every way the rules apply to the whole
--- expression, rule by rule, each rule's in match order; at most @n@.
+-- expression, rule by rule, each rule's in match order; at most @n@, and
+-- no more matches are enumerated than that.
 replaceListRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 replaceListRule e = case args e of
   [x, rules] -> withReplacements "ReplaceList" rules (fmap (apply sList) . every x)
-  [x, rules, Int_ n] -> withReplacements "ReplaceList" rules (fmap (apply sList . genericTake n) . every x)
+  [x, rules, Int_ n] -> withReplacements "ReplaceList" rules (fmap (apply sList) . upTo (clamp n) x)
   _ -> pure Nothing
   where
     every x rs = concat <$> traverse (\(Replacement lhs rhs) -> observeAll (matchRule lhs rhs x)) rs
+    upTo k x = \case
+      Replacement lhs rhs : rs | k > 0 -> do
+        found <- observeMany k (matchRule lhs rhs x)
+        (found <>) <$> upTo (k - length found) x rs
+      _ -> pure []
+    clamp n
+      | n <= 0 = 0
+      | otherwise = fromMaybe maxBound (toIntegralSized n) :: Int
 
 -- | @Cases[expr, form, levelspec, n]@: the parts at the levels given (by
 -- default level 1) that match the form, depth first, each before the part
@@ -168,33 +175,16 @@ casesRule e = case args e of
   [x, form, spec, Int_ n] | Just ls <- levelSpec spec -> Just <$> cases ls form (Just n) x
   _ -> pure Nothing
   where
-    cases ls form n x = do
-      let picked = parts (inLevel ls) x
-          pick = case readRule form of
-            Just (Replacement lhs rhs) -> matchRule lhs rhs
-            Nothing -> \y -> y <$ match (viewPattern form) y mempty
-      found <- catMaybes <$> traverse (observeFirst . pick) picked
-      pure (apply sList (maybe id genericTake (n :: Maybe Integer) found))
-
--- | The parts selected by level and depth, depth first, each before the part
--- containing it, heads excluded.
-parts :: (Integer -> Integer -> Bool) -> Expr -> [Expr]
-parts keep = fst . go 0
-  where
-    go p x =
-      let below = map (go (p + 1)) (V.toList (exprArgs x))
-          d = 1 + foldl' (\acc (_, k) -> max acc k) 0 below
-       in (concatMap fst below <> [x | keep p d], d)
-
--- | Rebuild bottom up, applying @f@ to every part the predicate selects by
--- its level and its depth in the original expression.
-rebuildM :: (Monad m) => (Integer -> Integer -> Bool) -> (Expr -> m Expr) -> Expr -> m Expr
-rebuildM keep f = fmap fst . go 0
-  where
-    go p x = case x of
-      App h as -> do
-        below <- V.mapM (go (p + 1)) as
-        let d = 1 + V.foldl' (\acc (_, k) -> max acc k) 0 below
-            x' = mkApp h (V.map fst below)
-        (,d) <$> (if keep p d then f x' else pure x')
-      _ -> (,1) <$> (if keep p 1 then f x else pure x)
+    -- Matching stops once @n@ parts are found.
+    cases ls form limit x = apply sList <$> collect (limit :: Maybe Integer) (levelParts (inLevel ls) x)
+      where
+        pick = case readRule form of
+          Just (Replacement lhs rhs) -> matchRule lhs rhs
+          Nothing -> let p = viewPattern form in \y -> y <$ match p y mempty
+        collect k = \case
+          y : ys
+            | maybe True (> 0) k ->
+                observeFirst (pick y) >>= \case
+                  Just r -> (r :) <$> collect (subtract 1 <$> k) ys
+                  Nothing -> collect k ys
+          _ -> pure []

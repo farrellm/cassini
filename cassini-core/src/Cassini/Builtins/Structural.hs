@@ -15,7 +15,7 @@
 module Cassini.Builtins.Structural (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Bound (..), Definition, PartSpec (..), args, define, down, inLevel, levelSpec, message, partSpec, sFalseE, sTrueE, sub)
+import Cassini.Builtins.Define (Bound (..), Definition, PartSpec (..), args, define, down, inLevel, levelParts, levelSpec, message, partSpec, rebuildM, sFalseE, sTrueE, sub)
 import Cassini.Core.Expr (Expr, apply, exprArgs, exprArity, exprHead, mkApp, pattern App, pattern Int_)
 import Cassini.Core.Symbol (sList)
 import Cassini.Eval.Kernel (Kernel)
@@ -113,28 +113,12 @@ mapRule e = case args e of
 -- before the expression containing it, heads excluded.
 levelRule :: Expr -> Maybe Expr
 levelRule e = case args e of
-  [x, spec] | Just ls <- levelSpec spec -> Just (apply sList (fst (collect (inLevel ls) 0 x)))
+  [x, spec] | Just ls <- levelSpec spec -> Just (apply sList (levelParts (inLevel ls) x))
   _ -> Nothing
-  where
-    -- The parts selected, and the depth, in one pass.
-    collect keep p x =
-      let below = map (collect keep (p + 1)) (V.toList (exprArgs x))
-          d = 1 + foldl' (\acc (_, k) -> max acc k) 0 below
-       in (concatMap fst below ++ [x | keep p d], d)
 
--- | Rebuild bottom up, applying @f@ to every part the predicate selects by
--- its level and its depth (WL's @Depth@: 1 for an atom, one more than the
--- deepest argument, heads excluded), both taken in the original expression.
+-- | 'rebuildM', pure.
 rebuild :: (Integer -> Integer -> Bool) -> (Expr -> Expr) -> Expr -> Expr
-rebuild keep f = fst . go 0
-  where
-    go p x = case x of
-      App h as ->
-        let below = V.map (go (p + 1)) as
-            d = 1 + V.foldl' (\acc (_, k) -> max acc k) 0 below
-            x' = mkApp h (V.map fst below)
-         in (if keep p d then f x' else x', d)
-      _ -> (if keep p 1 then f x else x, 1)
+rebuild keep f = runIdentity . rebuildM keep (Identity . f)
 
 -- | @FreeQ[expr, form]@: whether no subexpression, heads included, matches
 -- the form.
