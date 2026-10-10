@@ -12,12 +12,14 @@ import Cassini.Core.Symbol (globalSymbol, sPattern, sSequence)
 import Cassini.Eval.Kernel (KernelState (..))
 import Cassini.Pattern (Binding (..), Subst)
 import Cassini.Pattern.Match (matchAll, matchOne)
+import Cassini.Pattern.Net qualified as Net
 import Cassini.Rules (SymbolInfo (..))
 import Data.Map.Strict qualified as Map
+import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
 import Test.Gen (genExpr, genPattern, shrinkExpr)
 import Test.Kernel (ff, run, stateWith)
-import Test.QuickCheck (Gen, elements)
+import Test.QuickCheck (Gen, chooseInt, elements, listOf1, vectorOf)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.QuickCheck (counterexample, forAll, forAllShrink, sized, testProperty, (===))
 
@@ -38,6 +40,11 @@ tests =
         forAllShrink (sized genSubject) shrinkExpr $ \s ->
           forAll (genPattern s) $ \p ->
             rightToMaybe (fst (run patternState (matchOne p s))) === (listToMaybe <$> rightToMaybe (fst (run patternState (matchAll p s)))),
+      testProperty "the rule index is a superset of the matching rules, in table order" $
+        forAllShrink (sized genApplication) shrinkExpr $ \t ->
+          forAll (listOf1 (sized genApplication >>= genPattern)) $ \ps ->
+            let matching = filter (\p -> not (null (matchesOf p t)))
+             in matching (Net.candidates (Net.fromSeq id (Seq.fromList ps)) t) === matching ps,
       testProperty "matching leaves the kernel state unchanged" $
         forAllShrink (sized genSubject) shrinkExpr $ \s ->
           forAll (genPattern s) $ \p ->
@@ -64,6 +71,14 @@ genSubject n = genExpr n >>= go
           _ -> go h
         mkApp h' <$> V.mapM go as
       e -> pure e
+
+-- | @f[a, b]@ for a plain @f@: the rule index's domain, a downvalue of a
+-- head with neither @Orderless@ nor @Flat@.
+genApplication :: Int -> Gen Expr
+genApplication n = do
+  k <- chooseInt (0, 3)
+  args <- vectorOf k (genSubject (n `div` max 1 k))
+  pure (mkApp (mkSymbol (globalSymbol "f")) (V.fromList args))
 
 matchesOf :: Expr -> Expr -> [Subst]
 matchesOf p s = fromRight [] (fst (run patternState (matchAll p s)))

@@ -195,7 +195,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Pattern.Syntactic` | Structural matching, no attributes. |
 | `Cassini.Pattern.Sequence` | `BlankSequence`/`BlankNullSequence` distribution over a flat argument list. |
 | `Cassini.Pattern.Commutative` | The five-phase `Orderless` matcher (§4.5.4). |
-| `Cassini.Pattern.Net` | `RuleIndex`: candidate retrieval for rule lookup (§4.5.5). Never imports `Pattern.Match`. |
+| `Cassini.Pattern.Net` | `RuleIndex`: candidate retrieval for rule lookup, keyed on the first argument's head (§4.5.5). Never imports `Pattern.Match`. |
 | **L3** | |
 | `Cassini.Rules` | `Rule`, `RuleSet`, `SymbolInfo`, the four rule tables and the ladder. |
 | `Cassini.Eval.Kernel` | The `Kernel` effect, `KernelState`, and the two interpreters, parameterized by the evaluation sequence (§4.3). |
@@ -1571,6 +1571,24 @@ The trigger is measured (§8.3), and the measurement answers the question
 break-even is in the number of subjects matched, not the size of the pattern set**, because the net's
 construction cost must be amortized. A large rule table alone is not the signal.
 
+**Measured at 1b (2026-10-10; GHC 9.12.4, hash interning, one developer machine), and built.** The
+prototype was the cheapest index that discriminates at all: each rule keyed on the head of its
+left-hand side's first argument, with rules whose first argument is a blank, a sequence, an
+alternative or a condition kept as wildcards, and candidates merged back into table order. Against
+fifty rules `f[gi[x_], y_]` for one head, it took 2.0 µs and 8.6 KB per subject, where trying the
+rules in order took 38 µs and 122 KB. The ratio held from 1 subject to 10000. Building it costs less
+than one failed match, so **there is no break-even to wait for: it crosses over below one
+subject**, which is below any volume the evaluator generates. So it is built, as the `RuleIndex`.
+`Cassini.Rules` keeps one, lazily, on every table, and consults it for down-values only, and not
+when the symbol is `Orderless` or `Flat`, where any argument may come first. Up-values are keyed
+by some argument, not the head, so they need a different key. A property checks that the
+candidates are a superset of the matching rules, in table order (§7.3).
+
+This is not Krebber's many-to-one net, which also shares the work of matching among the
+candidates. That remains the next step if a profile shows matching against large rule tables
+dominating. Tables are per symbol, so it needs one symbol with many rules, such as §6.2's tier-1
+integration rules.
+
 ### 4.6 Automatic simplification
 
 The "boring" part that is the hard part — failure mode (b) in `notes/cas-haskell.md`.
@@ -2871,6 +2889,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
 | `Pattern` | for side-condition-free patterns, matching leaves `KernelState` unchanged except for messages | the backtracking rule (§4.5.2) |
 | `Pattern` | `matchOne ≡ listToMaybe <$> matchAll` | the observation functions diverging |
+| `Pattern` | the `RuleIndex`'s candidates for an expression include every rule that matches it, in table order (§4.5.5) | an index that drops a rule, or reorders specificity |
 | `Eval` | `evaluate . evaluate ≡ evaluate` | a non-converging fixed point |
 | `Eval` | evaluation under `runKernelPure` is deterministic given the same initial state | hidden `IO` dependence |
 | `Syntax` | `parse (pretty e) ≡ Right e`; `parseFullForm (fullForm e) ≡ Right e` | the precedence table and printer disagreeing (§4.10) |
@@ -3309,6 +3328,21 @@ Designed to answer specific questions rather than produce a number:
 crossover, and build the net if and only if the crossover is below the volume the evaluator actually
 generates.
 
+**Results at 1b** (2026-10-10; GHC 9.12.4, hash interning, one developer machine; the baselines in
+`bench/baseline/` carry every row):
+
+- Syntactic: 3.1 µs at 4 arguments, 41 µs at 64, linear in the pattern.
+- Sequence grid: allocation per match is flat, 5.0–5.5 KB and 1.2–1.7 µs once there are more than a
+  handful of matches, from 31 matches (`k = 2`, `n = 32`) to 4495 (`k = 4`, `n = 32`). Small cells
+  cost more per match (9–20 KB) only because setup is shared by fewer matches. The grid does not
+  show `MatchT` degrading with depth or count; see D11.
+- Commutative, steps 1–2 on: flat at 17–22 KB from arity 3 to 12. Off: 23 KB to 151 KB, and 6.2 µs to
+  41 µs, so at arity 12 the two steps prune by a factor of 7 in both.
+- Adversarial, 8 arguments: the linear pattern has 204 matches (1.0 ms) and the non-linear one 12
+  (81 µs), at the same 5–7 µs and 16–20 KB per match. At this size the difference is the number of
+  matches, not the search for them.
+- The net question: §4.5.5.
+
 ### 8.4 Evaluator and simplifier
 
 - **Fixed-point convergence**: expressions needing 1, 5, 20 rounds — also the D14 trigger, since
@@ -3352,8 +3386,9 @@ One fixed workload — parse, evaluate and print a script exercising simplificat
 differentiation, pattern replacement and polynomial arithmetic — measured as a single number.
 
 **The workload grows by milestone, and the gate is on from 1a** (§10). At 1a it is a FullForm script
-of automatic simplification and user rules through `runScript`; 1c adds infix parsing, printing and
-differentiation, and 2a polynomial arithmetic. A gate that waited for the full workload would be off
+of automatic simplification and user rules through `runScript`; 1b adds the pattern builtins over
+sequence variables, `Orderless` sums and definitions that need them (43 MB allocated, from 1a's
+22 MB); 1c adds infix parsing, printing and differentiation, and 2a polynomial arithmetic. A gate that waited for the full workload would be off
 through Stage 1, the most refactor-heavy stretch of the project. Each extension is a deliberate
 baseline regeneration, with the commit message saying what the workload gained.
 
@@ -3782,7 +3817,7 @@ answer, not a deletion.
 | D8 | Cohen's canonical order over WL fidelity (§9.2) | oracle-suite false positives becoming the dominant failure |
 | D9 | Inexact numbers absent from `Number` (§3.1) | when they are needed; the O-7 slot is reserved |
 | D10 | SMT-backed zero testing not adopted (§5.6) | polynomial side conditions needing more than layer 3 decides |
-| D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation per match dominating on the sequence-variable grid |
+| D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2). **Measured 2026-10-10 (1b), trigger not fired:** on §8.3's sequence-variable grid allocation per match is flat at 5.0–5.5 KB from 31 to 4495 matches, and does not grow with the number of variables (§8.3's results). Most of it is the substitution map and the bindings, which any monad would build. `logict` stays | §8.3's allocation per match growing with the number of matches or the depth of backtracking on the grid, or a profile putting `LogicT`'s binds ahead of the matchers' own work |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
 | D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 moved a held argument into an unheld position. That is §4.4's bug fix for repeated messages, not the marker. The fix is partial: a built-in's result goes round again with its unevaluated siblings, so `Plus[Part[{1, 2}, 3], x, x]` emits `Part::partw` twice, where WL emits it once (found 2026-10-09 in the PR #12 review) | §8.4's fixed-point benchmark showing re-evaluation dominating; or a message repeated by a built-in's round becoming an oracle or corpus divergence |

@@ -205,6 +205,7 @@ benchmark cassini-bench
     Bench.Core
     Bench.EndToEnd
     Bench.Eval
+    Bench.Pattern
     Bench.Simplify
 
   ghc-options:      -O2 -with-rtsopts=-T
@@ -214,6 +215,7 @@ benchmark cassini-bench
     , cassini-prelude
     , effectful-core ^>=2.6.1.0
     , tasty-bench ^>=0.5.1
+    , containers ^>=0.7
     , text ^>=2.1.4
     , vector ^>=0.13.2
 
