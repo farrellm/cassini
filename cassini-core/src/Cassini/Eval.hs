@@ -432,12 +432,7 @@ applyRule name r e = case r.ruleBody of
 -- @Flat@ head a rule also applies to a run of the arguments
 -- ('matchRuleOrRun'). 'Nothing' for a 'Native' rule, which is never matched.
 instantiate :: (Kernel :> es) => Rule -> Expr -> Eff es (Maybe Expr)
-instantiate r e = case r.ruleBody of
-  Native _ -> pure Nothing
-  Immediate body -> firstApplying body
-  Delayed body -> firstApplying body
-  where
-    firstApplying body = observeFirst (matchRuleOrRun r.ruleLhs body e)
+instantiate r e = maybe (pure Nothing) (\p -> observeFirst (matchRuleOrRun p e)) r.rulePrepared
 
 -- | Run a builtin. It fires only if it changes the expression, so step 6's
 -- restoration and the trace stay honest.
