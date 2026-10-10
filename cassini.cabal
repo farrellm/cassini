@@ -89,6 +89,7 @@ library
     , cassini:cassini-prelude
     , containers ^>=0.7
     , effectful-core ^>=2.6.1.0
+    , effectful-th ^>=1.0.0.4
     , hashable ^>=1.5.1
     , logict ^>=0.8.2.0
     , megaparsec ^>=9.8.1
