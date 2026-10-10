@@ -1385,9 +1385,14 @@ attribute (`wolfram_ref_except.html`, `wolfram_ref_verbatim.html`).
 **The sequence objects, as built at 1b.** Each element of a compound pattern's argument list takes
 a run of the subject's arguments, and `argRange` says how long: a blank one, `__` one or more,
 `___` any, `Repeated[p, spec]` by its spec, and `Optional` none or what its pattern takes. The spec
-forms are `n` (at most `n`), `{n}` (exactly) and `{m, n}`, with `n` possibly `Infinity`. Under a
-`Flat` head a blank takes one or more too, and a run of more than one binds the head over the run:
-with `f` `Flat`, `f[x_, c]` matches `f[a, b, c]` with `x = f[a, b]`. A run of exactly one is tried
+forms are `n` (at most `n`), `{n}` (exactly) and `{m, n}`, with `n` possibly `Infinity` in either
+(WL calls `Repeated[_, Infinity]` and `Repeated[_, {1, Infinity}]` identical,
+`mathematica.stackexchange.com/a/7904`). Against one expression rather than an argument list, as in
+`MatchQ[a, __]` or each part `Cases` tries, a sequence object takes it as a run of one, and a name
+binds the expression itself, so `Replace[a, x__ :> x]` is `a`. WL's `MatchQ[3 + x, __]` is `True`
+(`mathematica.stackexchange.com/q/314446`); until the 1b review a sequence object alone matched
+nothing (regression case 0052). Under a `Flat` head a blank takes one or more too, and a run of
+more than one binds the head over the run: with `f` `Flat`, `f[x_, c]` matches `f[a, b, c]` with `x = f[a, b]`. A run of exactly one is tried
 as `f[a]` first and then `a`, or as `a` only if the head also has `OneIdentity`
 (`wolfram/OneIdentity/PropertiesAndRelations/2`, `wolfram/Flat/PropertiesAndRelations/5`). That is
 all `OneIdentity` does to a run. Its other use is the fallback for `Optional`: a compound pattern
