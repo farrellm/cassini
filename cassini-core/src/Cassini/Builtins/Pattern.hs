@@ -11,8 +11,9 @@
 -- the evaluator takes a builtin's result round again (§4.4), which is also
 -- what leaves a replacement inside @Hold@ unevaluated.
 --
--- Under a @Flat@ head, a rule for that head also applies to a run of its
--- arguments ('matchRuleOrRun', §4.5.3).
+-- In @ReplaceAll@ and @ReplaceRepeated@, a rule for a @Flat@ head also
+-- applies to a run of its arguments ('matchRuleOrRun', §4.5.3); in
+-- @Replace@, it must match the whole.
 module Cassini.Builtins.Pattern (definitions) where
 
 import Cassini.Attributes (Attribute (..))
@@ -84,6 +85,10 @@ withReplacements name rules f = case readReplacements rules of
       App (Sym l) _ | l == sList -> rules
       _ -> apply sList [rules]
 
+-- | The first rule that applies to the whole expression, by its first match.
+applyFirst :: (Kernel :> es) => [Replacement] -> Expr -> Eff es (Maybe Expr)
+applyFirst rs e = firstJustM (\(Replacement lhs rhs) -> observeFirst (matchRule lhs rhs e)) rs
+
 -- | The first rule that applies, by its first match: to the whole
 -- expression or, under a @Flat@ head, to a run of its arguments.
 applyWithRuns :: (Kernel :> es) => [Replacement] -> Expr -> Eff es (Maybe Expr)
@@ -112,11 +117,13 @@ replaceAllRule e = case args e of
 
 -- | @Replace[expr, rules, levelspec]@: by default the whole expression only;
 -- with a level specification, bottom up over the parts at those levels,
--- heads excluded.
+-- heads excluded. Unlike @ReplaceAll@, a rule must match a part whole, never
+-- a run of a @Flat@ head's arguments: @Replace[a + b + c, a + x_Symbol :> x]@
+-- stays (@wolfram/Flat/PossibleIssues/4@).
 replaceRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 replaceRule e = case args e of
-  [x, rules] -> withReplacements "Replace" rules (\rs -> fromMaybe x <$> applyWithRuns rs x)
-  [x, rules, spec] | Just ls <- levelSpec spec -> withReplacements "Replace" rules (\rs -> rebuildM (inLevel ls) (\y -> fromMaybe y <$> applyWithRuns rs y) x)
+  [x, rules] -> withReplacements "Replace" rules (\rs -> fromMaybe x <$> applyFirst rs x)
+  [x, rules, spec] | Just ls <- levelSpec spec -> withReplacements "Replace" rules (\rs -> rebuildM (inLevel ls) (\y -> fromMaybe y <$> applyFirst rs y) x)
   _ -> pure Nothing
 
 -- | @ReplaceRepeated[expr, rules]@: @ReplaceAll@ until nothing changes. The

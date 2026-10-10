@@ -39,7 +39,7 @@ import Cassini.Attributes (Attribute (OneIdentity), AttributeSet, isFlat, isOrde
 import Cassini.Core.Expr (Expr, apply, exprHead, mkApp, pattern App, pattern Sym)
 import Cassini.Core.Symbol (sBlankNullSequence, sCondition, sPattern, sTrue, symbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
-import Cassini.Pattern (MatchOps (..), PatternView (..), Subst, applySubst, argRange, builtinDefault, unholdPattern, viewPattern)
+import Cassini.Pattern (MatchOps (..), PatternView (..), Subst, applySubst, argRange, bindDefault, builtinDefault, unholdPattern, viewPattern)
 import Cassini.Pattern.Commutative (matchCommutative)
 import Cassini.Pattern.Sequence (ArgContext (..), matchArgs)
 import Cassini.Pattern.Syntactic (matchSyntactic)
@@ -123,7 +123,7 @@ matchWith cfg = go
         go q s sigma'
       _ -> empty
     defaulted f n i o sigma = case o of
-      POptional q d -> maybe empty (\v -> go q v sigma) (d <|> builtinDefault f i n)
+      POptional q d -> maybe empty (\v -> bindDefault q v sigma) (d <|> builtinDefault f i n)
       _ -> empty
     isOptional = \case
       POptional _ _ -> True

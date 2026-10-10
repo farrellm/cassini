@@ -20,6 +20,7 @@ module Cassini.Pattern
     bindingExpr,
     applySubst,
     bindName,
+    bindDefault,
     isTrue,
     argRange,
     prefersLong,
@@ -194,6 +195,14 @@ bindName x b sigma = case Map.lookup x sigma of
   Nothing -> pure (Map.insert x b sigma)
   Just b' -> sigma <$ guard (b' == b)
 
+-- | An absent @Optional@: its name, if it has one, takes the default, which
+-- is not matched against the pattern. @x:(\"I\" | \"II\"):\"none\"@ binds
+-- @x@ to @\"none\"@ (@wolfram/Optional/Scope/3@).
+bindDefault :: (MonadPlus m) => PatternView -> Expr -> Subst -> m Subst
+bindDefault q v = case q of
+  PNamed x _ -> bindName x (BOne v)
+  _ -> pure
+
 -- | Whether a side condition's value admits a match: only @True@ does
 -- (§4.13).
 isTrue :: Expr -> Bool
@@ -204,7 +213,7 @@ isTrue = \case
 -- | How many arguments an element of a pattern's argument list takes: at
 -- least, and at most ('Nothing' is unbounded). Under a @Flat@ head (the
 -- flag), a blank takes a run of one or more, as the head's arguments
--- grouped (§4.5.3). @Optional@ takes at most one, whatever it wraps.
+-- grouped (§4.5.3). @Optional@ takes none, or what its pattern takes.
 argRange :: Bool -> PatternView -> (Int, Maybe Int)
 argRange flat = go
   where
@@ -219,7 +228,7 @@ argRange flat = go
       PExcept _ (Just q) -> go q
       PAlternative (q : qs) -> foldl' widen (go q) (map go qs)
       PRepeated _ r -> r
-      POptional _ _ -> (0, Just 1)
+      POptional q _ -> (0, snd (go q))
       _ -> (1, Just 1)
     widen (a, b) (c, d) = (min a c, max <$> b <*> d)
 

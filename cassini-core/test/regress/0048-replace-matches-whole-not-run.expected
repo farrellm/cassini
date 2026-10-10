@@ -1,0 +1,3 @@
+Out[1]: Plus[a, b, c]
+Out[2]: Plus[a, b, c, d]
+Out[3]: Plus[b, c, x]

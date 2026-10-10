@@ -1,0 +1,6 @@
+(* Optional takes nothing or what its pattern takes: a sequence, or under Flat a run; absent, its name takes the default unmatched (wolfram/Optional/Scope/2, /3; wolfram/Plus/PropertiesAndRelations/7). *)
+SetDelayed[f[Optional[Pattern[x, BlankSequence[]], 1]], List[x]]
+List[f[], f[2], f[2, 3]]
+SetDelayed[t[Pattern[x, Blank[]], Optional[Pattern[type, Alternatives["I", "II"]], "no type specified"]], List[x, type]]
+List[t[1], t[1, "I"]]
+ReplaceAll[List[a, Plus[a, b], Plus[a, b, c]], Rule[Plus[a, Optional[Pattern[x, Blank[]]]], g[x]]]

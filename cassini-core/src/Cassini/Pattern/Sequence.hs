@@ -31,6 +31,7 @@ import Cassini.Pattern
     Subst,
     applySubst,
     argRange,
+    bindDefault,
     bindName,
     builtinDefault,
     isTrue,
@@ -104,7 +105,7 @@ matchRun ops ctx pos arity = run
         PRepeated q _ -> (,BSeq xs) <$> V.foldM (flip (ops.recur q)) sigma xs
         POptional q d
           | k == 0 -> case d <|> defaultHere of
-              Just v -> (,BOne v) <$> run' q v sigma
+              Just v -> (,BOne v) <$> bindDefault q v sigma
               Nothing -> empty
           | otherwise -> run q xs sigma
         PExcept c (Just q) | k /= 1 -> do
@@ -114,8 +115,6 @@ matchRun ops ctx pos arity = run
         _ -> case V.toList xs of
           [a] -> (,BOne a) <$> ops.recur p a sigma
           _ -> empty
-    -- A default stands for one argument.
-    run' q v = fmap fst . run q (V.singleton v)
     defaultHere = case ctx.acHead of
       Sym f -> builtinDefault f pos arity
       _ -> Nothing

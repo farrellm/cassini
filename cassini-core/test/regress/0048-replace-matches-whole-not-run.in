@@ -1,0 +1,4 @@
+(* Replace matches a Flat head's expression whole; only ReplaceAll applies a rule to a run of its arguments (wolfram/Flat/PossibleIssues/4, wolfram/Plus/PropertiesAndRelations/7). *)
+Replace[Plus[a, b, c], RuleDelayed[Plus[a, Pattern[x, Blank[Symbol]]], x]]
+Replace[Plus[a, b, c, d], Rule[Plus[a, d], x]]
+ReplaceAll[Plus[a, b, c, d], Rule[Plus[a, d], x]]
