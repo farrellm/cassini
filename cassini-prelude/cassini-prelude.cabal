@@ -1,0 +1,40 @@
+cabal-version:      3.14
+name:               cassini-prelude
+version:            0.1.0.0
+synopsis:           The prelude every cassini package builds against
+description:
+  relude minus the names that collide with effectful or with cassini's
+  vocabulary (DESIGN.md §2.3).
+
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Matthew Farrell
+maintainer:         farrellm@alum.mit.edu
+category:           Math
+build-type:         Simple
+tested-with:        GHC ==9.12.4
+
+-- DESIGN.md §2.4. CI adds -Werror from the command line. The two common stanzas
+-- are copied into every package; scripts/check-common-stanzas.sh keeps them equal.
+common warnings
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wmissing-export-lists -Wpartial-fields
+    -Wredundant-constraints
+
+common extensions
+  default-extensions:
+    OverloadedRecordDot
+    OverloadedStrings
+
+-- DESIGN.md §2.3: relude minus the names that collide with effectful or with
+-- this project's vocabulary.
+library
+  import:           warnings, extensions
+  exposed-modules:  Cassini.Prelude
+  build-depends:    relude ^>=1.2.2
+  mixins:
+    relude (Relude as Prelude),
+    relude
+
+  default-language: GHC2024
