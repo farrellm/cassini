@@ -3619,6 +3619,35 @@ with six candidate mappings and exactly one match — and §4.5.4's `{g[x_], x_,
 - Corpus: the Wolfram pages of `Builtins.Pattern` and the pattern objects (`Blank` and its
   sequences, `Condition`, `Alternatives`, `Except`, `Verbatim`, `OneIdentity`) triaged as in 1a.
 
+**Done 2026-10-10** (PR #14). Krebber's four examples are unit tests citing the thesis (§3.3,
+§3.3.1 twice, §3.3.2), with §4.5.4's: the six-mapping example finds exactly one match, and
+`{g[x_], x_, y_}` finds `x = 2, y = g[1]`. The §7.3 laws run over sequence blanks and heads that are
+`Orderless`, `Flat`, both or neither, with the new rule-index row.
+
+Corpus and oracle at completion:
+
+- **Corpus:** 744 of the 111,806 cases are in scope, up from 624. 658 pass and are the ratchet,
+  123 of them new; 25 are in `divergences.txt`; 61 fail on pages outside this milestone. Every
+  in-scope case on the pages of `Builtins.Pattern` and the pattern objects passes or is listed:
+  `RepeatedNull[p, {0, Infinity}]`'s undocumented exception (§4.5.1) and a D27 numbering defect.
+  `wolfram/Flat/PropertiesAndRelations/2`, pending §4.5.3 since 1a, passes. The triage fixed
+  `Optional` (runs, and binding an absent default unmatched) and `Replace`'s whole-expression
+  match, regression cases 0047–0048.
+- **Oracle:** 240 of 299 inputs agree with Mathics3 10.0.1; 40 are listed and 19 inconclusive.
+  Every 1b input that disagrees is listed with WL's documented answer from the corpus or from
+  Stack Exchange, except equal `Orderless` subjects, which are §4.5.4's choice.
+
+The departures it found are recorded in their sections:
+
+- `MatchOps.attributesM`, `matchRule` and `matchRuleOrRun`, and sequence bindings spliced on
+  substitution (§4.5.2, regression case 0049, found by the end-to-end workload);
+- the sequence objects' ranges, `Flat` runs and `OneIdentity`, and `Optional`'s defaults (§4.5.1);
+- WL's enumeration order, and `Flat` rules applying to runs in `ReplaceAll` and definitions but not
+  `Replace` (§4.5.3);
+- equal subjects as one mapping (§4.5.4);
+- the `RuleIndex`, built because the crossover is below one subject (§4.5.5);
+- §8.3's results, and D11 measured and not fired.
+
 #### 1c — calculus in the kernel
 
 Pure-function application (§4.13's `Function`), `D` (§4.9), and the rest of §4.10's Stage 1 syntax:
