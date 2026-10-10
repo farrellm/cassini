@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -- | The 'Kernel' effect, the kernel state, and the two interpreters
@@ -55,29 +56,38 @@ import Cassini.Rules (BuiltinId (..), SymbolInfo, ValueKind (OwnValue), emptyInf
 import Data.IntMap.Strict qualified as IntMap
 import Data.Map.Strict qualified as Map
 import Data.Sequence ((|>))
-import Effectful (Dispatch (Dynamic), DispatchOf, Eff, Effect, IOE, (:>))
-import Effectful.Dispatch.Dynamic (EffectHandler, localSeqUnlift, reinterpret, send)
+import Effectful (Eff, Effect, IOE, (:>))
+import Effectful.Dispatch.Dynamic (EffectHandler, localSeqUnlift, reinterpret)
 import Effectful.Error.Static (Error, runErrorNoCallStack, throwError_, tryError)
 import Effectful.Reader.Static (Reader, ask, local, runReader)
 import Effectful.State.Static.Local (State, evalState, get, modify, put, runState)
+import Effectful.TH (makeEffect)
 
 -- | The kernel's operations.
 data Kernel :: Effect where
   -- | A symbol's attributes and rules; 'emptyInfo' for an unknown symbol.
   LookupSymbol :: Symbol -> Kernel m SymbolInfo
+  -- | Change a symbol's attributes or rules.
   ModifySymbol :: Symbol -> (SymbolInfo -> SymbolInfo) -> Kernel m ()
+  -- | Emit @symbol::tag@ with its arguments.
   EmitMessage :: Symbol -> MessageTag -> [Expr] -> Kernel m ()
-  -- | The knot: the interpreter runs the evaluation sequence, counting depth.
+  -- | Evaluate a subterm. This is the knot: the interpreter runs the
+  -- evaluation sequence, counting depth. All subterm evaluation goes
+  -- through here, never straight into the sequence, so the depth count
+  -- cannot be bypassed.
   Evaluate :: Expr -> Kernel m Expr
   -- | Remaining fuel in this fixed point.
   Iterations :: Kernel m Int
+  -- | Spend one iteration.
   SpendIteration :: Kernel m ()
   -- | Run with a fresh budget, then restore the caller's, however the inner
   -- computation exits.
   WithFuel :: Int -> m a -> Kernel m a
-  -- | @Throw@, @Break@, @Continue@, @Return@, @Abort[]@ (§4.13).
+  -- | Exit to the nearest handler: @Throw@, @Break@, @Continue@, @Return@,
+  -- @Abort[]@ (§4.13).
   Unwind :: Unwind -> Kernel m a
-  -- | Observe an unwind, to catch it or to restore state and rethrow.
+  -- | Run, observing any unwind, to catch it or to restore state and
+  -- rethrow.
   CatchUnwind :: m a -> Kernel m (Either Unwind a)
   -- | Resolve a 'Cassini.Rules.Native' rule's id. 'Nothing' is a
   -- construction bug in the registry, never a user error.
@@ -86,8 +96,6 @@ data Kernel :: Effect where
   TraceStep :: Text -> Expr -> Kernel m ()
   -- | The knobs fixed during evaluation.
   KernelConfig :: Kernel m EvalConfig
-
-type instance DispatchOf Kernel = Dynamic
 
 -- | The evaluation sequence, supplied by "Cassini.Eval".
 newtype Sequence = Sequence (forall es. (Kernel :> es) => Expr -> Eff es Expr)
@@ -153,54 +161,9 @@ data EvalConfig = EvalConfig
 defaultConfig :: EvalConfig
 defaultConfig = EvalConfig {recursionLimit = 1024, iterationLimit = 4096, trace = False}
 
--- | A symbol's attributes and rules.
-lookupSymbol :: (Kernel :> es) => Symbol -> Eff es SymbolInfo
-lookupSymbol = send . LookupSymbol
-
--- | Change a symbol's attributes or rules.
-modifySymbol :: (Kernel :> es) => Symbol -> (SymbolInfo -> SymbolInfo) -> Eff es ()
-modifySymbol s = send . ModifySymbol s
-
--- | Emit @symbol::tag@ with its arguments.
-emitMessage :: (Kernel :> es) => Symbol -> MessageTag -> [Expr] -> Eff es ()
-emitMessage s t = send . EmitMessage s t
-
--- | Evaluate a subterm. All subterm evaluation goes through here, never
--- straight into the sequence, so the depth count cannot be bypassed.
-evaluate :: (Kernel :> es) => Expr -> Eff es Expr
-evaluate = send . Evaluate
-
--- | Remaining fuel in this fixed point.
-iterations :: (Kernel :> es) => Eff es Int
-iterations = send Iterations
-
--- | Spend one iteration.
-spendIteration :: (Kernel :> es) => Eff es ()
-spendIteration = send SpendIteration
-
--- | Run with a fresh budget of iterations, restoring the caller's after.
-withFuel :: (Kernel :> es) => Int -> Eff es a -> Eff es a
-withFuel n = send . WithFuel n
-
--- | Exit to the nearest handler.
-unwind :: (Kernel :> es) => Unwind -> Eff es a
-unwind = send . Unwind
-
--- | Run, observing any unwind.
-catchUnwind :: (Kernel :> es) => Eff es a -> Eff es (Either Unwind a)
-catchUnwind = send . CatchUnwind
-
--- | Resolve a builtin id.
-lookupBuiltin :: (Kernel :> es) => BuiltinId -> Eff es (Maybe BuiltinFn)
-lookupBuiltin = send . LookupBuiltin
-
--- | Record a step of the evaluation sequence, if tracing is on.
-traceStep :: (Kernel :> es) => Text -> Expr -> Eff es ()
-traceStep name = send . TraceStep name
-
--- | The configuration.
-kernelConfig :: (Kernel :> es) => Eff es EvalConfig
-kernelConfig = send KernelConfig
+-- The operations, one per constructor, each documented by its constructor's
+-- comment.
+makeEffect ''Kernel
 
 -- The interpreters.
 
