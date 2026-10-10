@@ -36,6 +36,7 @@ import Cassini.Pattern
     Subst,
     argRange,
     prefersLong,
+    requiredHead,
   )
 import Cassini.Pattern.Sequence (ArgContext (..), matchRun)
 import Data.List (partition)
@@ -148,10 +149,9 @@ matchCommutative prune ops ctx ps ss sigma0 = do
       BOne v -> [v]
 
     -- Step 3 groups by head: a compound pattern with a literal head is tried
-    -- only against subjects with that head.
-    headFits p s = case core p of
-      PCompound (PLiteral h) _ -> exprHead s == h
-      _ -> True
+    -- only against subjects with that head, unless an Optional argument lets
+    -- it match others ('requiredHead').
+    headFits p s = maybe True (== exprHead s) (requiredHead (core p))
 
 -- | A pattern seen through its side conditions and @HoldPattern@.
 core :: PatternView -> PatternView

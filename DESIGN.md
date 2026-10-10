@@ -1574,7 +1574,11 @@ construction cost must be amortized. A large rule table alone is not the signal.
 **Measured at 1b (2026-10-10; GHC 9.12.4, hash interning, one developer machine), and built.** The
 prototype was the cheapest index that discriminates at all: each rule keyed on the head of its
 left-hand side's first argument, with rules whose first argument is a blank, a sequence, an
-alternative or a condition kept as wildcards, and candidates merged back into table order. Against
+alternative or a condition kept as wildcards, and candidates merged back into table order. A
+compound first argument with an `Optional` argument is a wildcard too: under a `OneIdentity` head,
+`n_. x_` matches what `x_` matches, whatever its head, so `g[n_. x_]` must be a candidate for
+`g[y]`. The commutative matcher's step 3 groups by head under the same exception; both ask
+`requiredHead`. Against
 fifty rules `f[gi[x_], y_]` for one head, it took 2.0 µs and 8.6 KB per subject, where trying the
 rules in order took 38 µs and 122 KB. The ratio held from 1 subject to 10000. Building it costs less
 than one failed match, so **there is no break-even to wait for: it crosses over below one
