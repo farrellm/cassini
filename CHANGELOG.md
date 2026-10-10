@@ -4,6 +4,19 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Milestone 1b, the matcher (DESIGN.md §4.5, §10):
+  * Sequence matching (`Cassini.Pattern.Sequence`): `__`, `___`, `Repeated` with its counts,
+    `Optional` with explicit and built-in defaults, and blanks under `Flat` heads, shortest run
+    first.
+  * Commutative matching (`Cassini.Pattern.Commutative`): Krebber's five steps under `Orderless`
+    heads, each distinct mapping once.
+  * `match` dispatches among the matchers by the subject head's attributes; `OneIdentity` with
+    `Optional` defaults; a `Flat` head's rules apply to a run of its arguments, in definitions and
+    in the `Replace` family (`matchRuleOrRun`).
+  * `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated` and `ReplaceList`, with their
+    operator forms (`Cassini.Builtins.Pattern`).
+  * The matcher laws over sequence blanks and `Orderless`/`Flat` heads, Krebber's examples as unit
+    tests, regression cases 0042–0046 and the oracle's `patterns` cases.
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;

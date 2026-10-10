@@ -15,9 +15,9 @@
 module Cassini.Builtins.Structural (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Definition, PartSpec (..), args, define, down, message, partSpec, sFalseE, sTrueE, sub)
-import Cassini.Core.Expr (Expr, apply, exprArgs, exprArity, exprHead, mkApp, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sList, systemSymbol)
+import Cassini.Builtins.Define (Bound (..), Definition, PartSpec (..), args, define, down, inLevel, levelSpec, message, partSpec, sFalseE, sTrueE, sub)
+import Cassini.Core.Expr (Expr, apply, exprArgs, exprArity, exprHead, mkApp, pattern App, pattern Int_)
+import Cassini.Core.Symbol (sList)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Pattern (isPatternFree, viewPattern)
 import Cassini.Pattern.Match (match, observeFirst)
@@ -121,42 +121,6 @@ levelRule e = case args e of
       let below = map (collect keep (p + 1)) (V.toList (exprArgs x))
           d = 1 + foldl' (\acc (_, k) -> max acc k) 0 below
        in (concatMap fst below ++ [x | keep p d], d)
-
-sAll :: Symbol
-sAll = systemSymbol "All"
-
--- | One bound of a level specification.
-data Bound = Level !Integer | Infinite
-
--- | @n@ is @{1, n}@, @{n}@ is @{n, n}@, @Infinity@ is @{1, Infinity}@ and
--- @All@ is @{0, Infinity}@.
-levelSpec :: Expr -> Maybe (Bound, Bound)
-levelSpec spec = case spec of
-  App (Sym l) ns | l == sList -> case V.toList ns of
-    [n] -> (\b -> (b, b)) <$> bound n
-    [m, n] -> (,) <$> bound m <*> bound n
-    _ -> Nothing
-  Sym a | a == sAll -> Just (Level 0, Infinite)
-  _ -> (Level 1,) <$> bound spec
-  where
-    bound = \case
-      Int_ n -> Just (Level n)
-      App (Sym d) xs | d == sDirectedInfinity, [Int_ 1] <- V.toList xs -> Just Infinite
-      _ -> Nothing
-
--- | Whether a part at level @p@ with depth @d@ is in the specification: a
--- non-negative bound compares the level, a negative bound @-k@ the depth.
-inLevel :: (Bound, Bound) -> Integer -> Integer -> Bool
-inLevel (lo, hi) p d = lower lo && upper hi
-  where
-    lower = \case
-      Level m | m >= 0 -> p >= m
-      Level m -> negate d >= m
-      Infinite -> False
-    upper = \case
-      Level n | n >= 0 -> p <= n
-      Level n -> negate d <= n
-      Infinite -> True
 
 -- | Rebuild bottom up, applying @f@ to every part the predicate selects by
 -- its level and its depth (WL's @Depth@: 1 for an atom, one more than the

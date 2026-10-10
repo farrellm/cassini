@@ -58,3 +58,23 @@ attributes 13 Mathics3
 0040-part-bad-spec 2 Mathics3
 0040-part-bad-spec 3 Mathics3
 0040-part-bad-spec 4 Mathics3
+# Mathics3: under Flat alone, f[x_] binds f[a] there only after a; WL tries
+# f[a] first (wolfram/OneIdentity/PropertiesAndRelations/2), and a after it
+# (wolfram/Flat/PropertiesAndRelations/5).
+0043-flat-blank-binds-grouped-run 5 Mathics3
+# Mathics3: ReplaceAll does not apply a Flat rule to a run of the arguments;
+# WL does (wolfram/Flat/Scope/2).
+0045-flat-rule-applies-to-run 2 Mathics3
+0045-flat-rule-applies-to-run 3 Mathics3
+# Mathics3: an Orderless match enumerates every permutation, within sequences
+# too; WL enumerates sub-multisets in subject order
+# (mathematica.stackexchange.com/q/187537, with WL's output).
+0046-orderless-each-mapping-once 2 Mathics3
+0046-orderless-each-mapping-once 5 Mathics3
+patterns 17 Mathics3
+# §4.5.4: equal subjects give one mapping, as Krebber's algorithm enumerates
+# them (krebber2017_ac_matching_thesis.pdf §3.3, §3.3.2). Mathics3 repeats
+# them, and finds no distribution at all for input 4; WL's answer for equal
+# subjects is not documented in the corpus or on Stack Exchange.
+0046-orderless-each-mapping-once 3 §4.5.4
+0046-orderless-each-mapping-once 4 §4.5.4

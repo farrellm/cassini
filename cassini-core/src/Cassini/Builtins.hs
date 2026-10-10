@@ -21,6 +21,7 @@ import Cassini.Attributes (Attribute (..), attributeName, attributeSet)
 import Cassini.Builtins.Arithmetic qualified as Arithmetic
 import Cassini.Builtins.Assign qualified as Assign
 import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down)
+import Cassini.Builtins.Pattern qualified as Pattern
 import Cassini.Builtins.Structural qualified as Structural
 import Cassini.Core.Expr (apply, pattern Sym)
 import Cassini.Core.Symbol (sBlankNullSequence, sSequence, symName)
@@ -37,7 +38,7 @@ standardState = install definitions emptyState
 
 -- | Every builtin definition, in installation order.
 definitions :: [Definition]
-definitions = kernel <> attributeSymbols <> Arithmetic.definitions <> Structural.definitions <> Assign.definitions
+definitions = kernel <> attributeSymbols <> Arithmetic.definitions <> Structural.definitions <> Pattern.definitions <> Assign.definitions
 
 -- | The attribute names as @System`@ symbols, so that the @Flat@ a user
 -- writes is the @Flat@ that @Attributes@ returns.

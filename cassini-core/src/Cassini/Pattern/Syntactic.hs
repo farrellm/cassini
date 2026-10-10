@@ -4,17 +4,16 @@
 -- names, conditions, tests, alternatives, @Except@, @HoldPattern@,
 -- @Verbatim@ and literals. Every later matcher calls back into it.
 --
--- Sequence patterns (@__@, @___@, @Repeated@, @Optional@) match nothing here;
--- distributing arguments among them is "Cassini.Pattern.Sequence"'s job, and
--- arrives with milestone 1b, as does matching under @Orderless@ heads. A
--- compound pattern matches only a subject with the same number of arguments,
--- position by position.
+-- Sequence patterns (@__@, @___@, @Repeated@, @Optional@) match nothing
+-- here: they take runs of arguments, which only an argument list has, and
+-- "Cassini.Pattern.Sequence" distributes them. A compound pattern here
+-- matches only a subject with the same number of arguments, position by
+-- position; "Cassini.Pattern.Match" sends it here only when no argument
+-- pattern takes a run and the head has neither @Flat@ nor @Orderless@.
 module Cassini.Pattern.Syntactic (matchSyntactic) where
 
-import Cassini.Core.Expr (Expr, exprHead, pattern App, pattern Sym)
-import Cassini.Core.Symbol (sTrue)
-import Cassini.Pattern (Binding (..), MatchOps (..), PatternView (..), Subst, applySubst)
-import Data.Map.Strict qualified as Map
+import Cassini.Core.Expr (Expr, exprHead, pattern App)
+import Cassini.Pattern (Binding (..), MatchOps (..), PatternView (..), Subst, applySubst, bindName, isTrue)
 import Data.Vector qualified as V
 
 -- | Match one pattern node against a subject, extending the substitution.
@@ -23,7 +22,7 @@ import Data.Vector qualified as V
 matchSyntactic :: (MonadPlus m) => MatchOps m -> PatternView -> Expr -> Subst -> m Subst
 matchSyntactic ops p s sigma = case p of
   PBlank c -> sigma <$ guard (headMatches c)
-  PNamed x q -> ops.recur q s sigma >>= bind x
+  PNamed x q -> ops.recur q s sigma >>= bindName x (BOne s)
   -- Only True admits a match (§4.13); the test sees the bindings so far.
   PCondition q test -> do
     sigma' <- ops.recur q s sigma
@@ -53,14 +52,3 @@ matchSyntactic ops p s sigma = case p of
   POptional _ _ -> empty
   where
     headMatches = maybe True (== exprHead s)
-    -- A name already bound must be bound to this subject: one name means one
-    -- value across a pattern.
-    bind x sigma' = case Map.lookup x sigma' of
-      Nothing -> pure (Map.insert x (BOne s) sigma')
-      Just (BOne t) -> sigma' <$ guard (t == s)
-      Just (BSeq _) -> empty
-
-isTrue :: Expr -> Bool
-isTrue = \case
-  Sym t -> t == sTrue
-  _ -> False

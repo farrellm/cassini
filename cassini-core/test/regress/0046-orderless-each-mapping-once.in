@@ -1,0 +1,6 @@
+(* An Orderless match enumerates each distinct mapping once, not once per permutation of equal subjects (krebber2017_ac_matching_thesis.pdf §3.3, §3.3.2), by size and then in subject order; the last input is WL's own answer in mathematica.stackexchange.com/q/187537. *)
+SetAttributes[h, Orderless]
+ReplaceList[h[a, b, c], RuleDelayed[h[Pattern[x, BlankSequence[]], Pattern[y, BlankSequence[]]], List[List[x], List[y]]]]
+ReplaceList[h[a, a], RuleDelayed[h[Pattern[x, Blank[]], Pattern[y, Blank[]]], List[x, y]]]
+ReplaceList[h[a, b, b, c, c, c], RuleDelayed[h[Pattern[x, BlankNullSequence[]], Pattern[y, BlankSequence[]], Pattern[y, BlankSequence[]]], List[List[x], List[y]]]]
+ReplaceList[Hold[Plus[b, a]], Rule[Hold[Plus[Pattern[x, BlankNullSequence[]], Pattern[y, BlankNullSequence[]]]], List[List[x], List[y]]]]
