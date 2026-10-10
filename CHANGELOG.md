@@ -4,6 +4,34 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Milestone 1b, the matcher (DESIGN.md §4.5, §10):
+  * Sequence matching (`Cassini.Pattern.Sequence`): `__`, `___`, `Repeated` with its counts,
+    `Optional` with explicit and built-in defaults, and blanks under `Flat` heads, shortest run
+    first.
+  * Commutative matching (`Cassini.Pattern.Commutative`): Krebber's five steps under `Orderless`
+    heads, each distinct mapping once.
+  * `match` dispatches among the matchers by the subject head's attributes; `OneIdentity` with
+    `Optional` defaults; a `Flat` head's rules apply to a run of its arguments, in definitions and
+    in the `Replace` family (`matchRuleOrRun`).
+  * `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated` and `ReplaceList`, with their
+    operator forms (`Cassini.Builtins.Pattern`).
+  * The matcher laws over sequence blanks and `Orderless`/`Flat` heads, Krebber's examples as unit
+    tests, regression cases 0042–0046 and the oracle's `patterns` cases.
+  * Fixes from the corpus triage, each with a regression case (0047–0048):
+    * `Optional` takes what its pattern takes, a sequence or a `Flat` run, and an absent one binds
+      its default without matching it;
+    * `Replace` matches a `Flat` head's expression whole; only `ReplaceAll` applies a rule to a run.
+  * The `RuleIndex` (`Cassini.Pattern.Net`), keyed on the first argument's head, built because
+    §8.3's net sweep found no break-even to wait for; `Cassini.Rules` consults it for down-values.
+  * Benchmarks of the matcher (`bench/Bench/Pattern.hs`, §8.3), and the end-to-end workload extended
+    with pattern replacement; both baselines regenerated. D11 measured, not fired.
+  * Fix: a sequence variable's binding splices into the argument list it is substituted into, as
+    WL's does, so `ReplaceRepeated` keeps matching an unevaluated result and `Hold` sees the
+    spliced arguments (regression case 0049).
+  * Fix: a compound pattern with an `Optional` argument, such as `n_. x_`, matches a subject
+    without its head, as `OneIdentity` allows, as a definition's first argument and among an
+    `Orderless` head's arguments: neither the rule index nor the commutative matcher's step 3
+    excludes it by head any more (regression case 0050).
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;

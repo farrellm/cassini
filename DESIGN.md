@@ -195,7 +195,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Pattern.Syntactic` | Structural matching, no attributes. |
 | `Cassini.Pattern.Sequence` | `BlankSequence`/`BlankNullSequence` distribution over a flat argument list. |
 | `Cassini.Pattern.Commutative` | The five-phase `Orderless` matcher (§4.5.4). |
-| `Cassini.Pattern.Net` | `RuleIndex`: candidate retrieval for rule lookup (§4.5.5). Never imports `Pattern.Match`. |
+| `Cassini.Pattern.Net` | `RuleIndex`: candidate retrieval for rule lookup, keyed on the first argument's head (§4.5.5). Never imports `Pattern.Match`. |
 | **L3** | |
 | `Cassini.Rules` | `Rule`, `RuleSet`, `SymbolInfo`, the four rule tables and the ladder. |
 | `Cassini.Eval.Kernel` | The `Kernel` effect, `KernelState`, and the two interpreters, parameterized by the evaluation sequence (§4.3). |
@@ -212,7 +212,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Minus`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL), and the infinities as symbols: `ComplexInfinity` evaluates to `DirectedInfinity[]` and `Infinity` to `DirectedInfinity[1]`, as WL's outputs show. Comparison is `Builtins.Logic`'s. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
 | `Cassini.Builtins.List` | List construction and manipulation. |
-| `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `RuleDelayed`. |
+| `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `ReplaceList`. `RuleDelayed` has no rules, only attributes, so `Cassini.Builtins` defines it beside `Rule`; `ReplaceList` is here because it is the language's way to see every match (§4.5.2). |
 | `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `TagSet`, `Unset`, `Attributes`, `Protect`. |
 | `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
 | `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
@@ -1382,6 +1382,25 @@ requires "that expr be matched exactly as it appears, with no substitutions for 
 "does not maintain expr in an unevaluated form" — so, unlike `HoldPattern`, it has no hold
 attribute (`wolfram_ref_except.html`, `wolfram_ref_verbatim.html`).
 
+**The sequence objects, as built at 1b.** Each element of a compound pattern's argument list takes
+a run of the subject's arguments, and `argRange` says how long: a blank one, `__` one or more,
+`___` any, `Repeated[p, spec]` by its spec, and `Optional` none or what its pattern takes. The spec
+forms are `n` (at most `n`), `{n}` (exactly) and `{m, n}`, with `n` possibly `Infinity`. Under a
+`Flat` head a blank takes one or more too, and a run of more than one binds the head over the run:
+with `f` `Flat`, `f[x_, c]` matches `f[a, b, c]` with `x = f[a, b]`. A run of exactly one is tried
+as `f[a]` first and then `a`, or as `a` only if the head also has `OneIdentity`
+(`wolfram/OneIdentity/PropertiesAndRelations/2`, `wolfram/Flat/PropertiesAndRelations/5`). That is
+all `OneIdentity` does to a run. Its other use is the fallback for `Optional`: a compound pattern
+whose head has `OneIdentity`, and all of whose arguments but one are `Optional`, matches a subject
+that is not an application of that head, as its one required argument does
+(`MatchQ[x, n_. x_]`; `wolfram/OneIdentity/BasicExamples/1`).
+
+`Optional[p, d]` takes `d` when no argument is left for it; `Optional[p]` takes the head's built-in
+default, which exists only for `Plus` (0), `Times` (1) and `Power`'s exponent (1). User defaults
+(`Default[f] = v`) are not implemented. An absent `Optional` binds its name to the default without
+matching the default against the pattern, so `t[x_, type:("I" | "II"):"none"]` matches `t[1]`
+(`wolfram/Optional/Scope/3`). `Longest` and `Shortest` are not implemented.
+
 #### 4.5.2 The matcher monad, and why nondeterminism cannot be an effect
 
 **No `effectful` handler can enumerate matches.** `Eff es` is `Env es -> IO a`, so a handler cannot
@@ -1424,9 +1443,10 @@ matchAll p s = observeAll (match (viewPattern p) s mempty)
 
 ```haskell
 data MatchOps m = MatchOps
-  { recur    :: PatternView -> Expr -> Subst -> m Subst  -- ^ hand a subpattern back
-  , evalM    :: Expr -> m Expr                           -- ^ side conditions
-  , matchesM :: PatternView -> Expr -> Subst -> m Bool   -- ^ for Except; commits to nothing
+  { recur       :: PatternView -> Expr -> Subst -> m Subst  -- ^ hand a subpattern back
+  , evalM       :: Expr -> m Expr                           -- ^ side conditions
+  , matchesM    :: PatternView -> Expr -> Subst -> m Bool   -- ^ for Except; commits to nothing
+  , attributesM :: Expr -> m AttributeSet                   -- ^ the subject head's (1b)
   }
 
 matchSyntactic :: (MonadPlus m) => MatchOps m -> PatternView -> Expr -> Subst -> m Subst
@@ -1437,7 +1457,25 @@ matchSyntactic :: (MonadPlus m) => MatchOps m -> PatternView -> Expr -> Subst ->
 dispatching to them would be an import cycle. A boot file for the cycle would need to name
 `LogicT` outside the one module rule 6 allows. The open recursion also makes containment stronger
 than the newtype alone: no matcher can name `logict`'s types, because no matcher sees the monad.
-1b's `Sequence` and `Commutative` take the same record, and `match` dispatches among them.
+1b's `Sequence` and `Commutative` take the same record, and `match` dispatches among them: a
+compound pattern's head is matched first, then its arguments go to `Commutative` if the subject's
+head is `Orderless`, to `Sequence` if it is `Flat` or any argument pattern takes a run, and
+position by position otherwise. **`attributesM` was added at 1b** because that dispatch, and
+`Flat`'s runs, depend on the subject head's attributes, which only the kernel knows.
+
+**Rule application is the matcher's too.** `matchRule lhs body e` is a rule's instantiated
+right-hand side for each match under which it applies, `lhs :> rhs /; test` trying the next match
+where the test fails. It moved from `Cassini.Eval` at 1b so that the `Replace` family uses the
+same code as the rule tables. `matchRuleOrRun` adds `Flat`'s runs (§4.5.3). `matchWith` takes a
+`MatchConfig`, whose one knob turns off §4.5.4's steps 1–2 for §8.3's measurement; evaluation never
+sets it.
+
+**A sequence binding splices where it is substituted.** `applySubst` puts a `__` variable's run
+into the argument list it lands in, not `Sequence[…]` for evaluation to splice later, and keeps
+`Sequence[…]` only where the variable is the whole replacement, as WL does
+(`mathematica.stackexchange.com/q/1929` and its answer a/1933, with WL's outputs). Until 1b's
+end-to-end workload found it, `ReplaceRepeated`, which does not evaluate between rounds, stopped
+matching after one round (regression case 0049).
 
 **Those three functions and five instances are the whole surface a replacement backend must
 reproduce** (D11, §9.2). Laziness is part of it: `matchOne` stops at the first success rather than
@@ -1462,6 +1500,25 @@ Four matchers, one interface, added in order:
 3. **`Cassini.Pattern.Commutative`** — `Orderless` heads (§4.5.4).
 4. **`Cassini.Pattern.Net`** — many-to-one discrimination net, built only if milestone 1b's
    measured crossover says so (§4.5.5, §10).
+
+**Order, as built at 1b.** Matches are enumerated in WL's order, because `Replace` takes the first
+and `ReplaceList` shows them all. In an argument list, earlier patterns take shorter runs first,
+except `Optional`, which takes its argument when there is one. Under `Orderless`, a variable takes
+subjects in subject order, and a run takes sub-multisets by size and then lexicographically by
+position, each in subject order. Both orders are WL's: `wolfram/Orderless/PossibleIssues/1`,
+`wolfram/Flat/PossibleIssues/1`, and `ReplaceList[Hold[b + a], Hold[x___ + y___] -> {{x}, {y}}]`
+quoted with WL's output in `mathematica.stackexchange.com/q/187537`.
+
+**`Flat` heads' rules apply to runs.** With `f` `Flat`, `f[a, b, c, d, e] /. f[b, c, d] -> x` is
+`f[a, x, e]`, and with `Orderless` too the run may be any sub-multiset (`wolfram/Flat/Scope/2`,
+`/3`). This is rule application, not matching: `MatchQ` and `Replace` see the whole expression
+(`wolfram/Flat/PossibleIssues/4`). `matchRuleOrRun` matches `f[ps] -> r` as
+`f[ps, post__] -> f[r, post]` and then `f[pre__, ps, post___] -> f[pre, r, post]` after the whole
+has failed (`f[ps, rest__]` under `Orderless`), with variables in a private context. The run is
+never the whole: with nothing around it, it would only repeat the failed match of the whole, on
+every rule the evaluator tries on a `Flat` head. `ReplaceAll`, `ReplaceRepeated` and the
+evaluator's rule tables use it. For definitions the corpus is silent, and Mathics3 applies them to
+a leading run only. Runs at any position were chosen to agree with `ReplaceAll`.
 
 #### 4.5.4 Commutative matching: the five phases
 
@@ -1489,6 +1546,13 @@ leaves later phases nothing to backtrack into. With `P = {g[x_], x_, y_}` agains
 repeated phase 2 finds no `1` among `{g[2], 2}`, and the match fails — although `x = 2, y = g[1]`
 matches.
 
+**Equal subjects are one mapping.** Of several equal subjects only the first is tried for a
+pattern, and a run is chosen by how many of each value it takes, so `h[a, a]` against `h[x_, y_]`
+is one match, not two. This is Krebber's algorithm (§3.3: brute force "will result in enumerating
+equivalent matches multiple times"; §3.3.2 enumerates distributions "without duplicate results"),
+and his examples are 1b's criterion. WL's answer for equal subjects is documented neither in the
+corpus nor on Stack Exchange, and Mathics3 repeats them, so the oracle lists it.
+
 Complexity: general AC matching is NP-complete, and linear AC matching (no repeated variable) is
 polynomial (`references/papers/pattern-matching/benanav1987_complexity_of_matching_problems.pdf`).
 The practical general algorithm, a hierarchy of bipartite matching problems, is
@@ -1508,6 +1572,28 @@ The trigger is measured (§8.3), and the measurement answers the question
 `references/papers/pattern-matching/krebber2017_ac_matching_thesis.pdf` ch. 4–5 poses: **the
 break-even is in the number of subjects matched, not the size of the pattern set**, because the net's
 construction cost must be amortized. A large rule table alone is not the signal.
+
+**Measured at 1b (2026-10-10; GHC 9.12.4, hash interning, one developer machine), and built.** The
+prototype was the cheapest index that discriminates at all: each rule keyed on the head of its
+left-hand side's first argument, with rules whose first argument is a blank, a sequence, an
+alternative or a condition kept as wildcards, and candidates merged back into table order. A
+compound first argument with an `Optional` argument is a wildcard too: under a `OneIdentity` head,
+`n_. x_` matches what `x_` matches, whatever its head, so `g[n_. x_]` must be a candidate for
+`g[y]`. The commutative matcher's step 3 groups by head under the same exception; both ask
+`requiredHead`. Against
+fifty rules `f[gi[x_], y_]` for one head, it took 2.0 µs and 8.6 KB per subject, where trying the
+rules in order took 38 µs and 122 KB. The ratio held from 1 subject to 10000. Building it costs less
+than one failed match, so **there is no break-even to wait for: it crosses over below one
+subject**, which is below any volume the evaluator generates. So it is built, as the `RuleIndex`.
+`Cassini.Rules` keeps one, lazily, on every table, and consults it for down-values only, and not
+when the symbol is `Orderless` or `Flat`, where any argument may come first. Up-values are keyed
+by some argument, not the head, so they need a different key. A property checks that the
+candidates are a superset of the matching rules, in table order (§7.3).
+
+This is not Krebber's many-to-one net, which also shares the work of matching among the
+candidates. That remains the next step if a profile shows matching against large rule tables
+dominating. Tables are per symbol, so it needs one symbol with many rules, such as §6.2's tier-1
+integration rules.
 
 ### 4.6 Automatic simplification
 
@@ -2809,6 +2895,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
 | `Pattern` | for side-condition-free patterns, matching leaves `KernelState` unchanged except for messages | the backtracking rule (§4.5.2) |
 | `Pattern` | `matchOne ≡ listToMaybe <$> matchAll` | the observation functions diverging |
+| `Pattern` | the `RuleIndex`'s candidates for an expression include every rule that matches it, in table order (§4.5.5) | an index that drops a rule, or reorders specificity |
 | `Eval` | `evaluate . evaluate ≡ evaluate` | a non-converging fixed point |
 | `Eval` | evaluation under `runKernelPure` is deterministic given the same initial state | hidden `IO` dependence |
 | `Syntax` | `parse (pretty e) ≡ Right e`; `parseFullForm (fullForm e) ≡ Right e` | the precedence table and printer disagreeing (§4.10) |
@@ -3247,6 +3334,21 @@ Designed to answer specific questions rather than produce a number:
 crossover, and build the net if and only if the crossover is below the volume the evaluator actually
 generates.
 
+**Results at 1b** (2026-10-10; GHC 9.12.4, hash interning, one developer machine; the baselines in
+`bench/baseline/` carry every row):
+
+- Syntactic: 3.1 µs at 4 arguments, 41 µs at 64, linear in the pattern.
+- Sequence grid: allocation per match is flat, 5.0–5.5 KB and 1.2–1.7 µs once there are more than a
+  handful of matches, from 31 matches (`k = 2`, `n = 32`) to 4495 (`k = 4`, `n = 32`). Small cells
+  cost more per match (9–20 KB) only because setup is shared by fewer matches. The grid does not
+  show `MatchT` degrading with depth or count; see D11.
+- Commutative, steps 1–2 on: flat at 17–22 KB from arity 3 to 12. Off: 23 KB to 151 KB, and 6.2 µs to
+  41 µs, so at arity 12 the two steps prune by a factor of 7 in both.
+- Adversarial, 8 arguments: the linear pattern has 204 matches (1.0 ms) and the non-linear one 12
+  (81 µs), at the same 5–7 µs and 16–20 KB per match. At this size the difference is the number of
+  matches, not the search for them.
+- The net question: §4.5.5.
+
 ### 8.4 Evaluator and simplifier
 
 - **Fixed-point convergence**: expressions needing 1, 5, 20 rounds — also the D14 trigger, since
@@ -3290,8 +3392,9 @@ One fixed workload — parse, evaluate and print a script exercising simplificat
 differentiation, pattern replacement and polynomial arithmetic — measured as a single number.
 
 **The workload grows by milestone, and the gate is on from 1a** (§10). At 1a it is a FullForm script
-of automatic simplification and user rules through `runScript`; 1c adds infix parsing, printing and
-differentiation, and 2a polynomial arithmetic. A gate that waited for the full workload would be off
+of automatic simplification and user rules through `runScript`; 1b adds the pattern builtins over
+sequence variables, `Orderless` sums and definitions that need them (43 MB allocated, from 1a's
+22 MB); 1c adds infix parsing, printing and differentiation, and 2a polynomial arithmetic. A gate that waited for the full workload would be off
 through Stage 1, the most refactor-heavy stretch of the project. Each extension is a deliberate
 baseline regeneration, with the commit message saying what the workload gained.
 
@@ -3522,6 +3625,35 @@ with six candidate mappings and exactly one match — and §4.5.4's `{g[x_], x_,
 - Corpus: the Wolfram pages of `Builtins.Pattern` and the pattern objects (`Blank` and its
   sequences, `Condition`, `Alternatives`, `Except`, `Verbatim`, `OneIdentity`) triaged as in 1a.
 
+**Done 2026-10-10** (PR #14). Krebber's four examples are unit tests citing the thesis (§3.3,
+§3.3.1 twice, §3.3.2), with §4.5.4's: the six-mapping example finds exactly one match, and
+`{g[x_], x_, y_}` finds `x = 2, y = g[1]`. The §7.3 laws run over sequence blanks and heads that are
+`Orderless`, `Flat`, both or neither, with the new rule-index row.
+
+Corpus and oracle at completion:
+
+- **Corpus:** 744 of the 111,806 cases are in scope, up from 624. 658 pass and are the ratchet,
+  123 of them new; 25 are in `divergences.txt`; 61 fail on pages outside this milestone. Every
+  in-scope case on the pages of `Builtins.Pattern` and the pattern objects passes or is listed:
+  `RepeatedNull[p, {0, Infinity}]`'s undocumented exception (§4.5.1) and a D27 numbering defect.
+  `wolfram/Flat/PropertiesAndRelations/2`, pending §4.5.3 since 1a, passes. The triage fixed
+  `Optional` (runs, and binding an absent default unmatched) and `Replace`'s whole-expression
+  match, regression cases 0047–0048.
+- **Oracle:** 240 of 299 inputs agree with Mathics3 10.0.1; 40 are listed and 19 inconclusive.
+  Every 1b input that disagrees is listed with WL's documented answer from the corpus or from
+  Stack Exchange, except equal `Orderless` subjects, which are §4.5.4's choice.
+
+The departures it found are recorded in their sections:
+
+- `MatchOps.attributesM`, `matchRule` and `matchRuleOrRun`, and sequence bindings spliced on
+  substitution (§4.5.2, regression case 0049, found by the end-to-end workload);
+- the sequence objects' ranges, `Flat` runs and `OneIdentity`, and `Optional`'s defaults (§4.5.1);
+- WL's enumeration order, and `Flat` rules applying to runs in `ReplaceAll` and definitions but not
+  `Replace` (§4.5.3);
+- equal subjects as one mapping (§4.5.4);
+- the `RuleIndex`, built because the crossover is below one subject (§4.5.5);
+- §8.3's results, and D11 measured and not fired.
+
 #### 1c — calculus in the kernel
 
 Pure-function application (§4.13's `Function`), `D` (§4.9), and the rest of §4.10's Stage 1 syntax:
@@ -3720,7 +3852,7 @@ answer, not a deletion.
 | D8 | Cohen's canonical order over WL fidelity (§9.2) | oracle-suite false positives becoming the dominant failure |
 | D9 | Inexact numbers absent from `Number` (§3.1) | when they are needed; the O-7 slot is reserved |
 | D10 | SMT-backed zero testing not adopted (§5.6) | polynomial side conditions needing more than layer 3 decides |
-| D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation per match dominating on the sequence-variable grid |
+| D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2). **Measured 2026-10-10 (1b), trigger not fired:** on §8.3's sequence-variable grid allocation per match is flat at 5.0–5.5 KB from 31 to 4495 matches, and does not grow with the number of variables (§8.3's results). Most of it is the substitution map and the bindings, which any monad would build. `logict` stays | §8.3's allocation per match growing with the number of matches or the depth of backtracking on the grid, or a profile putting `LogicT`'s binds ahead of the matchers' own work |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
 | D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 moved a held argument into an unheld position. That is §4.4's bug fix for repeated messages, not the marker. The fix is partial: a built-in's result goes round again with its unevaluated siblings, so `Plus[Part[{1, 2}, 3], x, x]` emits `Part::partw` twice, where WL emits it once (found 2026-10-09 in the PR #12 review) | §8.4's fixed-point benchmark showing re-evaluation dominating; or a message repeated by a built-in's round becoming an oracle or corpus divergence |

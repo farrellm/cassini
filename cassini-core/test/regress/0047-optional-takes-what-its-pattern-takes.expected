@@ -1,0 +1,5 @@
+Out[1]: -
+Out[2]: List[List[1], List[2], List[2, 3]]
+Out[3]: -
+Out[4]: List[List[1, "no type specified"], List[1, "I"]]
+Out[5]: List[g[0], g[b], g[Plus[b, c]]]

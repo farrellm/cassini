@@ -1,0 +1,10 @@
+(* Under a Flat head a blank takes a run of arguments, grouped under the head; one argument is f[a] before a, unless OneIdentity (wolfram/Flat/PropertiesAndRelations/2, /4, /5; wolfram/OneIdentity/PropertiesAndRelations/2). *)
+SetAttributes[f, Flat]
+ReplaceAll[f[a, b, c], Rule[f[a, Pattern[x, Blank[]]], List[x]]]
+SetDelayed[isInt[Blank[Integer]], True]
+ReplaceAll[f[3], RuleDelayed[Condition[f[Pattern[z, Blank[]]], isInt[z]], z]]
+ReplaceAll[List[f[a], f[b, c]], RuleDelayed[f[Pattern[x, Blank[]]], x]]
+SetAttributes[fo, List[Flat, OneIdentity]]
+ReplaceAll[List[fo[a], fo[b, c]], RuleDelayed[fo[Pattern[x, Blank[]]], x]]
+SetDelayed[fo[Pattern[x, Blank[]], Pattern[y, Blank[]]], Plus[x, y]]
+fo[a, b, c, d]

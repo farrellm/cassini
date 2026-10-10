@@ -1,0 +1,5 @@
+Out[1]: List[List[a], List[b, c]]
+Out[2]: -
+Out[3]: List[List[a], List[b, c]]
+Out[4]: -
+Out[5]: List[List[0, 1], List[a, 1], List[a, b]]
