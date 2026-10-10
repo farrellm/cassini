@@ -170,24 +170,24 @@ matchAll p s = observeAll (match (viewPattern p) s mempty)
 -- name. Rule application uses it, in the evaluator and in @Replace@; a
 -- match of the whole is always tried first.
 matchRuleOrRun :: (Kernel :> es) => Expr -> Expr -> Expr -> MatchT es Expr
-matchRuleOrRun lhs body e = matchRule lhs body e <|> run
+matchRuleOrRun lhs body e = case (unholdPattern lhs, e) of
+  -- Checked before the alternative is built: most subjects cannot take a
+  -- run, and the evaluator asks on every rule it tries.
+  (App (Sym g) ps, App hd@(Sym f) as) | g == f, V.length as > 1 -> matchRule lhs body e <|> run hd ps
+  _ -> matchRule lhs body e
   where
-    run = case (unholdPattern lhs, e) of
-      (App (Sym g) ps, App hd@(Sym f) as)
-        | g == f,
-          V.length as > 1 -> do
-            attrs <- liftMatch (headAttributes hd)
-            guard (isFlat attrs)
-            let (before, after)
-                  | isOrderless attrs = ([], [runVariable "rest"])
-                  | otherwise = ([runVariable "pre"], [runVariable "post"])
-                around x = mkApp hd (V.fromList (map runName before <> [x] <> map runName after))
-                lhs' = mkApp hd (V.fromList (before <> V.toList ps <> after))
-                body' = case body of
-                  App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [around x, test]
-                  _ -> around body
-            matchRule lhs' body' e
-      _ -> empty
+    run hd ps = do
+      attrs <- liftMatch (headAttributes hd)
+      guard (isFlat attrs)
+      let (before, after)
+            | isOrderless attrs = ([], [runVariable "rest"])
+            | otherwise = ([runVariable "pre"], [runVariable "post"])
+          around x = mkApp hd (V.fromList (map runName before <> [x] <> map runName after))
+          lhs' = mkApp hd (V.fromList (before <> V.toList ps <> after))
+          body' = case body of
+            App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [around x, test]
+            _ -> around body
+      matchRule lhs' body' e
     runName = \case
       App _ xs | Just x <- V.headM xs -> x
       x -> x

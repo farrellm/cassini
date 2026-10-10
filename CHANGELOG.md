@@ -21,6 +21,10 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     * `Optional` takes what its pattern takes, a sequence or a `Flat` run, and an absent one binds
       its default without matching it;
     * `Replace` matches a `Flat` head's expression whole; only `ReplaceAll` applies a rule to a run.
+  * The `RuleIndex` (`Cassini.Pattern.Net`), keyed on the first argument's head, built because
+    §8.3's net sweep found no break-even to wait for; `Cassini.Rules` consults it for down-values.
+  * Benchmarks of the matcher (`bench/Bench/Pattern.hs`, §8.3), and the end-to-end workload extended
+    with pattern replacement; both baselines regenerated. D11 measured, not fired.
   * Fix: a sequence variable's binding splices into the argument list it is substituted into, as
     WL's does, so `ReplaceRepeated` keeps matching an unevaluated result and `Hold` sees the
     spliced arguments (regression case 0049).

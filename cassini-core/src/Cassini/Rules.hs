@@ -36,13 +36,14 @@ module Cassini.Rules
   )
 where
 
-import Cassini.Attributes (AttributeSet)
+import Cassini.Attributes (AttributeSet, isFlat, isOrderless)
 import Cassini.Core.Expr (Expr, pattern App, pattern Sym)
 import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sPattern)
 import Cassini.Pattern (isPatternFree, unholdPattern)
 import Cassini.Pattern.Net qualified as Net
 import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
+import Text.Show (Show (showsPrec))
 
 -- | A rule: a pattern, what it rewrites to, where it ranks, and which rung of
 -- the ladder it is on.
@@ -118,13 +119,21 @@ data ValueKind = OwnValue | DownValue | UpValue | SubValue
 data Origin = User | Builtin
   deriving stock (Eq, Ord, Show, Enum, Bounded)
 
--- | One table's rules, ordered: first applicable wins.
-newtype RuleSet = RuleSet (Seq Rule)
-  deriving newtype (Show)
+-- | One table's rules, ordered: first applicable wins, with their index
+-- (§4.5.5). The index is lazy, so a table is indexed when it is first
+-- looked up after a change, never on a change itself.
+data RuleSet = RuleSet !(Seq Rule) (Net.RuleIndex Rule)
+
+instance Show RuleSet where
+  showsPrec d (RuleSet rs _) = showsPrec d rs
+
+-- | A table of these rules, in this order.
+ruleSet :: Seq Rule -> RuleSet
+ruleSet rs = RuleSet rs (Net.fromSeq (.ruleLhs) rs)
 
 -- | The rules, in table order.
 ruleSetToList :: RuleSet -> [Rule]
-ruleSetToList (RuleSet rs) = toList rs
+ruleSetToList (RuleSet rs _) = toList rs
 
 -- | Insert by specificity, after every rule at least as specific, so
 -- definition order breaks ties. A user rule with an equal left-hand side and
@@ -135,11 +144,11 @@ ruleSetToList (RuleSet rs) = toList rs
 -- Built-in rules are never replaced: their left-hand sides only record where
 -- they live.
 insertRule :: Rule -> RuleSet -> RuleSet
-insertRule r (RuleSet rs) = case Seq.findIndexL same rs of
-  Just i -> RuleSet (Seq.update i r rs)
+insertRule r (RuleSet rs _) = case Seq.findIndexL same rs of
+  Just i -> ruleSet (Seq.update i r rs)
   Nothing ->
     let (before, after) = Seq.spanl (\x -> x.ruleSpecificity <= r.ruleSpecificity) rs
-     in RuleSet (before <> (r Seq.<| after))
+     in ruleSet (before <> (r Seq.<| after))
   where
     same x =
       r.ruleOrigin == User
@@ -162,9 +171,9 @@ bodyCondition = \case
 -- Unlike 'insertRule', this ignores right-hand-side conditions: @Unset@
 -- names a left-hand side only, so it removes all the conditional rules on it.
 removeRule :: Expr -> RuleSet -> (Bool, RuleSet)
-removeRule lhs (RuleSet rs) =
+removeRule lhs (RuleSet rs _) =
   let rs' = Seq.filter (\x -> not (x.ruleOrigin == User && sameLhs x.ruleLhs lhs)) rs
-   in (Seq.length rs' /= Seq.length rs, RuleSet rs')
+   in (Seq.length rs' /= Seq.length rs, ruleSet rs')
 
 -- | Whether two left-hand sides are one, seen through @HoldPattern@.
 sameLhs :: Expr -> Expr -> Bool
@@ -192,7 +201,7 @@ data SymbolInfo = SymbolInfo
 emptyInfo :: SymbolInfo
 emptyInfo = SymbolInfo mempty (Values none none none none)
   where
-    none = RuleSet Seq.empty
+    none = ruleSet Seq.empty
 
 -- | One table.
 rulesOf :: ValueKind -> SymbolInfo -> RuleSet
@@ -229,7 +238,11 @@ ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
 -- | The candidate rules of one rung, in table order. Specificity has ordered
 -- them within the table; the origin selects the rung. A lazy list, so the
 -- caller, which stops at the first rule that fires, filters no further.
+-- Downvalues come through the index, keyed on the first argument's head,
+-- unless the symbol is @Orderless@ or @Flat@, where any argument may match
+-- the first pattern (§4.5.5).
 applicableRules :: SymbolInfo -> (ValueKind, Origin) -> Expr -> [Rule]
 applicableRules si (k, o) e =
-  let RuleSet rs = rulesOf k si
-   in filter (\r -> r.ruleOrigin == o) (toList (Net.candidates (Net.fromSeq rs) e))
+  let RuleSet rs ix = rulesOf k si
+      indexed = k == DownValue && not (isOrderless si.siAttributes || isFlat si.siAttributes)
+   in filter (\r -> r.ruleOrigin == o) (if indexed then Net.candidates ix e else toList rs)
