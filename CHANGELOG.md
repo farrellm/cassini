@@ -21,6 +21,9 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     * `Optional` takes what its pattern takes, a sequence or a `Flat` run, and an absent one binds
       its default without matching it;
     * `Replace` matches a `Flat` head's expression whole; only `ReplaceAll` applies a rule to a run.
+  * Fix: a sequence variable's binding splices into the argument list it is substituted into, as
+    WL's does, so `ReplaceRepeated` keeps matching an unevaluated result and `Hold` sees the
+    spliced arguments (regression case 0049).
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;
