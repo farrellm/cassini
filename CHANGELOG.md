@@ -17,6 +17,10 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     operator forms (`Cassini.Builtins.Pattern`).
   * The matcher laws over sequence blanks and `Orderless`/`Flat` heads, Krebber's examples as unit
     tests, regression cases 0042–0046 and the oracle's `patterns` cases.
+  * Fixes from the corpus triage, each with a regression case (0047–0048):
+    * `Optional` takes what its pattern takes, a sequence or a `Flat` run, and an absent one binds
+      its default without matching it;
+    * `Replace` matches a `Flat` head's expression whole; only `ReplaceAll` applies a rule to a run.
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;
