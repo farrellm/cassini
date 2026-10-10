@@ -15,7 +15,6 @@ import Cassini.Pattern.Match (matchAll, matchOne)
 import Cassini.Pattern.Net qualified as Net
 import Cassini.Rules (SymbolInfo (..))
 import Data.Map.Strict qualified as Map
-import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
 import Test.Gen (genExpr, genPattern, shrinkExpr)
 import Test.Kernel (ff, run, stateWith)
@@ -44,7 +43,7 @@ tests =
         forAllShrink (sized genApplication) shrinkExpr $ \t ->
           forAll (listOf1 (sized genApplication >>= genPattern)) $ \ps ->
             let matching = filter (\p -> not (null (matchesOf p t)))
-             in matching (Net.candidates (Net.fromSeq id (Seq.fromList ps)) t) === matching ps,
+             in matching (Net.candidates (Net.indexRules id (zip [0 :: Int ..] ps)) t) === matching ps,
       testProperty "matching leaves the kernel state unchanged" $
         forAllShrink (sized genSubject) shrinkExpr $ \s ->
           forAll (genPattern s) $ \p ->

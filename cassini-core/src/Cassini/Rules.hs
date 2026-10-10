@@ -41,7 +41,8 @@ import Cassini.Core.Expr (Expr, pattern App, pattern Sym)
 import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sPattern)
 import Cassini.Pattern (isPatternFree, unholdPattern)
 import Cassini.Pattern.Net qualified as Net
-import Data.Sequence qualified as Seq
+import Data.HashMap.Strict qualified as HashMap
+import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 import Text.Show (Show (showsPrec))
 
@@ -108,7 +109,13 @@ specificity e = let (b, l) = go e in Specificity (b, negate l)
 
 -- | A rule with its specificity computed.
 mkRule :: Origin -> Expr -> RuleBody -> Rule
-mkRule o lhs body = Rule {ruleLhs = lhs, ruleBody = body, ruleSpecificity = specificity lhs, ruleOrigin = o}
+mkRule o lhs body =
+  Rule
+    { ruleLhs = lhs,
+      ruleBody = body,
+      ruleSpecificity = specificity lhs,
+      ruleOrigin = o
+    }
 
 -- | The four tables. They have no order of their own: 'ladder' is the only
 -- order in which steps 10–13 visit them.
@@ -119,21 +126,34 @@ data ValueKind = OwnValue | DownValue | UpValue | SubValue
 data Origin = User | Builtin
   deriving stock (Eq, Ord, Show, Enum, Bounded)
 
--- | One table's rules, ordered: first applicable wins, with their index
--- (§4.5.5). The index is lazy, so a table is indexed when it is first
--- looked up after a change, never on a change itself.
-data RuleSet = RuleSet !(Seq Rule) (Net.RuleIndex Rule)
+-- | One table's rules, ordered: first applicable wins (§4.5.5). Each rule
+-- is under a key that is its place in the table: its specificity, then
+-- when it was first inserted, which a redefinition keeps. The index files
+-- them for lookup, and the rules are also kept by left-hand side, seen
+-- through @HoldPattern@, so that redefinition and @Unset@ find theirs
+-- without a scan. A change is logarithmic; nothing is rebuilt.
+data RuleSet = RuleSet
+  { -- | The next insertion's number.
+    rsNext :: !Int,
+    -- | The rules, filed for lookup and in table order.
+    rsIndex :: !(Net.RuleIndex RuleKey Rule),
+    -- | The rules by left-hand side, seen through @HoldPattern@.
+    rsByLhs :: !(HashMap Expr (Map RuleKey Rule))
+  }
+
+-- | A rule's place in its table.
+type RuleKey = (Specificity, Int)
 
 instance Show RuleSet where
-  showsPrec d (RuleSet rs _) = showsPrec d rs
+  showsPrec d rs = showsPrec d (ruleSetToList rs)
 
--- | A table of these rules, in this order.
-ruleSet :: Seq Rule -> RuleSet
-ruleSet rs = RuleSet rs (Net.fromSeq (.ruleLhs) rs)
+-- | No rules.
+emptyRuleSet :: RuleSet
+emptyRuleSet = RuleSet 0 Net.emptyIndex HashMap.empty
 
 -- | The rules, in table order.
 ruleSetToList :: RuleSet -> [Rule]
-ruleSetToList (RuleSet rs _) = toList rs
+ruleSetToList rs = Net.elems rs.rsIndex
 
 -- | Insert by specificity, after every rule at least as specific, so
 -- definition order breaks ties. A user rule with an equal left-hand side and
@@ -144,16 +164,19 @@ ruleSetToList (RuleSet rs _) = toList rs
 -- Built-in rules are never replaced: their left-hand sides only record where
 -- they live.
 insertRule :: Rule -> RuleSet -> RuleSet
-insertRule r (RuleSet rs _) = case Seq.findIndexL same rs of
-  Just i -> ruleSet (Seq.update i r rs)
-  Nothing ->
-    let (before, after) = Seq.spanl (\x -> x.ruleSpecificity <= r.ruleSpecificity) rs
-     in ruleSet (before <> (r Seq.<| after))
+insertRule r rs = case find (same . snd) (maybe [] Map.toList (HashMap.lookup lhs rs.rsByLhs)) of
+  Just (k, _) -> place k rs
+  Nothing -> place (r.ruleSpecificity, rs.rsNext) rs {rsNext = rs.rsNext + 1}
   where
+    lhs = unholdPattern r.ruleLhs
+    place k t =
+      t
+        { rsIndex = Net.insert r.ruleLhs k r t.rsIndex,
+          rsByLhs = HashMap.insertWith Map.union lhs (Map.singleton k r) t.rsByLhs
+        }
     same x =
       r.ruleOrigin == User
         && x.ruleOrigin == User
-        && sameLhs x.ruleLhs r.ruleLhs
         && bodyCondition x.ruleBody == bodyCondition r.ruleBody
 
 -- | The test of a right-hand side @rhs /; test@, if it has one.
@@ -171,13 +194,18 @@ bodyCondition = \case
 -- Unlike 'insertRule', this ignores right-hand-side conditions: @Unset@
 -- names a left-hand side only, so it removes all the conditional rules on it.
 removeRule :: Expr -> RuleSet -> (Bool, RuleSet)
-removeRule lhs (RuleSet rs _) =
-  let rs' = Seq.filter (\x -> not (x.ruleOrigin == User && sameLhs x.ruleLhs lhs)) rs
-   in (Seq.length rs' /= Seq.length rs, ruleSet rs')
-
--- | Whether two left-hand sides are one, seen through @HoldPattern@.
-sameLhs :: Expr -> Expr -> Bool
-sameLhs a b = unholdPattern a == unholdPattern b
+removeRule lhs rs = case Map.partition (\x -> x.ruleOrigin == User) <$> HashMap.lookup u rs.rsByLhs of
+  Just (users, kept)
+    | not (Map.null users) ->
+        ( True,
+          rs
+            { rsIndex = Map.foldlWithKey' (\ix k x -> Net.delete x.ruleLhs k ix) rs.rsIndex users,
+              rsByLhs = if Map.null kept then HashMap.delete u rs.rsByLhs else HashMap.insert u kept rs.rsByLhs
+            }
+        )
+  _ -> (False, rs)
+  where
+    u = unholdPattern lhs
 
 -- | A symbol's four tables. A record, not a map keyed by 'ValueKind', so
 -- that there is no key order to walk by mistake: a map's order would put
@@ -201,7 +229,7 @@ data SymbolInfo = SymbolInfo
 emptyInfo :: SymbolInfo
 emptyInfo = SymbolInfo mempty (Values none none none none)
   where
-    none = ruleSet Seq.empty
+    none = emptyRuleSet
 
 -- | One table.
 rulesOf :: ValueKind -> SymbolInfo -> RuleSet
@@ -243,6 +271,6 @@ ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
 -- the first pattern (§4.5.5).
 applicableRules :: SymbolInfo -> (ValueKind, Origin) -> Expr -> [Rule]
 applicableRules si (k, o) e =
-  let RuleSet rs ix = rulesOf k si
+  let ix = (rulesOf k si).rsIndex
       indexed = k == DownValue && not (isOrderless si.siAttributes || isFlat si.siAttributes)
-   in filter (\r -> r.ruleOrigin == o) (if indexed then Net.candidates ix e else toList rs)
+   in filter (\r -> r.ruleOrigin == o) (if indexed then Net.candidates ix e else Net.elems ix)
