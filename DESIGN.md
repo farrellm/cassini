@@ -190,8 +190,9 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Simplify.Rational` | Algebraic expansion, `Expand_main_op`, rationalization, numerator and denominator over ASAEs (§4.12). |
 | `Cassini.Simplify.Trig` | Trigonometric expansion, contraction and `Simplify_trig`, circular and hyperbolic (§4.12). |
 | `Cassini.Simplify.Numeric` | Radical normalization of rational bases and the infinity pass for `Plus`/`Times`/`Power` (§4.15). |
-| `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed. |
-| `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL). Comparison is `Builtins.Logic`'s. |
+| `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed, and the attribute-only symbols the evaluator relies on (`Hold` and its relatives, `Sequence`, `Unevaluated`, `Function`, the pattern heads, the atom heads). |
+| `Cassini.Builtins.Define` | The `Definition` each builtin module exports (a symbol, its attributes, its native rules), and the helpers they share. |
+| `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Minus`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL), and the infinities as symbols: `ComplexInfinity` evaluates to `DirectedInfinity[]` and `Infinity` to `DirectedInfinity[1]`, as WL's outputs show. Comparison is `Builtins.Logic`'s. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
 | `Cassini.Builtins.List` | List construction and manipulation. |
 | `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `RuleDelayed`. |
@@ -478,7 +479,9 @@ module Cassini.Simplify.Automatic (simplify, isASAE) where
 7. `cabal haddock --haddock-quickjump`, with a scripted floor on haddock's documented-percentage:
    `scripts/check-haddock.py`, at 100% for every module except `Cassini.Prelude`, whose exports are
    relude's
-8. the benchmark gate (§8.6), from milestone 1a
+8. the benchmark gate (§8.6), from milestone 1a: the `bench` job runs the end-to-end workload under
+   each `intern` setting and checks its allocation with
+   `bench/check-allocation.py --only All.EndToEnd`
 
 Steps 1–7 are Stage 0's exit condition (§10); step 8 needs an evaluator to measure. Every cabal
 command in the workflow takes the same `--enable-tests --enable-benchmarks --ghc-options=-Werror`,
@@ -974,8 +977,7 @@ data RuleBody
 newtype BuiltinId = BuiltinId Int
   deriving newtype (Eq, Ord)
 
--- | Steps 10-13 (§4.4), in order. 'Ord'/'Enum' on 'ValueKind' is EnumMap key
--- order, *not* this order: never walk 'siValues' in key order.
+-- | Steps 10-13 (§4.4), in order: the only order the tables are visited in.
 ladder :: Expr -> [(ValueKind, Origin)]
 ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
   where
@@ -984,16 +986,19 @@ ladder e = [(UpValue, User), (UpValue, Builtin), (down, User), (down, Builtin)]
       _               -> DownValue  -- h[e1, ...]
 
 data ValueKind = OwnValue | DownValue | UpValue | SubValue
-  deriving stock (Eq, Ord, Enum, Bounded)
+  deriving stock (Eq)
 
 data Origin = User | Builtin
   deriving stock (Eq, Ord, Enum, Bounded)
 
 newtype RuleSet = RuleSet (Seq Rule)     -- ^ ordered; first applicable wins
 
+data Values = Values      -- ^ one field per ValueKind
+  { ownValues, downValues, upValues, subValues :: !RuleSet }
+
 data SymbolInfo = SymbolInfo
   { siAttributes :: !AttributeSet
-  , siValues     :: !(EnumMap ValueKind RuleSet)
+  , siValues     :: !Values
   }
 ```
 
@@ -1009,9 +1014,15 @@ dangling id is a construction bug, not a user-reachable failure.
 **The ladder is four rungs, not two axes.** Sorting a table by specificity alone would let a specific
 *user* downvalue beat a general *built-in* upvalue, the inversion steps 11–12 forbid. So
 `applicableRules` takes one `(ValueKind, Origin)` rung and scans only that origin's rules;
-specificity orders rules *within* a rung, never across. Derived `Ord ValueKind` puts `DownValue`
-first, so walking `siValues` in key order *is* the inversion; `ladder` is the only list steps 10–13
+specificity orders rules *within* a rung, never across. `ladder` is the only list steps 10–13
 may iterate (§7.3 checks it).
+
+**The tables are a record, not a map keyed by `ValueKind`.** The first version was an
+`EnumMap ValueKind RuleSet`. A map has a key order, and derived `Ord` put `DownValue` before
+`UpValue`, so walking the map in key order *was* the inversion. That order could be warned
+against, never removed. A record has no order, and `rulesOf`/`modifyRules` select a field by
+`ValueKind`. Four keys never needed a map. The map also cost a dependency: `enummapset` 0.7.3
+depends on `aeson`, which had become the largest dependency of the kernel.
 
 **Which tables a rung reads.** The upvalue rungs consult, in argument order, the `UpValues` of each
 argument's head symbol (or of the argument, if it is a symbol). The lower rungs read `DownValues[h]`
@@ -1022,7 +1033,9 @@ since step 2 evaluates `h` by a recursive `evaluate`.
 
 `insertRule` orders each table by specificity at definition time, insertion order breaking ties.
 Specificity is a coarse structural measure (fewer blanks, more literal structure) and does not claim
-WL's exact behaviour: where it cannot decide, definition order does, and that is documented.
+WL's exact behaviour: where it cannot decide, definition order does, and that is documented. A
+blank's head constraint is literal structure, so `f[x_Integer]` is tried before `f[x_]` whichever
+was defined first, as in WL.
 
 ### 4.3 The kernel effect
 
@@ -1038,14 +1051,34 @@ data Kernel :: Effect where
   Iterations     :: Kernel m Int              -- ^ remaining fuel in this fixed point
   SpendIteration :: Kernel m ()
   WithFuel       :: Int -> m a -> Kernel m a  -- ^ run with a fresh budget, then restore
-type instance DispatchOf Kernel = Dynamic
+  LookupBuiltin  :: BuiltinId -> Kernel m (Maybe BuiltinFn)  -- ^ resolve a Native rule
+  TraceStep      :: Text -> Expr -> Kernel m ()              -- ^ a golden-trace entry
+  KernelConfig   :: Kernel m EvalConfig                      -- ^ the limits, for fixpoint
 
-evaluate :: (Kernel :> es) => Expr -> Eff es Expr
-evaluate = send . Evaluate
+makeEffect ''Kernel   -- evaluate :: (HasCallStack, Kernel :> es) => Expr -> Eff es Expr, …
 ```
+
+**The operations are generated by `effectful-th`'s `makeEffect`**, one function per constructor,
+each taking its constructor's Haddock comment. The hand-written alternative is a `send . Op`
+wrapper per operation, twelve at 1a. Generating them keeps an operation in one place, which is
+what adding one touches (1a added three, below). The generated signatures add `HasCallStack`;
+that was measured against the hand-written wrappers on every §8 benchmark and changed allocation
+by less than 0.2%. Two consequences: every constructor needs a comment, or its function is
+documented as "Perform the operation …", which the Haddock floor counts as covered; and the splice
+goes below every type `Kernel` mentions, because a splice ends a declaration group.
 
 Kernel code is constraint-polymorphic over what it needs, e.g.
 `matchOne :: (Kernel :> es) => Expr -> Expr -> Eff es (Maybe Subst)`.
+
+**Three operations were added when the code was written.** `LookupBuiltin` resolves a `Native`
+rule's id. `KernelState` holds the implementations (§4.2), and the rung that finds the rule has
+only the effect to reach them through. A dangling id answers `Nothing`, and no rule fires.
+`TraceStep` is the recording point for §7.4's golden traces. It is a no-op unless
+`EvalConfig.trace` is set. `KernelConfig` gives `fixpoint` the iteration limit to seed
+`WithFuel` with. An implementation is a `newtype BuiltinFn = BuiltinFn (forall es.
+(Kernel :> es) => Expr -> Eff es (Maybe Expr))`, which answers `Nothing` when it does not apply.
+The interpreters also discharge the `Unwind`/`CatchUnwind` pair of §4.13 from the start, because a
+user rule's rung catches `Return` (§4.4).
 
 **`Evaluate` is what makes §1.2's layering hold.** The matcher (`/;`, `?f`) and `Cassini.Zero` must
 evaluate but may not import the sequence (§2.6, rule 1), and a constraint grants the effect's
@@ -1089,6 +1122,21 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   `$RecursionLimit::reclim` and returns `Hold[e]` unevaluated, and evaluation continues outward: `x =
   x + 1; x` yields a partial result with a `Hold` at the cut — the source's "computations limited by
   `$RecursionLimit` … build up large intermediate structures" — rather than aborting.
+  **WL 14.1 does not do this.** Its documentation corpus shows `x = x + 1` evaluating to
+  `Plus[1, TerminatedEvaluation["RecursionLimit"]]`: the runaway evaluation is replaced whole, and
+  there is no `Hold` at the cut (`wolfram/$RecursionLimit/BasicExamples/1`). The quotation above is
+  from the older tutorial. The `Hold` cut stays, as D30, because WL's unwinding rule cannot be
+  read off three examples.
+  **The cut is idempotent.** At the limit, an expression that evaluates to itself comes back as it
+  is: a raw atom, a symbol with no own value, or a `Hold[…]` the cut already built. Only anything
+  else is wrapped, with the message. Without this, every fixed point near the limit re-evaluates its
+  own result, and that crosses the limit again. Heads, `1` and `Hold` itself get wrapped, the cuts
+  compound, and `x = x + 1` ran out of memory before it returned (regression case 0010).
+- **Where the two counters live.** Depth is in the handler's own `Reader`, changed with `local`,
+  which restores it however the inner evaluation exits: §4.13's second option. Fuel is
+  handler-local `State`, not `KernelState`, because it belongs to the fixed point being run, not to
+  the session. `WithFuel` saves it, runs the inner computation under `tryError`, restores it and
+  rethrows.
 
 **`Abort` is for `Abort[]` and interrupts**, which happen in production, and the REPL reports one
 as `$Aborted`. An interrupt is polled for, not thrown asynchronously (§4.13). `Throw`, `Break`, `Continue` and `Return` travel the same `Error` channel, as
@@ -1200,9 +1248,35 @@ plus ordinary definitions, and a patch adding such a branch is a bug. Two things
 - **Step 6 is `Unevaluated`'s implementation**, the one step that names it. (Its argument arrives
   unevaluated because `Unevaluated` has `HoldAllComplete`, not because a step special-cases it.)
   Step 6 records what it stripped, and **if no rule in steps 10–13 fires, the wrappers are
-  restored**, so `f[Unevaluated[1+1]]` evaluates to itself. Steps 7–9 may reorder arguments, so it
-  tracks values, not positions.
+  restored**, so `f[Unevaluated[1+1]]` evaluates to itself. It records each value with its
+  position, and restores by position while every value is still where it was, so
+  `f[a, Unevaluated[a]]` keeps its wrapper on the second argument. Once steps 7–9 have moved
+  arguments, it restores by value, on the first equal argument.
 - **The two limits *construct* `Hold`** (§4.3). Building the wrapper is not branching on it.
+
+**Two more things the list leaves implicit:**
+
+- **`Evaluate` overrides a hold.** Step 3 evaluates a held argument anyway when it is
+  `Evaluate[…]`, unless `h` has `HoldAllComplete`. So `Hold[Evaluate[1+1]]` is `Hold[2]` and
+  `HoldComplete[Evaluate[1+1]]` stays. This keys on the wrapper, as step 6 keys on `Unevaluated`.
+  It is not a branch on `Hold`.
+- **Steps 8 and `evalStepIndet` can finish early.** A threaded list, or `Indeterminate`, is a new
+  expression. The step returns it, the rungs do not run, and the fixed point evaluates it next
+  round.
+
+**What the golden trace records** (§7.4). A step is recorded when it applies, with the expression
+it leaves:
+
+- step 2 when the head changed, step 3 when an argument changed, and step 4 when anything is held;
+- steps 5 and 6 when they splice or strip;
+- steps 7 and 9 whenever `h` has the attribute, even when nothing moves;
+- step 8 when it threads, and `evalStepIndet` when it fires;
+- a rung when a rule fires: a built-in's result, or a user rule's right-hand side before the rung
+  evaluates it.
+
+Recording 7 and 9 unconditionally is what lets a trace show the step order on `Plus[a, Plus[b, a]]`,
+which flattens to an already sorted list. Each entry carries its evaluation depth, so subterm
+evaluations nest.
 
 **The fixed point is fuelled.** `fixpoint` opens its own `WithFuel` (§4.3), spends one iteration per
 round, and on exhaustion emits `$IterationLimit::itlim` and returns the expression in `Hold` — the
@@ -1211,6 +1285,23 @@ language's behaviour. Non-termination is a user error, so it gets a message, not
 **Re-evaluation cost.** Read literally, "start over" re-evaluates already-settled subterms on every
 round, walking whole subtrees. WL avoids this by marking expressions evaluated against a global
 definitions epoch. Stage 1 ships the literal version; the marker is D14.
+
+**One round is skipped, because it cannot change anything.** A round reports whether its result is
+already a fixed point. It is one in two cases. If no rule fired, steps 2–9 only evaluated the parts
+and rearranged them, and another round would try the same rules on the same expression, unless
+step 5 moved a held argument into an unheld position. A `Sequence` spliced under `HoldFirst` or
+`HoldRest` shifts positions, and the next round evaluates what now sits unheld: WL answers
+`f[1+1, 4, 6]` for `f[Sequence[1+1, 2+2], 3+3]` with `HoldFirst`
+(`wolfram/HoldFirst/PropertiesAndRelations/5`, regression case 0036). If a user
+rule fired, its rung evaluated the right-hand side to a fixed point itself. A built-in's result, an
+own value, a threaded list and `Indeterminate` still go round again. This is not D14's marker. It
+was forced by a visible bug, not by cost. An unevaluated subterm that emits a message, such as
+`Part[{1, 2}, 3]`, emitted it again every time a sibling's evaluation changed the parent. The 1a
+end-to-end workload showed `Part::partw` twice, and regression case 0013 pins it.
+**The fix is partial.** A built-in's result still goes round again, and so does any subterm left
+unevaluated beside it: `Plus[Part[{1, 2}, 3], x, x]` collects `x + x` into `2 x`, and the next
+round emits `Part::partw` a second time, where WL emits it once. Closing that gap means knowing
+which subterms are settled, which is a marker, so it waits on D14.
 
 ### 4.5 Pattern matching
 
@@ -1224,9 +1315,9 @@ matcher:
 ```haskell
 -- | Cassini.Pattern
 data PatternView
-  = PBlank      !(Maybe Symbol)               -- ^ _h
-  | PBlankSeq   !(Maybe Symbol)               -- ^ __h  (one or more)
-  | PBlankNull  !(Maybe Symbol)               -- ^ ___h (zero or more)
+  = PBlank      !(Maybe Expr)                 -- ^ _h
+  | PBlankSeq   !(Maybe Expr)                 -- ^ __h  (one or more)
+  | PBlankNull  !(Maybe Expr)                 -- ^ ___h (zero or more)
   | PNamed      !Symbol !PatternView          -- ^ x:patt, x_
   | PCondition  !PatternView !Expr            -- ^ patt /; test
   | PTest       !PatternView !Expr            -- ^ patt ? f
@@ -1244,6 +1335,9 @@ viewPattern :: Expr -> PatternView
 
 `Subst` is a `Map Symbol Binding`, where a binding is one expression or a sequence, because
 sequence variables bind runs of arguments.
+
+A blank's head constraint is an `Expr`, not a `Symbol`. `_h` compares `h` with the subject's
+`Head`, and a head can be compound (`_f[x]`).
 
 `HoldPattern[p]` matches as `p` does; its point is evaluation, not matching — `HoldPattern` has
 `HoldAll`, so a rule's left side keeps the structure the user wrote ("you need to wrap HoldPattern
@@ -1291,6 +1385,26 @@ matchAll p s = observeAll (match (viewPattern p) s mempty)
 
 `deriving newtype` needs no pragma: `GeneralisedNewtypeDeriving` is in GHC2021 and
 `DerivingStrategies` in GHC2024.
+
+**The matchers are written by open recursion, so none of them imports `MatchT`.**
+`Cassini.Pattern` defines a record of what a matcher needs from its monad:
+
+```haskell
+data MatchOps m = MatchOps
+  { recur    :: PatternView -> Expr -> Subst -> m Subst  -- ^ hand a subpattern back
+  , evalM    :: Expr -> m Expr                           -- ^ side conditions
+  , matchesM :: PatternView -> Expr -> Subst -> m Bool   -- ^ for Except; commits to nothing
+  }
+
+matchSyntactic :: (MonadPlus m) => MatchOps m -> PatternView -> Expr -> Subst -> m Subst
+```
+
+`match` in `Cassini.Pattern.Match` ties the knot: `match = matchSyntactic ops`, with
+`recur = match`. Two other designs were rejected. If the matchers imported `MatchT`, then `match`
+dispatching to them would be an import cycle. A boot file for the cycle would need to name
+`LogicT` outside the one module rule 6 allows. The open recursion also makes containment stronger
+than the newtype alone: no matcher can name `logict`'s types, because no matcher sees the monad.
+1b's `Sequence` and `Commutative` take the same record, and `match` dispatches among them.
 
 **Those three functions and five instances are the whole surface a replacement backend must
 reproduce** (D11, §9.2). Laziness is part of it: `matchOne` stops at the first success rather than
@@ -1432,6 +1546,25 @@ and `1·x` are **not** ASAEs, while `(x·y)^(1/2)` and `(x^(1/2))^(1/2)` are.
 - For a basic algebraic expression `u`, `simplify u` is an ASAE or `Undefined`.
 - **For an ASAE `u`, `simplify u` returns `u`.** Stronger than `simplify . simplify ≡ simplify`,
   because it also asserts that `isASAE` and `simplify` agree about what "simplified" means.
+
+**Two departures from the source, both found when the code was written:**
+
+- **SPOW-2 is restricted to numeric exponents.** Cohen makes `0^w` `Undefined` for every `w` that
+  is not a positive number, so `0^x` would be `Undefined`. WL leaves `0^x` alone, and a symbolic
+  exponent is not known to be non-positive. So `simplifyPower` decides `0^w` only for a numeric `w`.
+  `isASAE` admits `0^w` for a non-numeric `w`, against ASAE-6-4, so that both contracts still hold
+  of the pair. A property test found the disagreement.
+- **MPRD-3-2 can leave two constants.** It adjoins a merged factor where the merge happened. Two
+  radicals of one base can merge to a number behind an existing coefficient, as in
+  `3·2^(1/2)·2^(1/2)`, whose merge gives `[3, 2]` against ASAE-4-2. `simplifyProduct` multiplies
+  the constants of a merged list into one leading constant. Before §4.15's radicals this is rare,
+  because only a product of radicals with one base reaches it.
+
+**And one divergence from WL, kept because it is Cohen's:** a number does not distribute over a
+sum (`2·(a + b)` stays). WL's normal form distributes, and the corpus shows it. D29.
+
+`base` and `exponent` are exported as `powerBase` and `powerExponent`, and `const` as
+`constPart`, because the prelude has an `exponent` and `const`.
 
 **Where this attaches to the evaluator.** The built-in downvalues for `Plus`, `Times` and `Power`
 (step 13) call `simplifySum`, `simplifyProduct` and `simplifyPower` on their arguments — **not** the
@@ -1923,7 +2056,9 @@ interrupt is then an `Abort[]` at the next evaluation step, and every guarantee 
 A long pure computation below the kernel, such as `factorInteger` or a Gröbner basis, never reaches
 a poll. So a **second** Ctrl-C while the flag is still set is thrown asynchronously. The REPL
 reports that it skipped `Block` restoration, and the session state is not guaranteed.
-`runKernelPure` has no interrupts.
+`runKernelPure` has no interrupts. **The polling arrives with the REPL (milestone 1c).** Script mode,
+1a's only front end, installs no interrupt handler, and `Interrupt` exists as an `Abort` constructor
+only.
 
 **`Return` is a fourth unwind, `UReturn Expr`** (D23, answered). `wolfram_ref_return.html`:
 "Return[expr] exits control structures within the definition of a function, and gives the value
@@ -2624,7 +2759,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Core.Traversal` | `cata embed ≡ id` | a traversal that does not rebuild through the smart constructors |
 | `Structure` | `substitute u t t ≡ u`; `freeOf u t` implies `substitute u t r ≡ u` | subexpression comparison errors |
 | `Attributes` | `AttributeSet` is a commutative idempotent monoid; `holdsArgument` agrees with a naive reference on every (attributes, index, arity) | `HoldFirst`/`HoldRest` off-by-one |
-| `Rules` | `insertRule` keeps the set sorted by specificity with insertion order breaking ties; `applicableRules` visits rungs in `ladder` order | rule shadowing ("my definition is ignored"); the `Ord ValueKind` inversion (§4.2) |
+| `Rules` | `insertRule` keeps the set sorted by specificity with insertion order breaking ties; `applicableRules` visits rungs in `ladder` order | rule shadowing ("my definition is ignored"); a rung visited out of ladder order, the inversion of §4.2 |
 | `Simplify` | `simplifyRNE` agrees with `Rational`, and is `Nothing` exactly on division by zero | normalization and sign errors |
 | `Simplify` | `simplify u` satisfies `isASAE` or is `Left` | the postcondition, directly |
 | `Simplify` | **for an ASAE `u`, `simplify u ≡ u`** | the source's own contract; stronger than idempotence |
@@ -2678,8 +2813,11 @@ test/regress/
   ...
 ```
 
-Each `.in` is a script of FullForm expressions; each `.expected` is the FullForm output plus
-messages. `Test/Golden.hs` discovers cases with `findByExtension` and runs them through
+Each `.in` is a script of FullForm expressions, one per line. A whole-line WL comment `(* … *)` is
+not an input, so a case can cite its source. Each `.expected` is **§7.9's format**, which
+`runScript` adopted when it landed: `Out[k]: <FullForm>`, or `Out[k]: -` for `Null`, then one
+`Message[k]: symbol::tag` line per message. The corpus adapter therefore needs no translation.
+Trace cases add `Trace[k]: <step>: <FullForm>` lines before each output, indented by depth (§4.4). `Test/Golden.hs` discovers cases with `findByExtension` and runs them through
 `Cassini.REPL.runScript` (§4.10), so a case exercises the FullForm reader, the evaluator and the
 printer together, and adding one is adding two files. FullForm, not pretty output, so that printer
 improvements invalidate nothing.
@@ -2694,13 +2832,23 @@ improvements invalidate nothing.
 3. **Cases are named for the behaviour, not the bug** — `0002-builtin-upvalue-beats-user-downvalue`,
    not `0002-issue-17`.
 
-**Golden evaluation traces.** A second set records the *step sequence* for chosen expressions:
+**One test-only builtin.** Every golden case runs against the standard builtins plus a built-in
+upvalue on ``Test`up``, which answers `"builtin upvalue"` for any expression with a ``Test`up[…]``
+argument. 1a's builtins have no upvalue of their own, and
+`0002-builtin-upvalue-beats-user-downvalue` needs one. `Test/Golden.hs` installs it through
+`runScriptWith`. The unit test of the rung order installs one built-in rule on each rung the same
+way.
+
+**Golden evaluation traces.** A second set, `test/trace/`, records the *step sequence* for chosen
+expressions:
 which of the thirteen steps fired, in order, and the expression after each. A refactor that reorders
 `Flat` and `Orderless` gives correct-looking answers for most inputs and a visibly wrong trace for
 all of them.
 
 **Seeded corpus.** Every §7.2 worked example that spans more than one module goes in as a golden case
-from the start, so the suite has something to regress against before the first bug.
+from the start, so the suite has something to regress against before the first bug. The trace set
+seeds with the `Trace` inputs of *Evaluation of Expressions* that 1a's builtins cover. Its outputs
+are images, so those traces were read by hand against the page's prose.
 
 ### 7.5 Differential testing against external systems
 
@@ -2739,6 +2887,27 @@ harness whitelists all three kinds.
 
 **The externals arrive with the milestones they check** (§10): Mathics3 with 1a, SymPy with 2a,
 Singular with 3d.
+
+**The Mathics3 harness, as built at 1a.** `cassini-oracle` runs every script in `oracle/cases/` and
+every regression case in `test/regress/` twice. Cassini runs it through `runScript`.
+`oracle/mathics_eval.py` runs it in one Mathics3 session, under the interpreter
+`CASSINI_MATHICS_PYTHON` names, and writes the same script format (§7.4). Cases that need a
+test-only builtin are skipped. Each input gets one verdict:
+
+- **agree:** structurally equal up to `Orderless` order, or a difference that Cassini evaluates
+  to 0;
+- **disagree:** the difference is a nonzero number, or the message names differ;
+- **inconclusive:** anything else. Until 2a's zero test that includes every symbolic difference,
+  and also an input on which Mathics3 raises a Python exception. Mathics3 10.0.1 raises on an
+  endless own-value chain (`RecursionError`), and its `Part` assignment fails on a list of indices.
+
+`oracle/divergences.txt` lists known disagreements by case and input. Its reason is a D-number, or
+`Mathics3` where Mathics3 departs from WL. Such an entry cites the corpus case documenting WL's
+answer, or says the answer is from memory. Only an unlisted disagreement fails the suite. At 1a,
+over 127 inputs, 107 agree, 15 are listed and 5 are inconclusive, all from Mathics3's own failures.
+Eleven of the 15 are Mathics3 departing from WL's documented behaviour (`Protect`'s result,
+`Evaluate` inside `Hold`, `Power[x, y, z]`, `argx`). That is why the corpus is the higher authority
+for 1a's builtins.
 
 The Rubi problem corpus is the aspirational end state for `Integrate`; its size and timings are
 vendor-reported figures recorded in `notes/cas-haskell.md`, not measurements of this system. §7.8
@@ -2809,7 +2978,7 @@ corpus/
   fetched/                    -- gitignored
   wolfram-docs/               -- gitignored (§7.9)
   passing/<source>.txt        -- the ratchet: IDs of the cases known to pass
-  divergences.txt             -- case ID, and the D-number that explains it
+  divergences.txt             -- case ID, and the D-number (or "pending §N") that explains it
 ```
 
 The tools are Python scripts: the Wolfram documentation extractor (§7.9), Mathics3's pytest reader
@@ -2841,6 +3010,14 @@ reading it, with the same discipline as goldens (§7.4). A case that fails for a
 goes in `divergences.txt` with its D-number and is reported as a divergence, not a failure; this is
 §7.5's whitelist, kept per case. When a D-number is answered, its divergence entries are
 re-examined in the same change.
+
+**A failure can also be scheduled.** Triage meets cases whose behaviour a later milestone or track
+implements: radicals and infinities are §4.15's, but their pages mention only 1a's builtins, so
+they are in scope at 1a. They are not divergences, and leaving them unlisted would hide them among
+failures nobody has looked at. So `divergences.txt` also takes the reason `pending §N`, naming the
+section whose work implements the behaviour. The report counts these entries with the
+divergences. When that work lands, its pending entries are re-examined in the same change, and
+each is either removed or turned into a D-number.
 
 **Comparison, per corpus:**
 
@@ -2901,9 +3078,11 @@ corpus/wolfram-docs` is Python, and uses Mathics3 where a kernel would parse and
    to `Times[1, Power[2, -1]]`, not `Rational[1, 2]`. So each output is evaluated once in Mathics3,
    with every head except arithmetic (`Plus`, `Times`, `Power`, `Sqrt`, `Rational`, `Complex`,
    `DirectedInfinity`, `List` and a few spellings of them) renamed to an inert copy that keeps only
-   the original's `Hold*` attributes. Only arithmetic re-canonicalizes, a held argument stays as
-   displayed, and Mathics3 cannot evaluate further an output that WL left unevaluated. An output is
-   unusable in any of these cases:
+   the original's `Hold*` attributes. A symbol the example's own inputs give a hold attribute
+   (`SetAttributes[h, HoldFirst]`, or `Attributes[h] = {…}`) is `HoldAll` there: Mathics3 does not
+   know the page's attributes, and WL's output already evaluated what it did not hold. Only
+   arithmetic re-canonicalizes, a held argument stays as displayed, and Mathics3 cannot evaluate
+   further an output that WL left unevaluated. An output is unusable in any of these cases:
    - a second evaluation changes it;
    - normalization takes more than five seconds, or Mathics3 raises an error on it;
    - its label names a display form other than `InputForm` or `FullForm` (`Out[k]//MatrixForm=`);
@@ -2924,6 +3103,15 @@ corpus/wolfram-docs` is Python, and uses Mathics3 where a kernel would parse and
    `<Page>` is the page's own documentation URL, not its title, because a few functions have
    variant pages under one title (`blockchain/BlockchainData-Bitcoin` beside `BlockchainData`).
    Three pages ship twice under one URL; the copy tagged with the `Mathematica` paclet is kept.
+
+**What the adapter translates** (§7.4 fixed the golden format to be this one):
+
+- An expected file numbers its inputs as the documentation page did, so a one-input case can
+  hold `Out[67]`. Every input has exactly one `Out` line, so the adapter pairs the *k*-th label
+  in order with input *k*.
+- Message symbols are written as the notebook displays them, so `Infinity::indet` arrives as
+  `\[Infinity]::indet`. That is a normalizer defect, and D27's row records it. The adapter
+  rewrites it until the next extractor run fixes it.
 
 A `.in` file holds one FullForm input per line. A `.expected` file holds, for each input, a line
 `Out[k]: <FullForm>`, or `Out[k]: -` for an input with no output, or `Out[k]: ?<reason>` for an
@@ -3035,7 +3223,12 @@ generates.
   rather than the arithmetic.
 - **`//.` against 10, 100, 1000 rules**.
 - **Automatic simplification**: sums and products of 10, 100, 1000 terms, with and without like
-  terms, separating sort cost from merge cost.
+  terms, separating sort cost from merge cost. The terms arrive in scrambled order. On that input
+  `simplifySum` and `simplifyProduct` are quadratic in the number of distinct operands: SPRDREC-3
+  merges one operand at a time into the simplified rest. At 1000 terms that is about 50 ms and
+  120 MB, against 1 ms and 3 MB when the terms are alike. The evaluator always reaches them after
+  step 9 has sorted the arguments, where each merge stops at the first comparison, so the
+  quadratic case is the Haskell API's, not the evaluator's.
 - **Trigonometric expansion**, in two parts, because the obvious one cannot see what it is meant
   to guard. `TrigExpand[Sin[a₁ + … + aₙ]]` for growing `n` is the end-to-end cost, baselined; but
   its output has 2ⁿ⁻¹ terms, so its allocation is exponential under either recursion, and the naive
@@ -3073,6 +3266,8 @@ machine, and gating on them produces flaky builds that get disabled.
 
 - **Allocation is the hard gate**: fail above the committed baseline by more than 10%. Allocation
   does not depend on the machine, so any machine's baseline is valid for the same GHC and flags.
+  `check-allocation.py --only All.EndToEnd` restricts the check to this workload. The
+  microbenchmarks stay in the same CSV, and in the same baselines, as advice.
 - **Time is gated (`--fail-if-slower 10`) only against a baseline produced on the same runner
   class** — generated by a CI job and committed deliberately. A developer-machine baseline would
   make it flaky or meaningless, so until one exists, time is reported, not gated.
@@ -3222,9 +3417,10 @@ Three milestones, each a working evaluator a size larger than the last, then tra
 
 Attributes (§4.1), the rule tables and ladder (§4.2), the `Kernel` effect and both interpreters
 (§4.3), the evaluation sequence (§4.4), the syntactic matcher (§4.5.3, step 1), automatic
-simplification (§4.6), messages (§4.7), `Builtins.Assign`, and `Cassini.Syntax.FullForm` with
-`runScript` (§4.10) — the last so that the regression corpus (§7.4) starts here, with the code it
-guards.
+simplification (§4.6), messages (§4.7), `Builtins.Arithmetic`, `.Structural` and `.Assign`, and
+`Cassini.Syntax.FullForm` with `runScript` (§4.10). The last is here so that the regression corpus
+(§7.4) starts with the code it guards. `Builtins.Arithmetic` and `.Structural` were missing from this
+list, though the corpus triage below names both and the criterion needs `Plus`.
 
 **Done when** `Plus[a, Plus[b, a]]` flattens, sorts and collects to `2a + b`, and its golden trace
 shows step 7 before step 9.
@@ -3247,6 +3443,34 @@ gating on.
   pages of this milestone's builtins (`Builtins.Arithmetic`, `.Assign`, `.Structural`, and the
   attributes) is triaged: passing, a `divergences.txt` entry, or a fix with its regression case.
   The in-scope pass count is recorded.
+
+**Done 2026-10-09** (PR #12), with CI green on steps 1–8 under `-Werror` in both `intern`
+settings, step 8's allocation gate included.
+
+Corpus and oracle at completion:
+
+- **Corpus:** 624 of the 111,806 Wolfram documentation cases are in scope. 535 pass and are the
+  ratchet; 24 are in `divergences.txt` (D14, D20, D25, D29, and `pending` §4.5.3, §4.11, §4.13 and
+  §4.15); 65 fail on pages outside this milestone. 47 of the 624 came into scope when the
+  attribute names became `System`` symbols, after a PR review found they were not; their triage
+  fixed an evaluator bug (§4.4's settled round), three gaps in `Attributes` and `Unprotect`, and a
+  normalizer defect (D27).
+- **Oracle:** 173 of 204 inputs agree with Mathics3 10.0.1. 23 are listed and 8 are inconclusive,
+  all from Mathics3's own exceptions.
+
+The departures it found are recorded in their sections:
+
+- the three added kernel operations, the idempotent recursion cut, and where depth and fuel live
+  (§4.3);
+- the skipped settled round, `Evaluate` in a held position, what the trace records, and rule
+  conditions (§4.4, D14);
+- `MatchOps` open recursion and the `Expr` head constraint (§4.5.1–§4.5.2);
+- SPOW-2 and `isASAE` on `0^w`, MPRD's second constant, and D29 (§4.6);
+- the golden format and the test-only upvalue (§7.4);
+- the oracle harness (§7.5);
+- `pending §N` entries and the adapter's translations (§7.8–§7.9, D27);
+- the quadratic merge on unsorted input (§8.4);
+- D30, WL's `TerminatedEvaluation`.
 
 #### 1b — the matcher
 
@@ -3425,16 +3649,17 @@ document requires it.
 | Package | For | Layer |
 | :--- | :--- | :--- |
 | `relude` | the prelude (§2.3) | all |
-| `effectful` | the kernel effect and its interpreters (§4.3) | L2+ |
+| `effectful-core` | the kernel effect and its interpreters (§4.3). The core package, not `effectful`: everything used (dynamic dispatch, static `Reader`, `State` and `Error`) is in it | L2+ |
+| `effectful-th` | the kernel effect's operations, generated by `makeEffect` (§4.3); brings `template-haskell` and `th-abstraction` | L2 |
 | `text`, `vector`, `containers`, `unordered-containers`, `hashable`, `deepseq` | representation; `NFData` for benchmarks | L0–L2 |
-| `enummapset` | the `EnumMap ValueKind RuleSet` of the rule tables (§4.2) | L3 |
 | `logict` | matcher nondeterminism, confined to one module (§4.5.2) | L2 |
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
 | `megaparsec` | surface syntax (§4.10) | L5 |
 | `poly`, `semirings` | polynomial substrate and coefficient classes (§5.3) | A |
 | `tasty`, `tasty-hunit`, `tasty-quickcheck`, `tasty-golden`, `tasty-bench` | §7, §8 | test |
 
-Deliberately *not* dependencies: `lens` (the structure operators are a dozen functions, not an optics
+Deliberately *not* dependencies: `enummapset`, whose `EnumMap` held the four rule tables until a
+record replaced it (§4.2); `lens` (the structure operators are a dozen functions, not an optics
 library); `uniplate` (§3.6); `sbv` (D10); `symengine` (FFI to a fast external core would settle the
 two-layer question by outsourcing it, and this project is the exercise of not doing that);
 `vector-sized`/`singletons` for type-level arity (D13), which is also why `poly`'s `sparse` flag is
@@ -3464,7 +3689,7 @@ answer, not a deletion.
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2) | §8.3's allocation per match dominating on the sequence-variable grid |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
-| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4) | §8.4's fixed-point benchmark showing re-evaluation dominating |
+| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 moved a held argument into an unheld position. That is §4.4's bug fix for repeated messages, not the marker. The fix is partial: a built-in's result goes round again with its unevaluated siblings, so `Plus[Part[{1, 2}, 3], x, x]` emits `Part::partw` twice, where WL emits it once (found 2026-10-09 in the PR #12 review) | §8.4's fixed-point benchmark showing re-evaluation dominating; or a message repeated by a built-in's round becoming an oracle or corpus divergence |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
 | D16 | No `Sin[x]/Cos[x] → Tan[x]` in automatic evaluation, unlike WL: it would undo `Trig_substitute` inside `Simplify` (§4.11) | wanting WL's `Tan` spelling in output — answered first by a rewrite in `Cassini.Syntax.Pretty`, not by an evaluation rule |
 | D17 | `Simplify` is Cohen's `Simplify_trig`, one fixed strategy, not WL's search under a complexity measure (§4.12) | a second strategy existing — Gröbner side relations (§6.1), or Cohen's `Simplify_exp` (`cohen2002_*.pdf` §7.2 Exercise 4) — so that choosing between them needs a measure |
@@ -3477,8 +3702,12 @@ answer, not a deletion.
 | D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
 | D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8). The unabsorbed terms are guarded against Cohen's cancellations, which would otherwise assume them finite; one case, an infinity-bearing base under non-numeric exponents, is left unmerged (§4.15) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
 | D26 | Imported corpora are vendored only when permissively licensed and small enough to commit; any other corpus is fetched at a pinned commit, and the repository holds only its case IDs (§7.8) | a corpus's licence changing; or the test suites being shipped in a package, where fetched corpora must stay optional |
-| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here |
+| D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway. **Fired again 2026-10-09 (1a triage, after the attribute names became `System`` symbols):** the normalizer evaluated arithmetic held by an attribute the example set on its own symbol, so `SetAttributes[h, HoldFirst]; h[1+1, 2+2, 3+3]` was expected as `h[2, 4, 6]`. Fixed in the extractor (§7.9 step 6) and re-run over the same 14.1 notebooks, under Mathics3 10.0.1 and CPython 3.14: 38,160 examples ok and 85,558 usable outputs (from 38,157 and 85,555). Of the 29 changed files, 13 are that fix (the `Hold*`, `NHold*`, `SetAttributes`, `MapApply`, `ComapApply`, `Complex` and `Rational` pages), and 16 are run-to-run variation: three outputs that timed out before, memory addresses or a version string in eleven garbage outputs, and two `Plus` terms ordered differently by the new Python |
 | D28 | `structural` (O-T) recurs through `compareCanonical`, so each level re-runs `cohen` over a child its parent's `cohen` has just walked (§3.5). Two distinct terms that Cohen's rules call equal, differing d levels down, cost O(n·d), not O(n). Only unsimplified terms reach O-T. The likely fix keeps the relation: O-T has already checked equal kind and arity, and for those every kind's rule compares all child pairs, so a parent's `EQ` means every child pair is Cohen-equal and O-T can recur into `structural` directly. That needs the invariant stated in `Cassini.Core.Order` and a property checking the two versions agree | `compareCanonical` prominent in a §8.4 profile, or deep unsimplified terms in matching or `Orderless` sorting |
+| D29 | A rational number does not distribute over a sum. `2·(a + b)` and `-(c + d)` stay as products, as Cohen's ASAE has them (ASAE-4 admits a sum among the factors). WL distributes: `a + b - (c + d)` evaluates to `a + b - c - d`. Distributing would put an expansion rule into automatic simplification, which §4.6 keeps to exactly Cohen's operators. Expansion is `Expand`'s job (§4.12) | `Expand` arriving with the elementary-functions track, when the two normal forms can be compared on real workloads; or this entry's corpus and oracle divergences becoming the dominant kind |
+| D30 | The recursion limit cuts in place, as `Hold[e]`, and evaluation continues outward (§4.3). WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input. The in-place cut also emits `$RecursionLimit::reclim` twice for one runaway evaluation: `r[n_] := r[n + 1]; Length[{r[1]}]` gives `1` with the message once where step 3 cuts the argument and again where the rule's right-hand side is cut. WL emits it once. How many messages there are follows from which evaluation is replaced, so it is fixed with the unwinding rule, not before it (found 2026-10-09 in the PR #12 review) | an oracle or corpus case that pins down which enclosing evaluation WL replaces; or `Block` (§4.13), whose own example ends in `TerminatedEvaluation`, needing the same unwinding |
+| D31 | With tracing off, steps 2–9 still call `traceStep` and build the expression it would record. The handler drops it, but the effect call and the expression are paid for, on every `Flat` and `Orderless` node among others. Equality tests that guard some of these calls are not the cost: `Eq Expr` answers from the pointer, intern id or hash. Measured 2026-10-09 (GHC 9.12.4, hash interning, one developer machine): reading the flag once a round in `fixpoint` and carrying it on `Node` saves 0.7% of the end-to-end workload's allocation and 0.8–2.2% on the fixed-point benchmarks, with time inside the noise. A no-op `traceStep` bounds the saving at 1.5% and 3.6–6.4%. Gating the traces where rules fire saved nothing more. Not taken, for a change that small, because it means regenerating both allocation baselines | the evaluation sequence prominent in a §8.4 profile, or a benchmark baseline regenerated for another reason, when the change can ride along |
+| D32 | Steps 10–13 recompute, rung by rung, what the node already has (§4.2). Both upvalue rungs (10 and 11) collect the arguments' tag symbols and look each one up, and both downvalue rungs (12 and 13) look up the head symbol that step 2 already looked up for its attributes. For k tagged arguments that is about 2k+2 extra effect calls and symbol-table lookups per node per round, on the hottest path. Collecting the tags once per round and carrying the head's `SymbolInfo` on `Node` would remove them. Not measured. Not taken in the PR #12 review (2026-10-09), for D31's reason: it changes allocation, so it means regenerating both baselines | as D31's, and taken with it |
 
 ### 11.3 Provenance
 

@@ -1,0 +1,3 @@
+(* Corpus triage: lhs := rhs /; test applies the rule only where the test is True. *)
+SetDelayed[f[Pattern[x, Blank[]]], Condition[Plus[x, 1], FreeQ[x, y]]]
+List[f[a], f[y], f[g[y]]]

@@ -1,0 +1,12 @@
+(* Rule precedence: specific before general, upvalues before downvalues, own values. *)
+SetDelayed[f[Pattern[x, Blank[]]], "general"]
+SetDelayed[f[1], "specific"]
+List[f[1], f[2]]
+UpSetDelayed[g[h[Pattern[x, Blank[]]]], "up"]
+SetDelayed[g[Pattern[x, Blank[]]], "down"]
+List[g[h[1]], g[2]]
+Set[a, b]
+Set[b, 7]
+a
+SetDelayed[p[Pattern[x, Blank[]]][Pattern[y, Blank[]]], List[x, y]]
+p[1][2]

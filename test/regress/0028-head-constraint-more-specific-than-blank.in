@@ -1,0 +1,4 @@
+(* f[x_Integer] is tried before f[x_], whichever was defined first. *)
+SetDelayed[f[Pattern[x, Blank[]]], "general"]
+SetDelayed[f[Pattern[x, Blank[Integer]]], "integer"]
+List[f[3], f[a]]

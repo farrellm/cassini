@@ -469,7 +469,7 @@ def fullform(e, symbols=None, flags=None):
 SYSTEM_NAMES = set()
 
 
-def inert(e, hold_attrs):
+def inert(e, hold_attrs, page_holds=frozenset()):
     """Replace every non-arithmetic symbol head by an inert copy."""
     from mathics.core.expression import Expression
     from mathics.core.symbols import Symbol
@@ -487,12 +487,12 @@ def inert(e, hold_attrs):
             inert_name = INERT + name.replace("`", "$")
             if inert_name not in hold_attrs:
                 hold_attrs[inert_name] = name
-                _copy_hold_attributes(name, inert_name)
+                _copy_hold_attributes(name, inert_name, name in page_holds)
             new_head = Symbol(inert_name)
-    return Expression(new_head, *[inert(x, hold_attrs) for x in e.elements])
+    return Expression(new_head, *[inert(x, hold_attrs, page_holds) for x in e.elements])
 
 
-def _copy_hold_attributes(name, inert_name):
+def _copy_hold_attributes(name, inert_name, page_held):
     from mathics.core import attributes as A
 
     defs = session().definitions
@@ -501,7 +501,47 @@ def _copy_hold_attributes(name, inert_name):
     except Exception:
         attrs = 0
     keep = attrs & (A.A_HOLD_ALL | A.A_HOLD_FIRST | A.A_HOLD_REST | A.A_HOLD_ALL_COMPLETE | A.A_SEQUENCE_HOLD)
+    # A head the example's inputs gave a hold attribute holds every argument:
+    # its output is already evaluated where it was not held, and where it was,
+    # a spliced Sequence can have put unevaluated arguments beyond the held
+    # positions (wolfram/HoldFirst/PropertiesAndRelations/5).
+    if page_held:
+        keep |= A.A_HOLD_ALL
     defs.set_attributes(inert_name, keep)
+
+
+HOLD_NAMES = {"HoldAll", "HoldFirst", "HoldRest", "HoldAllComplete"}
+
+
+def page_holds(e, found):
+    """Add to found the symbols that SetAttributes[s, …] or Attributes[s] = …
+    anywhere in e gives a hold attribute."""
+    if not hasattr(e, "elements"):
+        return
+    head = e.head
+    els = e.elements
+    target = attrs = None
+    if not hasattr(head, "elements"):
+        h = head.get_name()
+        if h == "System`SetAttributes" and len(els) == 2:
+            target, attrs = els
+        elif h == "System`Set" and len(els) == 2 and hasattr(els[0], "elements"):
+            lhs = els[0]
+            if not hasattr(lhs.head, "elements") and lhs.head.get_name() == "System`Attributes" and len(lhs.elements) == 1:
+                target, attrs = lhs.elements[0], els[1]
+    if target is not None and HOLD_NAMES & {short(n) for n in _symbol_names(attrs)}:
+        found.update(_symbol_names(target))
+    for x in (head, *els):
+        page_holds(x, found)
+
+
+def _symbol_names(e):
+    """The names of a symbol, or of the symbols in a list."""
+    if hasattr(e, "elements"):
+        if not hasattr(e.head, "elements") and e.head.get_name() == "System`List":
+            return [n for x in e.elements for n in _symbol_names(x)]
+        return []
+    return [e.get_name()] if hasattr(e, "get_name") else []
 
 
 def restore(e, names):
@@ -549,14 +589,15 @@ def with_timeout(f, *args):
         signal.signal(signal.SIGALRM, old)
 
 
-def normalize_output(text, flags, symbols=None):
-    """FullForm of a documented output, arithmetic re-canonicalized."""
+def normalize_output(text, flags, symbols=None, holds=frozenset()):
+    """FullForm of a documented output, arithmetic re-canonicalized. holds
+    names the symbols the example's inputs gave a hold attribute."""
     if len(text) > MAX_TEXT:
         raise Unusable("size")
     e = mparse(text)
     names = {}
     try:
-        once = with_timeout(evaluate, inert(e, names))
+        once = with_timeout(evaluate, inert(e, names, holds))
         twice = with_timeout(evaluate, once)
         a = fullform(once)
         if fullform(twice) != a:
@@ -672,6 +713,7 @@ def process_example(page, ex):
     reasons = collections.Counter()
     symbols = set()
     flags = set()
+    holds = set()
     status = "ok"
     k_seen = 0
     for style, content, label in ex["cells"]:
@@ -683,7 +725,9 @@ def process_example(page, ex):
                 text = cell_text(content)
                 if len(text) > MAX_TEXT:
                     raise Unusable("size")
-                inputs.append((k, fullform(mparse(text), symbols, flags)))
+                parsed = mparse(text)
+                page_holds(parsed, holds)
+                inputs.append((k, fullform(parsed, symbols, flags)))
             except Unusable as u:
                 reasons["input:" + str(u)] += 1
                 status = "unusable"
@@ -695,7 +739,7 @@ def process_example(page, ex):
             try:
                 if form and form not in ("InputForm", "FullForm"):
                     raise Unusable("form:" + form)
-                outputs[k] = normalize_output(cell_text(content), flags, symbols)
+                outputs[k] = normalize_output(cell_text(content), flags, symbols, holds)
             except Unusable as u:
                 reasons["output:" + str(u)] += 1
                 outputs[k] = u

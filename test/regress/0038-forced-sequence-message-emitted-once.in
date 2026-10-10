@@ -1,0 +1,3 @@
+(* An argument Evaluate forces is evaluated once, even when the Sequence it gives splices it out of the held position. *)
+SetAttributes[f, HoldFirst]
+f[Evaluate[Sequence[1, Part[List[1], 2]]], Plus[1, 1]]

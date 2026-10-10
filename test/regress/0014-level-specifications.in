@@ -1,0 +1,9 @@
+(* Corpus triage: Map, Apply and Level read n, {n}, {m, n}, Infinity and negative levels, which count depth; Map[f] and Apply[f] are operator forms. *)
+Level[h0[h1[h2[h3[a]]]], List[0, -1]]
+Level[List[List[List[List[a]]]], -2]
+Map[f, List[List[a, b], List[c]], List[2]]
+Map[f, h1[h2[h3[x]]], -1]
+Apply[f, List[List[a, b], List[c, d]], List[1]]
+Apply[f, List[a, "s", 3], List[-1]]
+Map[f][List[a, b]]
+Apply[f][List[a, b]]

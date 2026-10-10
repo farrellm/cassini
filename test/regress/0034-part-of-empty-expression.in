@@ -1,0 +1,4 @@
+(* Part 1 of {} or f[] does not exist (partw); a part of an atom is deeper than the object (partd). *)
+Part[List[], 1]
+Part[f[], 1]
+Part[5, 1]

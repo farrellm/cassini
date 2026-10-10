@@ -1,0 +1,6 @@
+(* An index that is not a part specification is Part::pkspec1, and every index is checked before any part is taken, so it wins over an index out of range and over an atom. WL's message: wolfram/Part/PropertiesAndRelations/4, and mathematica.stackexchange.com/q/198139 and /q/193443. *)
+Part[List[a, b, c], x]
+Part[List[a, b, c], 5, x]
+Part[y, x]
+Part[List[a, b, c], List[1, x]]
+Part[y, 1]

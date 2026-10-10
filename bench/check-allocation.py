@@ -10,12 +10,16 @@ optimization. `cabal bench -O2` changes some figures by large factors. Under the
 `intern` flag allocation also varies by a few percent between runs, with
 garbage-collection timing; the threshold absorbs that.
 
-    check-allocation.py BASELINE.csv CURRENT.csv [--threshold PERCENT] [--slack BYTES]
+    check-allocation.py BASELINE.csv CURRENT.csv [--threshold PERCENT] [--slack BYTES] [--only PREFIX]
 
 A benchmark fails only when it is over by more than the threshold *and* by more
 than the slack. Near-zero baselines (a few bytes of stack growth or
 bookkeeping per iteration) would otherwise fail on noise: against a baseline
 of 0, any allocation at all is an infinite percentage.
+
+--only restricts the check to the benchmarks whose names start with PREFIX.
+CI gates on the end-to-end workload alone (`--only All.EndToEnd`): §8.6 makes
+it the number CI gates on, and the microbenchmarks advisory.
 """
 
 import argparse
@@ -34,10 +38,14 @@ def main():
     parser.add_argument("current")
     parser.add_argument("--threshold", type=float, default=10.0, help="percent over baseline allowed")
     parser.add_argument("--slack", type=int, default=1024, help="bytes over baseline always allowed")
+    parser.add_argument("--only", default="", help="check only benchmarks whose names start with this")
     args = parser.parse_args()
 
-    baseline = allocations(args.baseline)
-    current = allocations(args.current)
+    baseline = {k: v for k, v in allocations(args.baseline).items() if k.startswith(args.only)}
+    current = {k: v for k, v in allocations(args.current).items() if k.startswith(args.only)}
+    if not baseline:
+        print(f"no baseline benchmark starts with {args.only!r}")
+        sys.exit(1)
     failed = False
     for name, base in sorted(baseline.items()):
         if name not in current:

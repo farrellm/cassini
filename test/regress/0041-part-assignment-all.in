@@ -1,0 +1,9 @@
+(* All in a part assignment is every index of the expression, so a list of values of its length goes in elementwise and any other value goes in at every index. WL's answer for a list of the wrong length: wolfram/AppendTo/PossibleIssues/3, input 4. *)
+Set[m, List[List[11, 12, 13], List[21, 22, 23]]]
+Set[Part[m, All, 1], List[11, 21, 4]]
+m
+Set[Part[m, All, 1], List[p, q]]
+m
+Set[Part[m, All], 0]
+m
+Set[Part[y, All], 0]

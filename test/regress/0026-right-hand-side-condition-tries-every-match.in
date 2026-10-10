@@ -1,0 +1,6 @@
+(* lhs := rhs /; test tries the next match where the test fails, and an own value's condition is honoured. *)
+Set[t[1], True]
+SetDelayed[h[Alternatives[f[Pattern[x, Blank[]], Blank[]], f[Blank[], Pattern[x, Blank[]]]]], Condition[x, t[x]]]
+h[f[a, 1]]
+SetDelayed[y, Condition[5, t[2]]]
+y

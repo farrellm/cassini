@@ -1,0 +1,3 @@
+(* Corpus triage: Evaluate in a held position evaluates its argument, so an Unevaluated inside it survives. *)
+Hold[Evaluate[Unevaluated[Plus[1, 2]]]]
+Hold[Evaluate[Plus[1, 2], Plus[3, 4]]]

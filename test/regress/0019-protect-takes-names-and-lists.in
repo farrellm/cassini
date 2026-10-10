@@ -1,0 +1,6 @@
+(* Corpus triage: Protect and Unprotect take symbols, names and lists of either, and answer the names they changed. *)
+Set[p, Unprotect[Sqrt]]
+Protect[Evaluate[p]]
+Protect["Sqrt"]
+Unprotect[List[Sqrt, "Plus"]]
+Protect[Sqrt, Plus]

@@ -1,0 +1,4 @@
+f[Unevaluated[Plus[1, 1]]]
+Length[Unevaluated[Plus[a, b, c]]]
+SetDelayed[g[Pattern[x, Blank[]]], Hold[x]]
+g[Unevaluated[Plus[1, 1]]]

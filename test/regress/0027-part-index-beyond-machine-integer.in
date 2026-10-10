@@ -1,0 +1,6 @@
+(* An index beyond a machine integer is out of range, not wrapped to a small one. *)
+Part[List[a, b], 18446744073709551617]
+Part[List[a, b], -18446744073709551617]
+Set[z, List[1, 2, 3]]
+Set[Part[z, 18446744073709551617], 9]
+z

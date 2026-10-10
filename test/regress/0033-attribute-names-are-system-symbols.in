@@ -1,0 +1,4 @@
+(* The Flat a user writes is the Flat that Attributes returns. *)
+SetAttributes[f, Flat]
+FreeQ[Attributes[f], Flat]
+FreeQ[Attributes[Plus], Orderless]
