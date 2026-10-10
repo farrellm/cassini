@@ -111,13 +111,24 @@ replaceAllRule e = case args e of
 
 -- | One pass of @ReplaceAll@: top down, the first rule that applies to a
 -- subexpression replaces it, and the replacement is not searched again.
+-- A subtree no rule touched keeps its node: it is not rebuilt.
 replaceAllOnce :: (Kernel :> es) => [Replacement] -> Expr -> Eff es Expr
-replaceAllOnce rs x =
-  applyWithRuns rs x >>= \case
-    Just r -> pure r
-    Nothing -> case x of
-      App h as -> mkApp <$> replaceAllOnce rs h <*> V.mapM (replaceAllOnce rs) as
-      _ -> pure x
+replaceAllOnce rs x0 = fromMaybe x0 <$> go x0
+  where
+    -- 'Nothing' means no rule applied anywhere below.
+    go x =
+      applyWithRuns rs x >>= \case
+        Just r -> pure (Just r)
+        Nothing -> case x of
+          App h as -> do
+            h' <- go h
+            as' <- V.mapM go as
+            pure
+              ( if isNothing h' && V.all isNothing as'
+                  then Nothing
+                  else Just (mkApp (fromMaybe h h') (V.zipWith fromMaybe as as'))
+              )
+          _ -> pure Nothing
 
 -- | @Replace[expr, rules, levelspec]@: by default the whole expression only;
 -- with a level specification, bottom up over the parts at those levels,
