@@ -208,11 +208,16 @@ applySubst s u
       a -> V.singleton <$> go a
 
 -- | Bind a name, or check it against its binding: one name means one value
--- across a pattern.
+-- across a pattern. A sequence of one is that one expression, so in
+-- @f[x__, x_]@ the two @x@ agree on @f[a, a]@.
 bindName :: (MonadPlus m) => Symbol -> Binding -> Subst -> m Subst
 bindName x b sigma = case Map.lookup x sigma of
   Nothing -> pure (Map.insert x b sigma)
-  Just b' -> sigma <$ guard (b' == b)
+  Just b' -> sigma <$ guard (asRun b' == asRun b)
+  where
+    asRun = \case
+      BOne v -> V.singleton v
+      BSeq vs -> vs
 
 -- | An absent @Optional@: its name, if it has one, takes the default, which
 -- is not matched against the pattern. @x:(\"I\" | \"II\"):\"none\"@ binds
