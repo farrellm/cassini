@@ -11,21 +11,26 @@ arithmetic, structural and assignment builtins, FullForm and script mode. Milest
 sequence and commutative matchers, is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and it is ahead of the code.
 Where the two disagree, the design is the intent and the code is behind.
 
+Three packages under one `cabal.project` (`DESIGN.md` §2.1, D7). Each has its own `CLAUDE.md`
+with its paths, commands and local traps:
+
+| Package | What it is |
+| :--- | :--- |
+| [`cassini-prelude/`](./cassini-prelude/CLAUDE.md) | `Cassini.Prelude`: relude minus the collisions (§2.3). |
+| [`cassini-core/`](./cassini-core/CLAUDE.md) | The library, L0–L5 including script mode; the `intern` flag; every test suite, the corpora, the oracle and the benchmarks. |
+| [`cassini-repl/`](./cassini-repl/CLAUDE.md) | The `cassini` executable; the interactive loop from milestone 1c. |
+
+What spans packages stays at the root:
+
 | Path | What it is |
 | :--- | :--- |
-| [`DESIGN.md`](./DESIGN.md) | The architecture: module boundaries, types, the evaluation contract, the test and benchmark plans. **Start here.** |
+| [`DESIGN.md`](./DESIGN.md) | The architecture: module boundaries, types, the evaluation contract, the test and benchmark plans. **Start here.** Its paths under `src/`, `test/`, `bench/`, `corpus/` and `oracle/` are relative to `cassini-core/`. |
 | [`notes/`](./notes/) | The reading-and-building guide and its bibliography. Has its own `CLAUDE.md` with strict editing rules. |
 | [`references/`](./references/) | The document corpus the notes cite, indexed, with per-file defect annotations; its totals are in `references/CLAUDE.md`. Gitignored; see rule 6. |
-| `cassini.cabal` | Package definition. GHC2024, `base ^>=4.21.2.0`. |
-| `src/`, `src-intern/` | The library. `src-intern/{hash,weak}` are the two implementations of `Cassini.Core.Intern`, selected by the `intern` flag (§3.4). |
-| `prelude/` | `Cassini.Prelude`, the internal `cassini-prelude` sublibrary (§2.3). |
-| `app/`, `test/`, `bench/` | The executable (`--script`/`--trace` until the REPL), the fast suite `cassini-test` with the regression corpus `test/regress/` and golden traces `test/trace/`, and `cassini-bench` with its committed baselines (§7, §8). |
-| `oracle/` | `cassini-oracle`: differential testing against Mathics3 (§7.5), its cases, its Python side and its whitelist. |
-| `test-support/` | `Test.Script`, the script-format comparison `cassini-corpus` and `cassini-oracle` share. |
-| `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker, and the Haddock coverage floor. |
+| `cabal.project` | Lists the three packages. GHC2024, `base ^>=4.21.2.0`. |
+| `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker; the Haddock coverage floor; the common-stanza check. |
 | `.github/workflows/ci.yml` | CI, §2.8 steps 1–8. |
-| `corpus/` | Imported test corpora (`DESIGN.md` §7.8–§7.9): the `cassini-corpus` suite, its ratchet `passing/` and its manifest `divergences.txt`, and `tools/extract_wolfram_docs.py`. `fetched/` and `wolfram-docs/` are gitignored. |
-| `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate. The changelog is written as changes land, not at release. |
+| `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate, one copy for the project; each package's `LICENSE` is a symlink to the root's. The changelog is written as changes land, not at release. |
 
 ## Rules
 
@@ -59,10 +64,8 @@ Where the two disagree, the design is the intent and the code is behind.
 
 3. **Haskell house style, so it is not re-litigated** (`DESIGN.md` §2.3–§2.6).
 
-   - **`relude` is the prelude**, wired in through cabal `mixins` from the internal
-     `cassini-prelude` sublibrary, minus the names that collide with `effectful` or with this
-     project's vocabulary. The `mixins` stanza needs the qualified `cassini:cassini-prelude` form in
-     both `build-depends` and `mixins`; cabal rejects the bare name.
+   - **`relude` is the prelude**, through cabal `mixins` from the `cassini-prelude` package. The
+     wiring and the names subtracted are in [`cassini-prelude/CLAUDE.md`](./cassini-prelude/CLAUDE.md).
    - **`effectful` for the kernel** — never a bare `ReaderT Env IO`, never an mtl stack. The kernel
      is a custom dynamically dispatched effect with two interpreters, one of which has no `IOE`;
      that is what makes the evaluator testable as a pure function (§4.3).
@@ -76,68 +79,35 @@ Where the two disagree, the design is the intent and the code is behind.
    - Extensions are declared per module, except `OverloadedRecordDot` and `OverloadedStrings`, which
      are project-wide in a `common extensions` stanza. Never re-declare those two or anything
      GHC2024 already has; a redundant pragma is invisible noise.
+   - **The `common warnings` and `common extensions` stanzas are copied into every package's
+     `.cabal`**, because cabal cannot import a stanza across files and ormolu reads each package's
+     own. Change all three together; `scripts/check-common-stanzas.sh` fails CI if they differ.
    - **Record dot syntax is preferred**: `s.symName`, not `symName s`. Prefix selector application
      wants a reason (composition, passing the selector as a function, a section).
    - `ormolu` and `hlint`, both checked in CI. Ormolu has no style config, and that is the point.
-     It reads `default-extensions` from the cabal file, so **never pass `--no-cabal`**: without it
-     ormolu rewrites `r.field` to `r . field`. hlint does not read the cabal file at all, so
-     `.hlint.yaml` passes those extensions itself. Without them hlint suggests `f x . field` for
+     It reads `default-extensions` from the nearest `.cabal` file, so **never pass `--no-cabal`**:
+     without it ormolu rewrites `r.field` to `r . field`. hlint does not read the cabal file at all,
+     so `.hlint.yaml` passes those extensions itself. Without them hlint suggests `f x . field` for
      `(f x).field` (§2.5).
    - **Module layering is a lint rule, not a convention** (§2.6). Imports go down the layer stack;
-     `.hlint.yaml` fails a violation, and `lint/check-layering.sh` checks the rules themselves.
+     `.hlint.yaml` fails a violation, and `lint/check-layering.sh` checks the rules themselves. The
+     rules are by module name, so they span packages: L5 is `Cassini.Script` in cassini-core and
+     `Cassini.REPL` in cassini-repl.
 
-   Two traps already found, so they are not rediscovered:
+4. **A module implementing a published algorithm names its source in the module header.** The form
+   is in [`cassini-core/CLAUDE.md`](./cassini-core/CLAUDE.md). It ties the code to the corpus that
+   justified it, and makes `DESIGN.md`'s citations checkable from the other end.
 
-   - **relude re-exports mtl's `State`/`Reader` vocabulary** (`get`, `put`, `ask`, `local`, …), which
-     collides name-for-name with `effectful`. Resolved once in `Cassini.Prelude` by subtraction, not
-     per module by qualification; the same subtraction removes relude's `one` and `Undefined`, and
-     the list will grow (§2.3). relude also withholds `unsafePerformIO`, which is a feature:
-     `grep -rlE 'System.IO.Unsafe|reallyUnsafe' src src-intern` finds the symbol table, the two
-     intern tables and `Eq Expr`'s pointer test, and that is a complete audit of the unsafety in
-     the tree.
-   - **No `effectful` handler can enumerate matches.** `Effectful.NonDet` is `Maybe`-shaped by
-     necessity, not by an old release, so the matcher uses `LogicT` over `Eff` inside the `MatchT`
-     **newtype** in `Cassini.Pattern.Match`, the one module the `.hlint.yaml` rule lets import
-     `Control.Monad.Logic` (§4.5.2, D11). Do not replace the newtype with a synonym.
+5. **Test and benchmark discipline** (§7, §8). The mechanics are cassini-core's; these hold everywhere.
 
-4. **A module implementing a published algorithm names its source in the module header.**
-
-   ```haskell
-   -- | Automatic simplification of sums, products and powers.
-   --
-   -- Source: @references/papers/textbooks/cohen2003_*.pdf@ §3.2.
-   module Cassini.Simplify.Automatic (simplify, isASAE) where
-   ```
-
-   That ties the code to the corpus that justified it, and makes `DESIGN.md`'s citations checkable
-   from the other end.
-
-5. **Test and benchmark discipline** (§7, §8).
-
-   - **Every fixed bug adds a numbered regression case in `test/regress/`, in the same commit as the
-     fix.** The evaluation step order, the four-way rule ladder and the matcher's phase order are
-     all things a plausible-looking refactor breaks silently.
+   - **Every fixed bug adds a numbered regression case in `cassini-core/test/regress/`, in the same
+     commit as the fix.** The evaluation step order, the four-way rule ladder and the matcher's phase
+     order are all things a plausible-looking refactor breaks silently.
    - **Goldens are read before they are accepted.** `--accept` makes it trivial to enshrine a bug;
      a person reads the diff, and the commit message says why the new output is right.
-   - Regression cases are named for the behaviour, not the bug:
-     `0002-builtin-upvalue-beats-user-downvalue`, not `0002-issue-17`.
-   - A unit test lifted from a source cites where it came from (§7.2). Edge-case and bug tests
-     are welcome too, with no citation; their name says what contract they check.
-   - A new regression case is also an oracle case: run `cassini-oracle` before committing it.
-   - When the oracle disagrees, or is inconclusive because Mathics3 crashes, `corpus/wolfram-docs/`
-     often documents WL's answer; cite that case ID in `oracle/divergences.txt` or the regression
-     case's comment. Failing that, mathematica.stackexchange.com often quotes WL's real output,
-     messages included; cite the question or answer URL. Search it through the Stack Exchange API
-     (`api.stackexchange.com/2.3`, `site=mathematica`), not a web search engine, which barely
-     indexes it. `search/excerpts` covers answers as well as questions but drops `::`, so search
-     the bare tag (`pkspec1`), then fetch the hits' full bodies (`questions/{ids}` or
-     `answers/{ids}`, `filter=withbody`) and grep them. If neither documents it, drop the input;
-     don't pin a guess.
    - A fix commit adds its `CHANGELOG.md` line in the same commit.
-   - Benchmark baselines are committed per GHC version and `intern` setting, and regenerated
-     deliberately, with the commit message saying why. From milestone 1a, an allocation regression
-     fails CI (`bench/check-allocation.py`). Time is gated only against a baseline from the same CI
-     runner class (§8.6).
+   - Benchmark baselines are regenerated deliberately, with the commit message saying why. From
+     milestone 1a, an allocation regression fails CI.
 
 6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git, and neither
    are the `*.txt` OCR sidecars for the two image-only PDFs, which are the only way to `grep` those
@@ -148,52 +118,30 @@ Where the two disagree, the design is the intent and the code is behind.
    `references/CLAUDE.md` carries the corpus rules, including which held copies have OCR defects
    that make `grep` lie in both directions.
 
-   **Two test corpora are never committed either** (`DESIGN.md` §7.8–§7.9, D26–D27):
-   `corpus/fetched/`, cloned at pinned commits by `corpus/fetch.sh`, and `corpus/wolfram-docs/`,
-   extracted by `corpus/tools/extract_wolfram_docs.py` from the documentation notebooks that come
-   with a Mathematica licence. Wolfram's terms forbid scraping
-   `reference.wolfram.com`, so do not add a scraper, and do not commit an extracted case: only case
-   IDs go in git.
+   Two test corpora are never committed either; their rules, including the licence terms that
+   forbid a scraper, are in [`cassini-core/CLAUDE.md`](./cassini-core/CLAUDE.md).
 
 ## Toolchain
 
 GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`. Installed locally: `ormolu` 0.8.0.2,
 `hlint` 3.10, and `doctest` 0.25.0 (`cabal install doctest`). CI pins the same versions.
 
-CI (`.github/workflows/ci.yml`) runs `DESIGN.md` §2.8 steps 1–7 on every push and PR. Step 8, the
-§8.6 benchmark gate, arrives with milestone 1a. To run the same checks by hand:
+CI (`.github/workflows/ci.yml`) runs `DESIGN.md` §2.8 steps 1–8 on every push and PR. From the
+root, the project-wide checks are:
 
-- Build, with CI's warnings: `cabal build all --enable-tests --enable-benchmarks --ghc-options=-Werror`
-- Tests: `cabal test cassini-test`, and again with `-f intern` for the weak intern table
-- Doctests: `cabal repl --with-repl=doctest --repl-options=-Wno-missing-export-lists lib:cassini`.
-  This is not a test suite, because an executable cannot see the `mixins` renaming (§7.6), and
-  `--with-compiler=doctest` does not work either.
-- Lint: `hlint --ignore-glob='lint/fixtures/**' .` and `lint/check-layering.sh`
+- Build, with CI's warnings: `cabal build all --enable-tests --enable-benchmarks --ghc-options=-Werror`,
+  and again with `-f intern` for the weak intern table
+- Lint: `hlint --ignore-glob='lint/fixtures/**' .`, `lint/check-layering.sh` and
+  `scripts/check-common-stanzas.sh`
 - Format: `ormolu --mode check $(git ls-files '*.hs')`
-- Haddock floor: `cabal haddock lib:cassini 2>&1 | python3 scripts/check-haddock.py`
-- Benchmarks: `cabal bench --benchmark-options='--csv out.csv'`. Compare allocation with
-  `python3 bench/check-allocation.py bench/baseline/ghc-9.12.4-hash.csv out.csv`, or against
-  `-intern.csv` after a `-f intern` run. CI's step 8 gates only the end-to-end workload:
-  `--benchmark-options='-p EndToEnd --csv out.csv'`, then `check-allocation.py --only All.EndToEnd`.
-- Script mode, for trying the evaluator: `cabal run cassini -- --script FILE` (or `--trace FILE`),
-  one FullForm input per line.
-- The corpus ratchet: `cabal test cassini-corpus` (skips without `corpus/wolfram-docs/`). For
-  triage, run its binary (`cabal list-bin cassini-corpus --enable-tests`) with `--page NAME`,
-  `--verbose`, and `--write-passing FILE` to diff against `corpus/passing/wolfram.txt`.
-- The oracle: `CASSINI_MATHICS_PYTHON=$PWD/.venv/bin/python cabal test cassini-oracle`, with
-  Mathics3 installed in the gitignored `.venv` (`.venv/bin/pip install Mathics3`). It skips
-  without the variable.
-- The Wolfram documentation corpus (milestone W, `DESIGN.md` §7.9):
-  `python corpus/tools/extract_wolfram_docs.py <notebook-dir> corpus/wolfram-docs`, in a Python
-  environment with `Mathics3` installed. It takes about ten minutes on eight cores.
-- Re-extracting needs the notebooks unpacked from the offline installer's `.cab` files with
-  `7z x`, about 9.4 GB; `run.txt`'s `source:` line says where. For a trial run, use
-  `--only Sym1,Sym2` into the scratchpad, then `diff -r`.
-- A corpus `.expected` output has been normalised by Mathics3, so it isn't raw WL. When one looks
-  wrong, read the notebook cell before blaming the evaluator or the extractor.
-- To compare corpus failures across commits, `git worktree add` the old commit, symlink
-  `corpus/wolfram-docs` into it, and diff the `FAIL` lines of each binary's `--verbose` output.
 
-Two cabal behaviours to know. cabal accepts an undeclared `-f` flag silently, so a misspelt
+Tests, doctests, the Haddock floor, the corpus, the oracle and the benchmarks are cassini-core's
+commands, and running the evaluator is cassini-repl's. Every cabal command runs from the root:
+**the root is no package's directory, so name a target.** A bare `cabal bench` or `cabal test` there
+fails with *no package in the current directory*.
+
+Three cabal behaviours to know. **A command-line `-f intern` reaches cassini-core whatever target is
+named**, because cabal applies it to every local package that declares the flag (checked in
+`dist-newstyle/cache/plan.json`). **cabal accepts an undeclared `-f` flag silently**, so a misspelt
 `-f intren` tests nothing. And `-Wunused-packages` is deliberately absent from the warning set:
 under the mixins prelude it reports false positives, and `-Werror` would fail the build (§2.4).

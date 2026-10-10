@@ -1,0 +1,43 @@
+cabal-version:      3.14
+name:               cassini-repl
+version:            0.1.0.0
+synopsis:           The cassini executable: script mode, and the REPL from milestone 1c
+description:
+  The command-line front end to cassini-core (DESIGN.md §4.10). Kept apart
+  so that the REPL's terminal dependencies are not the kernel's (D7).
+
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Matthew Farrell
+maintainer:         farrellm@alum.mit.edu
+category:           Math
+build-type:         Simple
+tested-with:        GHC ==9.12.4
+
+-- DESIGN.md §2.4. CI adds -Werror from the command line. The two common stanzas
+-- are copied into every package; scripts/check-common-stanzas.sh keeps them equal.
+common warnings
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wmissing-export-lists -Wpartial-fields
+    -Wredundant-constraints
+
+common extensions
+  default-extensions:
+    OverloadedRecordDot
+    OverloadedStrings
+
+executable cassini
+  import:           warnings, extensions
+  main-is:          Main.hs
+  hs-source-dirs:   app
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini-core
+    , cassini-prelude
+
+  mixins:
+    base hiding (Prelude),
+    cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024

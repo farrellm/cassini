@@ -12,21 +12,21 @@
     # 1. The evaluation sequence is above matching: nothing below L3 may import it.
     - name: [Cassini.Eval, Cassini.Eval.Message]
       within: [Cassini.Eval.**, Cassini.Simplify.**, Cassini.Builtins.**,
-               Cassini.Integrate.Rules, Cassini.Syntax.**, Cassini.REPL,
+               Cassini.Integrate.Rules, Cassini.Syntax.**, Cassini.Script, Cassini.REPL,
                Main, Test.**, Bench.**]
     # 2. The Kernel effect and the rule tables are the vocabulary L2 needs for side
     #    conditions (§4.5.2). Cassini.Rules is deliberately absent: Eval.Kernel imports it.
     - name: [Cassini.Eval.Kernel, Cassini.Rules]
       within: [Cassini.Pattern.**, Cassini.Eval.**,
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
-               Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Main, Test.**, Bench.**]
+               Cassini.Syntax.**, Cassini.Script, Cassini.REPL, Cassini.Zero, Main, Test.**, Bench.**]
     # 3. The algebra tower does not see Expr; Poly.Convert and Zero are the bridges.
     #    Every L1 module whose API is over Expr is named, not just the type's own.
     - name: [Cassini.Core.Expr, Cassini.Core.Order, Cassini.Core.Traversal, Cassini.Structure]
       within: [Cassini.Core.**, Cassini.Structure, Cassini.Attributes,
                Cassini.Pattern.**, Cassini.Rules, Cassini.Eval.**,
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
-               Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Cassini.Poly.Convert,
+               Cassini.Syntax.**, Cassini.Script, Cassini.REPL, Cassini.Zero, Cassini.Poly.Convert,
                Main, Test.**, Bench.**]
     # 4. The representation is private to the core, and to the interning-agreement test.
     #    The intern table builds nodes, so it is private to the core outright: only
@@ -36,9 +36,11 @@
     - name: Cassini.Core.Intern
       within: [Cassini.Core.**]
     # 5. L4 and L5 are the top: nothing below them, and nothing in A, may import them.
-    - name: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Syntax.**, Cassini.REPL]
+    #    L5 spans two packages: Cassini.Script is cassini-core's script mode, and
+    #    Cassini.REPL is cassini-repl's interactive loop (§2.1).
+    - name: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Syntax.**, Cassini.Script, Cassini.REPL]
       within: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
-               Cassini.Syntax.**, Cassini.REPL, Main, Test.**, Bench.**]
+               Cassini.Syntax.**, Cassini.Script, Cassini.REPL, Main, Test.**, Bench.**]
     # 6. Nondeterminism is private to the matcher's monad (§4.5.2).
     - name: [Control.Monad.Logic, Control.Monad.Logic.Class]
       within: [Cassini.Pattern.Match]
