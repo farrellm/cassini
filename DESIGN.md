@@ -144,14 +144,31 @@ fixed-point loop.
 
 ## 2. Repository and package layout
 
-### 2.1 One package, for now
+### 2.1 Three packages
 
-One cabal package `cassini`: one public library, one internal sublibrary `cassini-prelude` (§2.3),
-one executable, several test-suites and benchmark suites.
+A root `cabal.project` lists three packages, each in a directory of its own name:
 
-**The trigger for splitting** into a multi-package `cabal.project` is dependency divergence, not
-size: when the algebra tower wants dependencies the kernel does not, `cassini-algebra` becomes its
-own package so that a user of the rewriting kernel does not pay for Gröbner bases. D7.
+| Package | Holds |
+| :--- | :--- |
+| `cassini-prelude` | `Cassini.Prelude` (§2.3), the prelude every other package builds against. |
+| `cassini-core` | The library, L0–L5 below the interactive loop, including script mode (`Cassini.Script`); the `intern` flag (§3.4); every test suite and the benchmark suite (§7, §8). |
+| `cassini-repl` | The `cassini` executable and, from milestone 1c, `Cassini.REPL`, the interactive loop (§4.10). |
+
+The repository root keeps what spans packages: this document, `notes/`, `references/`, `lint/`,
+`scripts/`, `.hlint.yaml` and CI. **Paths in this document under `src/`, `src-intern/`, `test/`,
+`test-support/`, `bench/`, `corpus/` and `oracle/` are relative to `cassini-core/`**, which is also
+the directory cabal runs that package's suites in, so the suites' relative paths are these.
+
+**Why split, and why there.** The trigger is dependency divergence, not size. The interactive loop
+wants terminal dependencies (line editing, history) that nothing else does, and a user of the
+rewriting kernel should not pay for them. The prelude is the one thing every package needs, so it
+is its own package rather than a sublibrary of one of them. Script mode stays in `cassini-core`
+because the test suites, the oracle, the corpus and the benchmarks all run scripts. The rule still
+holds for what comes next: when the algebra tower (`A`, §1.2) wants dependencies the kernel does
+not, `cassini-algebra` becomes a fourth package so that a user of the kernel does not pay for
+Gröbner bases. D7.
+
+The layering of §1.2 is per module, not per package, and §2.6 enforces it across all three.
 
 ### 2.2 Module tree
 
@@ -210,7 +227,8 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Syntax.Parser` | Infix surface syntax to `Expr`. |
 | `Cassini.Syntax.FullForm` | `Plus[a, Times[2, b]]` — read and print. The golden-test format. |
 | `Cassini.Syntax.Pretty` | Infix output with precedence-driven parenthesization; message formatting. |
-| `Cassini.REPL` | The read-eval-print loop, `In[]`/`Out[]`, and `runScript` (§4.10); the executable's body. |
+| `Cassini.Script` | Script mode: `runScript` and `traceScript`, FullForm in and out (§4.10, §7.4). In `cassini-core`, because every suite runs scripts. |
+| `Cassini.REPL` | The read-eval-print loop, `In[]`/`Out[]` (§4.10), from milestone 1c; the executable's body. The one L5 module in `cassini-repl`. |
 | **A** | |
 | `Cassini.Algebra.Class` | The coefficient-tower classes `semirings` does not supply (§5.3). |
 | `Cassini.Poly.Uni` | Dense univariate over a coefficient ring. |
@@ -232,35 +250,37 @@ expose the API (the `containers`/`vector` convention).
 vocabulary, and fifteen of those names — `State`, `get`, `put`, `modify`, `gets`, `state`,
 `runState`, `evalState`, `execState`, `Reader`, `ask`, `asks`, `local`, `runReader`, `withReader` —
 collide one for one with `Effectful.State.Static.Local` and `Effectful.Reader.Static`. Fixing that
-with qualified imports in fifty modules is fifty chances to get it wrong, so it is fixed once, in an
-internal sublibrary:
+with qualified imports in fifty modules is fifty chances to get it wrong, so it is fixed once, in a
+package of its own (§2.1):
 
 ```cabal
-library cassini-prelude
+-- cassini-prelude/cassini-prelude.cabal
+library
   import:           warnings, extensions
   exposed-modules:  Cassini.Prelude
-  hs-source-dirs:   prelude
   build-depends:    relude
   mixins:
       relude (Relude as Prelude)
     , relude
   default-language: GHC2024
 
+-- cassini-core/cassini-core.cabal, and every other consuming stanza
 library
   import:           warnings, extensions
-  build-depends:    base, cassini:cassini-prelude, effectful, ...
+  build-depends:    base, cassini-prelude, effectful, ...
   mixins:
-      base                   hiding (Prelude)
-    , cassini:cassini-prelude (Cassini.Prelude as Prelude)
+      base            hiding (Prelude)
+    , cassini-prelude (Cassini.Prelude as Prelude)
   ...
 ```
 
 Every stanza that consumes the prelude carries the same two `mixins` lines. Verified against GHC
 9.12.4 and cabal 3.16.1.0:
 
-- **`cassini:cassini-prelude`, not the bare name**, in both `build-depends` and `mixins`; cabal
-  rejects the bare one as *unknown package*.
-- **The sublibrary depends on `relude` alone, through two `mixins` lines.** Without
+- **The bare name `cassini-prelude`**, in both `build-depends` and `mixins`, now that it is a
+  package. While it was an internal sublibrary of the single package, cabal required the qualified
+  `cassini:cassini-prelude` in both places and rejected the bare one as *unknown package*.
+- **The prelude package depends on `relude` alone, through two `mixins` lines.** Without
   `relude (Relude as Prelude)`, GHC's implicit `import Prelude` has nothing to resolve to (*Could not
   load module 'Prelude'*); base's `Prelude` must not be visible beside it, because relude
   *redefines* `show`, `lines`, `error` and others and the re-export becomes ambiguous. Relude's
@@ -306,8 +326,8 @@ Consequences:
 - **No `unsafePerformIO`.** Two modules import `System.IO.Unsafe` explicitly: `Cassini.Core.Symbol`,
   for the symbol table (§3.2), and `Cassini.Core.Intern`, in each of its two implementations (§3.4).
   One more uses an unsafe primitive: `Cassini.Core.Expr.Internal`, whose `Eq` tests pointer
-  equality first (§3.4). `grep -rlE 'System.IO.Unsafe|reallyUnsafe' src src-intern` listing exactly
-  those four files is a complete audit of the tree's unsafety.
+  equality first (§3.4). `grep -rlE 'System.IO.Unsafe|reallyUnsafe' src src-intern`, run in
+  `cassini-core/`, listing exactly those four files is a complete audit of the tree's unsafety.
 
 ### 2.4 Compiler, warnings and extensions
 
@@ -335,7 +355,7 @@ what makes §1.2's layering checkable and the `Internal` convention meaningful.
 
 Extensions are declared per module, so that a module's header says what it needs — with two
 exceptions, project-wide in a second `common` stanza imported by every stanza (the prelude
-sublibrary included) as `import: warnings, extensions`:
+package's included) as `import: warnings, extensions`:
 
 ```cabal
 common extensions
@@ -348,6 +368,12 @@ common extensions
 information.** Both would appear in nearly every header (`Text` everywhere; `r.field` as the house
 default) and so say nothing there. `OverloadedRecordDot` is *not* in GHC2024: without it `r.rName`
 parses as `r . rName` and fails as a confusing type error.
+
+**Both stanzas are copied into each package's `.cabal` (§2.1), and a script keeps the copies
+equal.** A `.cabal` file cannot import a `common` stanza from another file, and a `cabal.project`
+cannot carry `default-extensions`. Even if it could, ormolu reads extensions from the `.cabal`
+file nearest the source file, not from the project (§2.5). `scripts/check-common-stanzas.sh`
+fails when any package's two stanzas differ from `cassini-core`'s, and CI runs it (§2.8 step 5).
 
 Per module, as needed: `PatternSynonyms` and `ViewPatterns` (§3.3), `TypeFamilies` (every `type
 instance` — `Base Expr` in §3.6, `DispatchOf Kernel` in §4.3 — and the algebra tower), `DerivingVia`
@@ -367,7 +393,8 @@ about in review, which is the whole value being bought. The `.ormolu` file it re
 **Ormolu must see the cabal file; never pass `--no-cabal`.** It reads `default-extensions` from the
 `.cabal` file, resolving `common` stanza imports. With `--no-cabal` it parses `r.rName` without
 `OverloadedRecordDot` and *rewrites the source* to `r . rName`, silently changing its meaning.
-(Verified with ormolu 0.8.0.2.)
+(Verified with ormolu 0.8.0.2.) It finds the cabal file by walking up from each source file, so
+`ormolu --mode check $(git ls-files '*.hs')` at the root reads each package's own `.cabal`.
 
 **hlint does not read the cabal file at all**, so `.hlint.yaml` passes the project-wide
 extensions as `arguments`. Without them hlint parses `(f x).field` as composition and suggests
@@ -383,21 +410,21 @@ extensions as `arguments`. Without them hlint parses `(f x).field` as compositio
     # 1. The evaluation sequence is above matching: nothing below L3 may import it.
     - name: [Cassini.Eval, Cassini.Eval.Message]
       within: [Cassini.Eval.**, Cassini.Simplify.**, Cassini.Builtins.**,
-               Cassini.Integrate.Rules, Cassini.Syntax.**, Cassini.REPL,
+               Cassini.Integrate.Rules, Cassini.Syntax.**, Cassini.Script, Cassini.REPL,
                Main, Test.**, Bench.**]
     # 2. The Kernel effect and the rule tables are the vocabulary L2 needs for side
     #    conditions (§4.5.2). Cassini.Rules is deliberately absent: Eval.Kernel imports it.
     - name: [Cassini.Eval.Kernel, Cassini.Rules]
       within: [Cassini.Pattern.**, Cassini.Eval.**,
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
-               Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Main, Test.**, Bench.**]
+               Cassini.Syntax.**, Cassini.Script, Cassini.REPL, Cassini.Zero, Main, Test.**, Bench.**]
     # 3. The algebra tower does not see Expr; Poly.Convert and Zero are the bridges.
     #    Every L1 module whose API is over Expr is named, not just the type's own.
     - name: [Cassini.Core.Expr, Cassini.Core.Order, Cassini.Core.Traversal, Cassini.Structure]
       within: [Cassini.Core.**, Cassini.Structure, Cassini.Attributes,
                Cassini.Pattern.**, Cassini.Rules, Cassini.Eval.**,
                Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
-               Cassini.Syntax.**, Cassini.REPL, Cassini.Zero, Cassini.Poly.Convert,
+               Cassini.Syntax.**, Cassini.Script, Cassini.REPL, Cassini.Zero, Cassini.Poly.Convert,
                Main, Test.**, Bench.**]
     # 4. The representation is private to the core, and to the interning-agreement test.
     #    The intern table builds nodes, so it is private to the core outright: only
@@ -407,9 +434,11 @@ extensions as `arguments`. Without them hlint parses `(f x).field` as compositio
     - name: Cassini.Core.Intern
       within: [Cassini.Core.**]
     # 5. L4 and L5 are the top: nothing below them, and nothing in A, may import them.
-    - name: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Syntax.**, Cassini.REPL]
+    #    L5 spans two packages: Cassini.Script is cassini-core's script mode, and
+    #    Cassini.REPL is cassini-repl's interactive loop (§2.1).
+    - name: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Syntax.**, Cassini.Script, Cassini.REPL]
       within: [Cassini.Simplify.**, Cassini.Builtins.**, Cassini.Integrate.Rules,
-               Cassini.Syntax.**, Cassini.REPL, Main, Test.**, Bench.**]
+               Cassini.Syntax.**, Cassini.Script, Cassini.REPL, Main, Test.**, Bench.**]
     # 6. Nondeterminism is private to the matcher's monad (§4.5.2).
     - name: [Control.Monad.Logic, Control.Monad.Logic.Class]
       within: [Cassini.Pattern.Match]
@@ -417,8 +446,9 @@ extensions as `arguments`. Without them hlint parses `(f x).field` as compositio
 
 Rules 1 and 2 split L3 at §1.2's seam. Rule 5 guards the top of the stack: without it nothing stops
 `Cassini.Zero` importing `Cassini.Simplify.Automatic`, and GHC would not object, since that is not a
-cycle. `Main`, `Test.**` and `Bench.**` appear throughout because `hlint .` walks every suite
-directory and `app/`. §4.11–§4.12's modules need no rule of their own: `Cassini.Simplify.**` and
+cycle. `Main`, `Test.**` and `Bench.**` appear throughout because `hlint .`, run at the root, walks
+every package's suite directories and `cassini-repl/app/`. The rules are by module name, so one
+config covers all three packages. §4.11–§4.12's modules need no rule of their own: `Cassini.Simplify.**` and
 `Cassini.Builtins.**` already place them, and they import only downward within L4
 (`Simplify.Trig` → `.Elementary`, `.Rational`; `.Rational` → `.Elementary`, for `simplifyE`;
 `.Elementary` → `.Numeric`; `.Numeric` → `.Automatic`; `Builtins.Arithmetic` → `Simplify.Elementary`, for `simplifyExpPower`,
@@ -472,20 +502,23 @@ module Cassini.Simplify.Automatic (simplify, isASAE) where
 2. `cabal test cassini-test` (unit, property, golden)
 3. `cabal test -f intern cassini-test` — the same suite with the interning flag flipped (§3.4), so
    both implementations of `Cassini.Core.Intern` are compiled and tested on every commit
-4. doctests: `cabal repl --with-repl=doctest --repl-options=-Wno-missing-export-lists lib:cassini`
+4. doctests: `cabal repl --with-repl=doctest --repl-options=-Wno-missing-export-lists lib:cassini-core`
    (§7.6), under each `intern` setting
-5. `hlint --ignore-glob='lint/fixtures/**' .`, plus `lint/check-layering.sh` (§2.6)
+5. `hlint --ignore-glob='lint/fixtures/**' .`, plus `lint/check-layering.sh` (§2.6) and
+   `scripts/check-common-stanzas.sh` (§2.4)
 6. `ormolu --mode check $(git ls-files '*.hs')` — no `--no-cabal` (§2.5)
 7. `cabal haddock --haddock-quickjump`, with a scripted floor on haddock's documented-percentage:
    `scripts/check-haddock.py`, at 100% for every module except `Cassini.Prelude`, whose exports are
    relude's
 8. the benchmark gate (§8.6), from milestone 1a: the `bench` job runs the end-to-end workload under
-   each `intern` setting and checks its allocation with
-   `bench/check-allocation.py --only All.EndToEnd`
+   each `intern` setting (`cabal bench cassini-bench`, named, because the root is no package's
+   directory) and checks its allocation with `bench/check-allocation.py --only All.EndToEnd`
 
 Steps 1–7 are Stage 0's exit condition (§10); step 8 needs an evaluator to measure. Every cabal
 command in the workflow takes the same `--enable-tests --enable-benchmarks --ghc-options=-Werror`,
-so that no step reconfigures the build and the `intern` build is held to `-Werror` too. The
+so that no step reconfigures the build and the `intern` build is held to `-Werror` too. A
+command-line `-f intern` reaches `cassini-core` whichever target is named, because cabal applies it
+to every local package that declares the flag (checked in `plan.json`, cabal 3.16.1.0). The
 dependencies carry `^>=` bounds at the versions CI first resolved. Step 2 names
 its suite rather than `all`, which would pull the slow suite into every commit. A nightly job runs
 `cassini-oracle`, `cassini-slow`, `cassini-corpus` and the random-seed property run (§7.1, §7.3,
@@ -1644,7 +1677,8 @@ and that must not invalidate hundreds of regression cases.
 
 `Cassini.REPL` fills the `cassini` executable: `In[n]`/`Out[n]`, `%`, message display, `Trace`,
 timing, and a `--script` mode that reads FullForm and writes FullForm. The script mode is a library
-function, `runScript :: Text -> IO Text`, which the golden tests call directly.
+function in `cassini-core`, `Cassini.Script.runScript :: Text -> IO Text`, which the golden tests
+call directly; the interactive loop is `cassini-repl`'s (§2.1).
 
 ### 4.11 Elementary functions
 
@@ -2650,7 +2684,7 @@ kinds that catch different failures.
 
 ### 7.1 Layout and harness
 
-`tasty` throughout, the suite tree mirroring `src/`:
+`tasty` throughout, the suite tree mirroring `src/`, all in `cassini-core/` (§2.1):
 
 ```
 test/
@@ -2818,7 +2852,7 @@ not an input, so a case can cite its source. Each `.expected` is **§7.9's forma
 `runScript` adopted when it landed: `Out[k]: <FullForm>`, or `Out[k]: -` for `Null`, then one
 `Message[k]: symbol::tag` line per message. The corpus adapter therefore needs no translation.
 Trace cases add `Trace[k]: <step>: <FullForm>` lines before each output, indented by depth (§4.4). `Test/Golden.hs` discovers cases with `findByExtension` and runs them through
-`Cassini.REPL.runScript` (§4.10), so a case exercises the FullForm reader, the evaluator and the
+`Cassini.Script.runScript` (§4.10), so a case exercises the FullForm reader, the evaluator and the
 printer together, and adding one is adding two files. FullForm, not pretty output, so that printer
 improvements invalidate nothing.
 
@@ -2924,8 +2958,8 @@ changes. They run on every commit (§2.8, step 4).
 interprets sources through the GHC API, and nothing hands an executable cabal's `mixins`
 renaming, without which `Prelude` does not resolve to `Cassini.Prelude`. Of the two ways of
 borrowing cabal's own flags, `cabal repl --with-compiler=doctest` fails: cabal then builds the
-internal `cassini-prelude` sublibrary with doctest as its compiler (*unrecognized option
-`--make'*). `cabal repl --with-repl=doctest lib:cassini`, which cabal 3.14 added for this purpose,
+`cassini-prelude` dependency with doctest as its compiler (*unrecognized option
+`--make'*). `cabal repl --with-repl=doctest lib:cassini-core`, which cabal 3.14 added for this purpose,
 swaps the program only for the repl session and works. Answered on the first build, with doctest
 0.25.0.
 
@@ -3369,7 +3403,7 @@ tooling is here because every later stage is written under it; added afterwards,
 everything already written.
 
 - Tooling: `cassini.cabal` per §2.4 — the `common` stanzas, the `cassini-prelude` sublibrary and its
-  `mixins` (§2.3), and the `intern` manual flag selecting §3.4's two source directories;
+  `mixins` (§2.3; a package of its own since the split of §2.1), and the `intern` manual flag selecting §3.4's two source directories;
   `.hlint.yaml` per §2.6, with its fixtures; CI (§2.8) green on steps 1–7 with `-Werror`. Step 8
   arrives with 1a.
 - §7.6's doctest risk answered on this first build, and §2.8 step 4 and §7.6 edited to say which
@@ -3682,7 +3716,7 @@ answer, not a deletion.
 | D4 | QuickCheck over Hedgehog (§7.3) | shrinking quality becoming the reason counterexamples go uninvestigated |
 | D5 | `poly` over Kmett's `algebra` (§5.3) | Gröbner work at Stage 3 needing the `Numeric.Domain.*` chain |
 | D6 | `Effectful.State.Static.Local` over `.Shared` (§4.3) | any move toward parallel evaluation |
-| D7 | Single package over multi-package (§2.1) | the algebra tower's dependency footprint diverging |
+| D7 | Single package over multi-package (§2.1). **Answered 2026-10-09:** three packages, `cassini-prelude`, `cassini-core` and `cassini-repl`, each in its own directory under one `cabal.project`. The trigger fired early, on the frontend rather than the algebra tower: milestone 1c's interactive loop brings terminal dependencies the kernel should not carry, and the prelude, which every package needs, became a package rather than a sublibrary of one of them. Script mode stays in `cassini-core` as `Cassini.Script`, because every suite runs scripts. The common stanzas are copied per package and checked equal (§2.4) | the algebra tower's dependency footprint diverging, which makes `cassini-algebra` a fourth package (§2.1) |
 | D8 | Cohen's canonical order over WL fidelity (§9.2) | oracle-suite false positives becoming the dominant failure |
 | D9 | Inexact numbers absent from `Number` (§3.1) | when they are needed; the O-7 slot is reserved |
 | D10 | SMT-backed zero testing not adopted (§5.6) | polynomial side conditions needing more than layer 3 decides |

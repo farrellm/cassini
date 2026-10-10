@@ -4,6 +4,11 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
+  `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
+  executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;
+  `Cassini.REPL` is reserved for the interactive loop. Consumers depend on `cassini-prelude` by its
+  bare name, and `scripts/check-common-stanzas.sh` keeps the per-package `common` stanzas equal.
 * Milestone 1a, the evaluator (DESIGN.md §4, §10):
   * Attributes as a bitmask (`Cassini.Attributes`).
   * Rules, the four tables and the ladder (`Cassini.Rules`).
@@ -16,7 +21,7 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   * Cohen's automatic simplification (`Cassini.Simplify.Automatic`).
   * The arithmetic, structural and assignment builtins, and the registry (`Cassini.Builtins.*`).
   * FullForm, read and printed (`Cassini.Syntax.FullForm`).
-  * Script mode: `runScript`, `traceScript`, and `cassini --script`/`--trace` (`Cassini.REPL`).
+  * Script mode: `runScript`, `traceScript`, and `cassini --script`/`--trace` (`Cassini.REPL`, now `Cassini.Script`).
   * The regression corpus and golden traces (`test/regress/`, `test/trace/`).
   * Benchmarks of the fixed point, automatic simplification and the end-to-end workload, and CI
     step 8, the allocation gate on the end-to-end workload (`bench/check-allocation.py --only`).

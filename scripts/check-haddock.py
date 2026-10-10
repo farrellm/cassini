@@ -4,7 +4,7 @@
 Reads `cabal haddock` output on stdin and echoes it. Cassini.Prelude is
 excluded: it re-exports relude, whose documentation is relude's.
 
-    cabal haddock lib:cassini 2>&1 | check-haddock.py [--floor PERCENT]
+    cabal haddock lib:cassini-core 2>&1 | check-haddock.py [--floor PERCENT]
 """
 
 import argparse

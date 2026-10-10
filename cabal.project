@@ -1,0 +1,6 @@
+-- DESIGN.md §2.1: three packages. The kernel and its suites are cassini-core;
+-- the prelude and the executable are packages of their own.
+packages:
+  cassini-prelude
+  cassini-core
+  cassini-repl
