@@ -60,8 +60,9 @@ import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 
 -- | A pattern, read. The sequence objects (@__@, @___@, @Repeated@,
--- @Optional@) take a run of arguments, so only "Cassini.Pattern.Sequence"
--- and "Cassini.Pattern.Commutative" match them; alone they match nothing.
+-- @Optional@) take a run of arguments, which "Cassini.Pattern.Sequence" and
+-- "Cassini.Pattern.Commutative" distribute; alone, against one expression,
+-- they take it as a run of one.
 data PatternView
   = -- | @_h@
     PBlank !(Maybe Expr)
@@ -126,14 +127,16 @@ viewPattern e = case e of
       _ -> Nothing
 
 -- | A repetition count: @n@ is at most @n@ (from the given least), @{n}@
--- exactly @n@, @{m, n}@ from @m@ to @n@, where @n@ may be @Infinity@.
+-- exactly @n@, @{m, n}@ from @m@ to @n@. The bound @n@ may be @Infinity@
+-- in both @n@ and @{m, n}@: WL calls @Repeated[_, Infinity]@ and
+-- @Repeated[_, {1, Infinity}]@ identical (@mathematica.stackexchange.com/a/7904@).
 repeatSpec :: Int -> Expr -> Maybe (Int, Maybe Int)
 repeatSpec lo = \case
   App (Sym l) ns | l == sList -> case V.toList ns of
     [n] -> count n >>= \k -> pure (k, Just k)
     [m, n] -> (,) <$> count m <*> bound n
     _ -> Nothing
-  n -> (lo,) . Just <$> count n
+  n -> (lo,) <$> bound n
   where
     count = \case
       Int_ k | k >= 0 -> toIntegralSized k

@@ -88,3 +88,8 @@ patterns 17 Mathics3
 # Replace matches the whole (wolfram/Flat/PossibleIssues/4).
 0048-replace-matches-whole-not-run 1 Mathics3
 0048-replace-matches-whole-not-run 2 Mathics3
+# Mathics3: Repeated[p, Infinity] recurses to $RecursionLimit; WL calls it
+# identical to Repeated[p, {1, Infinity}] (mathematica.stackexchange.com/a/7904).
+0053-repeated-bound-may-be-infinity-without-braces 1 Mathics3
+0053-repeated-bound-may-be-infinity-without-braces 2 Mathics3
+0053-repeated-bound-may-be-infinity-without-braces 3 Mathics3

@@ -34,6 +34,11 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     excludes it by head any more (regression case 0050).
   * Fix: a name bound by a sequence variable to a run of one argument agrees with the same name
     bound to that argument alone, so `f[x__, x_]` matches `f[a, a]` (regression case 0051).
+  * Fix: a sequence object against one expression, rather than an argument list, takes it as a
+    run of one, so `MatchQ[a, __]` is `True` and `Cases[{1, a}, __]` is `{1, a}` (regression
+    case 0052).
+  * Fix: `Repeated[p, Infinity]` is read as `Repeated[p, {1, Infinity}]`, not as a literal
+    expression (regression case 0053).
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;

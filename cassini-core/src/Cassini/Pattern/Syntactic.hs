@@ -4,9 +4,11 @@
 -- names, conditions, tests, alternatives, @Except@, @HoldPattern@,
 -- @Verbatim@ and literals. Every later matcher calls back into it.
 --
--- Sequence patterns (@__@, @___@, @Repeated@, @Optional@) match nothing
--- here: they take runs of arguments, which only an argument list has, and
--- "Cassini.Pattern.Sequence" distributes them. A compound pattern here
+-- Sequence patterns (@__@, @___@, @Repeated@, @Optional@) take runs of
+-- arguments, which "Cassini.Pattern.Sequence" distributes over an argument
+-- list. Here, against one expression, they take it as a run of one, so
+-- @MatchQ[a, __]@ is @True@ and a name binds the expression itself, as a
+-- sequence of one is (§4.5.1). A compound pattern here
 -- matches only a subject with the same number of arguments, position by
 -- position; "Cassini.Pattern.Match" sends it here only when no argument
 -- pattern takes a run and the head has neither @Flat@ nor @Orderless@.
@@ -46,9 +48,9 @@ matchSyntactic ops p s sigma = case p of
     maybe (pure sigma) (\q' -> ops.recur q' s sigma) q
   PHold q -> ops.recur q s sigma
   PVerbatim e -> sigma <$ guard (e == s)
-  PBlankSeq _ -> empty
-  PBlankNull _ -> empty
-  PRepeated _ _ -> empty
-  POptional _ _ -> empty
+  PBlankSeq c -> sigma <$ guard (headMatches c)
+  PBlankNull c -> sigma <$ guard (headMatches c)
+  PRepeated q (lo, hi) -> guard (lo <= 1 && maybe True (>= 1) hi) *> ops.recur q s sigma
+  POptional q _ -> ops.recur q s sigma
   where
     headMatches = maybe True (== exprHead s)
