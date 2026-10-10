@@ -42,6 +42,7 @@ library
     Cassini.Builtins.Arithmetic
     Cassini.Builtins.Assign
     Cassini.Builtins.Define
+    Cassini.Builtins.Pattern
     Cassini.Builtins.Structural
     Cassini.Core.Expr
     Cassini.Core.Expr.Internal
@@ -53,8 +54,10 @@ library
     Cassini.Eval.Message
     Cassini.Number
     Cassini.Pattern
+    Cassini.Pattern.Commutative
     Cassini.Pattern.Match
     Cassini.Pattern.Net
+    Cassini.Pattern.Sequence
     Cassini.Pattern.Syntactic
     Cassini.Rules
     Cassini.Script
@@ -103,6 +106,9 @@ test-suite cassini-test
     Test.Cassini.Core.Traversal
     Test.Cassini.Eval
     Test.Cassini.Number
+    Test.Cassini.Pattern
+    Test.Cassini.Pattern.Commutative
+    Test.Cassini.Pattern.Sequence
     Test.Cassini.Pattern.Syntactic
     Test.Cassini.Rules
     Test.Cassini.Simplify.Automatic

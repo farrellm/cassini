@@ -1,0 +1,5 @@
+(* An Orderless match whose first submatch for g[x_] must be undone: binding x = 1 leaves no 1 for x_, so g[x_] takes g[2] (DESIGN.md §4.5.4). *)
+SetAttributes[h, Orderless]
+Replace[h[g[1], g[2], 2], RuleDelayed[h[g[Pattern[x, Blank[]]], Pattern[x, Blank[]], Pattern[y, Blank[]]], List[x, y]]]
+SetDelayed[k[h[g[Pattern[x, Blank[]]], Pattern[x, Blank[]], Pattern[y, Blank[]]]], List[x, y]]
+k[h[2, g[1], g[2]]]

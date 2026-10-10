@@ -1,0 +1,6 @@
+(* The first sequence variable takes the shortest run first, in Replace and in a definition alike; Optional takes its argument when there is one. *)
+Replace[f[a, b, c], RuleDelayed[f[Pattern[x, BlankSequence[]], Pattern[y, BlankSequence[]]], List[List[x], List[y]]]]
+SetDelayed[s[Pattern[x, BlankSequence[]], Pattern[y, BlankNullSequence[]]], List[List[x], List[y]]]
+s[a, b, c]
+SetDelayed[o[Optional[Pattern[x, Blank[]], 0], Optional[Pattern[y, Blank[]], 1]], List[x, y]]
+List[o[], o[a], o[a, b]]

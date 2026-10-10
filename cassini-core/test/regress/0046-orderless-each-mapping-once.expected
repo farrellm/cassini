@@ -1,0 +1,5 @@
+Out[1]: -
+Out[2]: List[List[List[a], List[b, c]], List[List[b], List[a, c]], List[List[c], List[a, b]], List[List[a, b], List[c]], List[List[a, c], List[b]], List[List[b, c], List[a]]]
+Out[3]: List[List[a, a]]
+Out[4]: List[List[List[a, c], List[b, c]], List[List[a, b, b, c], List[c]], List[List[a, c, c, c], List[b]]]
+Out[5]: List[List[List[], List[b, a]], List[List[b], List[a]], List[List[a], List[b]], List[List[b, a], List[]]]

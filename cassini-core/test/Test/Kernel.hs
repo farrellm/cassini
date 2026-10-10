@@ -6,6 +6,7 @@ module Test.Kernel
     eval,
     evalWith,
     evalStd,
+    stateWith,
     parse,
     ff,
     messageNames,
@@ -48,6 +49,11 @@ evalStd = go std
       [] -> ""
       [t] -> ff (fst (eval st (parse t)))
       t : ts -> go (snd (eval st (parse t))) ts
+
+-- | The standard kernel after a sequence of FullForm inputs, for tests that
+-- need definitions or attributes in place.
+stateWith :: [Text] -> KernelState
+stateWith = foldl' (\st t -> snd (eval st (parse t))) std
 
 -- | Read FullForm with the front end's name resolution. A syntax error reads
 -- as a string saying so, which no expected value equals.

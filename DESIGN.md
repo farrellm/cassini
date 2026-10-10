@@ -212,7 +212,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Minus`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL), and the infinities as symbols: `ComplexInfinity` evaluates to `DirectedInfinity[]` and `Infinity` to `DirectedInfinity[1]`, as WL's outputs show. Comparison is `Builtins.Logic`'s. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
 | `Cassini.Builtins.List` | List construction and manipulation. |
-| `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `RuleDelayed`. |
+| `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `ReplaceList`. `RuleDelayed` has no rules, only attributes, so `Cassini.Builtins` defines it beside `Rule`; `ReplaceList` is here because it is the language's way to see every match (§4.5.2). |
 | `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `TagSet`, `Unset`, `Attributes`, `Protect`. |
 | `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
 | `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
@@ -1382,6 +1382,25 @@ requires "that expr be matched exactly as it appears, with no substitutions for 
 "does not maintain expr in an unevaluated form" — so, unlike `HoldPattern`, it has no hold
 attribute (`wolfram_ref_except.html`, `wolfram_ref_verbatim.html`).
 
+**The sequence objects, as built at 1b.** Each element of a compound pattern's argument list takes
+a run of the subject's arguments, and `argRange` says how long: a blank one, `__` one or more,
+`___` any, `Repeated[p, spec]` by its spec, and `Optional` none or what its pattern takes. The spec
+forms are `n` (at most `n`), `{n}` (exactly) and `{m, n}`, with `n` possibly `Infinity`. Under a
+`Flat` head a blank takes one or more too, and a run of more than one binds the head over the run:
+with `f` `Flat`, `f[x_, c]` matches `f[a, b, c]` with `x = f[a, b]`. A run of exactly one is tried
+as `f[a]` first and then `a`, or as `a` only if the head also has `OneIdentity`
+(`wolfram/OneIdentity/PropertiesAndRelations/2`, `wolfram/Flat/PropertiesAndRelations/5`). That is
+all `OneIdentity` does to a run. Its other use is the fallback for `Optional`: a compound pattern
+whose head has `OneIdentity`, and all of whose arguments but one are `Optional`, matches a subject
+that is not an application of that head, as its one required argument does
+(`MatchQ[x, n_. x_]`; `wolfram/OneIdentity/BasicExamples/1`).
+
+`Optional[p, d]` takes `d` when no argument is left for it; `Optional[p]` takes the head's built-in
+default, which exists only for `Plus` (0), `Times` (1) and `Power`'s exponent (1). User defaults
+(`Default[f] = v`) are not implemented. An absent `Optional` binds its name to the default without
+matching the default against the pattern, so `t[x_, type:("I" | "II"):"none"]` matches `t[1]`
+(`wolfram/Optional/Scope/3`). `Longest` and `Shortest` are not implemented.
+
 #### 4.5.2 The matcher monad, and why nondeterminism cannot be an effect
 
 **No `effectful` handler can enumerate matches.** `Eff es` is `Env es -> IO a`, so a handler cannot
@@ -1424,9 +1443,10 @@ matchAll p s = observeAll (match (viewPattern p) s mempty)
 
 ```haskell
 data MatchOps m = MatchOps
-  { recur    :: PatternView -> Expr -> Subst -> m Subst  -- ^ hand a subpattern back
-  , evalM    :: Expr -> m Expr                           -- ^ side conditions
-  , matchesM :: PatternView -> Expr -> Subst -> m Bool   -- ^ for Except; commits to nothing
+  { recur       :: PatternView -> Expr -> Subst -> m Subst  -- ^ hand a subpattern back
+  , evalM       :: Expr -> m Expr                           -- ^ side conditions
+  , matchesM    :: PatternView -> Expr -> Subst -> m Bool   -- ^ for Except; commits to nothing
+  , attributesM :: Expr -> m AttributeSet                   -- ^ the subject head's (1b)
   }
 
 matchSyntactic :: (MonadPlus m) => MatchOps m -> PatternView -> Expr -> Subst -> m Subst
@@ -1437,7 +1457,18 @@ matchSyntactic :: (MonadPlus m) => MatchOps m -> PatternView -> Expr -> Subst ->
 dispatching to them would be an import cycle. A boot file for the cycle would need to name
 `LogicT` outside the one module rule 6 allows. The open recursion also makes containment stronger
 than the newtype alone: no matcher can name `logict`'s types, because no matcher sees the monad.
-1b's `Sequence` and `Commutative` take the same record, and `match` dispatches among them.
+1b's `Sequence` and `Commutative` take the same record, and `match` dispatches among them: a
+compound pattern's head is matched first, then its arguments go to `Commutative` if the subject's
+head is `Orderless`, to `Sequence` if it is `Flat` or any argument pattern takes a run, and
+position by position otherwise. **`attributesM` was added at 1b** because that dispatch, and
+`Flat`'s runs, depend on the subject head's attributes, which only the kernel knows.
+
+**Rule application is the matcher's too.** `matchRule lhs body e` is a rule's instantiated
+right-hand side for each match under which it applies, `lhs :> rhs /; test` trying the next match
+where the test fails. It moved from `Cassini.Eval` at 1b so that the `Replace` family uses the
+same code as the rule tables. `matchRuleOrRun` adds `Flat`'s runs (§4.5.3). `matchWith` takes a
+`MatchConfig`, whose one knob turns off §4.5.4's steps 1–2 for §8.3's measurement; evaluation never
+sets it.
 
 **Those three functions and five instances are the whole surface a replacement backend must
 reproduce** (D11, §9.2). Laziness is part of it: `matchOne` stops at the first success rather than
@@ -1462,6 +1493,23 @@ Four matchers, one interface, added in order:
 3. **`Cassini.Pattern.Commutative`** — `Orderless` heads (§4.5.4).
 4. **`Cassini.Pattern.Net`** — many-to-one discrimination net, built only if milestone 1b's
    measured crossover says so (§4.5.5, §10).
+
+**Order, as built at 1b.** Matches are enumerated in WL's order, because `Replace` takes the first
+and `ReplaceList` shows them all. In an argument list, earlier patterns take shorter runs first,
+except `Optional`, which takes its argument when there is one. Under `Orderless`, a variable takes
+subjects in subject order, and a run takes sub-multisets by size and then lexicographically by
+position, each in subject order. Both orders are WL's: `wolfram/Orderless/PossibleIssues/1`,
+`wolfram/Flat/PossibleIssues/1`, and `ReplaceList[Hold[b + a], Hold[x___ + y___] -> {{x}, {y}}]`
+quoted with WL's output in `mathematica.stackexchange.com/q/187537`.
+
+**`Flat` heads' rules apply to runs.** With `f` `Flat`, `f[a, b, c, d, e] /. f[b, c, d] -> x` is
+`f[a, x, e]`, and with `Orderless` too the run may be any sub-multiset (`wolfram/Flat/Scope/2`,
+`/3`). This is rule application, not matching: `MatchQ` and `Replace` see the whole expression
+(`wolfram/Flat/PossibleIssues/4`). `matchRuleOrRun` matches `f[ps] -> r` as
+`f[pre___, ps, post___] -> f[pre, r, post]` after the whole has failed (`f[ps, rest___]` under
+`Orderless`), with variables in a private context. `ReplaceAll`, `ReplaceRepeated` and the
+evaluator's rule tables use it. For definitions the corpus is silent, and Mathics3 applies them to
+a leading run only. Runs at any position were chosen to agree with `ReplaceAll`.
 
 #### 4.5.4 Commutative matching: the five phases
 
@@ -1488,6 +1536,13 @@ leaves later phases nothing to backtrack into. With `P = {g[x_], x_, y_}` agains
 `S = {g[1], g[2], 2}`, phase 3 via `matchOne` binds `x = 1` (the first `g` in canonical order), the
 repeated phase 2 finds no `1` among `{g[2], 2}`, and the match fails — although `x = 2, y = g[1]`
 matches.
+
+**Equal subjects are one mapping.** Of several equal subjects only the first is tried for a
+pattern, and a run is chosen by how many of each value it takes, so `h[a, a]` against `h[x_, y_]`
+is one match, not two. This is Krebber's algorithm (§3.3: brute force "will result in enumerating
+equivalent matches multiple times"; §3.3.2 enumerates distributions "without duplicate results"),
+and his examples are 1b's criterion. WL's answer for equal subjects is documented neither in the
+corpus nor on Stack Exchange, and Mathics3 repeats them, so the oracle lists it.
 
 Complexity: general AC matching is NP-complete, and linear AC matching (no repeated variable) is
 polynomial (`references/papers/pattern-matching/benanav1987_complexity_of_matching_problems.pdf`).

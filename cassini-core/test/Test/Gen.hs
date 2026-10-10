@@ -29,7 +29,7 @@ module Test.Gen
 where
 
 import Cassini.Core.Expr
-import Cassini.Core.Symbol (globalSymbol, sBlank, sFactorial, sPattern, sPlus, sPower, sTimes)
+import Cassini.Core.Symbol (globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sFactorial, sPattern, sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt, NRat), fromRational')
 import Data.Ratio ((%))
 import Data.Vector qualified as V
@@ -216,9 +216,10 @@ genRNE n
         ]
 
 -- | A pattern derived from a subject by replacing subterms with named
--- blanks, sometimes head-constrained, so it matches by construction
--- (DESIGN.md §7.3). Each blank's name is its position, so no two share one.
--- It builds no side conditions (§4.5.2).
+-- blanks, sometimes head-constrained, and runs of arguments with named
+-- sequence blanks, so it matches by construction (DESIGN.md §7.3). Each
+-- blank's name is its position, so no two share one. It builds no side
+-- conditions (§4.5.2).
 genPattern :: Expr -> Gen Expr
 genPattern = go "pv"
   where
@@ -231,5 +232,13 @@ genPattern = go "pv"
       App h as -> do
         h' <- go (path <> "h") h
         as' <- V.imapM (\i a -> go (path <> "a" <> show i) a) as
-        pure (mkApp h' as')
+        as'' <- frequency [(2, pure as'), (1, sequenceRun path as')]
+        pure (mkApp h' as'')
       _ -> pure e
+    -- A run of arguments, possibly empty, replaced by one sequence blank.
+    sequenceRun path as = do
+      i <- chooseInt (0, V.length as)
+      j <- chooseInt (i, V.length as)
+      b <- if j > i then elements [sBlankSequence, sBlankNullSequence] else pure sBlankNullSequence
+      let v = apply sPattern [sym (path <> "s"), apply b []]
+      pure (V.take i as <> V.singleton v <> V.drop j as)

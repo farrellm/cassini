@@ -63,14 +63,12 @@ import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Int
 import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol
   ( Symbol,
-    sCondition,
     sEvaluate,
     sFunction,
     sHold,
     sIndeterminate,
     sList,
     sSequence,
-    sTrue,
     sUnevaluated,
     symName,
     systemSymbol,
@@ -96,8 +94,7 @@ import Cassini.Eval.Kernel
     unwind,
     withFuel,
   )
-import Cassini.Pattern (applySubst, viewPattern)
-import Cassini.Pattern.Match (liftMatch, match, observeFirst)
+import Cassini.Pattern.Match (matchRuleOrRun, observeFirst)
 import Cassini.Rules (BuiltinId, Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), applicableRules, ladder)
 import Data.Vector qualified as V
 import Effectful (Eff, IOE, (:>))
@@ -430,24 +427,16 @@ applyRule name r e = case r.ruleBody of
 -- | A user rule's right-hand side, instantiated by the first match under
 -- which it applies. @lhs :> rhs /; test@ applies only where the test, under
 -- the match's bindings, evaluates to @True@; where it does not, the next
--- match is tried, as a condition on the left-hand side would be. 'Nothing'
--- for a 'Native' rule, which is never matched.
+-- match is tried, as a condition on the left-hand side would be. Under a
+-- @Flat@ head a rule also applies to a run of the arguments
+-- ('matchRuleOrRun'). 'Nothing' for a 'Native' rule, which is never matched.
 instantiate :: (Kernel :> es) => Rule -> Expr -> Eff es (Maybe Expr)
 instantiate r e = case r.ruleBody of
   Native _ -> pure Nothing
   Immediate body -> firstApplying body
   Delayed body -> firstApplying body
   where
-    firstApplying body = observeFirst $ do
-      sigma <- match (viewPattern r.ruleLhs) e mempty
-      case body of
-        App (Sym c) xs
-          | c == sCondition,
-            [rhs, test] <- V.toList xs ->
-              liftMatch (evaluate (applySubst sigma test)) >>= \case
-                Sym t | t == sTrue -> pure (applySubst sigma rhs)
-                _ -> empty
-        _ -> pure (applySubst sigma body)
+    firstApplying body = observeFirst (matchRuleOrRun r.ruleLhs body e)
 
 -- | Run a builtin. It fires only if it changes the expression, so step 6's
 -- restoration and the trace stay honest.

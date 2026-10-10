@@ -19,11 +19,17 @@ module Cassini.Pattern
     Subst,
     bindingExpr,
     applySubst,
+    bindName,
+    isTrue,
+    argRange,
+    prefersLong,
+    builtinDefault,
     MatchOps (..),
   )
 where
 
-import Cassini.Core.Expr (Expr, apply, pattern App, pattern Sym)
+import Cassini.Attributes (AttributeSet)
+import Cassini.Core.Expr (Expr, apply, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
     sAlternatives,
@@ -31,22 +37,29 @@ import Cassini.Core.Symbol
     sBlankNullSequence,
     sBlankSequence,
     sCondition,
+    sDirectedInfinity,
     sExcept,
     sHoldPattern,
+    sList,
     sOptional,
     sPattern,
     sPatternTest,
+    sPlus,
+    sPower,
     sRepeated,
     sRepeatedNull,
     sSequence,
+    sTimes,
+    sTrue,
     sVerbatim,
   )
 import Cassini.Structure (substituteAll)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 
--- | A pattern, read. Constructors the syntactic matcher does not handle
--- (sequences, @Repeated@, @Optional@) arrive with milestone 1b.
+-- | A pattern, read. The sequence objects (@__@, @___@, @Repeated@,
+-- @Optional@) take a run of arguments, so only "Cassini.Pattern.Sequence"
+-- and "Cassini.Pattern.Commutative" match them; alone they match nothing.
 data PatternView
   = -- | @_h@
     PBlank !(Maybe Expr)
@@ -91,7 +104,9 @@ viewPattern e = case e of
     | h == sPatternTest, [p, f] <- V.toList as -> PTest (viewPattern p) f
     | h == sAlternatives -> PAlternative (map viewPattern (V.toList as))
     | h == sRepeated, [p] <- V.toList as -> PRepeated (viewPattern p) (1, Nothing)
+    | h == sRepeated, [p, n] <- V.toList as, Just r <- repeatSpec 1 n -> PRepeated (viewPattern p) r
     | h == sRepeatedNull, [p] <- V.toList as -> PRepeated (viewPattern p) (0, Nothing)
+    | h == sRepeatedNull, [p, n] <- V.toList as, Just r <- repeatSpec 0 n -> PRepeated (viewPattern p) r
     | h == sOptional, [p] <- V.toList as -> POptional (viewPattern p) Nothing
     | h == sOptional, [p, d] <- V.toList as -> POptional (viewPattern p) (Just d)
     | h == sExcept, [c] <- V.toList as -> PExcept (viewPattern c) Nothing
@@ -107,6 +122,23 @@ viewPattern e = case e of
       [] -> Just Nothing
       [c] -> Just (Just c)
       _ -> Nothing
+
+-- | A repetition count: @n@ is at most @n@ (from the given least), @{n}@
+-- exactly @n@, @{m, n}@ from @m@ to @n@, where @n@ may be @Infinity@.
+repeatSpec :: Int -> Expr -> Maybe (Int, Maybe Int)
+repeatSpec lo = \case
+  App (Sym l) ns | l == sList -> case V.toList ns of
+    [n] -> count n >>= \k -> pure (k, Just k)
+    [m, n] -> (,) <$> count m <*> bound n
+    _ -> Nothing
+  n -> (lo,) . Just <$> count n
+  where
+    count = \case
+      Int_ k | k >= 0 -> toIntegralSized k
+      _ -> Nothing
+    bound = \case
+      App (Sym d) xs | d == sDirectedInfinity, [Int_ 1] <- V.toList xs -> Just Nothing
+      n -> Just <$> count n
 
 -- | Whether the expression contains no pattern object, heads included. Such a
 -- pattern matches only itself, which is the fast path of @FreeQ@ and
@@ -155,6 +187,65 @@ applySubst s u
   | Map.null s = u
   | otherwise = substituteAll u [(Sym x, bindingExpr b) | (x, b) <- Map.toList s]
 
+-- | Bind a name, or check it against its binding: one name means one value
+-- across a pattern.
+bindName :: (MonadPlus m) => Symbol -> Binding -> Subst -> m Subst
+bindName x b sigma = case Map.lookup x sigma of
+  Nothing -> pure (Map.insert x b sigma)
+  Just b' -> sigma <$ guard (b' == b)
+
+-- | Whether a side condition's value admits a match: only @True@ does
+-- (§4.13).
+isTrue :: Expr -> Bool
+isTrue = \case
+  Sym t -> t == sTrue
+  _ -> False
+
+-- | How many arguments an element of a pattern's argument list takes: at
+-- least, and at most ('Nothing' is unbounded). Under a @Flat@ head (the
+-- flag), a blank takes a run of one or more, as the head's arguments
+-- grouped (§4.5.3). @Optional@ takes at most one, whatever it wraps.
+argRange :: Bool -> PatternView -> (Int, Maybe Int)
+argRange flat = go
+  where
+    go = \case
+      PBlank _ | flat -> (1, Nothing)
+      PBlankSeq _ -> (1, Nothing)
+      PBlankNull _ -> (0, Nothing)
+      PNamed _ q -> go q
+      PCondition q _ -> go q
+      PTest q _ -> go q
+      PHold q -> go q
+      PExcept _ (Just q) -> go q
+      PAlternative (q : qs) -> foldl' widen (go q) (map go qs)
+      PRepeated _ r -> r
+      POptional _ _ -> (0, Just 1)
+      _ -> (1, Just 1)
+    widen (a, b) (c, d) = (min a c, max <$> b <*> d)
+
+-- | Whether an element tries its longer runs first. @Optional@ does: it
+-- matches an argument when there is one, and only otherwise its default.
+-- Everything else tries the shortest run first, as WL's @__@ does.
+prefersLong :: PatternView -> Bool
+prefersLong = \case
+  PNamed _ q -> prefersLong q
+  PCondition q _ -> prefersLong q
+  PTest q _ -> prefersLong q
+  PHold q -> prefersLong q
+  POptional _ _ -> True
+  _ -> False
+
+-- | The built-in default of an argument of a head, for @Optional[p]@ with
+-- no default of its own: the 1-based position and the number of pattern
+-- arguments. @Plus@'s is 0, @Times@'s 1, and @Power@'s exponent 1. User
+-- defaults (@Default[f] = v@) are not implemented.
+builtinDefault :: Symbol -> Int -> Int -> Maybe Expr
+builtinDefault f i n
+  | f == sPlus = Just (Int_ 0)
+  | f == sTimes = Just (Int_ 1)
+  | f == sPower, i == 2, n == 2 = Just (Int_ 1)
+  | otherwise = Nothing
+
 -- | What a matcher needs from the monad it runs in. "Cassini.Pattern.Match"
 -- supplies these for 'Cassini.Pattern.Match.MatchT'; the matchers are
 -- polymorphic in @m@, so they never see @logict@ (§2.6, rule 6).
@@ -166,5 +257,8 @@ data MatchOps m = MatchOps
     evalM :: Expr -> m Expr,
     -- | Whether a pattern matches at all, committing to nothing: for
     -- @Except@, whose bindings do not escape.
-    matchesM :: PatternView -> Expr -> Subst -> m Bool
+    matchesM :: PatternView -> Expr -> Subst -> m Bool,
+    -- | The attributes of a subject's head: a symbol's own, none for a
+    -- compound head. @Orderless@, @Flat@ and @OneIdentity@ change matching.
+    attributesM :: Expr -> m AttributeSet
   }
