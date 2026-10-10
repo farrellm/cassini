@@ -24,6 +24,8 @@ module Cassini.Pattern
     isTrue,
     argRange,
     prefersLong,
+    isOptional,
+    requiredHead,
     builtinDefault,
     MatchOps (..),
   )
@@ -248,6 +250,22 @@ argRange flat = go
       POptional q _ -> (0, snd (go q))
       _ -> (1, Just 1)
     widen (a, b) (c, d) = (min a c, max <$> b <*> d)
+
+-- | Whether a pattern is an @Optional@ argument, @p:d@ or @p.@.
+isOptional :: PatternView -> Bool
+isOptional = \case
+  POptional _ _ -> True
+  _ -> False
+
+-- | The head every subject a pattern matches must have, when there is one:
+-- a compound pattern's literal head, unless it has an @Optional@ argument,
+-- since under a @OneIdentity@ head @n_. x_@ also matches what @x_@ matches,
+-- a subject with any head (§4.5.1). For pruning and indexing, which must
+-- not exclude a subject that matches; the matcher decides the rest.
+requiredHead :: PatternView -> Maybe Expr
+requiredHead = \case
+  PCompound (PLiteral h) qs | not (any isOptional qs) -> Just h
+  _ -> Nothing
 
 -- | Whether an element tries its longer runs first. @Optional@ does: it
 -- matches an argument when there is one, and only otherwise its default.

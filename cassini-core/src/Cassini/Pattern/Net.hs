@@ -6,7 +6,9 @@
 -- argument, when that argument is literal or a compound with a literal head:
 -- @f[g[x_], y_]@ is keyed on @g@. A rule whose first argument is a blank, a
 -- sequence, an alternative or a condition is a wildcard, a candidate for
--- every expression. 'candidates' gives the rules keyed on the expression's
+-- every expression, and so is one whose first argument has an @Optional@
+-- argument: @f[n_. x_]@ matches @f[y]@ through @Times@'s @OneIdentity@
+-- ('requiredHead'). 'candidates' gives the rules keyed on the expression's
 -- first argument's head and the wildcards, merged back into table order, so
 -- specificity and definition order decide exactly as they did without it.
 -- It is a superset of the rules that match; the matcher confirms them.
@@ -31,7 +33,7 @@ module Cassini.Pattern.Net
 where
 
 import Cassini.Core.Expr (Expr, exprHead, pattern App)
-import Cassini.Pattern (PatternView (..), unholdPattern, viewPattern)
+import Cassini.Pattern (PatternView (..), requiredHead, unholdPattern, viewPattern)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
@@ -83,7 +85,7 @@ ruleKey lhs = case viewPattern (unholdPattern lhs) of
     key = \case
       PLiteral x -> Just (exprHead x)
       PVerbatim x -> Just (exprHead x)
-      PCompound (PLiteral h) _ -> Just h
+      q@(PCompound _ _) -> requiredHead q
       PHold q -> key q
       _ -> Nothing
 

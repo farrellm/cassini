@@ -28,6 +28,10 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   * Fix: a sequence variable's binding splices into the argument list it is substituted into, as
     WL's does, so `ReplaceRepeated` keeps matching an unevaluated result and `Hold` sees the
     spliced arguments (regression case 0049).
+  * Fix: a compound pattern with an `Optional` argument, such as `n_. x_`, matches a subject
+    without its head, as `OneIdentity` allows, as a definition's first argument and among an
+    `Orderless` head's arguments: neither the rule index nor the commutative matcher's step 3
+    excludes it by head any more (regression case 0050).
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;
