@@ -1024,7 +1024,9 @@ data ValueKind = OwnValue | DownValue | UpValue | SubValue
 data Origin = User | Builtin
   deriving stock (Eq, Ord, Enum, Bounded)
 
-newtype RuleSet = RuleSet (Seq Rule)     -- ^ ordered; first applicable wins
+data RuleSet                             -- ^ ordered; first applicable wins
+  -- each rule under (specificity, insertion number), in a RuleIndex (§4.5.5),
+  -- and by left-hand side for redefinition and Unset
 
 data Values = Values      -- ^ one field per ValueKind
   { ownValues, downValues, upValues, subValues :: !RuleSet }
@@ -1590,10 +1592,25 @@ fifty rules `f[gi[x_], y_]` for one head, it took 2.0 µs and 8.6 KB per subject
 rules in order took 38 µs and 122 KB. The ratio held from 1 subject to 10000. Building it costs less
 than one failed match, so **there is no break-even to wait for: it crosses over below one
 subject**, which is below any volume the evaluator generates. So it is built, as the `RuleIndex`.
-`Cassini.Rules` keeps one, lazily, on every table, and consults it for down-values only, and not
+`Cassini.Rules` keeps one on every table, and consults it for down-values only, and not
 when the symbol is `Orderless` or `Flat`, where any argument may come first. Up-values are keyed
 by some argument, not the head, so they need a different key. A property checks that the
 candidates are a superset of the matching rules, in table order (§7.3).
+
+**Changed in the 1b review (2026-10-10): the index is incremental, and files ground rules
+whole.** As first built, the index was rebuilt from the table on the first lookup after any
+change, and keyed a rule with no pattern object by its first argument's head. A memoising
+definition, `f[n_] := f[n] = …`, defeats both: each call inserts a rule and then looks one up, so
+each call rebuilt an index of every rule so far, and every `f[k]` sat in the one `Integer` bucket,
+so each lookup tried them all. With `insertRule`'s own scan for a rule to replace, computing
+`f[1]` … `f[8000]` took 64 s, growing faster than quadratically. Now each rule sits under a key
+that is its place in the table, `(specificity, insertion number)`, with a redefinition keeping
+its key, so the index is a set of ordered maps, merged on lookup, and a change is logarithmic. A
+rule whose left-hand side has no pattern object can match only an expression equal to it, so it is
+filed under the whole left-hand side and is a candidate for that expression alone. The table also
+keeps its rules by left-hand side, seen through `HoldPattern`, so redefinition and `Unset` find
+theirs by hash. The same 8000 calls take 0.59 s, linear in the number of rules. A property checks
+inserts and removals against the table kept as a list, as it was before.
 
 This is not Krebber's many-to-one net, which also shares the work of matching among the
 candidates. That remains the next step if a profile shows matching against large rule tables
@@ -2884,7 +2901,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Core.Traversal` | `cata embed ≡ id` | a traversal that does not rebuild through the smart constructors |
 | `Structure` | `substitute u t t ≡ u`; `freeOf u t` implies `substitute u t r ≡ u` | subexpression comparison errors |
 | `Attributes` | `AttributeSet` is a commutative idempotent monoid; `holdsArgument` agrees with a naive reference on every (attributes, index, arity) | `HoldFirst`/`HoldRest` off-by-one |
-| `Rules` | `insertRule` keeps the set sorted by specificity with insertion order breaking ties; `applicableRules` visits rungs in `ladder` order | rule shadowing ("my definition is ignored"); a rung visited out of ladder order, the inversion of §4.2 |
+| `Rules` | `insertRule` keeps the set sorted by specificity with insertion order breaking ties; inserts and removals agree with the table kept as a list (§4.5.5); `applicableRules` visits rungs in `ladder` order | rule shadowing ("my definition is ignored"); a redefinition that adds a rule instead of replacing one; a rung visited out of ladder order, the inversion of §4.2 |
 | `Simplify` | `simplifyRNE` agrees with `Rational`, and is `Nothing` exactly on division by zero | normalization and sign errors |
 | `Simplify` | `simplify u` satisfies `isASAE` or is `Left` | the postcondition, directly |
 | `Simplify` | **for an ASAE `u`, `simplify u ≡ u`** | the source's own contract; stronger than idempotence |

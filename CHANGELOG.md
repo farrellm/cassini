@@ -39,6 +39,9 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     case 0052).
   * Fix: `Repeated[p, Infinity]` is read as `Repeated[p, {1, Infinity}]`, not as a literal
     expression (regression case 0053).
+  * A rule table's index changes in place instead of being rebuilt, and files a rule with no
+    pattern object under its whole left-hand side, so a memoising definition is linear, not
+    quadratic: `f[1]` … `f[8000]` take 0.6 s, from 64 s (DESIGN.md §4.5.5).
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;

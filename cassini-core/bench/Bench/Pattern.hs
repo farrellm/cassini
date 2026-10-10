@@ -26,7 +26,6 @@ import Cassini.Eval.Kernel (Kernel, KernelState, defaultConfig)
 import Cassini.Pattern (viewPattern)
 import Cassini.Pattern.Match (MatchConfig (..), defaultMatchConfig, matchWith, observeAll, observeFirst)
 import Cassini.Pattern.Net qualified as Net
-import Data.Sequence qualified as Seq
 import Effectful (Eff, runPureEff)
 import Test.Tasty.Bench (Benchmark, bench, bgroup, nf)
 
@@ -131,7 +130,7 @@ oneToOne rules ss = runMatch (traverse (firstOf (zip [0 ..] rules)) ss)
 indexed :: [Expr] -> [Expr] -> Maybe [Maybe Int]
 indexed rules ss = runMatch (traverse (\s -> firstOf (Net.candidates index s) s) ss)
   where
-    index = Net.fromSeq snd (Seq.fromList [(i, r) | (i, r) <- zip [0 :: Int ..] rules])
+    index = Net.indexRules snd [(i, (i, r)) | (i, r) <- zip [0 :: Int ..] rules]
 
 firstOf :: [(Int, Expr)] -> Expr -> Eff '[Kernel] (Maybe Int)
 firstOf candidates s = case candidates of

@@ -5,15 +5,17 @@ module Test.Cassini.Rules (tests) where
 
 import Cassini.Builtins (install)
 import Cassini.Builtins.Define (Definition (..), down, up)
-import Cassini.Core.Expr (Expr, apply, mkString, pattern App, pattern Int_)
-import Cassini.Core.Symbol (globalSymbol)
+import Cassini.Core.Expr (Expr, apply, mkString, pattern App, pattern Int_, pattern Sym)
+import Cassini.Core.Symbol (globalSymbol, sCondition, sHoldPattern)
 import Cassini.Eval.Kernel (KernelState)
+import Cassini.Pattern (unholdPattern)
 import Cassini.Rules
+import Data.List (findIndex)
 import Test.Gen (fn, genExpr, genPattern)
 import Test.Kernel (eval, evalStd, ff, parse, std)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
-import Test.Tasty.QuickCheck (Gen, chooseInt, counterexample, forAll, testProperty, vectorOf, (===))
+import Test.Tasty.QuickCheck (Gen, chooseInt, counterexample, elements, forAll, listOf, oneof, testProperty, vectorOf, (===), (==>))
 
 tests :: TestTree
 tests =
@@ -25,6 +27,13 @@ tests =
               entries = [(r.ruleSpecificity, tag r.ruleBody) | r <- ruleSetToList table]
            in counterexample (show entries) $
                 and (zipWith (\(s, i) (s', j) -> s < s' || (s == s' && i < j)) entries (drop 1 entries)),
+      testProperty "inserting and removing rules agrees with a list kept in table order" $
+        forAll genLhss $ \lhss ->
+          not (null lhss) ==> forAll (listOf (genOp lhss)) $ \ops ->
+            let table = foldl' (\t op -> either (\l -> snd (removeRule l t)) (`insertRule` t) op) emptyTable ops
+                model = foldl' (flip (either modelRemove modelInsert)) [] ops
+                entries rs = [(r.ruleLhs, show @Text r.ruleBody) | r <- rs]
+             in entries (ruleSetToList table) === entries model,
       testProperty "the lower rungs read SubValues exactly for h[…][…]" $
         forAll (genExpr 6) $ \e ->
           let k = if curried e then SubValue else DownValue
@@ -48,6 +57,35 @@ tests =
     tag = \case
       Immediate (Int_ i) -> i
       _ -> -1
+
+-- | An insertion or a removal on one of the left-hand sides, sometimes
+-- wrapped in @HoldPattern@, which neither sees; a body sometimes carries a
+-- condition, which an insertion compares.
+genOp :: [Expr] -> Gen (Either Expr Rule)
+genOp lhss = do
+  l <- elements lhss
+  l' <- elements [l, apply sHoldPattern [l]]
+  i <- chooseInt (0, 3)
+  c <- elements [Nothing, Just (fn "p" []), Just (fn "q" [])]
+  let body = maybe (Int_ (toInteger i)) (\t -> apply sCondition [Int_ (toInteger i), t]) c
+  oneof [pure (Left l'), pure (Right (mkRule User l' (Delayed body)))]
+
+-- | The table as a list, maintained as it was before the index: a rule
+-- replaces a user rule with its left-hand side and condition in place, or
+-- goes after every rule at least as specific; a removal drops every user
+-- rule with the left-hand side.
+modelInsert :: Rule -> [Rule] -> [Rule]
+modelInsert r rs = case findIndex same rs of
+  Just i -> take i rs <> [r] <> drop (i + 1) rs
+  Nothing -> let (before, after) = span (\x -> x.ruleSpecificity <= r.ruleSpecificity) rs in before <> [r] <> after
+  where
+    same x = unholdPattern x.ruleLhs == unholdPattern r.ruleLhs && condition x.ruleBody == condition r.ruleBody
+    condition = \case
+      Delayed (App (Sym c) cs) | c == sCondition, [_, t] <- toList cs -> Just t
+      _ -> Nothing
+
+modelRemove :: Expr -> [Rule] -> [Rule]
+modelRemove l = filter (\x -> unholdPattern x.ruleLhs /= unholdPattern l)
 
 -- | Distinct left-hand sides @f[…]@, most with blanks.
 genLhss :: Gen [Expr]
