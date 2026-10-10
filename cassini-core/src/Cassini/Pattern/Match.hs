@@ -116,14 +116,13 @@ matchWith cfg = go
     -- Under a OneIdentity head, f[p, q:.d, …] matches what p matches, the
     -- optional arguments taking their defaults, when the subject is not an
     -- f[…] itself (§4.5.1): x matches n_. x_ with n = 1.
-    oneIdentity h qs s sigma = case h of
-      PLiteral hd@(Sym f) | exprHead s /= hd -> do
+    -- The pattern's shape is checked before the head's attributes are looked
+    -- up: most compound patterns have no Optional argument, and every failed
+    -- match against a subject with another head comes through here.
+    oneIdentity h qs s sigma = case (h, partition (isOptional . snd) (zip [1 ..] (V.toList qs))) of
+      (PLiteral hd@(Sym f), (optionals@(_ : _), [(_, q)])) | exprHead s /= hd -> do
         attrs <- ops.attributesM hd
         guard (member OneIdentity attrs)
-        oneIdentityArgs f qs s sigma
-      _ -> empty
-    oneIdentityArgs f qs s sigma = case partition (isOptional . snd) (zip [1 ..] (V.toList qs)) of
-      (optionals@(_ : _), [(_, q)]) -> do
         sigma' <- foldlM (\acc (i, o) -> defaulted f (V.length qs) i o acc) sigma optionals
         go q s sigma'
       _ -> empty

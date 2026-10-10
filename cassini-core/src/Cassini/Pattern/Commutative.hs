@@ -176,9 +176,7 @@ nameOf p = case core p of
 
 -- | Remove one subject equal to the value, the first.
 removeValue :: Expr -> [(Int, Expr)] -> Maybe [(Int, Expr)]
-removeValue v rest = case break ((== v) . snd) rest of
-  (before, _ : after) -> Just (before <> after)
-  _ -> Nothing
+removeValue v = fmap snd . takeFirst ((== v) . snd)
 
 -- | The subjects not equal to an earlier one.
 distinctFirst :: [(Int, Expr)] -> [(Int, Expr)]
