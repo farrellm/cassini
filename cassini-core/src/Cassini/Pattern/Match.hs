@@ -22,6 +22,7 @@ module Cassini.Pattern.Match
     liftMatch,
     observeFirst,
     observeAll,
+    observeMany,
     match,
     matchOne,
     matchAll,
@@ -37,9 +38,9 @@ where
 
 import Cassini.Attributes (Attribute (OneIdentity), AttributeSet, isFlat, isOrderless, member)
 import Cassini.Core.Expr (Expr, apply, exprHead, mkApp, pattern App, pattern Sym)
-import Cassini.Core.Symbol (sBlankNullSequence, sCondition, sPattern, sTrue, symbol)
+import Cassini.Core.Symbol (Symbol, sBlankNullSequence, sBlankSequence, sCondition, sPattern, sTrue, symbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
-import Cassini.Pattern (MatchOps (..), PatternView (..), Subst, applySubst, argRange, bindDefault, builtinDefault, unholdPattern, viewPattern)
+import Cassini.Pattern (MatchOps (..), PatternView (..), Subst, applySubst, argRange, bindDefault, builtinDefault, isOptional, unholdPattern, viewPattern)
 import Cassini.Pattern.Commutative (matchCommutative)
 import Cassini.Pattern.Sequence (ArgContext (..), matchArgs)
 import Cassini.Pattern.Syntactic (matchSyntactic)
@@ -65,6 +66,10 @@ observeFirst (MatchT m) = listToMaybe <$> observeManyT 1 m
 -- | Every result, in order.
 observeAll :: MatchT es a -> Eff es [a]
 observeAll (MatchT m) = observeAllT m
+
+-- | At most this many results, in order, computing no more than it needs.
+observeMany :: Int -> MatchT es a -> Eff es [a]
+observeMany n (MatchT m) = observeManyT n m
 
 -- | Match a pattern against a subject, extending a substitution, every way it
 -- matches.
@@ -125,9 +130,6 @@ matchWith cfg = go
     defaulted f n i o sigma = case o of
       POptional q d -> maybe empty (\v -> bindDefault q v sigma) (d <|> builtinDefault f i n)
       _ -> empty
-    isOptional = \case
-      POptional _ _ -> True
-      _ -> False
 
 -- | The attributes of a subject's head: a symbol's own; a compound head has
 -- none.
@@ -165,10 +167,12 @@ matchAll p s = observeAll (match (viewPattern p) s mempty)
 -- the arguments, the rest kept around the replacement: with @f@ @Flat@,
 -- @f[b, c] -> x@ turns @f[a, b, c, d]@ into @f[a, x, d]@, and if @f@ is
 -- @Orderless@ too the run may be any sub-multiset (§4.5.3). The rule
--- @f[ps] -> r@ is matched as @f[pre___, ps, post___] -> f[pre, r, post]@,
--- or @f[ps, rest___] -> f[r, rest]@, with variables no user pattern can
--- name. Rule application uses it, in the evaluator and in @Replace@; a
--- match of the whole is always tried first.
+-- @f[ps] -> r@ is matched as @f[ps, post__] -> f[r, post]@ and then
+-- @f[pre__, ps, post___] -> f[pre, r, post]@, or under @Orderless@ as
+-- @f[ps, rest__] -> f[r, rest]@, with variables no user pattern can name.
+-- The run is never the whole: a match of the whole is always tried first,
+-- and with nothing around it the run would only try it again. Rule
+-- application uses it, in the evaluator and in @Replace@.
 matchRuleOrRun :: (Kernel :> es) => Expr -> Expr -> Expr -> MatchT es Expr
 matchRuleOrRun lhs body e = case (unholdPattern lhs, e) of
   -- Checked before the alternative is built: most subjects cannot take a
@@ -179,19 +183,25 @@ matchRuleOrRun lhs body e = case (unholdPattern lhs, e) of
     run hd ps = do
       attrs <- liftMatch (headAttributes hd)
       guard (isFlat attrs)
-      let (before, after)
-            | isOrderless attrs = ([], [runVariable "rest"])
-            | otherwise = ([runVariable "pre"], [runVariable "post"])
-          around x = mkApp hd (V.fromList (map runName before <> [x] <> map runName after))
+      let shapes
+            | isOrderless attrs = [([], [runVariable "rest" sBlankSequence])]
+            | otherwise =
+                [ ([], [runVariable "post" sBlankSequence]),
+                  ([runVariable "pre" sBlankSequence], [runVariable "post" sBlankNullSequence])
+                ]
+      asum [around hd ps before after | (before, after) <- shapes]
+    around hd ps before after =
+      let wrap x = mkApp hd (V.fromList (map runName before <> [x] <> map runName after))
           lhs' = mkApp hd (V.fromList (before <> V.toList ps <> after))
           body' = case body of
-            App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [around x, test]
-            _ -> around body
-      matchRule lhs' body' e
+            App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [wrap x, test]
+            _ -> wrap body
+       in matchRule lhs' body' e
     runName = \case
       App _ xs | Just x <- V.headM xs -> x
       x -> x
 
--- | A sequence variable in a private context, which no user pattern names.
-runVariable :: Text -> Expr
-runVariable n = apply sPattern [Sym (symbol "Cassini`Private`" n), apply sBlankNullSequence []]
+-- | A sequence variable in a private context, which no user pattern names,
+-- with its blank: @__@ or @___@.
+runVariable :: Text -> Symbol -> Expr
+runVariable n blank = apply sPattern [Sym (symbol "Cassini`Private`" n), apply blank []]

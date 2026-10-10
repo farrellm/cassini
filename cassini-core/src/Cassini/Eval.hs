@@ -44,6 +44,7 @@ module Cassini.Eval
     restoreUneval,
     Round (..),
     fixpoint,
+    firstJustM,
   )
 where
 
@@ -467,6 +468,7 @@ restoreUneval n
 changed :: (Kernel :> es) => Text -> Node -> Eff es Node
 changed name n = n <$ traceStep name (nodeExpr n)
 
+-- | The first 'Just' of an effectful search, trying no more than it needs.
 firstJustM :: (Monad m) => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
 firstJustM f = \case
   [] -> pure Nothing

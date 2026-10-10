@@ -27,12 +27,13 @@ module Cassini.Builtins.Define
     Bound (..),
     levelSpec,
     inLevel,
-    firstJustM,
+    levelParts,
+    rebuildM,
   )
 where
 
 import Cassini.Attributes (Attribute)
-import Cassini.Core.Expr (Expr, exprArgs, pattern App, pattern Int_, pattern Sym)
+import Cassini.Core.Expr (Expr, exprArgs, mkApp, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sFalse, sList, sNull, sTrue, systemSymbol)
 import Cassini.Eval.Kernel (BuiltinFn (..), Kernel, emitMessage)
 import Cassini.Eval.Message (MessageTag (..))
@@ -145,8 +146,26 @@ inLevel (lo, hi) p d = lower lo && upper hi
       Level n -> negate d <= n
       Infinite -> True
 
--- | The first 'Just' of an effectful search, trying no more than it needs.
-firstJustM :: (Monad m) => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
-firstJustM f = \case
-  [] -> pure Nothing
-  x : xs -> f x >>= maybe (firstJustM f xs) (pure . Just)
+-- | The parts selected by level and depth, depth first, each before the part
+-- containing it, heads excluded.
+levelParts :: (Integer -> Integer -> Bool) -> Expr -> [Expr]
+levelParts keep = fst . go 0
+  where
+    go p x =
+      let below = map (go (p + 1)) (V.toList (exprArgs x))
+          d = 1 + foldl' (\acc (_, k) -> max acc k) 0 below
+       in (concatMap fst below <> [x | keep p d], d)
+
+-- | Rebuild bottom up, applying @f@ to every part the predicate selects by
+-- its level and its depth (WL's @Depth@: 1 for an atom, one more than the
+-- deepest argument, heads excluded), both taken in the original expression.
+rebuildM :: (Monad m) => (Integer -> Integer -> Bool) -> (Expr -> m Expr) -> Expr -> m Expr
+rebuildM keep f = fmap fst . go 0
+  where
+    go p x = case x of
+      App h as -> do
+        below <- V.mapM (go (p + 1)) as
+        let d = 1 + V.foldl' (\acc (_, k) -> max acc k) 0 below
+            x' = mkApp h (V.map fst below)
+        (,d) <$> (if keep p d then f x' else pure x')
+      _ -> (,1) <$> (if keep p 1 then f x else pure x)

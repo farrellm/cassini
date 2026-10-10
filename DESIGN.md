@@ -1513,8 +1513,10 @@ quoted with WL's output in `mathematica.stackexchange.com/q/187537`.
 `f[a, x, e]`, and with `Orderless` too the run may be any sub-multiset (`wolfram/Flat/Scope/2`,
 `/3`). This is rule application, not matching: `MatchQ` and `Replace` see the whole expression
 (`wolfram/Flat/PossibleIssues/4`). `matchRuleOrRun` matches `f[ps] -> r` as
-`f[pre___, ps, post___] -> f[pre, r, post]` after the whole has failed (`f[ps, rest___]` under
-`Orderless`), with variables in a private context. `ReplaceAll`, `ReplaceRepeated` and the
+`f[ps, post__] -> f[r, post]` and then `f[pre__, ps, post___] -> f[pre, r, post]` after the whole
+has failed (`f[ps, rest__]` under `Orderless`), with variables in a private context. The run is
+never the whole: with nothing around it, it would only repeat the failed match of the whole, on
+every rule the evaluator tries on a `Flat` head. `ReplaceAll`, `ReplaceRepeated` and the
 evaluator's rule tables use it. For definitions the corpus is silent, and Mathics3 applies them to
 a leading run only. Runs at any position were chosen to agree with `ReplaceAll`.
 
