@@ -1,0 +1,218 @@
+cabal-version:      3.14
+name:               cassini-core
+version:            0.1.0.0
+synopsis:           A computer algebra system: a term rewriting kernel over exact numbers
+description:
+  A Wolfram-Language-style term rewriting kernel over an exact numeric and
+  polynomial substrate. See DESIGN.md.
+
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Matthew Farrell
+maintainer:         farrellm@alum.mit.edu
+category:           Math
+build-type:         Simple
+tested-with:        GHC ==9.12.4
+
+-- DESIGN.md §3.4: off is hash-only, on is the weak intern table. CI builds and
+-- tests both (§2.8).
+flag intern
+  description: Hash-cons Expr nodes through a global weak table
+  default:     False
+  manual:      True
+
+-- DESIGN.md §2.4. CI adds -Werror from the command line. The two common stanzas
+-- are copied into every package; scripts/check-common-stanzas.sh keeps them equal.
+common warnings
+  ghc-options:
+    -Wall -Wcompat -Widentities -Wincomplete-record-updates
+    -Wincomplete-uni-patterns -Wmissing-export-lists -Wpartial-fields
+    -Wredundant-constraints
+
+common extensions
+  default-extensions:
+    OverloadedRecordDot
+    OverloadedStrings
+
+library
+  import:           warnings, extensions
+  exposed-modules:
+    Cassini.Attributes
+    Cassini.Builtins
+    Cassini.Builtins.Arithmetic
+    Cassini.Builtins.Assign
+    Cassini.Builtins.Define
+    Cassini.Builtins.Structural
+    Cassini.Core.Expr
+    Cassini.Core.Expr.Internal
+    Cassini.Core.Order
+    Cassini.Core.Symbol
+    Cassini.Core.Traversal
+    Cassini.Eval
+    Cassini.Eval.Kernel
+    Cassini.Eval.Message
+    Cassini.Number
+    Cassini.Pattern
+    Cassini.Pattern.Match
+    Cassini.Pattern.Net
+    Cassini.Pattern.Syntactic
+    Cassini.Rules
+    Cassini.Script
+    Cassini.Simplify.Automatic
+    Cassini.Structure
+    Cassini.Syntax.FullForm
+
+  other-modules:    Cassini.Core.Intern
+  hs-source-dirs:   src
+
+  if flag(intern)
+    hs-source-dirs: src-intern/weak
+
+  else
+    hs-source-dirs: src-intern/hash
+
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini-prelude
+    , containers ^>=0.7
+    , effectful-core ^>=2.6.1.0
+    , effectful-th ^>=1.0.0.4
+    , hashable ^>=1.5.1
+    , logict ^>=0.8.2.0
+    , megaparsec ^>=9.8.1
+    , recursion-schemes ^>=5.2.3
+    , text ^>=2.1.4
+    , unordered-containers ^>=0.2.21
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
+
+test-suite cassini-test
+  import:           warnings, extensions
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  other-modules:
+    Test.Cassini.Attributes
+    Test.Cassini.Core.Intern
+    Test.Cassini.Core.Order
+    Test.Cassini.Core.Traversal
+    Test.Cassini.Eval
+    Test.Cassini.Number
+    Test.Cassini.Pattern.Syntactic
+    Test.Cassini.Rules
+    Test.Cassini.Simplify.Automatic
+    Test.Cassini.Structure
+    Test.Cassini.Syntax
+    Test.Gen
+    Test.Golden
+    Test.Kernel
+    Test.Numeric
+
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini-core
+    , cassini-prelude
+    , containers ^>=0.7
+    , effectful-core ^>=2.6.1.0
+    , filepath ^>=1.5.5.0
+    , hashable ^>=1.5.1
+    , QuickCheck ^>=2.19
+    , recursion-schemes ^>=5.2.3
+    , tasty ^>=1.5.4
+    , tasty-golden ^>=2.3.5
+    , tasty-hunit ^>=0.10.2
+    , tasty-quickcheck ^>=0.11.1
+    , text ^>=2.1.4
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
+
+-- DESIGN.md §7.8: other systems' cases under a ratchet. Skips a corpus that
+-- is absent, so a fresh clone passes it vacuously.
+test-suite cassini-corpus
+  import:           warnings, extensions
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   corpus test-support
+  main-is:          Main.hs
+  other-modules:
+    Test.Corpus.Wolfram
+    Test.Script
+
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini-core
+    , cassini-prelude
+    , containers ^>=0.7
+    , directory ^>=1.3.10.1
+    , filepath ^>=1.5.5.0
+    , text ^>=2.1.4
+    , unordered-containers ^>=0.2.21
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
+
+-- DESIGN.md §7.5: differential testing against Mathics3. Skips unless
+-- CASSINI_MATHICS_PYTHON names an interpreter with Mathics3.
+test-suite cassini-oracle
+  import:           warnings, extensions
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   oracle test-support
+  main-is:          Main.hs
+  other-modules:    Test.Script
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini-core
+    , cassini-prelude
+    , containers ^>=0.7
+    , directory ^>=1.3.10.1
+    , filepath ^>=1.5.5.0
+    , process ^>=1.6.26.1
+    , text ^>=2.1.4
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
+
+-- DESIGN.md §8.1.
+benchmark cassini-bench
+  import:           warnings, extensions
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   bench
+  main-is:          Main.hs
+  other-modules:
+    Bench.Core
+    Bench.EndToEnd
+    Bench.Eval
+    Bench.Simplify
+
+  ghc-options:      -O2 -with-rtsopts=-T
+  build-depends:
+    , base ^>=4.21.2.0
+    , cassini-core
+    , cassini-prelude
+    , effectful-core ^>=2.6.1.0
+    , tasty-bench ^>=0.5.1
+    , text ^>=2.1.4
+    , vector ^>=0.13.2
+
+  mixins:
+    base hiding (Prelude),
+    cassini-prelude (Cassini.Prelude as Prelude)
+
+  default-language: GHC2024
