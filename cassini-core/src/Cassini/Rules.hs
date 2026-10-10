@@ -39,7 +39,7 @@ where
 import Cassini.Attributes (AttributeSet, isFlat, isOrderless)
 import Cassini.Core.Expr (Expr, pattern App, pattern Sym)
 import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sPattern)
-import Cassini.Pattern (isPatternFree, unholdPattern)
+import Cassini.Pattern (PreparedRule, isPatternFree, prepareRule, unholdPattern)
 import Cassini.Pattern.Net qualified as Net
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map.Strict qualified as Map
@@ -54,7 +54,10 @@ data Rule = Rule
     ruleBody :: !RuleBody,
     ruleSpecificity :: !Specificity,
     -- | Which rung of the ladder the rule is on.
-    ruleOrigin :: !Origin
+    ruleOrigin :: !Origin,
+    -- | The pattern and body read for the matcher, when the body is an
+    -- expression; lazy, so a rule is read when it is first tried.
+    rulePrepared :: Maybe PreparedRule
   }
   deriving stock (Show)
 
@@ -114,7 +117,11 @@ mkRule o lhs body =
     { ruleLhs = lhs,
       ruleBody = body,
       ruleSpecificity = specificity lhs,
-      ruleOrigin = o
+      ruleOrigin = o,
+      rulePrepared = case body of
+        Immediate b -> Just (prepareRule lhs b)
+        Delayed b -> Just (prepareRule lhs b)
+        Native _ -> Nothing
     }
 
 -- | The four tables. They have no order of their own: 'ladder' is the only

@@ -1470,9 +1470,13 @@ head is `Orderless`, to `Sequence` if it is `Flat` or any argument pattern takes
 position by position otherwise. **`attributesM` was added at 1b** because that dispatch, and
 `Flat`'s runs, depend on the subject head's attributes, which only the kernel knows.
 
-**Rule application is the matcher's too.** `matchRule lhs body e` is a rule's instantiated
-right-hand side for each match under which it applies, `lhs :> rhs /; test` trying the next match
-where the test fails. It moved from `Cassini.Eval` at 1b so that the `Replace` family uses the
+**Rule application is the matcher's too.** `matchRule r e` is a rule's instantiated right-hand side
+for each match under which it applies, `lhs :> rhs /; test` trying the next match where the test
+fails. The rule is a `PreparedRule`, read once by `prepareRule lhs body`: its left-hand side's
+`PatternView`, its body, and `matchRuleOrRun`'s run forms, so that neither the evaluator, which
+tries a rule on every evaluation, nor `ReplaceAll`, which tries it on every subexpression, reads
+the pattern again. A `Rule` carries one, built lazily by `mkRule`; until the 1b review each try
+called `viewPattern` and each `Flat` node built the run forms anew. It moved from `Cassini.Eval` at 1b so that the `Replace` family uses the
 same code as the rule tables. `matchRuleOrRun` adds `Flat`'s runs (§4.5.3). `matchWith` takes a
 `MatchConfig`, whose one knob turns off §4.5.4's steps 1–2 for §8.3's measurement; evaluation never
 sets it.

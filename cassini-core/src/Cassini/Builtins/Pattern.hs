@@ -22,7 +22,7 @@ import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Int
 import Cassini.Core.Symbol (sList, sRule, sRuleDelayed)
 import Cassini.Eval (firstJustM)
 import Cassini.Eval.Kernel (Kernel)
-import Cassini.Pattern (viewPattern)
+import Cassini.Pattern (PreparedRule, prepareRule, viewPattern)
 import Cassini.Pattern.Match (match, matchRule, matchRuleOrRun, observeAll, observeFirst, observeMany)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -46,8 +46,8 @@ operatorForm = \case
   _ -> Nothing
 
 -- | One replacement rule: its left-hand side and its body, which may carry a
--- @/;@ condition.
-data Replacement = Replacement !Expr !Expr
+-- @/;@ condition, read once however many parts it is tried on.
+type Replacement = PreparedRule
 
 -- | The rules a replacement argument holds: one list, or several, each
 -- giving its own result.
@@ -58,7 +58,7 @@ readRule = \case
   App (Sym r) xs
     | r == sRule || r == sRuleDelayed,
       [lhs, rhs] <- V.toList xs ->
-        Just (Replacement lhs rhs)
+        Just (prepareRule lhs rhs)
   _ -> Nothing
 
 readReplacements :: Expr -> Maybe Replacements
@@ -88,12 +88,12 @@ withReplacements name rules f = case readReplacements rules of
 
 -- | The first rule that applies to the whole expression, by its first match.
 applyFirst :: (Kernel :> es) => [Replacement] -> Expr -> Eff es (Maybe Expr)
-applyFirst rs e = firstJustM (\(Replacement lhs rhs) -> observeFirst (matchRule lhs rhs e)) rs
+applyFirst rs e = firstJustM (\r -> observeFirst (matchRule r e)) rs
 
 -- | The first rule that applies, by its first match: to the whole
 -- expression or, under a @Flat@ head, to a run of its arguments.
 applyWithRuns :: (Kernel :> es) => [Replacement] -> Expr -> Eff es (Maybe Expr)
-applyWithRuns rs e = firstJustM (\(Replacement lhs rhs) -> observeFirst (matchRuleOrRun lhs rhs e)) rs
+applyWithRuns rs e = firstJustM (\r -> observeFirst (matchRuleOrRun r e)) rs
 
 -- | @MatchQ[expr, form]@.
 matchQRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
@@ -165,10 +165,10 @@ replaceListRule e = case args e of
   [x, rules, Int_ n] -> withReplacements "ReplaceList" rules (fmap (apply sList) . upTo (clamp n) x)
   _ -> pure Nothing
   where
-    every x rs = concat <$> traverse (\(Replacement lhs rhs) -> observeAll (matchRule lhs rhs x)) rs
+    every x rs = concat <$> traverse (\r -> observeAll (matchRule r x)) rs
     upTo k x = \case
-      Replacement lhs rhs : rs | k > 0 -> do
-        found <- observeMany k (matchRule lhs rhs x)
+      r : rs | k > 0 -> do
+        found <- observeMany k (matchRule r x)
         (found <>) <$> upTo (k - length found) x rs
       _ -> pure []
     clamp n
@@ -190,7 +190,7 @@ casesRule e = case args e of
     cases ls form limit x = apply sList <$> collect (limit :: Maybe Integer) (levelParts (inLevel ls) x)
       where
         pick = case readRule form of
-          Just (Replacement lhs rhs) -> matchRule lhs rhs
+          Just r -> matchRule r
           Nothing -> let p = viewPattern form in \y -> y <$ match p y mempty
         collect k = \case
           y : ys

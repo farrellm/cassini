@@ -27,6 +27,8 @@ module Cassini.Pattern
     isOptional,
     requiredHead,
     builtinDefault,
+    PreparedRule (..),
+    prepareRule,
     MatchOps (..),
   )
 where
@@ -55,9 +57,11 @@ import Cassini.Core.Symbol
     sTimes,
     sTrue,
     sVerbatim,
+    symbol,
   )
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
+import Text.Show (Show (showsPrec), showParen, showString)
 
 -- | A pattern, read. The sequence objects (@__@, @___@, @Repeated@,
 -- @Optional@) take a run of arguments, which "Cassini.Pattern.Sequence" and
@@ -297,6 +301,64 @@ builtinDefault f i n
   | f == sTimes = Just (Int_ 1)
   | f == sPower, i == 2, n == 2 = Just (Int_ 1)
   | otherwise = Nothing
+
+-- | A rule read once for the matcher, so that applying it to many
+-- subexpressions, or trying it on every evaluation, does not read it again:
+-- its left-hand side as a 'PatternView' and its body, which may carry a
+-- @/;@ condition. If the left-hand side (through @HoldPattern@) is @f[ps]@,
+-- the forms that apply it to a run of a @Flat@ @f@'s arguments are here too
+-- (§4.5.3): @f[ps, post__] -> f[r, post]@ and then
+-- @f[pre__, ps, post___] -> f[pre, r, post]@, or under @Orderless@
+-- @f[ps, rest__] -> f[r, rest]@, with variables no user pattern can name.
+-- The fields after the head are lazy, so a rule pays for what it uses.
+data PreparedRule = PreparedRule
+  { prLhs :: !Expr,
+    prBody :: !Expr,
+    -- | The left-hand side, read.
+    prView :: PatternView,
+    -- | @f@, when the left-hand side is @f[ps]@ for a symbol @f@.
+    prRunHead :: !(Maybe Symbol),
+    -- | The run forms, read, with their bodies, in the order tried.
+    prRuns :: [(PatternView, Expr)],
+    -- | The run form under @Orderless@.
+    prRunsOrderless :: [(PatternView, Expr)]
+  }
+
+instance Show PreparedRule where
+  showsPrec d r = showParen (d > 10) (showString "prepareRule " . showsPrec 11 r.prLhs . showString " " . showsPrec 11 r.prBody)
+
+-- | Read a rule's left-hand side and body for the matcher.
+prepareRule :: Expr -> Expr -> PreparedRule
+prepareRule lhs body = case unholdPattern lhs of
+  App (Sym f) ps ->
+    let around before after =
+          let wrap x = apply f (map runName before <> [x] <> map runName after)
+              body' = case body of
+                App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [wrap x, test]
+                _ -> wrap body
+           in (viewPattern (apply f (before <> V.toList ps <> after)), body')
+     in base
+          { prRunHead = Just f,
+            prRuns = [around [] [runPost], around [runPre] [runPostNull]],
+            prRunsOrderless = [around [] [runRest]]
+          }
+  _ -> base
+  where
+    base = PreparedRule {prLhs = lhs, prBody = body, prView = viewPattern lhs, prRunHead = Nothing, prRuns = [], prRunsOrderless = []}
+    runName = \case
+      App _ xs | Just x <- V.headM xs -> x
+      x -> x
+
+-- | The run forms' sequence variables, in a private context that no user
+-- pattern names, with their blanks.
+runPre, runPost, runPostNull, runRest :: Expr
+runPre = runVariable "pre" sBlankSequence
+runPost = runVariable "post" sBlankSequence
+runPostNull = runVariable "post" sBlankNullSequence
+runRest = runVariable "rest" sBlankSequence
+
+runVariable :: Text -> Symbol -> Expr
+runVariable n blank = apply sPattern [Sym (symbol "Cassini`Private`" n), apply blank []]
 
 -- | What a matcher needs from the monad it runs in. "Cassini.Pattern.Match"
 -- supplies these for 'Cassini.Pattern.Match.MatchT'; the matchers are
