@@ -1,0 +1,3 @@
+(* A sequence variable's binding splices into the argument list it is substituted into, before any evaluation, so inside Hold too; as the whole right-hand side it stays Sequence[...] (mathematica.stackexchange.com/q/1929 and its answer a/1933, with WL's outputs). *)
+ReplaceRepeated[Hold[List[1, 2, f[3, 4]]], RuleDelayed[f[Pattern[x, BlankNullSequence[]]], x]]
+ReplaceAll[ReplaceAll[Hold[List[1, 2, x]], Rule[x, s[3, 4]]], RuleDelayed[Pattern[f, Blank[]][Pattern[left, BlankNullSequence[]], s[Pattern[middle, BlankNullSequence[]]], Pattern[right, BlankNullSequence[]]], f[left, middle, right]]]

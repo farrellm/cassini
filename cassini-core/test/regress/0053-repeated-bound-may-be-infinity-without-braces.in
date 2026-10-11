@@ -1,0 +1,4 @@
+(* Repeated[p, Infinity] is Repeated[p, {1, Infinity}]: WL calls the two identical (mathematica.stackexchange.com/a/7904), and the braced form's outputs are wolfram/Repeated/PropertiesAndRelations/1's. Until the 1b review the unbraced form was not read as a pattern at all. *)
+MatchQ[f[a, a, a], f[Repeated[a, Infinity]]]
+ReplaceAll[List[List[], List[a], List[a, a]], Rule[List[Repeated[a, Infinity]], x]]
+MatchQ[f[a, b], f[Repeated[a, Infinity], b]]

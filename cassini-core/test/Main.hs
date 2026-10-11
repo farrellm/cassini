@@ -8,6 +8,9 @@ import Test.Cassini.Core.Order qualified
 import Test.Cassini.Core.Traversal qualified
 import Test.Cassini.Eval qualified
 import Test.Cassini.Number qualified
+import Test.Cassini.Pattern qualified
+import Test.Cassini.Pattern.Commutative qualified
+import Test.Cassini.Pattern.Sequence qualified
 import Test.Cassini.Pattern.Syntactic qualified
 import Test.Cassini.Rules qualified
 import Test.Cassini.Simplify.Automatic qualified
@@ -30,6 +33,9 @@ main = do
         Test.Cassini.Attributes.tests,
         Test.Cassini.Rules.tests,
         Test.Cassini.Pattern.Syntactic.tests,
+        Test.Cassini.Pattern.Sequence.tests,
+        Test.Cassini.Pattern.Commutative.tests,
+        Test.Cassini.Pattern.tests,
         Test.Cassini.Simplify.Automatic.tests,
         Test.Cassini.Eval.tests,
         Test.Cassini.Syntax.tests,

@@ -19,11 +19,22 @@ module Cassini.Pattern
     Subst,
     bindingExpr,
     applySubst,
+    bindName,
+    bindDefault,
+    isTrue,
+    argRange,
+    prefersLong,
+    isOptional,
+    requiredHead,
+    builtinDefault,
+    PreparedRule (..),
+    prepareRule,
     MatchOps (..),
   )
 where
 
-import Cassini.Core.Expr (Expr, apply, pattern App, pattern Sym)
+import Cassini.Attributes (AttributeSet)
+import Cassini.Core.Expr (Expr, apply, mkApp, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
     sAlternatives,
@@ -31,22 +42,31 @@ import Cassini.Core.Symbol
     sBlankNullSequence,
     sBlankSequence,
     sCondition,
+    sDirectedInfinity,
     sExcept,
     sHoldPattern,
+    sList,
     sOptional,
     sPattern,
     sPatternTest,
+    sPlus,
+    sPower,
     sRepeated,
     sRepeatedNull,
     sSequence,
+    sTimes,
+    sTrue,
     sVerbatim,
+    symbol,
   )
-import Cassini.Structure (substituteAll)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
+import Text.Show (Show (showsPrec), showParen, showString)
 
--- | A pattern, read. Constructors the syntactic matcher does not handle
--- (sequences, @Repeated@, @Optional@) arrive with milestone 1b.
+-- | A pattern, read. The sequence objects (@__@, @___@, @Repeated@,
+-- @Optional@) take a run of arguments, which "Cassini.Pattern.Sequence" and
+-- "Cassini.Pattern.Commutative" distribute; alone, against one expression,
+-- they take it as a run of one.
 data PatternView
   = -- | @_h@
     PBlank !(Maybe Expr)
@@ -91,7 +111,9 @@ viewPattern e = case e of
     | h == sPatternTest, [p, f] <- V.toList as -> PTest (viewPattern p) f
     | h == sAlternatives -> PAlternative (map viewPattern (V.toList as))
     | h == sRepeated, [p] <- V.toList as -> PRepeated (viewPattern p) (1, Nothing)
+    | h == sRepeated, [p, n] <- V.toList as, Just r <- repeatSpec 1 n -> PRepeated (viewPattern p) r
     | h == sRepeatedNull, [p] <- V.toList as -> PRepeated (viewPattern p) (0, Nothing)
+    | h == sRepeatedNull, [p, n] <- V.toList as, Just r <- repeatSpec 0 n -> PRepeated (viewPattern p) r
     | h == sOptional, [p] <- V.toList as -> POptional (viewPattern p) Nothing
     | h == sOptional, [p, d] <- V.toList as -> POptional (viewPattern p) (Just d)
     | h == sExcept, [c] <- V.toList as -> PExcept (viewPattern c) Nothing
@@ -107,6 +129,25 @@ viewPattern e = case e of
       [] -> Just Nothing
       [c] -> Just (Just c)
       _ -> Nothing
+
+-- | A repetition count: @n@ is at most @n@ (from the given least), @{n}@
+-- exactly @n@, @{m, n}@ from @m@ to @n@. The bound @n@ may be @Infinity@
+-- in both @n@ and @{m, n}@: WL calls @Repeated[_, Infinity]@ and
+-- @Repeated[_, {1, Infinity}]@ identical (@mathematica.stackexchange.com/a/7904@).
+repeatSpec :: Int -> Expr -> Maybe (Int, Maybe Int)
+repeatSpec lo = \case
+  App (Sym l) ns | l == sList -> case V.toList ns of
+    [n] -> count n >>= \k -> pure (k, Just k)
+    [m, n] -> (,) <$> count m <*> bound n
+    _ -> Nothing
+  n -> (lo,) <$> bound n
+  where
+    count = \case
+      Int_ k | k >= 0 -> toIntegralSized k
+      _ -> Nothing
+    bound = \case
+      App (Sym d) xs | d == sDirectedInfinity, [Int_ 1] <- V.toList xs -> Just Nothing
+      n -> Just <$> count n
 
 -- | Whether the expression contains no pattern object, heads included. Such a
 -- pattern matches only itself, which is the fast path of @FreeQ@ and
@@ -148,12 +189,188 @@ bindingExpr = \case
   BOne x -> x
   BSeq xs -> apply sSequence (V.toList xs)
 
--- | Replace every bound variable by its binding, all at once. Not yet aware of
+-- | Replace every bound variable by its binding, all at once. A sequence
+-- binding in an argument list is spliced into it there and then, as WL
+-- does, so @f[a, b] /. f[x__] :> Hold[g[x]]@ is @Hold[g[a, b]]@ even though
+-- nothing evaluates inside @Hold@; anywhere else it is @Sequence[…]@.
+-- Subtrees with no bound variable keep their nodes. Not yet aware of
 -- scoping constructs; that arrives with @Function@ (§4.13).
 applySubst :: Subst -> Expr -> Expr
 applySubst s u
   | Map.null s = u
-  | otherwise = substituteAll u [(Sym x, bindingExpr b) | (x, b) <- Map.toList s]
+  | otherwise = fromMaybe u (go u)
+  where
+    -- 'Nothing' means unchanged.
+    go = \case
+      Sym x -> bindingExpr <$> Map.lookup x s
+      App h as ->
+        let h' = go h
+            as' = V.map arg as
+         in if isNothing h' && V.all isNothing as'
+              then Nothing
+              else Just (mkApp (fromMaybe h h') (V.concat (V.toList (V.zipWith (fromMaybe . V.singleton) as as'))))
+      _ -> Nothing
+    arg = \case
+      Sym x | Just (BSeq xs) <- Map.lookup x s -> Just xs
+      a -> V.singleton <$> go a
+
+-- | Bind a name, or check it against its binding: one name means one value
+-- across a pattern. A sequence of one is that one expression, so in
+-- @f[x__, x_]@ the two @x@ agree on @f[a, a]@.
+bindName :: (MonadPlus m) => Symbol -> Binding -> Subst -> m Subst
+bindName x b sigma = case Map.lookup x sigma of
+  Nothing -> pure (Map.insert x b sigma)
+  Just b' -> sigma <$ guard (asRun b' == asRun b)
+  where
+    asRun = \case
+      BOne v -> V.singleton v
+      BSeq vs -> vs
+
+-- | An absent @Optional@: its name, if it has one, takes the default, which
+-- is not matched against the pattern. @x:(\"I\" | \"II\"):\"none\"@ binds
+-- @x@ to @\"none\"@ (@wolfram/Optional/Scope/3@).
+bindDefault :: (MonadPlus m) => PatternView -> Expr -> Subst -> m Subst
+bindDefault q v = case q of
+  PNamed x _ -> bindName x (BOne v)
+  _ -> pure
+
+-- | Whether a side condition's value admits a match: only @True@ does
+-- (§4.13).
+isTrue :: Expr -> Bool
+isTrue = \case
+  Sym t -> t == sTrue
+  _ -> False
+
+-- | How many arguments an element of a pattern's argument list takes: at
+-- least, and at most ('Nothing' is unbounded). Under a @Flat@ head (the
+-- flag), a blank takes a run of one or more, as the head's arguments
+-- grouped (§4.5.3). @Optional@ takes none, or what its pattern takes.
+argRange :: Bool -> PatternView -> (Int, Maybe Int)
+argRange flat = go
+  where
+    go = \case
+      PBlank _ | flat -> (1, Nothing)
+      PBlankSeq _ -> (1, Nothing)
+      PBlankNull _ -> (0, Nothing)
+      PNamed _ q -> go q
+      PCondition q _ -> go q
+      PTest q _ -> go q
+      PHold q -> go q
+      PExcept _ (Just q) -> go q
+      PAlternative (q : qs) -> foldl' widen (go q) (map go qs)
+      PRepeated _ r -> r
+      POptional q _ -> (0, snd (go q))
+      _ -> (1, Just 1)
+    widen (a, b) (c, d) = (min a c, max <$> b <*> d)
+
+-- | Whether a pattern is an @Optional@ argument, @p:d@ or @p.@.
+isOptional :: PatternView -> Bool
+isOptional = \case
+  POptional _ _ -> True
+  _ -> False
+
+-- | The head every subject a pattern matches must have, when there is one:
+-- a compound pattern's literal head, unless it has an @Optional@ argument,
+-- since under a @OneIdentity@ head @n_. x_@ also matches what @x_@ matches,
+-- a subject with any head (§4.5.1). For pruning and indexing, which must
+-- not exclude a subject that matches; the matcher decides the rest.
+requiredHead :: PatternView -> Maybe Expr
+requiredHead = \case
+  PCompound (PLiteral h) qs | not (any isOptional qs) -> Just h
+  _ -> Nothing
+
+-- | Whether an element tries its longer runs first. @Optional@ does: it
+-- matches an argument when there is one, and only otherwise its default.
+-- Everything else tries the shortest run first, as WL's @__@ does.
+prefersLong :: PatternView -> Bool
+prefersLong = \case
+  PNamed _ q -> prefersLong q
+  PCondition q _ -> prefersLong q
+  PTest q _ -> prefersLong q
+  PHold q -> prefersLong q
+  POptional _ _ -> True
+  _ -> False
+
+-- | The built-in default of an argument of a head, for @Optional[p]@ with
+-- no default of its own: the 1-based position and the number of pattern
+-- arguments. @Plus@'s is 0, @Times@'s 1, and @Power@'s exponent 1. User
+-- defaults (@Default[f] = v@) are not implemented.
+builtinDefault :: Symbol -> Int -> Int -> Maybe Expr
+builtinDefault f i n
+  | f == sPlus = Just (Int_ 0)
+  | f == sTimes = Just (Int_ 1)
+  | f == sPower, i == 2, n == 2 = Just (Int_ 1)
+  | otherwise = Nothing
+
+-- | A rule read once for the matcher, so that applying it to many
+-- subexpressions, or trying it on every evaluation, does not read it again:
+-- its left-hand side as a 'PatternView' and its body, which may carry a
+-- @/;@ condition. If the left-hand side (through @HoldPattern@) is @f[ps]@,
+-- the forms that apply it to a run of a @Flat@ @f@'s arguments are here too
+-- (§4.5.3): @f[ps, post__] -> f[r, post]@ and then
+-- @f[pre__, ps, post___] -> f[pre, r, post]@, or under @Orderless@
+-- @f[ps, rest__] -> f[r, rest]@, with variables no user pattern can name.
+-- The fields after the head are lazy, so a rule pays for what it uses.
+data PreparedRule = PreparedRule
+  { prLhs :: !Expr,
+    prBody :: !Expr,
+    -- | The left-hand side, read.
+    prView :: PatternView,
+    -- | @f@, when the left-hand side is @f[ps]@ for a symbol @f@.
+    prRunHead :: !(Maybe Symbol),
+    -- | The run forms, read, with their bodies, in the order tried.
+    prRuns :: [(PatternView, Expr)],
+    -- | The run form under @Orderless@.
+    prRunsOrderless :: [(PatternView, Expr)]
+  }
+
+instance Show PreparedRule where
+  showsPrec d r = showParen (d > 10) (showString "prepareRule " . showsPrec 11 r.prLhs . showString " " . showsPrec 11 r.prBody)
+
+-- | Read a rule's left-hand side and body for the matcher. The run forms
+-- see through @HoldPattern@ and a condition on the left-hand side, which
+-- each run form keeps: @f[ps] /; t@ is applied to a run as
+-- @f[ps, post__] /; t@.
+prepareRule :: Expr -> Expr -> PreparedRule
+prepareRule lhs body = case runTarget lhs of
+  Just (f, ps, conditioned) ->
+    let around before after =
+          let wrap x = apply f (map runName before <> [x] <> map runName after)
+              body' = case body of
+                App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [wrap x, test]
+                _ -> wrap body
+           in (viewPattern (conditioned (apply f (before <> V.toList ps <> after))), body')
+     in base
+          { prRunHead = Just f,
+            prRuns = [around [] [runPost], around [runPre] [runPostNull]],
+            prRunsOrderless = [around [] [runRest]]
+          }
+  Nothing -> base
+  where
+    base = PreparedRule {prLhs = lhs, prBody = body, prView = viewPattern lhs, prRunHead = Nothing, prRuns = [], prRunsOrderless = []}
+    runName = \case
+      App _ xs | Just x <- V.headM xs -> x
+      x -> x
+    -- @f[ps]@ through @HoldPattern@ and conditions, with the conditions to
+    -- put back around a run form.
+    runTarget e = case unholdPattern e of
+      App (Sym c) xs
+        | c == sCondition,
+          [p, test] <- V.toList xs ->
+            (\(f, ps, k) -> (f, ps, \x -> apply sCondition [k x, test])) <$> runTarget p
+      App (Sym f) ps -> Just (f, ps, id)
+      _ -> Nothing
+
+-- | The run forms' sequence variables, in a private context that no user
+-- pattern names, with their blanks.
+runPre, runPost, runPostNull, runRest :: Expr
+runPre = runVariable "pre" sBlankSequence
+runPost = runVariable "post" sBlankSequence
+runPostNull = runVariable "post" sBlankNullSequence
+runRest = runVariable "rest" sBlankSequence
+
+runVariable :: Text -> Symbol -> Expr
+runVariable n blank = apply sPattern [Sym (symbol "Cassini`Private`" n), apply blank []]
 
 -- | What a matcher needs from the monad it runs in. "Cassini.Pattern.Match"
 -- supplies these for 'Cassini.Pattern.Match.MatchT'; the matchers are
@@ -166,5 +383,8 @@ data MatchOps m = MatchOps
     evalM :: Expr -> m Expr,
     -- | Whether a pattern matches at all, committing to nothing: for
     -- @Except@, whose bindings do not escape.
-    matchesM :: PatternView -> Expr -> Subst -> m Bool
+    matchesM :: PatternView -> Expr -> Subst -> m Bool,
+    -- | The attributes of a subject's head: a symbol's own, none for a
+    -- compound head. @Orderless@, @Flat@ and @OneIdentity@ change matching.
+    attributesM :: Expr -> m AttributeSet
   }

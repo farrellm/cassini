@@ -1,0 +1,9 @@
+(* Against one expression rather than an argument list, a sequence object takes it as a run of one, and a name binds the expression itself. WL's MatchQ[3 + x, __] is True (mathematica.stackexchange.com/q/314446); Mathics3 agrees with every output here. *)
+MatchQ[Plus[3, x], BlankSequence[]]
+MatchQ[a, BlankNullSequence[]]
+MatchQ[a, Repeated[a]]
+MatchQ[a, BlankSequence[Integer]]
+MatchQ[a, Repeated[a, List[2, 3]]]
+Replace[a, RuleDelayed[Pattern[x, BlankSequence[]], List[x]]]
+Replace[a, RuleDelayed[Pattern[x, BlankSequence[]], x]]
+Cases[List[1, a], BlankSequence[]]

@@ -1,0 +1,4 @@
+(* One name is one value across a pattern, and a sequence variable's run of one argument is that argument: x__ and x_ agree on a single a, in an argument list and nested. *)
+MatchQ[f[a, a], f[Pattern[x, BlankSequence[]], Pattern[x, Blank[]]]]
+MatchQ[f[a, g[a]], f[Pattern[x, BlankSequence[]], g[Pattern[x, Blank[]]]]]
+MatchQ[f[a, b, g[a]], f[Pattern[x, BlankSequence[]], g[Pattern[x, Blank[]]]]]

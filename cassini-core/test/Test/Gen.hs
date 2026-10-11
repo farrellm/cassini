@@ -29,7 +29,7 @@ module Test.Gen
 where
 
 import Cassini.Core.Expr
-import Cassini.Core.Symbol (globalSymbol, sBlank, sFactorial, sPattern, sPlus, sPower, sTimes)
+import Cassini.Core.Symbol (globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sFactorial, sPattern, sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt, NRat), fromRational')
 import Data.Ratio ((%))
 import Data.Vector qualified as V
@@ -92,6 +92,12 @@ genAtom =
 -- Heads include @Plus@, @Times@, @Power@ (usually binary, sometimes not),
 -- @Factorial@, plain functions and curried heads, so every kind and every
 -- malformed variant is reached.
+--
+-- An exponent, and the operand of @Factorial@, come from 'genTame', so that
+-- every generated term evaluates in bounded time. Evaluation is exact, so
+-- @Power[4\/3, Power[5, 13]]@ computes a number of about 150 million digits,
+-- and @Factorial[Power[5, 13]]@ a larger one; WL's limit on exact integers is
+-- deferred (DESIGN.md §11.2, D33).
 genExpr :: Int -> Gen Expr
 genExpr n
   | n <= 1 = genAtom
@@ -100,10 +106,10 @@ genExpr n
         [ (2, genAtom),
           (3, plus <$> args 0 3),
           (3, times <$> args 0 3),
-          (3, power <$> sub 2 <*> sub 2),
-          (1, apply sPower <$> args 0 3),
-          (1, factorial <$> sub 1),
-          (1, apply sFactorial <$> args 0 2),
+          (3, power <$> sub 2 <*> genTame (n `div` 2)),
+          (1, apply sPower <$> nary),
+          (1, factorial <$> genTame (n - 1)),
+          (1, apply sFactorial <$> tames 0 2),
           (3, fn <$> elements ["f", "g", "x"] <*> args 0 3),
           (1, mkApp . fn "f" <$> args 1 1 <*> (V.fromList <$> args 0 2))
         ]
@@ -112,6 +118,36 @@ genExpr n
     args lo hi = do
       k <- chooseInt (lo, hi)
       vectorOf k (genExpr ((n - 1) `div` max 1 k))
+    tames lo hi = do
+      k <- chooseInt (lo, hi)
+      vectorOf k (genTame ((n - 1) `div` max 1 k))
+    -- @Power[a, b, c]@ is @a^(b^c)@, so only the base is unrestricted.
+    nary = oneof [pure [], (:) <$> sub 2 <*> tames 0 2]
+
+-- | An exponent: a number no larger than 2 in magnitude, a symbol, or a
+-- small compound that is never a number, because a sum or product always
+-- has a symbol in it. 'genExpr' at size 100 nests powers six deep, and each
+-- level multiplies the exponent by at most 4 (@Power[a, 2, 2]@), so a numeric
+-- exponent stays below 4^6 = 4096.
+genTame :: Int -> Gen Expr
+genTame n
+  | n <= 1 = small
+  | otherwise =
+      frequency
+        [ (3, small),
+          (1, plus <$> withSymbol),
+          (1, times <$> withSymbol),
+          (1, fn <$> elements ["f", "g", "x"] <*> (chooseInt (0, 2) >>= (`vectorOf` small)))
+        ]
+  where
+    small =
+      frequency
+        [ (2, int <$> chooseInteger (-2, 2)),
+          (1, rat <$> elements [1 % 2, -(1 % 2), 1 % 3]),
+          (3, symbol)
+        ]
+    symbol = sym <$> elements ["a", "b", "c", "x", "y"]
+    withSymbol = (:) <$> symbol <*> (chooseInt (0, 2) >>= (`vectorOf` small))
 
 -- | A subterm of the given term, heads included, uniformly.
 genSubterm :: Expr -> Gen Expr
@@ -161,6 +197,8 @@ everyKind =
 
 -- | A basic algebraic expression (Cohen §3.1): numbers, symbols, and sums,
 -- products, binary powers, unary factorials and functions of them. The
+-- operand of a factorial is a leaf or a small compound with a symbol in it,
+-- for 'genExpr'\'s reason. The
 -- domain of 'Cassini.Simplify.Automatic.simplify'\'s contracts. Exponents
 -- stay small, so numbers stay small.
 genBAE :: Int -> Gen Expr
@@ -172,14 +210,24 @@ genBAE n
           (3, plus <$> args 2 3),
           (3, times <$> args 2 3),
           (3, power <$> genBAE (n `div` 2) <*> exponentE),
-          (1, factorial <$> genBAE (n `div` 2)),
+          (1, factorial <$> factorialArg),
           (2, fn <$> elements ["f", "g"] <*> args 1 2)
         ]
   where
     leaf =
       frequency
         [ (2, mkNumber <$> smallNumber),
-          (5, sym <$> elements ["a", "b", "c", "x", "y"])
+          (5, symbol)
+        ]
+    symbol = sym <$> elements ["a", "b", "c", "x", "y"]
+    -- A leaf, or a compound with a symbol in it: never a number above 3, so
+    -- a factorial of a factorial stays small (as 'genExpr'\'s 'genTame').
+    factorialArg =
+      oneof
+        [ leaf,
+          plus <$> sequence [symbol, leaf],
+          times <$> sequence [symbol, leaf],
+          power <$> symbol <*> exponentE
         ]
     smallNumber =
       oneof
@@ -216,9 +264,10 @@ genRNE n
         ]
 
 -- | A pattern derived from a subject by replacing subterms with named
--- blanks, sometimes head-constrained, so it matches by construction
--- (DESIGN.md §7.3). Each blank's name is its position, so no two share one.
--- It builds no side conditions (§4.5.2).
+-- blanks, sometimes head-constrained, and runs of arguments with named
+-- sequence blanks, so it matches by construction (DESIGN.md §7.3). Each
+-- blank's name is its position, so no two share one. It builds no side
+-- conditions (§4.5.2).
 genPattern :: Expr -> Gen Expr
 genPattern = go "pv"
   where
@@ -231,5 +280,13 @@ genPattern = go "pv"
       App h as -> do
         h' <- go (path <> "h") h
         as' <- V.imapM (\i a -> go (path <> "a" <> show i) a) as
-        pure (mkApp h' as')
+        as'' <- frequency [(2, pure as'), (1, sequenceRun path as')]
+        pure (mkApp h' as'')
       _ -> pure e
+    -- A run of arguments, possibly empty, replaced by one sequence blank.
+    sequenceRun path as = do
+      i <- chooseInt (0, V.length as)
+      j <- chooseInt (i, V.length as)
+      b <- if j > i then elements [sBlankSequence, sBlankNullSequence] else pure sBlankNullSequence
+      let v = apply sPattern [sym (path <> "s"), apply b []]
+      pure (V.take i as <> V.singleton v <> V.drop j as)

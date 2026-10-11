@@ -1,0 +1,4 @@
+(* Under a OneIdentity head, n_. x_ matches what x_ matches, so a compound pattern with an Optional argument matches a subject without its head: as a definition's first argument, through the rule index, and as an Orderless head's argument, through the commutative matcher (wolfram/OneIdentity/BasicExamples/1, wolfram/Optional/PropertiesAndRelations/2). *)
+SetDelayed[g[Times[Optional[Pattern[n, Blank[]]], Pattern[x, Blank[]]]], List[n, x]]
+List[g[y], g[Times[2, y]]]
+MatchQ[Plus[a, b], Plus[Times[Optional[Pattern[n, Blank[]]], Pattern[x, Blank[]]], Pattern[y, Blank[]]]]

@@ -1,0 +1,6 @@
+(* A Flat head's rule applies to a run of its arguments in ReplaceAll; under Orderless too, to any sub-multiset (wolfram/Flat/Scope/2, /3). *)
+SetAttributes[f, Flat]
+ReplaceAll[f[a, b, c, d, e], Rule[f[b, c, d], x]]
+ReplaceAll[f[a, b, c, d, e], Rule[f[b, c, d], f[x, y]]]
+SetAttributes[g, List[Flat, Orderless]]
+ReplaceAll[g[a, b, c, d, e], Rule[g[d, b], x]]
