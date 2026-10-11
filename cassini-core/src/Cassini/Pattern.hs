@@ -327,27 +327,39 @@ data PreparedRule = PreparedRule
 instance Show PreparedRule where
   showsPrec d r = showParen (d > 10) (showString "prepareRule " . showsPrec 11 r.prLhs . showString " " . showsPrec 11 r.prBody)
 
--- | Read a rule's left-hand side and body for the matcher.
+-- | Read a rule's left-hand side and body for the matcher. The run forms
+-- see through @HoldPattern@ and a condition on the left-hand side, which
+-- each run form keeps: @f[ps] /; t@ is applied to a run as
+-- @f[ps, post__] /; t@.
 prepareRule :: Expr -> Expr -> PreparedRule
-prepareRule lhs body = case unholdPattern lhs of
-  App (Sym f) ps ->
+prepareRule lhs body = case runTarget lhs of
+  Just (f, ps, conditioned) ->
     let around before after =
           let wrap x = apply f (map runName before <> [x] <> map runName after)
               body' = case body of
                 App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [wrap x, test]
                 _ -> wrap body
-           in (viewPattern (apply f (before <> V.toList ps <> after)), body')
+           in (viewPattern (conditioned (apply f (before <> V.toList ps <> after))), body')
      in base
           { prRunHead = Just f,
             prRuns = [around [] [runPost], around [runPre] [runPostNull]],
             prRunsOrderless = [around [] [runRest]]
           }
-  _ -> base
+  Nothing -> base
   where
     base = PreparedRule {prLhs = lhs, prBody = body, prView = viewPattern lhs, prRunHead = Nothing, prRuns = [], prRunsOrderless = []}
     runName = \case
       App _ xs | Just x <- V.headM xs -> x
       x -> x
+    -- @f[ps]@ through @HoldPattern@ and conditions, with the conditions to
+    -- put back around a run form.
+    runTarget e = case unholdPattern e of
+      App (Sym c) xs
+        | c == sCondition,
+          [p, test] <- V.toList xs ->
+            (\(f, ps, k) -> (f, ps, \x -> apply sCondition [k x, test])) <$> runTarget p
+      App (Sym f) ps -> Just (f, ps, id)
+      _ -> Nothing
 
 -- | The run forms' sequence variables, in a private context that no user
 -- pattern names, with their blanks.

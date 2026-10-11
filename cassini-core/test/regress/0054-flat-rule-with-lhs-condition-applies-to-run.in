@@ -1,0 +1,7 @@
+(* A condition on a Flat head's rule's left-hand side does not stop the rule applying to a run of the arguments: the run form keeps the condition (DESIGN.md §4.5.3). Until the 1b review only an unconditioned f[ps] had run forms. Mathics3 agrees with every output. *)
+SetAttributes[f, Flat]
+SetDelayed[Condition[f[a, b], True], c]
+f[a, b, d]
+SetAttributes[g, List[Flat, Orderless]]
+ReplaceAll[g[a, b, c], Rule[Condition[g[a, c], True], x]]
+ReplaceAll[g[a, b, c], Rule[Condition[HoldPattern[g[a, c]], False], x]]
