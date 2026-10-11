@@ -49,6 +49,9 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     the loop.
   * Fix: `D` differentiates a compound head that depends on the variable, as WL does:
     `D[f[x][y], x]` is `f'[x][y]`, not 0, while `D[x[t], x]` stays 0 (regression case 0073).
+  * Fix: string escapes are WL's, not Haskell's, in both parsers: `"\101"` is `"A"` (octal), `\.hh`,
+    `\:hhhh` and `\|hhhhhh` are read, and `\SOH`, `\&` and `\x41` are errors. Both printers write
+    control characters as escapes (regression case 0074).
 
 * Milestone 1b, the matcher (DESIGN.md §4.5, §10):
   * Sequence matching (`Cassini.Pattern.Sequence`): `__`, `___`, `Repeated` with its counts,

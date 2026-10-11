@@ -45,6 +45,10 @@ tests =
           testGroup "WL's parse, as Mathics3 10.0.1 reads it" (map parsesAs mathics),
           testGroup "the two departures (Cassini.Syntax.Parser)" (map parsesAs departures),
           testCase "a real is refused (D9)" $ isLeft (parseExpr resolveName "1.5") @?= True,
+          testGroup "WL's string escapes, as WL 15.0.1 reads them" (map readsString stringEscapes),
+          testGroup "string escapes WL refuses, or Stage 1 lacks" (map refusesString badEscapes),
+          testCase "FullForm reads the same escapes" $ parseFullForm resolveName "\"\\101\\.41\"" @?= Right (str "AA"),
+          testCase "control characters print as escapes" $ pretty (str "\r\b\SOH") @?= "\"\\r\\b\\.01\"",
           testCase "1.. is Repeated[1], not a real" $ ff "1.." @?= "Repeated[1]",
           testCase "an open bracket is incomplete" $ incomplete resolveName "f[x," @?= True,
           testCase "a trailing operator is incomplete" $ incomplete resolveName "a +" @?= True,
@@ -58,6 +62,26 @@ tests =
        in counterexample (toString printed) (parseExpr resolveGen printed === Right e)
     parsesAs (input, expected) = testCase (toString input) (ff input @?= expected)
     ff = either ("parse error: " <>) fullForm . parseExpr resolveName
+    readsString (input, expected) = testCase (toString input) (parseExpr resolveName input @?= Right (str expected))
+    refusesString input = testCase (toString input) (isLeft (parseExpr resolveName input) @?= True)
+
+-- | String literals and the text WL 15.0.1 reads from them
+-- (@ToCharacterCode[ToExpression[…]]@, through the Wolfram Cloud MCP).
+stringEscapes :: [(Text, Text)]
+stringEscapes =
+  [ ("\"\\101\"", "A"),
+    ("\"\\1012\"", "A2"),
+    ("\"\\.41\"", "A"),
+    ("\"\\:0041\"", "A"),
+    ("\"\\|000041\"", "A"),
+    ("\"\\b\\f\\r\\t\\n\"", "\b\f\r\t\n"),
+    ("\"\\'\"", "\\'")
+  ]
+
+-- | String literals WL refuses with @Syntax::stresc@ or @Syntax::sntoct1@
+-- and @sntoct2@, and the named-character and box escapes Stage 1 lacks (D36).
+badEscapes :: [Text]
+badEscapes = ["\"\\x41\"", "\"\\SOH\"", "\"\\q\"", "\"\\7\"", "\"\\0\"", "\"\\.4\"", "\"\\a\"", "\"\\[Alpha]\"", "\"\\<a\\>\""]
 
 -- | Inputs and their parses, read by Mathics3 10.0.1's parser
 -- (@FullForm[Hold[…]]@), which follows WL's.

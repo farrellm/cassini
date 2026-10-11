@@ -21,15 +21,15 @@ where
 import Cassini.Core.Expr (Expr, mkApp, mkNumber, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, globalSymbol, sRational, symContext, symName, symbol)
 import Cassini.Number (Number (NInt, NRat), fromRational')
+import Cassini.Syntax.Lexer (quoteString, stringLiteral)
 import Data.Char (isAlphaNum, isLetter)
 import Data.Ratio ((%))
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as B
 import Data.Vector qualified as V
-import Text.Megaparsec (Parsec, between, eof, errorBundlePretty, manyTill, notFollowedBy, parse, satisfy, sepBy, takeWhileP, try, (<?>))
+import Text.Megaparsec (Parsec, between, eof, errorBundlePretty, notFollowedBy, parse, satisfy, sepBy, takeWhileP, try, (<?>))
 import Text.Megaparsec.Char (char, digitChar, space)
-import Text.Megaparsec.Char.Lexer qualified as L
 
 -- $setup
 -- >>> import Cassini.Core.Symbol (globalSymbol)
@@ -63,7 +63,7 @@ parseFullForm resolve src = first (toText . errorBundlePretty) (parse (space *> 
       let n = readInteger digits
       pure (Int_ (if isJust sign then negate n else n))
 
-    stringLit = Str . toText <$> (char '"' *> manyTill L.charLiteral (char '"'))
+    stringLit = Str <$> stringLiteral
 
     symbolLit = do
       leading <- optional (char '`')
@@ -103,15 +103,8 @@ fullForm = TL.toStrict . B.toLazyText . go
     go = \case
       Num (NInt i) -> B.fromString (show i)
       Num (NRat r) -> "Rational[" <> B.fromString (show (numerator r)) <> ", " <> B.fromString (show (denominator r)) <> "]"
-      Str t -> B.fromText (quote t)
+      Str t -> B.fromText (quoteString t)
       Sym s
         | s.symContext `elem` ["System`", "Global`"] -> B.fromText s.symName
         | otherwise -> B.fromText s.symContext <> B.fromText s.symName
       App h as -> go h <> "[" <> mconcat (intersperse ", " (map go (V.toList as))) <> "]"
-    quote t = "\"" <> T.concatMap escape t <> "\""
-    escape = \case
-      '"' -> "\\\""
-      '\\' -> "\\\\"
-      '\n' -> "\\n"
-      '\t' -> "\\t"
-      c -> T.singleton c
