@@ -45,6 +45,7 @@ import Cassini.Core.Symbol
 import Cassini.Eval.Message (Message (..), MessageTag (..))
 import Cassini.Number (Number (NInt, NRat))
 import Cassini.Syntax.Parser (Fixity (..), Operator (..), operators)
+import Data.Char (isAlphaNum, isLetter)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Text qualified as T
 import Data.Vector qualified as V
@@ -284,8 +285,15 @@ name s
   | s.symContext `elem` ["System`", "Global`"] = s.symName
   | otherwise = s.symContext <> s.symName
 
+-- | Whether a message tag reads back after @::@ as itself: a name as the
+-- lexer's 'Cassini.Syntax.Lexer.nameTok' reads one, without a leading
+-- backquote, which the parser does not keep.
 isName :: Text -> Bool
-isName t = not (T.null t) && T.all (\c -> c `notElem` (" []\"" :: String)) t
+isName = all part . T.splitOn "`"
+  where
+    part p = case T.uncons p of
+      Just (c, rest) -> (isLetter c || c == '$') && T.all (\x -> isAlphaNum x || x == '$') rest
+      Nothing -> False
 
 quote :: Text -> Text
 quote t = "\"" <> T.concatMap escape t <> "\""

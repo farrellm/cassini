@@ -279,4 +279,8 @@ runKernelInterruptible ::
 runKernelInterruptible sq cfg ref flag =
   reinterpret
     (runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0))
-    (handler sq Store {load = readIORef ref, store = modifyIORef' ref, poll = atomicModifyIORef' flag (False,)})
+    (handler sq Store {load = readIORef ref, store = modifyIORef' ref, poll = poll})
+  where
+    -- A plain read at every step, and the atomic clear only when one is
+    -- pending.
+    poll = readIORef flag >>= \pending -> if pending then atomicModifyIORef' flag (False,) else pure False

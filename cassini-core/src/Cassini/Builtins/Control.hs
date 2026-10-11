@@ -22,6 +22,7 @@ import Cassini.Core.Expr (Expr, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sFunction, sList, sNull, sSlot, sSlotSequence)
 import Cassini.Eval.Kernel (Kernel, evaluate)
 import Cassini.Structure (Binding (..), Scoping (Shielding), Slots (..), substituteFree)
+import Data.List (unsnoc)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -95,5 +96,3 @@ compoundRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 compoundRule e = case unsnoc (args e) of
   Nothing -> pure (Just sNullE)
   Just (before, lastE) -> Just lastE <$ traverse_ evaluate before
-  where
-    unsnoc xs = (take (length xs - 1) xs,) <$> viaNonEmpty last xs

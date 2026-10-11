@@ -39,6 +39,14 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
     `Orderless` (regression case 0068).
   * Fix: `ReplaceList` with a negative count stays, with `ReplaceList::innf`, and takes
     `Infinity` as no limit (regression case 0070).
+  * Fix: a named pure function's derivative, `Function[x, x^2]'`, is taken in fresh variables, so
+    a global value of `x` no longer leaves it unevaluated (regression case 0071).
+  * Fix: only a literal `Rational` head sees a fraction as `Rational[n, d]`; `_[_, _]` no longer
+    matches `1/2` (regression case 0072).
+  * Fix: `substituteFree` traverses a scoping construct's inside once, not twice, so filling
+    slots under nested pure functions is linear, not exponential, in their depth.
+  * Fix: `:trace` is interruptible like any input, and a second Ctrl-C during it no longer ends
+    the loop.
 
 * Milestone 1b, the matcher (DESIGN.md §4.5, §10):
   * Sequence matching (`Cassini.Pattern.Sequence`): `__`, `___`, `Repeated` with its counts,

@@ -1,0 +1,4 @@
+(* A named pure function's derivative is taken in its parameter, whatever global value the parameter's symbol has. *)
+Set[x, 5]
+Derivative[1][Function[x, Power[x, 2]]]
+Derivative[1][Function[x, Power[x, 2]]][3]

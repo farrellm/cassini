@@ -100,12 +100,14 @@ matchWith cfg = go
           attributesM = liftMatch . headAttributes
         }
     go p s sigma = case p of
-      PCompound h qs -> compound h qs (asApplication s) sigma <|> oneIdentity h qs s sigma
+      PCompound h qs -> compound h qs (asApplication h s) sigma <|> oneIdentity h qs s sigma
       _ -> matchSyntactic ops p s sigma
-    -- A rational number is Rational[p, q] to a compound pattern, so
-    -- Rational[n_, d_] matches 22/7 (wolfram/Rational/Scope/7).
-    asApplication s = case s of
-      Rat_ r -> apply sRational [Int_ (numerator r), Int_ (denominator r)]
+    -- A rational number is Rational[p, q] to a compound pattern whose head
+    -- is literally Rational, so Rational[n_, d_] matches 22/7
+    -- (wolfram/Rational/Scope/7). It is still an atom to any other head, so
+    -- _[_, _] does not match it.
+    asApplication h s = case (h, s) of
+      (PLiteral (Sym r), Rat_ q) | r == sRational -> apply sRational [Int_ (numerator q), Int_ (denominator q)]
       _ -> s
     compound h qs s sigma = case s of
       App sh sargs -> do

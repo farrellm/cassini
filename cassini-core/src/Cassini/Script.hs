@@ -33,6 +33,7 @@ import Cassini.Eval.Kernel (EvalConfig (..), Kernel, KernelState (..), TraceEntr
 import Cassini.Eval.Message (messageName)
 import Cassini.Syntax.FullForm (fullForm, parseFullForm)
 import Data.HashSet qualified as HashSet
+import Data.List (unsnoc)
 import Data.Text qualified as T
 import Data.Vector qualified as V
 import Effectful (Eff, runEff, (:>))
@@ -91,8 +92,6 @@ evaluateInput k e = case e of
         v <- evaluateTop (apply sCompoundExpression before)
         Sym sNull <$ recordLine k e v
   _ -> evaluateTop e >>= \v -> v <$ recordLine k e v
-  where
-    unsnoc xs = (take (length xs - 1) xs,) <$> viaNonEmpty last xs
 
 -- | A name without a context is @System`@ if the registry defines it, else
 -- @Global`@.
