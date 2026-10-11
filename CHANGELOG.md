@@ -42,6 +42,13 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   * A rule table's index changes in place instead of being rebuilt, and files a rule with no
     pattern object under its whole left-hand side, so a memoising definition is linear, not
     quadratic: `f[1]` … `f[8000]` take 0.6 s, from 64 s (DESIGN.md §4.5.5).
+* Fix: three flaky property tests. `genExpr` could build an exponent such as `Power[5, 13]`, and
+  `genBAE` a factorial of a factorial, and evaluating those exactly hung the `Eval` and `Simplify`
+  laws or ran them out of memory. Exponents and factorial operands are now small numbers or terms
+  with a symbol in them. And `Test.Numeric` skips the periodic test functions at arguments too
+  large to keep the tolerance, a false failure of "simplify preserves numeric value". These were
+  test defects, not evaluator bugs, so there is no regression case; exact arithmetic's missing
+  size limit is deferred as D33 (DESIGN.md §7.3, §11.2).
 * Split into three packages under one `cabal.project` (DESIGN.md §2.1, D7): `cassini-prelude`,
   `cassini-core` (the library, its test suites and benchmarks) and `cassini-repl` (the `cassini`
   executable). Script mode is renamed `Cassini.REPL` → `Cassini.Script` and stays in core;

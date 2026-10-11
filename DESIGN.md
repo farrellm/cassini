@@ -2879,7 +2879,14 @@ are the smaller cost (D4).
 
 - `genExpr :: Int -> Gen Expr` — size-bounded valid expressions over a **small fixed symbol pool**,
   the budget split among arguments. With fresh symbols everywhere no two subterms are equal, and
-  every test that depends on collecting like terms passes vacuously.
+  every test that depends on collecting like terms passes vacuously. Every term must evaluate in
+  bounded time, and exact arithmetic makes that a constraint on the generator (D33): an exponent,
+  and a factorial's operand, is a number of magnitude at most 2 or a term with a symbol in it, so
+  that a numeric exponent stays below 4⁶ however deep the powers nest. Unrestricted, the generator
+  occasionally built `Power[4/3, Power[5, 13]]`, a number of about 150 million digits, and the
+  `Eval` laws hung or ran out of memory about once in 10 to 30 runs (found 2026-10-10). `genBAE`
+  bounds its factorial operands the same way, after `Factorial[Plus[1, Factorial[16]]]` hung the
+  `Simplify` laws.
 - `genASAE :: Int -> Gen Expr` — already-simplified expressions, for the idempotence law.
 - `genPattern :: Expr -> Gen Expr` — a pattern *derived from* a subject by replacing subterms with
   blanks, so it matches by construction; random patterns almost never match anything. It builds no
@@ -2890,7 +2897,8 @@ are the smaller cost (D4).
 **Numeric checks use a test-only evaluator.** Several laws compare values at random points, and most
 expressions do not evaluate to exact rationals there (`2^(1/2)`, `Sin[1/3]`). `Test/Numeric.hs`
 evaluates an `Expr` to `Double` at a point and compares with a relative tolerance, skipping points
-near singularities. It lives in the test tree because it is a heuristic oracle, not a decision
+near singularities, and skipping the test functions `f` and `g`, which are periodic, at arguments
+beyond 10⁶, where rounding the argument alone costs more than the tolerance. It lives in the test tree because it is a heuristic oracle, not a decision
 procedure — which is exactly why the library's zero test has no such layer (§5.6).
 
 **The law table.** Each row is a property; the last column is what justifies its cost.
@@ -3900,6 +3908,7 @@ answer, not a deletion.
 | D30 | The recursion limit cuts in place, as `Hold[e]`, and evaluation continues outward (§4.3). WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input. The in-place cut also emits `$RecursionLimit::reclim` twice for one runaway evaluation: `r[n_] := r[n + 1]; Length[{r[1]}]` gives `1` with the message once where step 3 cuts the argument and again where the rule's right-hand side is cut. WL emits it once. How many messages there are follows from which evaluation is replaced, so it is fixed with the unwinding rule, not before it (found 2026-10-09 in the PR #12 review) | an oracle or corpus case that pins down which enclosing evaluation WL replaces; or `Block` (§4.13), whose own example ends in `TerminatedEvaluation`, needing the same unwinding |
 | D31 | With tracing off, steps 2–9 still call `traceStep` and build the expression it would record. The handler drops it, but the effect call and the expression are paid for, on every `Flat` and `Orderless` node among others. Equality tests that guard some of these calls are not the cost: `Eq Expr` answers from the pointer, intern id or hash. Measured 2026-10-09 (GHC 9.12.4, hash interning, one developer machine): reading the flag once a round in `fixpoint` and carrying it on `Node` saves 0.7% of the end-to-end workload's allocation and 0.8–2.2% on the fixed-point benchmarks, with time inside the noise. A no-op `traceStep` bounds the saving at 1.5% and 3.6–6.4%. Gating the traces where rules fire saved nothing more. Not taken, for a change that small, because it means regenerating both allocation baselines | the evaluation sequence prominent in a §8.4 profile, or a benchmark baseline regenerated for another reason, when the change can ride along |
 | D32 | Steps 10–13 recompute, rung by rung, what the node already has (§4.2). Both upvalue rungs (10 and 11) collect the arguments' tag symbols and look each one up, and both downvalue rungs (12 and 13) look up the head symbol that step 2 already looked up for its attributes. For k tagged arguments that is about 2k+2 extra effect calls and symbol-table lookups per node per round, on the hottest path. Collecting the tags once per round and carrying the head's `SymbolInfo` on `Node` would remove them. Not measured. Not taken in the PR #12 review (2026-10-09), for D31's reason: it changes allocation, so it means regenerating both baselines | as D31's, and taken with it |
+| D33 | Exact arithmetic has no size limit: `Power[3, 1220703125]` and `Factorial[10^10]` are computed in full, however long that takes and however much memory it needs. WL stops at a limit with `Overflow[]` and `General::ovfl`, but the corpus documents that only for machine reals (`wolfram/Power/PossibleIssues/7`, `2^(2^100.0)`), not where the limit lies for exact integers, so none is set. The test generators stay inside the limit instead (§7.3) | a corpus or oracle case that pins down WL's limit on exact integers; or the interactive loop (milestone 1c), where one mistyped exponent should not cost the session |
 
 ### 11.3 Provenance
 
