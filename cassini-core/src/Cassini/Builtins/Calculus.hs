@@ -166,9 +166,12 @@ powerRule e = do
 -- @D[h[g1, …, gn], x]@ is the sum, over each @gi@ that depends on the
 -- variable, of @Derivative[0, …, 1, …, 0][h][g1, …, gn] D[gi, x]@. When @h@
 -- is itself @Derivative[ns][f]@, the order goes up in place, so
--- @D[f'[x], x]@ is @f''[x]@. The arithmetic heads are the rules above,
--- and an application whose head alone depends on the variable has
--- derivative 0.
+-- @D[f'[x], x]@ is @f''[x]@. The arithmetic heads are the rules above.
+--
+-- A compound head that depends on the variable adds one more term,
+-- @D[h, x][g1, …, gn]@, so @D[f[x][y], x]@ is @f'[x][y]@. A symbol head is
+-- a function's name, not an occurrence of the variable, so @D[x[t], x]@ and
+-- @D[x[y][z], x]@ are 0 (WL 15.0.1, through the Wolfram Cloud MCP).
 chainRule :: Expr -> Maybe Expr
 chainRule e = do
   (f, x) <- single e
@@ -176,7 +179,15 @@ chainRule e = do
   guard (h `notElem` map Sym [sPlus, sTimes, sPower])
   let n = V.length gs
       term i g = apply sTimes [mkApp (derivativeHead h n i) gs, dOf g x]
-  Just (apply sPlus [term i g | (i, g) <- zip [0 ..] (V.toList gs), not (freeOf g x)])
+      headTerm = [mkApp (dOf h x) gs | isApp h, dependsOn h]
+      dependsOn u =
+        u == x || case u of
+          App hu us -> (isApp hu && dependsOn hu) || any dependsOn us
+          _ -> False
+      isApp = \case
+        App _ _ -> True
+        _ -> False
+  Just (apply sPlus (headTerm <> [term i g | (i, g) <- zip [0 ..] (V.toList gs), not (freeOf g x)]))
 
 -- | The head of the derivative of @h@ in its @i@th of @n@ arguments.
 derivativeHead :: Expr -> Int -> Int -> Expr

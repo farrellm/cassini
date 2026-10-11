@@ -44,7 +44,7 @@ tests =
           testCase "the chain rule, through each argument" $
             evalStd ["D[h[x, Power[x, 2], y], x]"] @?= "Plus[Derivative[1, 0, 0][h][x, Power[x, 2], y], Times[2, Derivative[0, 1, 0][h][x, Power[x, 2], y], x]]",
           testCase "differentiating a derivative raises its order" $ evalStd ["D[Derivative[1][f][x], x]"] @?= "Derivative[2][f][x]",
-          testCase "a head alone depending on the variable gives 0" $ evalStd ["D[x[t], x]"] @?= "0",
+          testCase "a symbol head is not the variable" $ evalStd ["D[x[t], x]"] @?= "0",
           testCase "differentiation by a subexpression" $ evalStd ["D[Power[f[x], 2], f[x]]"] @?= "Times[2, f[x]]"
         ],
       testGroup

@@ -1794,7 +1794,10 @@ functions (`wolfram/D/Scope/BasicUses/10`); a list threads; then the constant, v
 product, power and chain rules. A rule's result has `D` inside it, which the fixed point
 evaluates, so the recursion is the evaluator's. The chain rule produces
 `Derivative[0, …, 1, …, 0][h][g₁, …]` times `D[gᵢ, x]` for each `gᵢ` that depends on `x`; when `h` is
-itself `Derivative[ns][f]` it raises the order in place, so `D[f'[x], x]` is `f''[x]`. Variables may
+itself `Derivative[ns][f]` it raises the order in place, so `D[f'[x], x]` is `f''[x]`. A compound
+head that depends on `x` adds the term `D[h, x][g₁, …]`, so `D[f[x][y], x]` is `f'[x][y]`; a symbol
+head is a function's name and not an occurrence of `x`, so `D[x[t], x]` and `D[x[y][z], x]` are 0.
+Both are WL 15.0.1's answers, evaluated through the Wolfram Cloud MCP. Variables may
 be expressions (`D[f[x]^2, f[x]]`); a number as the variable leaves `D` unevaluated, since WL's
 message for it is not in the corpus.
 
