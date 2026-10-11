@@ -23,6 +23,7 @@ where
 import Cassini.Core.Expr (Expr, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
+    isNamePart,
     sBlank,
     sBlankNullSequence,
     sBlankSequence,
@@ -46,7 +47,6 @@ import Cassini.Eval.Message (Message (..), MessageTag (..))
 import Cassini.Number (Number (NInt, NRat))
 import Cassini.Syntax.Lexer (quoteString)
 import Cassini.Syntax.Parser (Fixity (..), Operator (..), operators)
-import Data.Char (isAlphaNum, isLetter)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Text qualified as T
 import Data.Vector qualified as V
@@ -290,11 +290,7 @@ name s
 -- lexer's 'Cassini.Syntax.Lexer.nameTok' reads one, without a leading
 -- backquote, which the parser does not keep.
 isName :: Text -> Bool
-isName = all part . T.splitOn "`"
-  where
-    part p = case T.uncons p of
-      Just (c, rest) -> (isLetter c || c == '$') && T.all (\x -> isAlphaNum x || x == '$') rest
-      Nothing -> False
+isName = all isNamePart . T.splitOn "`"
 
 -- | A message as the front end shows it: @symbol::tag: text@, the template's
 -- @`k`@ slots filled with the arguments printed in the infix syntax. A tag

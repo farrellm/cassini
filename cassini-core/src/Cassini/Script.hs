@@ -24,15 +24,14 @@ module Cassini.Script
   )
 where
 
-import Cassini.Builtins (standardState, systemNames)
+import Cassini.Builtins (resolveName, standardState)
 import Cassini.Builtins.Session (recordLine)
 import Cassini.Core.Expr (Expr, apply, pattern App, pattern Sym)
-import Cassini.Core.Symbol (Symbol, globalSymbol, sCompoundExpression, sNull, systemSymbol)
+import Cassini.Core.Symbol (sCompoundExpression, sNull)
 import Cassini.Eval (evaluateTop, runEvalIO)
 import Cassini.Eval.Kernel (EvalConfig (..), Kernel, KernelState (..), TraceEntry (..), Unwind (..), defaultConfig)
 import Cassini.Eval.Message (messageName)
 import Cassini.Syntax.FullForm (fullForm, parseFullForm)
-import Data.HashSet qualified as HashSet
 import Data.List (unsnoc)
 import Data.Text qualified as T
 import Data.Vector qualified as V
@@ -92,10 +91,3 @@ evaluateInput k e = case e of
         v <- evaluateTop (apply sCompoundExpression before)
         Sym sNull <$ recordLine k e v
   _ -> evaluateTop e >>= \v -> v <$ recordLine k e v
-
--- | A name without a context is @System`@ if the registry defines it, else
--- @Global`@.
-resolveName :: Text -> Symbol
-resolveName n
-  | HashSet.member n systemNames = systemSymbol n
-  | otherwise = globalSymbol n

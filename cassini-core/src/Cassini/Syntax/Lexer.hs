@@ -27,7 +27,8 @@ module Cassini.Syntax.Lexer
   )
 where
 
-import Data.Char (digitToInt, isAlphaNum, isDigit, isHexDigit, isLetter, isOctDigit)
+import Cassini.Core.Symbol (isNameChar, isNameStart)
+import Data.Char (digitToInt, isAlphaNum, isDigit, isHexDigit, isOctDigit)
 import Data.Text qualified as T
 import Numeric (showHex)
 import Text.Megaparsec (Parsec, choice, lookAhead, manyTill, notFollowedBy, satisfy, takeWhile1P, takeWhileP, try, (<?>))
@@ -205,7 +206,7 @@ nameTok = do
   let parts = first' : rest
   pure (Name relative (take (length parts - 1) parts) (fromMaybe first' (viaNonEmpty last parts)))
   where
-    part = T.cons <$> satisfy (\c -> isLetter c || c == '$') <*> takeWhileP (Just "name") (\c -> isAlphaNum c || c == '$')
+    part = T.cons <$> satisfy isNameStart <*> takeWhileP (Just "name") isNameChar
 
 -- | A blank as written: how many underscores, the head name after them, and
 -- whether a @.@ makes it optional (@x_.@).

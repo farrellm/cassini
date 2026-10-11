@@ -48,7 +48,7 @@ module Cassini.Syntax.Parser
 where
 
 import Cassini.Core.Expr (Expr, apply, mkApp, mkNumber, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sBlank, sBlankNullSequence, sBlankSequence, sDerivative, sList, sNull, sOptional, sPattern, sPlus, sPower, sSlot, sSlotSequence, sTimes, symbol)
+import Cassini.Core.Symbol (Symbol, qualifiedName, sBlank, sBlankNullSequence, sBlankSequence, sDerivative, sList, sNull, sOptional, sPattern, sPlus, sPower, sSlot, sSlotSequence, sTimes, symbol)
 import Cassini.Number (Number (NInt, NRat), fromRational')
 import Cassini.Syntax.Lexer
 import Data.Ratio ((%))
@@ -380,9 +380,7 @@ expr resolve = go
       where
         headOf op = maybe "" (fromMaybe "" . (.opHead)) (find (\o -> o.opToken == op) operators)
 
-    resolveName (Name relative ctxs base)
-      | null ctxs && not relative = resolve base
-      | otherwise = symbol (T.concat (map (<> "`") ((if relative then ("Global" :) else id) ctxs))) base
+    resolveName (Name relative ctxs base) = qualifiedName resolve relative ctxs base
 
     sys h = apply (symbol "System`" h)
     sys0 h = Sym (symbol "System`" h)

@@ -19,6 +19,13 @@ module Cassini.Core.Symbol
     compareSymbolName,
     fullName,
 
+    -- * Names as written
+    isNameStart,
+    isNameChar,
+    isNamePart,
+    qualifiedName,
+    parseName,
+
     -- * Well-known symbols
     sPlus,
     sTimes,
@@ -68,7 +75,10 @@ module Cassini.Core.Symbol
   )
 where
 
+import Data.Char (isAlphaNum, isLetter)
 import Data.HashMap.Strict qualified as HashMap
+import Data.List (unsnoc)
+import Data.Text qualified as T
 import System.IO.Unsafe (unsafePerformIO)
 import Text.Show (Show (showsPrec), showString)
 
@@ -111,6 +121,48 @@ compareSymbolName = comparing symName <> comparing symContext
 -- | The context-qualified name, @System`Plus@.
 fullName :: Symbol -> Text
 fullName x = x.symContext <> x.symName
+
+-- | Whether a character may start a part of a name: a letter or @$@. The
+-- name grammar is here once, for the lexer, FullForm, the printer and
+-- @Symbol["…"]@ (DESIGN.md §4.10).
+isNameStart :: Char -> Bool
+isNameStart c = isLetter c || c == '$'
+
+-- | Whether a character may continue a part of a name: a letter, a digit
+-- or @$@.
+isNameChar :: Char -> Bool
+isNameChar c = isAlphaNum c || c == '$'
+
+-- | Whether the text is one part of a name, with no backquote: @x$1@.
+isNamePart :: Text -> Bool
+isNamePart t = case T.uncons t of
+  Just (c, rest) -> isNameStart c && T.all isNameChar rest
+  Nothing -> False
+
+-- | The symbol a name denotes, given whether it began with a backquote,
+-- its context parts and its last part. A bare name goes through the
+-- resolver; @a`b`c@ is @c@ in @a`b`@, and @`b`c@ is @c@ in @Global`b`@.
+qualifiedName :: (Text -> Symbol) -> Bool -> [Text] -> Text -> Symbol
+qualifiedName resolve relative ctxs base
+  | null ctxs && not relative = resolve base
+  | otherwise = symbol (T.concat (map (<> "`") ((if relative then ("Global" :) else id) ctxs))) base
+
+-- | The symbol a name written as text denotes, by 'qualifiedName', or
+-- 'Nothing' for text that is not a name.
+--
+-- >>> fullName <$> parseName globalSymbol "`a`b"
+-- Just "Global`a`b"
+-- >>> parseName globalSymbol "a``b"
+-- Nothing
+parseName :: (Text -> Symbol) -> Text -> Maybe Symbol
+parseName resolve t = case T.splitOn "`" t of
+  "" : parts -> named True parts
+  parts -> named False parts
+  where
+    named relative parts = do
+      (ctxs, base) <- unsnoc parts
+      guard (all isNamePart parts)
+      Just (qualifiedName resolve relative ctxs base)
 
 -- | The symbol with this context and name, allocating it on first use.
 symbol :: Text -> Text -> Symbol
