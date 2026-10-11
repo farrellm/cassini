@@ -13,6 +13,7 @@
 -- "Cassini.Builtins.Control"'s, with its application rule.
 module Cassini.Builtins
   ( standardState,
+    resolveName,
     definitions,
     install,
     systemNames,
@@ -29,14 +30,12 @@ import Cassini.Builtins.Pattern qualified as Pattern
 import Cassini.Builtins.Session qualified as Session
 import Cassini.Builtins.Structural qualified as Structural
 import Cassini.Core.Expr (apply, pattern Str, pattern Sym)
-import Cassini.Core.Symbol (Symbol, globalSymbol, sBlankNullSequence, sSequence, symName, symbol, systemSymbol)
+import Cassini.Core.Symbol (Symbol, globalSymbol, parseName, sBlankNullSequence, sSequence, symName, systemSymbol)
 import Cassini.Eval.Kernel (KernelState (..), emptyState)
 import Cassini.Rules (BuiltinId (..), Origin (..), RuleBody (..), SymbolInfo (..), ValueKind (..), emptyInfo, insertRule, mkRule, modifyRules)
-import Data.Char (isAlphaNum, isLetter)
 import Data.HashSet qualified as HashSet
 import Data.IntMap.Strict qualified as IntMap
 import Data.Map.Strict qualified as Map
-import Data.Text qualified as T
 
 -- | Every builtin, installed into an empty state. Each session, script and
 -- corpus case starts from this.
@@ -109,26 +108,17 @@ kernel =
     -- string that is not a name stays, with Symbol::symname
     -- (wolfram/Symbol/PossibleIssues/1).
     symbolRule e = case args e of
-      [Str t] -> case symbolNamed t of
+      [Str t] -> case parseName resolveName t of
         Just s -> pure (Just (Sym s))
         Nothing -> Nothing <$ message "Symbol" "symname" [Str t]
       _ -> pure Nothing
 
--- | The symbol a name denotes: @System`@ for a name the registry defines,
--- @Global`@ for any other bare name, and the given context for
--- @ctx`name@, or @Global`ctx`name@ for @`ctx`name@. 'Nothing' for
--- something that is not a name.
-symbolNamed :: Text -> Maybe Symbol
-symbolNamed t = case T.splitOn "`" t of
-  [n] | valid n -> Just (if HashSet.member n systemNames then systemSymbol n else globalSymbol n)
-  "" : parts@(_ : _) | all valid parts -> qualified ("Global" : parts)
-  parts@(_ : _ : _) | all valid parts -> qualified parts
-  _ -> Nothing
-  where
-    qualified parts = symbol (T.concat (map (<> "`") (take (length parts - 1) parts))) <$> viaNonEmpty last parts
-    valid n = case T.uncons n of
-      Just (c, rest) -> (isLetter c || c == '$') && T.all (\x -> isAlphaNum x || x == '$') rest
-      Nothing -> False
+-- | A name without a context is @System`@ if the registry defines it, else
+-- @Global`@: how the front end resolves a bare name, and @Symbol["…"]@ too.
+resolveName :: Text -> Symbol
+resolveName n
+  | HashSet.member n systemNames = systemSymbol n
+  | otherwise = globalSymbol n
 
 -- | Install definitions: attributes are added, and each native rule gets the
 -- next id. A native rule's left-hand side is never matched (its

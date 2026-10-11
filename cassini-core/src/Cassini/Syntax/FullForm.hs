@@ -19,16 +19,14 @@ module Cassini.Syntax.FullForm
 where
 
 import Cassini.Core.Expr (Expr, mkApp, mkNumber, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
-import Cassini.Core.Symbol (Symbol, globalSymbol, sRational, symContext, symName, symbol)
+import Cassini.Core.Symbol (Symbol, globalSymbol, qualifiedName, sRational, symContext, symName)
 import Cassini.Number (Number (NInt, NRat), fromRational')
-import Cassini.Syntax.Lexer (quoteString, stringLiteral)
-import Data.Char (isAlphaNum, isLetter)
+import Cassini.Syntax.Lexer (Name (..), nameTok, quoteString, stringLiteral)
 import Data.Ratio ((%))
-import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as B
 import Data.Vector qualified as V
-import Text.Megaparsec (Parsec, between, eof, errorBundlePretty, notFollowedBy, parse, satisfy, sepBy, takeWhileP, try, (<?>))
+import Text.Megaparsec (Parsec, between, eof, errorBundlePretty, notFollowedBy, parse, sepBy, (<?>))
 import Text.Megaparsec.Char (char, digitChar, space)
 
 -- $setup
@@ -65,20 +63,8 @@ parseFullForm resolve src = first (toText . errorBundlePretty) (parse (space *> 
 
     stringLit = Str <$> stringLiteral
 
-    symbolLit = do
-      leading <- optional (char '`')
-      parts <- namePart `sepBy1'` char '`'
-      pure $ case (leading, parts) of
-        (Nothing, [n]) -> Sym (resolve n)
-        (Just _, _) -> Sym (symbol (T.concat (map (<> "`") ("Global" : init' parts))) (last' parts))
-        (Nothing, _) -> Sym (symbol (T.concat (map (<> "`") (init' parts))) (last' parts))
+    symbolLit = (\n -> Sym (qualifiedName resolve n.nameRelative n.nameContexts n.nameBase)) <$> nameTok
 
-    namePart = do
-      c <- satisfy (\x -> isLetter x || x == '$')
-      rest <- takeWhileP (Just "name") (\x -> isAlphaNum x || x == '$')
-      pure (T.cons c rest)
-
-    sepBy1' p s = (:) <$> p <*> many (try (s *> p))
     lexeme p = p <* space
     symbolP c = lexeme (char c)
 
@@ -88,9 +74,6 @@ parseFullForm resolve src = first (toText . errorBundlePretty) (parse (space *> 
       _ -> e
 
     readInteger = foldl' (\acc d -> acc * 10 + toInteger (ord d - ord '0')) 0
-
-    init' xs = take (length xs - 1) xs
-    last' xs = fromMaybe "" (viaNonEmpty last xs)
 
 -- | Print as FullForm. Symbols in @System`@ and @Global`@ print bare;
 -- any other context prints in full.
