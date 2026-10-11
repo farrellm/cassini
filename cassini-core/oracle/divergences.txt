@@ -121,3 +121,6 @@ patterns 17 Mathics3
 0073-compound-head-differentiated-symbol-head-not 5 Mathics3
 0073-compound-head-differentiated-symbol-head-not 6 Mathics3
 0073-compound-head-differentiated-symbol-head-not 7 Mathics3
+# Mathics3: refuses the string escape \' ; WL 15.0.1, evaluated through the
+# Wolfram Cloud MCP, keeps the two characters as written (DESIGN.md §4.10).
+0074-string-escapes-are-wl-not-haskell 3 Mathics3

@@ -44,6 +44,7 @@ import Cassini.Core.Symbol
   )
 import Cassini.Eval.Message (Message (..), MessageTag (..))
 import Cassini.Number (Number (NInt, NRat))
+import Cassini.Syntax.Lexer (quoteString)
 import Cassini.Syntax.Parser (Fixity (..), Operator (..), operators)
 import Data.Char (isAlphaNum, isLetter)
 import Data.HashMap.Strict qualified as HashMap
@@ -80,7 +81,7 @@ doc _ e = case e of
   Num (NInt i) | i < 0 -> (480, show i)
   Num (NInt i) -> atom (show i)
   Num (NRat r) -> (470, show (numerator r) <> "/" <> show (denominator r))
-  Str t -> atom (quote t)
+  Str t -> atom (quoteString t)
   Sym s -> atom (name s)
   App (Sym h) as -> fromMaybe (call e) (special h (V.toList as))
   App _ _ | Just t <- derivativeForm e -> (670, t)
@@ -294,16 +295,6 @@ isName = all part . T.splitOn "`"
     part p = case T.uncons p of
       Just (c, rest) -> (isLetter c || c == '$') && T.all (\x -> isAlphaNum x || x == '$') rest
       Nothing -> False
-
-quote :: Text -> Text
-quote t = "\"" <> T.concatMap escape t <> "\""
-  where
-    escape = \case
-      '"' -> "\\\""
-      '\\' -> "\\\\"
-      '\n' -> "\\n"
-      '\t' -> "\\t"
-      c -> T.singleton c
 
 -- | A message as the front end shows it: @symbol::tag: text@, the template's
 -- @`k`@ slots filled with the arguments printed in the infix syntax. A tag

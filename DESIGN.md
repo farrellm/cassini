@@ -1857,8 +1857,12 @@ whose first factor is a positive number negates that number (`a - 2 b` is `Plus[
 not WL's `Plus[a, Times[-1, 2, b]]`). Both differ from WL only where evaluation is held. Beyond the
 subset above it reads `=.`, `/:`, `..`, `...`, `x:p` and `p:v`, `'`, `!` both ways, `&&`, `||`,
 `<>`, `::`, `@@`, `@@@` (as `Apply[f, x, {1}]`, as Mathics3 reads it), `/@`, `//@`, `++`, `--` and
-`+=` and its kin, and `%`, `%%` and `%n`. Named characters, character escapes in names, `Span`,
-`Dot` and associations are parse errors (D36). `incomplete` says whether an input failed only for
+`+=` and its kin, and `%`, `%%` and `%n`. A string's escapes are WL's, in the infix syntax and in
+FullForm alike: `\"`, `\\`, `\b`, `\f`, `\n`, `\r`, `\t`, three octal digits (`\101`), `\.hh`,
+`\:hhhh` and `\|hhhhhh`, with `\'` kept as written and any other escape an error, as WL 15.0.1 reads
+them (through the Wolfram Cloud MCP). Both printers write a control character as its escape. Named
+characters, in names or strings, character escapes in names, a string's box escapes (`\<`, `\!`, …),
+`Span`, `Dot` and associations are parse errors (D36). `incomplete` says whether an input failed only for
 ending too soon, which is how the loop knows to read another line.
 
 **The printer.** `Cassini.Syntax.Pretty` reads the same table and prints an operator form only
@@ -4113,7 +4117,7 @@ answer, not a deletion.
 | D33 | Exact arithmetic has no size limit: `Power[3, 1220703125]` and `Factorial[10^10]` are computed in full, however long that takes and however much memory it needs. WL stops at a limit with `Overflow[]` and `General::ovfl`, but the corpus documents that only for machine reals (`wolfram/Power/PossibleIssues/7`, `2^(2^100.0)`), not where the limit lies for exact integers, so none is set. The test generators stay inside the limit instead (§7.3). **Trigger fired 2026-10-11 (1c), answered: still no limit.** In the interactive loop a mistyped exponent costs the input, not the session: a second Ctrl-C is thrown at the computation and the loop carries on (§4.10). The cost is that GHC delivers it only between foreign calls, so one GMP multiplication runs to its end: `2^(3^19)` stopped about a second after the second Ctrl-C, and `2^(3^21)`'s last multiplications take longer than that | a corpus or oracle case that pins down WL's limit on exact integers; or a user's input whose single multiplication outlasts their patience |
 | D34 | String patterns are absent (§4.10's deferred list), so `Protect["x*"]` and `Unprotect["x*"]` name the symbol `x*` rather than every symbol matching. Matching names would also need a `Kernel` operation listing the symbols the kernel has seen, which WL's `Names` is (six Wolfram corpus cases, found 2026-10-11 in 1c's triage) | `Names`, `StringMatchQ` or another string-pattern builtin arriving |
 | D35 | `D`'s results are in the form its rule table builds, simplified, which is not always WL's: for `D[g[x]^3/4, {x, 2}]` WL keeps `1/4` outside a sum (`wolfram/D/Scope/FunctionsDefinedByDerivatives/3`). Equal in value, different in structure, and the corpus compares structure. WL's rule for where a constant factor stays cannot be read off one example (§4.9) | 2a's zero test, when corpus cases of `D` can be compared semantically; or such entries becoming `D`'s dominant divergence |
-| D36 | The infix syntax is §4.10's Stage 1 subset: named characters (`\[Alpha]`), character escapes in names (`\.78`, `\:0078`), `Span`, `Dot`, associations and string patterns are parse errors (three Mathics3 cases, 2026-10-11) | a corpus's in-scope cases needing one, or a builtin whose usual spelling is one (`Dot` with matrices, `Span` with `Part`) |
+| D36 | The infix syntax is §4.10's Stage 1 subset: named characters (`\[Alpha]`), character escapes in names (`\.78`, `\:0078`), a string's box escapes (`\<`, `\>`, `\!`, `\&`), `Span`, `Dot`, associations and string patterns are parse errors (three Mathics3 cases, 2026-10-11) | a corpus's in-scope cases needing one, or a builtin whose usual spelling is one (`Dot` with matrices, `Span` with `Part`) |
 
 ### 11.3 Provenance
 

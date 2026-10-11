@@ -14,6 +14,8 @@ module Cassini.Syntax.Lexer
     operatorTokens,
     integerTok,
     stringTok,
+    stringLiteral,
+    quoteString,
     nameTok,
     Name (..),
     BlankTok (..),
@@ -25,8 +27,9 @@ module Cassini.Syntax.Lexer
   )
 where
 
-import Data.Char (isAlphaNum, isDigit, isLetter)
+import Data.Char (digitToInt, isAlphaNum, isDigit, isHexDigit, isLetter, isOctDigit)
 import Data.Text qualified as T
+import Numeric (showHex)
 import Text.Megaparsec (Parsec, choice, lookAhead, manyTill, notFollowedBy, satisfy, takeWhile1P, takeWhileP, try, (<?>))
 import Text.Megaparsec.Char (char, space1, string)
 import Text.Megaparsec.Char.Lexer qualified as L
@@ -125,9 +128,62 @@ integerTok = lexeme $ do
   where
     real = try (char '.' *> notFollowedBy (char '.'))
 
--- | A string literal, with WL's escapes.
+-- | A string literal, with WL's escapes, and the whitespace after it.
 stringTok :: Parser Text
-stringTok = lexeme (toText <$> (char '"' *> manyTill L.charLiteral (char '"'))) <?> "a string"
+stringTok = lexeme stringLiteral <?> "a string"
+
+-- | A string literal, quotes included, with WL's escapes: @\\\"@, @\\\\@,
+-- @\\b@, @\\f@, @\\n@, @\\r@, @\\t@; exactly three octal digits, @\\101@;
+-- @\\.hh@, @\\:hhhh@ and @\\|hhhhhh@ in hexadecimal. @\\'@ is the two
+-- characters as written. Any other escape is an error, as in WL
+-- (@Syntax::stresc@), and so are the ones Stage 1 does not have: named
+-- characters, @\\[Alpha]@ (D36), and the box escapes @\\\<@, @\\\>@, @\\!@,
+-- @\\&@ and their kin. These are WL 15.0.1's readings, evaluated through the
+-- Wolfram Cloud MCP. "Cassini.Syntax.FullForm" reads strings with it too.
+stringLiteral :: Parser Text
+stringLiteral = T.concat <$> (char '"' *> manyTill piece (char '"'))
+  where
+    piece = (char '\\' *> escape) <|> takeWhile1P (Just "a character") (`notElem` ['"', '\\'])
+    escape =
+      choice
+        [ T.singleton <$> choice [c <$ char e | (e, c) <- simple],
+          "\\'" <$ char '\'',
+          code 8 3 "3 octal digits are required after \\ to construct an 8-bit character" (pure ()),
+          code 16 2 "2 hexadecimal digits are required after \\. to construct an 8-bit character" (void (char '.')),
+          code 16 4 "4 hexadecimal digits are required after \\: to construct a 16-bit character" (void (char ':')),
+          code 16 6 "6 hexadecimal digits are required after \\| to construct a character" (void (char '|')),
+          char '[' *> fail "named characters (\\[Name]) are not in the Stage 1 syntax (D36)",
+          satisfy (`elem` ("<>!&*@^%`+_/=," :: String)) *> fail "box escapes are not in the Stage 1 syntax",
+          satisfy (const True) >>= \c -> fail ("unknown string escape \\" <> [c])
+        ]
+    simple = [('"', '"'), ('\\', '\\'), ('b', '\b'), ('f', '\f'), ('n', '\n'), ('r', '\r'), ('t', '\t')]
+    code :: Int -> Int -> String -> Parser () -> Parser Text
+    code base n err lead =
+      try lead *> do
+        ds <- takeWhileP (Just "a digit") (isDigitIn base)
+        when (T.length ds < n) (fail err)
+        let (here, rest) = T.splitAt n ds
+            value = T.foldl' (\acc d -> acc * base + digitToInt d) 0 here
+        when (value > ord maxBound) (fail "the character code is beyond Unicode")
+        pure (T.cons (chr value) rest)
+    isDigitIn base c = if base == 8 then isOctDigit c else isHexDigit c
+
+-- | A string as a literal 'stringLiteral' reads back: quotes and
+-- backslashes escaped, and the control characters as their escapes.
+quoteString :: Text -> Text
+quoteString t = "\"" <> T.concatMap escape t <> "\""
+  where
+    escape = \case
+      '"' -> "\\\""
+      '\\' -> "\\\\"
+      '\b' -> "\\b"
+      '\f' -> "\\f"
+      '\n' -> "\\n"
+      '\r' -> "\\r"
+      '\t' -> "\\t"
+      c
+        | c < ' ' || c == '\DEL' -> "\\." <> T.justifyRight 2 '0' (toText (showHex (ord c) ""))
+        | otherwise -> T.singleton c
 
 -- | A name as written: its context parts and its last part. @a`b`c@ is
 -- @Name False ["a", "b"] "c"@, and a leading backquote, @`c@, marks a
