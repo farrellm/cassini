@@ -113,3 +113,11 @@ patterns 17 Mathics3
 # (wolfram/Rational/Scope/7).
 0066-rational-pattern-matches-a-fraction 1 Mathics3
 0066-rational-pattern-matches-a-fraction 2 Mathics3
+# Mathics3: drops a compound head's dependence on the variable, giving 0
+# (and only the argument term for [2]); WL 15.0.1, evaluated through the
+# Wolfram Cloud MCP, gives the head term D[h, x][args] (DESIGN.md §4.9).
+0073-compound-head-differentiated-symbol-head-not 1 Mathics3
+0073-compound-head-differentiated-symbol-head-not 2 Mathics3
+0073-compound-head-differentiated-symbol-head-not 5 Mathics3
+0073-compound-head-differentiated-symbol-head-not 6 Mathics3
+0073-compound-head-differentiated-symbol-head-not 7 Mathics3

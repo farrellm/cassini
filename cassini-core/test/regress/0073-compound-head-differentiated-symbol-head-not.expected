@@ -1,0 +1,8 @@
+Out[1]: Derivative[1][f][x][y]
+Out[2]: Plus[Derivative[1][f[x]][x], Derivative[1][f][x][x]]
+Out[3]: 0
+Out[4]: 0
+Out[5]: Derivative[1][f][x][y][z]
+Out[6]: 1[y]
+Out[7]: Derivative[2][f][x][y]
+Out[8]: Derivative[1][f[a]][x]

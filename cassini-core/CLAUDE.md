@@ -51,8 +51,10 @@ relative paths (`test/regress`, `corpus/wolfram-docs`, `oracle/cases`) resolve f
      (`api.stackexchange.com/2.3`, `site=mathematica`), not a web search engine, which barely
      indexes it. `search/excerpts` covers answers as well as questions but drops `::`, so search
      the bare tag (`pkspec1`), then fetch the hits' full bodies (`questions/{ids}` or
-     `answers/{ids}`, `filter=withbody`) and grep them. If neither documents it, drop the input;
-     don't pin a guess.
+     `answers/{ids}`, `filter=withbody`) and grep them. Better than either: evaluate it in WL itself
+     through the Wolfram Cloud MCP (`https://agenttools.wolfram.com/mcp`, no account needed; its
+     `WolframLanguageEvaluator` tool takes `code`), and cite the version `$Version` reports. If none
+     of these settles it, drop the input; don't pin a guess.
    - Benchmark baselines are committed per GHC version and `intern` setting. From milestone 1a, an
      allocation regression fails CI (`bench/check-allocation.py`). Time is gated only against a
      baseline from the same CI runner class (§8.6).
