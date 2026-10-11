@@ -1417,8 +1417,9 @@ matching the default against the pattern, so `t[x_, type:("I" | "II"):"none"]` m
 **Three gaps the 1c corpora found.** A compound pattern whose arguments are *all* `Optional`
 falls back too: one argument takes the subject, the last first, the rest their defaults, so `x`
 matches `b_. x_.` with `b = 1` and `x_.^m_.` with `m = 1` (Mathics3's tests; WL documents only the
-one-required-argument case). A rational number is `Rational[p, q]` to a compound pattern, so
-`Rational[n_, d_]` matches `22/7` (`wolfram/Rational/Scope/7`). And a `Verbatim[h]` head matches its
+one-required-argument case). A rational number is `Rational[p, q]` to a compound pattern whose head is
+literally `Rational`, so `Rational[n_, d_]` matches `22/7` (`wolfram/Rational/Scope/7`); to any other
+compound pattern it is an atom, so `_[_, _]` does not match it. And a `Verbatim[h]` head matches its
 arguments in order without `h`'s `Flat` and `Orderless`, since `Verbatim` matches "with no
 substitutions for blanks or other transformations" (`wolfram_ref_verbatim.html`); Expreduce and
 Mathics3 agree. Regression cases 0066–0068.

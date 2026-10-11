@@ -269,16 +269,17 @@ substituteFree scoping vars0 slots0 u0
             Literal -> vars
           inSlots = if sc.scSlots then Nothing else slots
           inside = go inVars inSlots
-          changes = (not (Map.null inVars) || isJust inSlots) && isJust (sc.scMap (const Nothing) inside)
-          -- Only a parameter's substitution renames: filling slots does not
-          -- (wolfram/Slot/PossibleIssues/1).
-          renames = not (Map.null inVars) && isJust (sc.scMap (const Nothing) (go inVars Nothing))
           renamed = case scoping of
             Shielding -> sc.scLocal
             Literal -> filter (`Map.notMember` vars) sc.scLocal
-       in if renames && not (null renamed)
+          -- Only a parameter's substitution renames: filling slots does not
+          -- (wolfram/Slot/PossibleIssues/1). Checked only when there is a
+          -- name to rename, and the inside is otherwise traversed once, so
+          -- that nested constructs cost linear, not exponential, time.
+          renames = not (null renamed) && not (Map.null inVars) && isJust (sc.scMap (const Nothing) (go inVars Nothing))
+       in if renames
             then (\sc' -> fromMaybe sc'.scExpr (sc'.scMap (go vars slots) inside)) <$> rename renamed sc
-            else sc.scMap (go vars slots) (if changes then inside else const Nothing)
+            else sc.scMap (go vars slots) inside
 
 -- | Rename a construct's local names to @x$@ inside its scope, and read it
 -- again.

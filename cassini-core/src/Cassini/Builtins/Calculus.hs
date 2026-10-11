@@ -25,7 +25,8 @@ import Cassini.Core.Expr (Expr, apply, mkApp, pattern App, pattern Int_, pattern
 import Cassini.Core.Symbol (Symbol, sDerivative, sFunction, sList, sNull, sPlus, sPower, sSlot, sTimes, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
 import Cassini.Rules (Origin (..), Rule (..), ValueKind (..), ruleSetToList, rulesOf)
-import Cassini.Structure (freeOf, substituteAll)
+import Cassini.Structure (Binding (..), Scoping (Shielding), freeOf, substituteAll, substituteFree)
+import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 
@@ -237,8 +238,15 @@ derivativeOfDefinition e = case e of
       Just orders <- traverse order (V.toList ns),
       Just xs <- params ps,
       length xs == length orders -> do
-        result <- evaluate (apply sD (body : [apply sList [Sym x, Int_ k] | (x, k) <- zip xs orders, k > 0]))
-        pure (if noD result then Just (apply sFunction (ps : result : attrs)) else Nothing)
+        -- Differentiate in fresh variables, not the parameters themselves,
+        -- which may have global values that D's evaluation would read.
+        let vars = freshVars (length xs)
+            body' = substituteFree Shielding (Map.fromList (zip xs (map BOne vars))) Nothing body
+        result <- evaluate (apply sD (body' : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0]))
+        pure $
+          if noD result
+            then Just (apply sFunction (ps : substituteAll result (zip vars (map Sym xs)) : attrs))
+            else Nothing
   App (App (Sym d) ns) (V.toList -> [Num _])
     | d == sDerivative,
       Just _ <- traverse order (V.toList ns) ->
@@ -249,7 +257,7 @@ derivativeOfDefinition e = case e of
         differentiable f >>= \case
           False -> pure Nothing
           True -> do
-            let vars = [Sym (symbol "Cassini`Private`" ("d" <> show k)) | k <- [1 .. length orders]]
+            let vars = freshVars (length orders)
                 applied = mkApp f (V.fromList vars)
             value <- evaluate applied
             if value == applied && not (structural f)
@@ -262,6 +270,7 @@ derivativeOfDefinition e = case e of
                     else Just (apply sFunction [substituteAll result [(v, apply sSlot [Int_ k]) | (v, k) <- zip vars [1 ..]]])
   _ -> pure Nothing
   where
+    freshVars n = [Sym (symbol "Cassini`Private`" ("d" <> show k)) | k <- [1 .. n]]
     params = \case
       Sym x | x /= sNull -> Just [x]
       App (Sym l) xs | l == sList -> traverse (\case Sym x -> Just x; _ -> Nothing) (V.toList xs)

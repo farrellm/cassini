@@ -1,0 +1,4 @@
+(* Only a literal Rational head sees a fraction as Rational[n, d]; to any other compound pattern it is an atom. *)
+MatchQ[Rational[1, 2], Rational[Blank[], Blank[]]]
+MatchQ[Rational[1, 2], Blank[][Blank[], Blank[]]]
+Cases[List[Rational[1, 2], g[1, 2]], RuleDelayed[Pattern[h, Blank[]][Pattern[a, Blank[]], Pattern[b, Blank[]]], List[h, a, b]]]

@@ -81,7 +81,7 @@ loop session flag opts n = do
         say ("FullForm output " <> if opts.showFullForm then "off" else "on")
         loop session flag opts {showFullForm = not opts.showFullForm} n
       "trace" : _ -> do
-        liftIO (traceLine session (T.strip (T.drop 5 cmd)))
+        liftIO (traceLine session flag (T.strip (T.drop 5 cmd)))
         loop session flag opts n
       _ -> say ("unknown command :" <> cmd <> "; :help lists them") >> loop session flag opts n
     say = outputStrLn . toString
@@ -134,11 +134,21 @@ evaluateLine session flag opts n src = case parseExpr resolveName src of
 
 -- | @:trace expr@: evaluate with the evaluation sequence's steps recorded,
 -- and print them, indented by depth, without recording the input.
-traceLine :: IORef KernelState -> Text -> IO ()
-traceLine session src = case parseExpr resolveName src of
+traceLine :: IORef KernelState -> IORef Bool -> Text -> IO ()
+traceLine session flag src = case parseExpr resolveName src of
   Left err -> putTextLn ("Syntax::sntx: " <> T.strip err)
   Right e -> do
-    r <- runEff (runEvalIO defaultConfig {trace = True} session (evaluateTop e))
+    -- Interruptible as an input is: Ctrl-C aborts at the next step, and a
+    -- second one, thrown at the loop, is caught here rather than ending it.
+    writeIORef flag False
+    outcome <- try @AsyncException (runEff (runEvalInterruptible defaultConfig {trace = True} session flag (evaluateTop e)))
+    writeIORef flag False
+    r <- case outcome of
+      Right r -> pure r
+      Left UserInterrupt -> do
+        putTextLn "Interrupted outside an evaluation step: what the input changed was not restored, and the session state is no longer guaranteed."
+        pure (Right (Sym (systemSymbol "$Aborted")))
+      Left other -> throwIO other
     (steps, messages) <- atomicModifyIORef' session (\k -> (k {ksMessages = mempty, ksTrace = mempty}, (toList k.ksTrace, toList k.ksMessages)))
     for_ steps $ \t -> putTextLn (T.replicate (2 * (t.teDepth - 1)) " " <> t.teStep <> ": " <> pretty t.teExpr)
     for_ messages (putTextLn . prettyMessage)
