@@ -1,0 +1,6 @@
+foo[2, 1] /. foo[a_, b_] -> a
+foo[2, 1] /. foo[a_, a_] -> a
+foo[2, 2] /. foo[a_, a_] -> a
+MatchQ[2, a_Integer]
+MatchQ[2, a_Real]
+foo[2, 1] /. foo[a___Integer] -> bar[a]

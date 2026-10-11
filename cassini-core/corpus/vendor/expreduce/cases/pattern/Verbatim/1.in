@@ -1,0 +1,6 @@
+ReplaceList[a+b+c+d,Verbatim[Plus][___,x_,y_,___]->{x,y}]
+ReplaceList[a+b+c+d,Verbatim[Times][___,x_,y_,___]->{x,y}]
+ReplaceList[a+b*c+d,Verbatim[Times][___,x_,y_,___]->{x,y}]
+ReplaceList[foo[a,b,c,d],Verbatim[foo][___,x_,y_,___]->{x,y}]
+ReplaceList[(a+b)[a,b,c,d],Verbatim[a+b][___,x_,y_,___]->{x,y}]
+ReplaceList[(a+b)[a,b,c,d],Verbatim[a+_][___,x_,y_,___]->{x,y}]

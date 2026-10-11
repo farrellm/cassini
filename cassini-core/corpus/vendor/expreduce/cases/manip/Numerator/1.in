@@ -1,0 +1,5 @@
+Numerator[a/b]
+Numerator[a^2*b]
+Numerator[a^2*b^-2]
+Numerator[a^2*b^-a*c]
+Numerator[2/3]

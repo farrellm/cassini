@@ -1,8 +1,12 @@
 # Corpus cases that fail for a known reason (DESIGN.md §7.8): the case ID,
 # then the reason. A D-number is a deliberate divergence (§11.2). "pending §N"
 # names the section whose track implements the behaviour; such entries are
-# re-examined, and removed, when that track lands. Only case IDs and reasons
-# are kept here, never a case's content (D26-D27).
+# re-examined, and removed, when that track lands. "§N" alone names the
+# section whose documented choice the case's source departs from.
+# "Expreduce" and "Mathics3" mean that source departs from WL, as the
+# comment's evidence shows; "undocumented", that WL's answer is documented
+# nowhere this project can read, and the evaluator's stands until it is.
+# Only case IDs and reasons are kept here, never a case's content (D26-D27).
 
 # D14: WL emits Thread::tdlen twice for Power[{a, b, c}, {1, 2}], from a round
 # this evaluator knows cannot change the result and skips (§4.4).
@@ -32,13 +36,7 @@ wolfram/Divide/PossibleIssues/1 pending §4.15
 wolfram/Indeterminate/BasicExamples/1 pending §4.15
 wolfram/Indeterminate/Scope/3 pending §4.15
 wolfram/DirectedInfinity/PossibleIssues/3 pending §4.15
-
-# Pure functions (§4.13): Function's evaluation and its attributes argument,
-# with the track for control flow, logic and numbers.
-wolfram/Function/GeneralizationsAndExtensions/3 pending §4.13
-wolfram/HoldAll/PropertiesAndRelations/8 pending §4.13
-wolfram/HoldFirst/PropertiesAndRelations/4 pending §4.13
-wolfram/HoldRest/PropertiesAndRelations/2 pending §4.13
+wolfram/ComplexInfinity/BasicExamples/1 pending §4.15
 
 # WL's RepeatedNull[p, {0, Infinity}] fails on an empty run, though
 # RepeatedNull[p, {0, 2}] matches one (wolfram/RepeatedNull/PropertiesAndRelations/4)
@@ -57,3 +55,88 @@ wolfram/Map/PropertiesAndRelations/5 pending §4.15
 # Pi and its attributes, with the elementary functions (§4.11).
 wolfram/SymbolName/PropertiesAndRelations/2 pending §4.11
 wolfram/Symbol/PropertiesAndRelations/5 pending §4.11
+
+# D30: WL runs f[x_] := f[x + 1] as one evaluation chain, to $IterationLimit;
+# here a user rule evaluates its own right-hand side (§4.4), so the chain
+# deepens to $RecursionLimit and is cut in place. And x = x + 1 is cut at
+# another depth, with another partial result.
+wolfram/SetDelayed/PossibleIssues/3 D30
+wolfram/Set/PossibleIssues/2 D30
+
+# D27: the expected outputs are numbered one off from the inputs: Out[3]
+# holds the second input's answer, which is what this evaluator gives.
+wolfram/Protected/PropertiesAndRelations/1 D27
+
+# D34: string patterns are absent, so Protect["x*"] names the symbol x*.
+wolfram/Protect/Scope/UsingPatterns/1 D34
+wolfram/Protect/Scope/UsingPatterns/2 D34
+wolfram/Protect/Scope/UsingPatterns/3 D34
+wolfram/Unprotect/Scope/UsingPatterns/1 D34
+wolfram/Unprotect/Scope/UsingPatterns/2 D34
+wolfram/Unprotect/Scope/UsingPatterns/3 D34
+
+# D35: D's result is in the form its rule table builds; WL keeps the
+# constant 1/4 outside a sum. Equal in value.
+wolfram/D/Scope/FunctionsDefinedByDerivatives/3 D35
+
+# --- Expreduce (vendored) and Mathics3 (fetched), milestone 1c ---
+
+# D20: no complex numbers.
+expreduce/power/Sqrt/2 D20
+expreduce/power/Sqrt/3 D20
+
+# D25: infinities absorb only numbers.
+expreduce/specialsyms/ComplexInfinity/2 D25
+expreduce/specialsyms/ComplexInfinity/3 D25
+
+# D29: a number does not distribute over a sum.
+expreduce/power/Sqrt/6 D29
+
+# The infinity pass (§4.15), with the track for control flow, logic and numbers.
+expreduce/specialsyms/Indeterminate/1 pending §4.15
+expreduce/specialsyms/Indeterminate/2 pending §4.15
+expreduce/specialsyms/Indeterminate/3 pending §4.15
+expreduce/specialsyms/Indeterminate/4 pending §4.15
+expreduce/specialsyms/Infinity/1 pending §4.15
+expreduce/specialsyms/Infinity/2 pending §4.15
+mathics/builtin/numbers/test_constants/test_constants_private/1 pending §4.15
+mathics/builtin/numbers/test_constants/test_constants_private/2 pending §4.15
+
+# §4.5.3: matches are enumerated in WL's documented order, which these
+# sources' orders are not: Expreduce lists the Orderless mappings of the
+# inner sum first, and Mathics3 gives each of two Optional arguments under a
+# Flat head one argument, where Optional takes its run (§4.5.1).
+expreduce/pattern/ReplaceList/5 §4.5.3
+mathics/builtin/test_rules/test_pattern_rules/23 §4.5.3
+
+# D36: syntax outside the Stage 1 subset: named characters and character
+# escapes in names.
+mathics/builtin/test_strings/test_characters2/1 D36
+mathics/builtin/test_strings/test_characters2/2 D36
+mathics/builtin/test_strings/test_characters2/3 D36
+
+# Expreduce: Plus is Protected in WL (wolfram/Flat/BasicExamples/2 lists its
+# attributes), so a definition for it fails with SetDelayed::write;
+# Expreduce accepts it, and the next case uses it.
+expreduce/pattern/MatchQ/16 Expreduce
+expreduce/pattern/MatchQ/17 Expreduce
+# Expreduce: Infinity's attributes lack Constant; the registry has it, and
+# so does Mathics3 10.0.1. No WL page shows them.
+expreduce/system/Attributes/1 Expreduce
+
+# Mathics3: under Flat without OneIdentity, WL tries f[x_] against f[a] with
+# x = f[a] before x = a (wolfram/Flat/PropertiesAndRelations/5), so
+# f[x_] := {x} recurses; Mathics3 binds x = a.
+mathics/builtin/test_attributes/test_attributes/3 Mathics3
+mathics/builtin/test_attributes/test_attributes/5 Mathics3
+# Mathics3, as the normalizer: it cannot evaluate Map at level
+# {-Infinity, Infinity}, so the expected value is the unevaluated call.
+expreduce/functional/Map/10 Mathics3
+
+# Undocumented: WL's answer is in neither the corpus nor on Stack Exchange.
+# Attributes of a number and of a compound expression (Expreduce answers
+# lists), and UpSet on a symbol (Mathics3 leaves it unevaluated; this
+# evaluator emits UpSet::nosym and gives $Failed, as 1a decided).
+expreduce/system/Attributes/5 undocumented
+expreduce/system/Attributes/6 undocumented
+mathics/builtin/assignments/test_assignment/test_upset/1 undocumented

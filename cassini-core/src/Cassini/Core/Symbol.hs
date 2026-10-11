@@ -57,6 +57,14 @@ module Cassini.Core.Symbol
     sOptional,
     sExcept,
     sVerbatim,
+    sSlot,
+    sSlotSequence,
+    sWith,
+    sModule,
+    sSet,
+    sSetDelayed,
+    sCompoundExpression,
+    sDerivative,
   )
 where
 
@@ -272,3 +280,35 @@ sExcept = systemSymbol "Except"
 -- | @System`Verbatim@.
 sVerbatim :: Symbol
 sVerbatim = systemSymbol "Verbatim"
+
+-- | @System`Slot@, @#n@ in a pure function (§4.13).
+sSlot :: Symbol
+sSlot = systemSymbol "Slot"
+
+-- | @System`SlotSequence@, @##n@ in a pure function (§4.13).
+sSlotSequence :: Symbol
+sSlotSequence = systemSymbol "SlotSequence"
+
+-- | @System`With@, a scoping construct (§4.13).
+sWith :: Symbol
+sWith = systemSymbol "With"
+
+-- | @System`Module@, a scoping construct (§4.13).
+sModule :: Symbol
+sModule = systemSymbol "Module"
+
+-- | @System`Set@.
+sSet :: Symbol
+sSet = systemSymbol "Set"
+
+-- | @System`SetDelayed@.
+sSetDelayed :: Symbol
+sSetDelayed = systemSymbol "SetDelayed"
+
+-- | @System`CompoundExpression@, @a; b@.
+sCompoundExpression :: Symbol
+sCompoundExpression = systemSymbol "CompoundExpression"
+
+-- | @System`Derivative@, @f'@ (§4.9).
+sDerivative :: Symbol
+sDerivative = systemSymbol "Derivative"

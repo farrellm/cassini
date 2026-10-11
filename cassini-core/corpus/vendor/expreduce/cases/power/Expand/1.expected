@@ -1,0 +1,9 @@
+Out[1]: Plus[Power[a, 3], Times[3, Power[a, 2], b], Times[3, Power[a, 2], c], Times[3, a, Power[b, 2]], Times[6, a, b, c], Times[3, a, Power[c, 2]], Power[b, 3], Times[3, Power[b, 2], c], Times[3, b, Power[c, 2]], Power[c, 3]]
+Out[2]: Plus[Times[a, c], Times[a, d], Times[a, e], Times[b, c], Times[b, d], Times[b, e]]
+Out[3]: Plus[Times[a, Power[d, 2]], Times[2, a, d, e], Times[a, Power[e, 2]], Times[b, Power[d, 2]], Times[2, b, d, e], Times[b, Power[e, 2]], Times[c, Power[d, 2]], Times[2, c, d, e], Times[c, Power[e, 2]]]
+Out[4]: Plus[Power[a, Times[2, b]], Power[c, Times[2, d]], Times[2, Power[a, b], Power[c, d]]]
+Out[5]: Plus[Times[a, Power[d, -1]], Times[b, Power[d, -1]], Times[c, Power[d, -1]]]
+Out[6]: Plus[Power[d, -1], Times[2, a, Power[d, -1]], Times[Power[a, 2], Power[d, -1]], Times[b, Power[d, -1]], Times[c, Power[d, -1]]]
+Out[7]: Plus[2, Times[2, a]]
+Out[8]: -
+Out[9]: Rational[1, 3]

@@ -313,7 +313,9 @@ changeAttributes f e = case args e of
 
 -- | @Protect@ and @Unprotect@: the names of the symbols whose protection
 -- changed, as strings. A @Locked@ symbol refuses with @Protect::locked@,
--- for @Unprotect@ too, as WL's message does.
+-- for @Unprotect@ too, as WL's message does. An argument that is not a
+-- symbol, a name or a list of them is @Protect::pssl@ (@Unprotect::pssl@),
+-- and the call stays (@wolfram/HoldAll/PropertiesAndRelations/2@).
 protection :: (Kernel :> es) => Bool -> Expr -> Eff es (Maybe Expr)
 protection protect e =
   traverse symbolsOf (args e) >>= \xs -> case sequence xs of
@@ -331,7 +333,10 @@ protection protect e =
                 modifySymbol s (\si -> si {siAttributes = (if protect then Attributes.insert else Attributes.delete) Protected si.siAttributes})
                 pure (Just (mkString s.symName))
       pure (Just (apply sList changed))
-    Nothing -> pure Nothing
+    Nothing -> do
+      for_ (viaNonEmpty head [a | (a, Nothing) <- zip (args e) xs]) $ \a ->
+        message (if protect then "Protect" else "Unprotect") "pssl" [a]
+      pure Nothing
   where
     -- A symbol, a name, or a list of them.
     symbolsOf = \case

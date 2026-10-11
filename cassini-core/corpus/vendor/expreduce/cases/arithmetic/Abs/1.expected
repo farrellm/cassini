@@ -1,0 +1,9 @@
+Out[1]: 5
+Out[2]: 5
+Out[3]: Abs[a]
+Out[4]: Abs[Sin[x]]
+Out[5]: True
+Out[6]: 0
+Out[7]: Abs[Power[x, a]]
+Out[8]: Abs[Power[x, Plus[a, b]]]
+Out[9]: Rational[1, 2]

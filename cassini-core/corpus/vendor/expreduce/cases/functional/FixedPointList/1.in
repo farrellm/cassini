@@ -1,0 +1,2 @@
+Length@FixedPointList[(# + 3/#)/2 &, 1.0]
+FixedPointList[D[#, x] &, x^3]

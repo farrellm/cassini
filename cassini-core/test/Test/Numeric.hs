@@ -24,7 +24,7 @@ import Test.QuickCheck (Gen, choose)
 -- but a small natural number, @f@ or @g@ of arguments too large for a
 -- periodic function to keep the tolerance, or any head this evaluator does
 -- not know. The functions @f@ and @g@ are fixed real functions of their
--- arguments.
+-- arguments, and @Derivative[n1, …][f]@ and @[g]@ their partial derivatives.
 evalAt :: Map Text Double -> Expr -> Maybe Double
 evalAt point = go
   where
@@ -42,7 +42,32 @@ evalAt point = go
         | h == sFactorial, [x] <- V.toList as -> go x >>= factorial
         | h.symName == "f" -> traverse go (V.toList as) >>= periodic (\w -> sin (1.3 * w))
         | h.symName == "g" -> traverse go (V.toList as) >>= periodic (\w -> cos (0.7 * w) + 2)
+      -- Derivative[n1, …, nk][f][a1, …, ak]: f and g are functions of
+      -- w = a1 + 2 a2 + …, so the partial derivative is the k-th
+      -- derivative in w times 1^n1 2^n2 ….
+      App (App (App (Sym d) ns) fs) as
+        | d.symName == "Derivative",
+          [Sym f] <- V.toList fs,
+          Just orders <- traverse order (V.toList ns),
+          length orders == V.length as -> do
+            xs <- traverse go (V.toList as)
+            let k = sum orders
+                scale = product [fromIntegral i ^ n | (i, n) <- zip [1 :: Int ..] orders]
+                shift = fromIntegral k * pi / 2
+            periodic
+              ( \w -> case f.symName of
+                  "f" -> scale * 1.3 ^ k * sin (1.3 * w + shift)
+                  "g" | k > 0 -> scale * 0.7 ^ k * cos (0.7 * w + shift)
+                  "g" -> cos (0.7 * w) + 2
+                  _ -> 0 / 0
+              )
+              xs
+              >>= \v -> if isNaN v then Nothing else Just v
       _ -> Nothing
+    order = \case
+      Num n | Just k <- integral (toRational' n), k >= 0 -> Just k
+      _ -> Nothing
+    integral r = if denominator r == 1 then Just (numerator r) else Nothing
     -- Rounding makes the argument's absolute error about 1e-16 of its size,
     -- and a periodic function passes it on whole: beyond 1e6, two spellings
     -- of one value can differ by more than 'approxEqual' allows.

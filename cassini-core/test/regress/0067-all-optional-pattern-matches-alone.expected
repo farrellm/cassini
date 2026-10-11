@@ -1,0 +1,4 @@
+Out[1]: True
+Out[2]: True
+Out[3]: List[0, 1, x]
+Out[4]: List[x, 1]

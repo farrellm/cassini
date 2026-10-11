@@ -1,0 +1,2 @@
+Out[1]: HoldComplete[Evaluate[Plus[a, a]], Plus[2, 2], Sequence[a, b]]
+Out[2]: 3

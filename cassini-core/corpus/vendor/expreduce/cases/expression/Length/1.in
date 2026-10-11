@@ -1,0 +1,7 @@
+Length[{1,2,3,4}]
+Length[{}]
+Length[{5}]
+Length[foo[1, 2]]
+Length[a]
+Length[2.5]
+Length["hello"]

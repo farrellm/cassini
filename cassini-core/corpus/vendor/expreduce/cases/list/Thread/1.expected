@@ -1,0 +1,13 @@
+Out[1]: List[f[x], f[y], f[z]]
+Out[2]: List[f[x, b], f[y, b], f[z, b]]
+Out[3]: f[List[x, y, z], List[b]]
+Out[4]: List[f[List[x, y, z], b]]
+Out[5]: List[f[List[x, y, z], b]]
+Out[6]: List[f[x, b, a], f[y, b, b], f[z, b, c]]
+Out[7]: List[mypos[-1], mypos[4], mypos[5]]
+Out[8]: f[a, b, c]
+Out[9]: List[f[1]]
+Out[10]: List[0, 1, 2]
+Out[11]: List[List[0, a], List[1, a], List[2, a]]
+Out[12]: a
+Out[13]: Thread[]

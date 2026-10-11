@@ -1,0 +1,8 @@
+Table[a, 5]
+Table[i, {i, 5, 10}]
+Table[n^2, {n, 1, 10}]
+listTableTestState`i = 22
+Table[i, {i, 5, 10}]
+Table[x[99], {x[_], 0, 2}]
+testn := 5;
+Table[i, {i, testn}]

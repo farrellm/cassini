@@ -1,0 +1,5 @@
+Out[1]: Times[testa, testb]
+Out[2]: False
+Out[3]: Plus[testa, testb]
+Out[4]: 5
+Out[5]: Plus[a, b]

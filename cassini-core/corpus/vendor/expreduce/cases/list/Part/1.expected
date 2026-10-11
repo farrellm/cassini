@@ -1,0 +1,25 @@
+Out[1]: b
+Out[2]: List[List[1, 4, 9, 16, 25], List[2, 8, 18, 32, 50], List[3, 12, 27, 48, 75], List[4, 16, 36, 64, 100], List[5, 20, 45, 80, 125]]
+Out[3]: 20
+Out[4]: List[5, 20, 45, 80, 125]
+Out[5]: Part[List[a], 2]
+Out[6]: foo
+Out[7]: i
+Out[8]: List[2, 4, 6]
+Out[9]: i
+Out[10]: Part[]
+Out[11]: Part[List[a, b], 1.5]
+Out[12]: Part[List[a, b], a, 1.5]
+Out[13]: foo
+Out[14]: List[List[1, 4, 9, 16, 25], List[2, 8, 18, 32, 50], List[3, 12, 27, 48, 75], List[4, 16, 36, 64, 100], List[5, 20, 45, 80, 125]]
+Out[15]: 20
+Out[16]: List[5, 20, 45, 80, 125]
+Out[17]: foo[a, b, c]
+Out[18]: Part[1, 5]
+Out[19]: a
+Out[20]: Part[List[a], 2]
+Out[21]: List[5, 20, 45, 80, 125]
+Out[22]: 3
+Out[23]: Part[List[List[1, 2], List[3]], 2, 2]
+Out[24]: List[3, 4]
+Out[25]: List[25, 50, 75, 100, 125]

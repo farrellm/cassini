@@ -1,0 +1,8 @@
+Out[1]: List[a, b]
+Out[2]: List[a, b, y, z]
+Out[3]: foo[a, b, y, z]
+Out[4]: Union[foo[b, a, a, b, a], List[y, z]]
+Out[5]: List[]
+Out[6]: Union[List[b, a, a, b, a], z]
+Out[7]: List[a]
+Out[8]: List[List]

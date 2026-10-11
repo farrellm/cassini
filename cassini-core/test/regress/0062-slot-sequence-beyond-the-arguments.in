@@ -1,0 +1,3 @@
+(* wolfram/SlotSequence/PossibleIssues/1: ##n just past the arguments is empty; beyond that it stays, with Function::slots. *)
+Function[f[SlotSequence[5]]][a, b, c]
+Function[f[SlotSequence[5]]][a, b, c, d]
