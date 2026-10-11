@@ -1,0 +1,4 @@
+(* wolfram/Slot/PossibleIssues/1: filling a slot does not rename an inner function's parameter; substituting one does. *)
+Function[u, Function[v, f[u, v]]][x]
+Function[Function[v, f[Slot[1], v]]][x]
+Function[Function[v, f[Slot[1], v]]][x][y]

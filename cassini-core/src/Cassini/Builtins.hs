@@ -8,7 +8,9 @@
 -- 'Native' rule on the symbol's table (§4.2), and sets the symbol's
 -- attributes. The registry also defines the attribute-only symbols the
 -- evaluator itself relies on: @Hold@ and its relatives, @Sequence@,
--- @Unevaluated@, @Function@, the pattern heads, and the Boolean constants.
+-- @Unevaluated@, the pattern heads, and the Boolean constants. @Function@,
+-- which the evaluator consults for a head's attributes (§4.4), is
+-- "Cassini.Builtins.Control"'s, with its application rule.
 module Cassini.Builtins
   ( standardState,
     definitions,
@@ -20,16 +22,21 @@ where
 import Cassini.Attributes (Attribute (..), attributeName, attributeSet)
 import Cassini.Builtins.Arithmetic qualified as Arithmetic
 import Cassini.Builtins.Assign qualified as Assign
-import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down)
+import Cassini.Builtins.Calculus qualified as Calculus
+import Cassini.Builtins.Control qualified as Control
+import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down, message)
 import Cassini.Builtins.Pattern qualified as Pattern
+import Cassini.Builtins.Session qualified as Session
 import Cassini.Builtins.Structural qualified as Structural
-import Cassini.Core.Expr (apply, pattern Sym)
-import Cassini.Core.Symbol (sBlankNullSequence, sSequence, symName)
+import Cassini.Core.Expr (apply, pattern Str, pattern Sym)
+import Cassini.Core.Symbol (Symbol, globalSymbol, sBlankNullSequence, sSequence, symName, symbol, systemSymbol)
 import Cassini.Eval.Kernel (KernelState (..), emptyState)
 import Cassini.Rules (BuiltinId (..), Origin (..), RuleBody (..), SymbolInfo (..), ValueKind (..), emptyInfo, insertRule, mkRule, modifyRules)
+import Data.Char (isAlphaNum, isLetter)
 import Data.HashSet qualified as HashSet
 import Data.IntMap.Strict qualified as IntMap
 import Data.Map.Strict qualified as Map
+import Data.Text qualified as T
 
 -- | Every builtin, installed into an empty state. Each session, script and
 -- corpus case starts from this.
@@ -38,7 +45,16 @@ standardState = install definitions emptyState
 
 -- | Every builtin definition, in installation order.
 definitions :: [Definition]
-definitions = kernel <> attributeSymbols <> Arithmetic.definitions <> Structural.definitions <> Pattern.definitions <> Assign.definitions
+definitions =
+  kernel
+    <> attributeSymbols
+    <> Arithmetic.definitions
+    <> Structural.definitions
+    <> Pattern.definitions
+    <> Assign.definitions
+    <> Control.definitions
+    <> Calculus.definitions
+    <> Session.definitions
 
 -- | The attribute names as @System`@ symbols, so that the @Flat@ a user
 -- writes is the @Flat@ that @Attributes@ returns.
@@ -59,7 +75,6 @@ kernel =
     define "Unevaluated" [HoldAllComplete, Protected] [],
     define "Sequence" [Protected] [],
     define "Evaluate" [Protected] [down evaluateRule],
-    define "Function" [HoldAll, Protected] [],
     define "Rule" [Protected, SequenceHold] [],
     define "RuleDelayed" [HoldRest, Protected, SequenceHold] [],
     define "Blank" [Protected] [],
@@ -79,7 +94,7 @@ kernel =
     define "Integer" [Protected] [],
     define "Rational" [Protected] [],
     define "String" [Protected] [],
-    define "Symbol" [Protected] [],
+    define "Symbol" [Locked, Protected] [down symbolRule],
     define "True" [Locked, Protected] [],
     define "False" [Locked, Protected] [],
     define "Null" [Locked, Protected] []
@@ -89,6 +104,31 @@ kernel =
     evaluateRule e = pure $ case args e of
       [x] -> Just x
       xs -> Just (apply sSequence xs)
+    -- Symbol["name"] is the symbol, resolved as the front end resolves
+    -- a name (wolfram/Symbol/BasicExamples/1); a context may be given. A
+    -- string that is not a name stays, with Symbol::symname
+    -- (wolfram/Symbol/PossibleIssues/1).
+    symbolRule e = case args e of
+      [Str t] -> case symbolNamed t of
+        Just s -> pure (Just (Sym s))
+        Nothing -> Nothing <$ message "Symbol" "symname" [Str t]
+      _ -> pure Nothing
+
+-- | The symbol a name denotes: @System`@ for a name the registry defines,
+-- @Global`@ for any other bare name, and the given context for
+-- @ctx`name@, or @Global`ctx`name@ for @`ctx`name@. 'Nothing' for
+-- something that is not a name.
+symbolNamed :: Text -> Maybe Symbol
+symbolNamed t = case T.splitOn "`" t of
+  [n] | valid n -> Just (if HashSet.member n systemNames then systemSymbol n else globalSymbol n)
+  "" : parts@(_ : _) | all valid parts -> qualified ("Global" : parts)
+  parts@(_ : _ : _) | all valid parts -> qualified parts
+  _ -> Nothing
+  where
+    qualified parts = symbol (T.concat (map (<> "`") (take (length parts - 1) parts))) <$> viaNonEmpty last parts
+    valid n = case T.uncons n of
+      Just (c, rest) -> (isLetter c || c == '$') && T.all (\x -> isAlphaNum x || x == '$') rest
+      Nothing -> False
 
 -- | Install definitions: attributes are added, and each native rule gets the
 -- next id. A native rule's left-hand side is never matched (its

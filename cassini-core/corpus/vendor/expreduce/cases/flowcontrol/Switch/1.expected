@@ -1,0 +1,6 @@
+Out[1]: b
+Out[2]: k
+Out[3]: Switch[z, 1]
+Out[4]: Switch[z, d, b, l, c]
+Out[5]: Switch[]
+Out[6]: Switch[z]

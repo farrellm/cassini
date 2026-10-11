@@ -1,0 +1,5 @@
+(* A number's derivative is 0 &, and List, whose derivative is D's own list rule, differentiates (Mathics3 10.0.1's test_calculus). *)
+Derivative[1][1]
+Derivative[1][Rational[2, 3]]
+Derivative[1][List]
+Derivative[0, 0, 1][List]

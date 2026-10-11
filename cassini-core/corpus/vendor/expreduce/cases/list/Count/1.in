@@ -1,0 +1,6 @@
+Count[a+b+c^2,_]
+Count[a+b+c^2,_,-1]
+Count[a+b+c^2,_,Infinity]
+Count[a,_,Infinity]
+Count[a,_,-1]
+Count[a + 2 + c^2, _Integer, Infinity]

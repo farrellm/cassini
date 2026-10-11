@@ -46,6 +46,7 @@ module Cassini.Eval.Kernel
     -- * Interpreters
     runKernelPure,
     runKernelIO,
+    runKernelInterruptible,
   )
 where
 
@@ -182,7 +183,11 @@ type HandlerEs base = Reader Env : State Fuel : Error Unwind : base
 -- caller's 'IORef' for the 'IO' one.
 data Store es = Store
   { load :: Eff es KernelState,
-    store :: (KernelState -> KernelState) -> Eff es ()
+    store :: (KernelState -> KernelState) -> Eff es (),
+    -- | Whether an interrupt is pending, clearing it: polled at every
+    -- 'Evaluate', the safe point where it becomes @UAbort Interrupt@
+    -- (§4.13).
+    poll :: Eff es Bool
   }
 
 handler :: Sequence -> Store (HandlerEs base) -> EffectHandler Kernel (HandlerEs base)
@@ -192,6 +197,8 @@ handler (Sequence sq) st env = \case
     st.store $ \k -> k {ksSymbols = Map.alter (Just . f . fromMaybe emptyInfo) s k.ksSymbols}
   EmitMessage s t as -> message s t as
   Evaluate e -> do
+    interrupted <- st.poll
+    when interrupted $ throwError_ (UAbort Interrupt)
     Env cfg d <- ask @Env
     if d >= cfg.recursionLimit
       then
@@ -241,7 +248,7 @@ runKernelPure ::
 runKernelPure sq cfg s0 =
   reinterpret
     (runState s0 . runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0))
-    (handler sq Store {load = get, store = modify})
+    (handler sq Store {load = get, store = modify, poll = pure False})
 
 -- | The 'IO' interpreter: the state is the caller's 'IORef', so it returns
 -- none. The REPL's session state.
@@ -255,4 +262,21 @@ runKernelIO ::
 runKernelIO sq cfg ref =
   reinterpret
     (runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0))
-    (handler sq Store {load = readIORef ref, store = modifyIORef' ref})
+    (handler sq Store {load = readIORef ref, store = modifyIORef' ref, poll = pure False})
+
+-- | 'runKernelIO' that polls an interrupt flag at every evaluation step. The
+-- REPL's handler for Ctrl-C only sets the flag, and the next 'Evaluate'
+-- clears it and raises @UAbort Interrupt@ through the ordinary channel, so
+-- an interrupt is an @Abort[]@ at a safe point (§4.13).
+runKernelInterruptible ::
+  (IOE :> es) =>
+  Sequence ->
+  EvalConfig ->
+  IORef KernelState ->
+  IORef Bool ->
+  Eff (Kernel : es) a ->
+  Eff es (Either Unwind a)
+runKernelInterruptible sq cfg ref flag =
+  reinterpret
+    (runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0))
+    (handler sq Store {load = readIORef ref, store = modifyIORef' ref, poll = atomicModifyIORef' flag (False,)})

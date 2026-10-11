@@ -1,0 +1,5 @@
+testa*testb /. a_Symbol*a_Symbol -> 5
+MatchQ[testa*testb, a_Symbol*a_Symbol]
+testa+testb /. a_Symbol+a_Symbol -> 5
+testa*testb /. a_Symbol*b_Symbol -> 5
+a + b /. (b_Symbol + b_Symbol) -> 2

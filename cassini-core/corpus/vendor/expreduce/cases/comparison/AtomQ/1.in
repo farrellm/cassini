@@ -1,0 +1,5 @@
+AtomQ["hello"]
+AtomQ[5/3]
+AtomQ[hello]
+AtomQ[a/b]
+AtomQ[bar[x]]

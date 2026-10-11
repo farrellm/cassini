@@ -1,0 +1,8 @@
+Depth[foo]
+Depth[{foo}]
+Depth[bar[foo, bar]]
+Depth[foo[foo[]]]
+Depth[3]
+Depth[3.5]
+Depth[3/5]
+Depth[foo[{{{}}}][]]

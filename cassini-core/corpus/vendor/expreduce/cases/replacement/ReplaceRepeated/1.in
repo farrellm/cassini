@@ -1,0 +1,2 @@
+logRules := {Log[x_ y_] :> Log[x] + Log[y], Log[x_^k_] :> k Log[x]}
+Log[a^b*b^(c^d)] //. logRules

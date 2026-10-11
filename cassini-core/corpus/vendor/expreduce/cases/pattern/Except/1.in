@@ -1,0 +1,3 @@
+Cases[{5, 2, 3.5, x, y, 4}, Except[_Real]]
+Cases[{5, 2, a^b, x, y, 4}, Except[_Symbol^_Symbol]]
+{a, b, 0, 1, 2, x, y} /. Except[0, a_Integer] -> foo[a]

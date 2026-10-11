@@ -1,0 +1,37 @@
+1/2+3/a//Together
+(1/2+3/a)^c//Together
+(1/2+3/a)^2//Together
+a+b+c/d//Together
+1/(a+b)+1/(c+d)//Together
+1/(a+b)+1/(c+d)-a//Together
+a/b+c//Together
+(a+(b c)/d)/b//Together
+a+(b c)/d//Together
+Together[(c + a*d + b*d)/d]
+(3+a/2+b)/a//Together
+(a/b)/e//Together
+(3 + a*1/4)/a//Together
+3 + foo[a]*2/4//Together
+1/2 + 3/a//Together
+(c+ a/b)/a//Together
+(c+e+ a/b)/d//Together
+Together[(1/2 + 3/a)^2+b/c]
+(3 + a/2)/a//Together
+(rest + a*b/c)/d//Together
+1/(a+b)+c//Together
+Together[(c + a*d + b*d)/d]
+(3+a/2+b)/a//Together
+(a/b)/e//Together
+Together[1/(a + b) + c+d/a]
+(a+b)(c+d)//Together
+1/(a + b)+1/(c+d)//Together
+1/(a + b)//Together
+a/(b*c)+(e*f)//Together
+Together[1/(a + b) + 1/(c + d) - a]
+1/a+1/b//Together
+1/a+1/b+c//Together
+1/c+d//Together
+1/2+a//Together
+(1+a/(c+d)+b/(c+d))/(a+b)//Together
+1/a+1/b+c+d//Together
+2a+2b//Together

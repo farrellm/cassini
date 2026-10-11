@@ -1,0 +1,6 @@
+Out[1]: x
+Out[2]: Symbol
+Out[3]: True
+Out[4]: abc`x
+Out[5]: Symbol["1x"]
+Message[5]: Symbol::symname

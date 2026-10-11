@@ -1,0 +1,3 @@
+(* wolfram/D/Scope/BasicUses/10: D[f, {{x, y}, 2}] is the Hessian. *)
+D[Plus[Power[x, 2], Times[5, Power[y, 3]]], List[List[x, y]]]
+D[Plus[Power[x, 2], Times[5, Power[y, 3]]], List[List[x, y], 2]]

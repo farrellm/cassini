@@ -2,18 +2,50 @@
 --
 -- At milestone 1a it is a FullForm script of automatic simplification and
 -- user rules through 'runScript'; 1b adds pattern replacement, with sequence
--- variables and @Orderless@ matching, and definitions that need them. Each
--- later milestone extends it, and each extension regenerates the baselines
--- deliberately: 1c adds parsing, printing and differentiation, 2a
--- polynomial arithmetic.
-module Bench.EndToEnd (benchmarks, workload) where
+-- variables and @Orderless@ matching, and definitions that need them; 1c
+-- adds infix inputs, parsed by "Cassini.Syntax.Parser", pure functions and
+-- differentiation, and prints every output with "Cassini.Syntax.Pretty".
+-- Each later milestone extends it, and each extension regenerates the
+-- baselines deliberately: 2a adds polynomial arithmetic.
+module Bench.EndToEnd (benchmarks, workload, run) where
 
-import Cassini.Script (runScript)
+import Cassini.Script (resolveName, runScript)
+import Cassini.Syntax.FullForm (fullForm, parseFullForm)
+import Cassini.Syntax.Parser (parseExpr)
+import Cassini.Syntax.Pretty (pretty)
 import Data.Text qualified as T
 import Test.Tasty.Bench (Benchmark, bench, bgroup, nfIO)
 
 benchmarks :: Benchmark
-benchmarks = bgroup "EndToEnd" [bench "workload" (nfIO (runScript workload))]
+benchmarks = bgroup "EndToEnd" [bench "workload" (nfIO run)]
+
+-- | Parse the infix inputs, run the whole script, and print every output.
+run :: IO [Text]
+run = do
+  out <- runScript (workload <> T.unlines (map toFullForm infixInputs))
+  pure [either id pretty (parseFullForm resolveName r) | l <- lines out, Just r <- [T.stripPrefix ": " (snd (T.breakOn ": " l))]]
+  where
+    toFullForm l = either (const l) fullForm (parseExpr resolveName l)
+
+-- | Milestone 1c's inputs, in the infix syntax: pure functions in slot and
+-- named form, user derivatives, the product and chain rules through them,
+-- repeated and partial differentiation, and rules over the results.
+infixInputs :: [Text]
+infixInputs =
+  [ "sq2 = #^2 + 1 &",
+    "Derivative[1][u] = 3 #^2 &",
+    "v[x_] := x^3 - 2 x",
+    "Table2 = Function[{f, n}, f /@ {n, n + 1, n + 2}]",
+    "{sq2 /@ {1, 2, 3}, Table2[sq2, 4], Function[{a, b}, a b + a/b][p, q]}",
+    "D[u[x] v[x] w[x], x]",
+    "D[u[x^2] + v[u[x]] + w[v[x]]^3, x]",
+    "D[(x^2 + y)^4 u[x y], x, y]",
+    "D[u[x]^5 v[x]^-2, {x, 4}]",
+    "D[{x^3 y, x y^2, u[x] + y}, {{x, y}}]",
+    "Derivative[2][v][t] + Derivative[1][#^4 &][t]",
+    "D[s1 s2 s3 s4 s5 s6 u[x s1] u[x s2] u[x s3], x] /. u'[z_] :> 3 z^2",
+    "% /. {s1 -> 1, s2 -> 2, s3 -> 3}"
+  ]
 
 -- | The script: definitions, then sums and products that collect, rules that
 -- fire through own values, down values and subvalues, and messages; then

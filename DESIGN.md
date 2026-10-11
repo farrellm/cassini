@@ -187,7 +187,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Core.Intern` | The hash-consing table, private behind the one exported `intern`. Two implementations behind a flag (§3.4). |
 | `Cassini.Core.Order` | `compareCanonical`, Cohen's order relation extended to all terms. The kernel's *only* ordering. |
 | `Cassini.Core.Traversal` | Base functor, `recursion-schemes` instances, `rewriteM`. |
-| `Cassini.Structure` | Structure-based operators: `exprKind`, `part`, `numberOfParts`, `construct`, `freeOf`, `substitute`. |
+| `Cassini.Structure` | Structure-based operators: `exprKind`, `part`, `numberOfParts`, `construct`, `freeOf`, `substitute`; and `substituteFree`, the substitution that knows scoping constructs (§4.13). |
 | **L2** | |
 | `Cassini.Attributes` | The attribute set as a bitmask, and the predicates the evaluator asks it. |
 | `Cassini.Pattern` | The pattern language as a view over `Expr`, plus `Subst`. |
@@ -207,7 +207,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Simplify.Rational` | Algebraic expansion, `Expand_main_op`, rationalization, numerator and denominator over ASAEs (§4.12). |
 | `Cassini.Simplify.Trig` | Trigonometric expansion, contraction and `Simplify_trig`, circular and hyperbolic (§4.12). |
 | `Cassini.Simplify.Numeric` | Radical normalization of rational bases and the infinity pass for `Plus`/`Times`/`Power` (§4.15). |
-| `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed, and the attribute-only symbols the evaluator relies on (`Hold` and its relatives, `Sequence`, `Unevaluated`, `Function`, the pattern heads, the atom heads). |
+| `Cassini.Builtins` | Registry assembly — one `KernelState` with every builtin installed, and the attribute-only symbols the evaluator relies on (`Hold` and its relatives, `Sequence`, `Unevaluated`, the pattern heads, the atom heads, and `Symbol["name"]`). |
 | `Cassini.Builtins.Define` | The `Definition` each builtin module exports (a symbol, its attributes, its native rules), and the helpers they share. |
 | `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Minus`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL), and the infinities as symbols: `ComplexInfinity` evaluates to `DirectedInfinity[]` and `Infinity` to `DirectedInfinity[1]`, as WL's outputs show. Comparison is `Builtins.Logic`'s. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
@@ -216,10 +216,11 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `TagSet`, `Unset`, `Attributes`, `Protect`. |
 | `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
 | `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
-| `Cassini.Builtins.Control` | `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). |
+| `Cassini.Builtins.Control` | `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). 1c built `Function`, `Slot`, `SlotSequence` and `CompoundExpression`. |
+| `Cassini.Builtins.Session` | `In`, `Out` and `$Line`, and `recordLine`, which the front ends call after each input (§4.10). |
 | `Cassini.Builtins.Logic` | `Equal` and the orderings, `SameQ`, `TrueQ`, `And`/`Or`/`Not` (§4.14). |
 | `Cassini.Builtins.Integer` | `Abs`, `Sign`, `Floor`, `Ceiling`, `Round`, `Mod`, `Quotient`, `GCD`, `LCM`, `Binomial`, `Factorial`, `Max`, `Min`, `PrimeQ`, `FactorInteger`, `Numerator`, `Denominator` (§4.15). |
-| `Cassini.Builtins.Calculus` | `D`, `Integrate`, `Series`, `Normal`, `Limit`, `Sum`, `Product`; `RootSum` (§6.5). |
+| `Cassini.Builtins.Calculus` | `D`, `Derivative`, `Integrate`, `Series`, `Normal`, `Limit`, `Sum`, `Product`; `RootSum` (§6.5). 1c built `D` and `Derivative` (§4.9). |
 | `Cassini.Builtins.Polynomial` | `Expand`, `ExpandAll`, `Collect`, `Cancel`, `Factor`, `Together`, `Apart`, `PolynomialGCD`, `Coefficient`, `Exponent`, `Variables`, `Resultant`, `Discriminant`, `GroebnerBasis`, `PolynomialReduce`, `Solve` (§6.5). |
 | `Cassini.Integrate.Rules` | The tier-1 integration rule set and its loader (§6.2). **L4 despite its namespace**: it names `Expr`, `Cassini.Rules` and the surface syntax exactly as `Cassini.Builtins.*` does. |
 | **L5** | |
@@ -1167,7 +1168,12 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   else is wrapped, with the message. Without this, every fixed point near the limit re-evaluates its
   own result, and that crosses the limit again. Heads, `1` and `Hold` itself get wrapped, the cuts
   compound, and `x = x + 1` ran out of memory before it returned (regression case 0010).
-- **Where the two counters live.** Depth is in the handler's own `Reader`, changed with `local`,
+- **Interrupts arrived with the loop (1c).** `runKernelInterruptible` is `runKernelIO` with an
+`IORef Bool` that `Evaluate`'s handler polls on entry, clearing it and raising `UAbort Interrupt`
+(§4.13); the other two interpreters' poll is `pure False`. `Cassini.Eval` exports it as
+`runEvalInterruptible`.
+
+**Where the two counters live.** Depth is in the handler's own `Reader`, changed with `local`,
   which restores it however the inner evaluation exits: §4.13's second option. Fuel is
   handler-local `State`, not `KernelState`, because it belongs to the fixed point being run, not to
   the session. `WithFuel` saves it, runs the inner computation under `tryError`, restores it and
@@ -1407,6 +1413,15 @@ default, which exists only for `Plus` (0), `Times` (1) and `Power`'s exponent (1
 (`Default[f] = v`) are not implemented. An absent `Optional` binds its name to the default without
 matching the default against the pattern, so `t[x_, type:("I" | "II"):"none"]` matches `t[1]`
 (`wolfram/Optional/Scope/3`). `Longest` and `Shortest` are not implemented.
+
+**Three gaps the 1c corpora found.** A compound pattern whose arguments are *all* `Optional`
+falls back too: one argument takes the subject, the last first, the rest their defaults, so `x`
+matches `b_. x_.` with `b = 1` and `x_.^m_.` with `m = 1` (Mathics3's tests; WL documents only the
+one-required-argument case). A rational number is `Rational[p, q]` to a compound pattern, so
+`Rational[n_, d_]` matches `22/7` (`wolfram/Rational/Scope/7`). And a `Verbatim[h]` head matches its
+arguments in order without `h`'s `Flat` and `Orderless`, since `Verbatim` matches "with no
+substitutions for blanks or other transformations" (`wolfram_ref_verbatim.html`); Expreduce and
+Mathics3 agree. Regression cases 0066–0068.
 
 #### 4.5.2 The matcher monad, and why nondeterminism cannot be an effect
 
@@ -1770,6 +1785,36 @@ work sooner and test nothing.
 Scope: chain and product rules, `Derivative[n]` for repeated differentiation, and user-extensible
 derivatives. The acceptance test is in §10.
 
+**As built at 1c.** `Cassini.Builtins.Calculus` installs ten built-in downvalues on `D`, tried in
+order, each answering `Nothing` when it does not apply: `D[f]` is `f`; several variables
+differentiate in turn; `{x, n}` takes one derivative at a time, so each is evaluated before the
+next, and `{{x, y, …}}` and `{{x, y, …}, n}` the gradient, a row per function for a list of
+functions (`wolfram/D/Scope/BasicUses/10`); a list threads; then the constant, variable, sum,
+product, power and chain rules. A rule's result has `D` inside it, which the fixed point
+evaluates, so the recursion is the evaluator's. The chain rule produces
+`Derivative[0, …, 1, …, 0][h][g₁, …]` times `D[gᵢ, x]` for each `gᵢ` that depends on `x`; when `h` is
+itself `Derivative[ns][f]` it raises the order in place, so `D[f'[x], x]` is `f''[x]`. Variables may
+be expressions (`D[f[x]^2, f[x]]`); a number as the variable leaves `D` unevaluated, since WL's
+message for it is not in the corpus.
+
+`Derivative` is **not `Protected`**, as in WL (`Attributes[Derivative]` is `{NHoldAll,
+ReadProtected}`, `wolfram/HoldAll/PropertiesAndRelations/12`), so `Derivative[1][f] = 3 #^2 &` and
+`f'[x_] := …` are ordinary user subvalues, keyed on `Derivative` (§4.2). Its two built-in
+subvalues add orders (`Derivative[1][Derivative[2][f]]` is `Derivative[3][f]`; all zeros is `f`)
+and differentiate a definition: a pure function (one with named parameters keeps them:
+`Function[x, x^2]'` is `Function[x, 2 x]`, `wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1`),
+a number (`1'` is `0 &`), `List`, `Plus`, `Times` and `Power`, and a symbol with user downvalues,
+whose definition is applied to fresh variables and differentiated (`f[x_] := x Cos[x]` makes `f'`
+a pure function, `wolfram/Derivative/Scope/1`). The last applies only when the definition matches
+the fresh variables: otherwise the chain rule would produce `Derivative[ns][f]` again and the rule
+would recur on it. A user's subvalue for `Derivative[1][f]` is on rung 12 and wins over both.
+
+**Two things wait.** An exponent that depends on the variable needs `Log`, which is §4.11's, so
+`D[2^x, x]` stays unevaluated until the elementary-functions track: emitting a `System`Log` the
+registry does not define would print as `Log` and differ from the `Log` a user types. And `D`'s
+results are in the form its rule table builds, which is not always WL's: for `D[g[x]^3/4, {x, 2}]`
+WL keeps `1/4` outside a sum, equal in value (D35).
+
 ### 4.10 Surface syntax and the REPL
 
 Needed beyond ergonomics for the regression corpus (§7.4) and for golden files a person can read.
@@ -1782,7 +1827,7 @@ disagree about how `a /. b -> c` parses; a round-trip property (§7.3) enforces 
 Stage 1 subset: numbers, strings, symbols with contexts, `f[...]`, `{...}`, `a[[i]]`, arithmetic and
 comparison operators, `=`/`:=`/`^=`/`^:=`, `->`/`:>`, `/.`/`//.`, `/;`, `?`, `|`,
 `_`/`__`/`___` with names and head constraints, `&`/`#`, `@`/`//`/`~f~`, and `;`. Deferred: `Span`,
-string patterns, boxes, anything notebook-shaped.
+string patterns, named characters, boxes, anything notebook-shaped (D36).
 
 `Cassini.Syntax.FullForm` is the canonical machine-readable form, separate from `.Pretty`. **All
 golden files are FullForm**, because pretty output changes whenever precedence handling improves,
@@ -1792,6 +1837,54 @@ and that must not invalidate hundreds of regression cases.
 timing, and a `--script` mode that reads FullForm and writes FullForm. The script mode is a library
 function in `cassini-core`, `Cassini.Script.runScript :: Text -> IO Text`, which the golden tests
 call directly; the interactive loop is `cassini-repl`'s (§2.1).
+
+**The parser, as built at 1c.** `Cassini.Syntax.Lexer` holds the token parsers (comments nest,
+operators are read longest first, a real literal is an error, D9) and `Cassini.Syntax.Parser` a
+precedence-climbing parser over `operators`, the table, whose precedences are WL's `Precedence`
+values; `&&` is given 217 against `||`'s 215, since WL's parser binds it tighter though
+`Precedence` reports 215 for both. The parse is WL's as Mathics3 reproduces it, checked by unit
+tests against Mathics3 10.0.1's `FullForm[Hold[…]]`: a product written with operators is spliced
+into the product around it (`-a b` is `Times[-1, a, b]`, `a b/c` is `Times[a, b, Power[c, -1]]`),
+one in parentheses is not, and chains of one comparison are one call while mixed ones are
+`Inequality`. **Two departures**, so that every expression has a printed form that reads back as
+itself: an integer literal over a positive integer literal is the rational number (`1/2` is
+`Rational[1, 2]`, as FullForm's `Rational[1, 2]` reads as the number), and negating a product
+whose first factor is a positive number negates that number (`a - 2 b` is `Plus[a, Times[-2, b]]`,
+not WL's `Plus[a, Times[-1, 2, b]]`). Both differ from WL only where evaluation is held. Beyond the
+subset above it reads `=.`, `/:`, `..`, `...`, `x:p` and `p:v`, `'`, `!` both ways, `&&`, `||`,
+`<>`, `::`, `@@`, `@@@` (as `Apply[f, x, {1}]`, as Mathics3 reads it), `/@`, `//@`, `++`, `--` and
+`+=` and its kin, and `%`, `%%` and `%n`. Named characters, character escapes in names, `Span`,
+`Dot` and associations are parse errors (D36). `incomplete` says whether an input failed only for
+ending too soon, which is how the loop knows to read another line.
+
+**The printer.** `Cassini.Syntax.Pretty` reads the same table and prints an operator form only
+where the parser builds exactly that expression from it, and the bracket form everywhere else:
+`Times[a, Power[b, -1]]` is `a/b`, but `Times[3, Power[2, -1]]` is `3 2^-1`, since `3/2` reads as
+the number, and a product inside a product is parenthesized, since the parser would splice it.
+The round-trip property runs over `genExpr` and over a generator of every operator form; it found
+`Out[-1]` printed as `%` (which is `Out[]`) and `f'[x]` printed as an atom where `?` would bind
+tighter. Messages print as `symbol::tag: text`, from a template table for the messages the kernel
+emits, keyed by full name where the arguments differ between symbols.
+
+**The session.** `Cassini.Builtins.Session` defines `In`, `Out` and `$Line`, and `recordLine`, which
+the front ends call after each input: `In[k]` holds the input, `Out[k]` its result, and `$Line`
+becomes `k + 1`. `Out[]` and `Out[-k]` are built-in downvalues counting back from `$Line`, so `%`
+works in script mode too, where the Wolfram corpus's examples use it. An input ending in `;`
+gives `Null` but records the value before the semicolon, as WL does: after `n = 2^200;`, `%` is
+`2^200` (`wolfram/CompoundExpression/BasicExamples/3`); `Cassini.Script.evaluateInput` is that
+rule, and both front ends use it.
+
+**The loop.** `Cassini.REPL` reads with `haskeline` (line editing, history in
+`~/.cassini_history`), continues an incomplete input on the next line, and prints messages, then
+`Out[n]= ` and the result unless it is `Null`. A syntax error uses no number. Its commands are
+`:trace expr` (the evaluation steps of §7.4's traces, printed in the infix syntax), `:timing`,
+`:fullform` and `:quit`; `Trace` and `Timing` as builtins are not in Stage 1. Interrupts are §4.13's:
+SIGINT's handler sets a flag, which `runKernelInterruptible`'s `Evaluate` polls (§4.3), so the
+input gives `$Aborted`; a second Ctrl-C while the flag is still set is thrown asynchronously, and
+the loop says the session state is no longer guaranteed. GHC delivers that exception only between
+foreign calls, so a single enormous multiplication still finishes first; a builtin that loops
+without evaluating, such as `//.`, is reached only by the second Ctrl-C. Ctrl-C at the prompt
+discards the line.
 
 ### 4.11 Elementary functions
 
@@ -2100,6 +2193,30 @@ points the evaluator must get right:
   that would capture a free symbol of the substituted value is renamed (`y` → `y$`). This is
   `Cassini.Structure.substitute` extended by one scoping-aware case, not a second substitution
   function.
+
+**Substitution, as built at 1c.** It is a second function after all, `substituteFree`, because the
+first must stay literal: `ReplaceAll` substitutes "without any renaming"
+(`wolfram_ref_modularity_and_naming.html`), and its fast path is `substitute`. `substituteFree`
+substitutes for symbols and, for slot form, slots, and knows the scoping constructs the page lists:
+`Function`, `With`, `Module`, and `->`, `:>`, `=` and `:=`, whose local names are their pattern
+names. It has two modes, per the page. **`Shielding`** is `Function` and `With`: a construct's own
+names shield its inside, and every one of them is renamed to `x$` when the substitution changes
+the inside, "more liberally than is strictly necessary". **`Literal`** is a rule's right-hand
+side, which WL instantiates "effectively … using the /. operator": every occurrence is replaced,
+the construct's own names included (so `mkfun[var_, body_] := Function[{var}, body]` works), and
+only its other names are renamed. So `applySubst`, the matcher's instantiation, is
+`substituteFree Literal`, and `Binding` moved down to `Cassini.Structure` with it. **Filling slots
+renames nothing**: WL gives `Function[Function[v, f[#, v]]][x]` as `Function[v, f[x, v]]`, where
+substituting a named parameter renames `v` (`wolfram/Slot/PossibleIssues/1`). `##n` fills up to one
+past the last argument, where it is empty; beyond that it stays, with `Function::slots`
+(`wolfram/SlotSequence/PossibleIssues/1`). The renaming examples on the page are unit tests, and
+the `Control` row's capture law runs `Function[x, Function[y, b]][a][v]` against substituting both
+at once.
+
+**`CompoundExpression` arrived with 1c**, ahead of this track, because the parser's `;` needs it
+and the corpora's inputs use it. It evaluates each argument but the last and returns the last
+unevaluated, for the fixed point to evaluate once, so a message the last argument emits is emitted
+once. The rest of this section is still the track's.
 
 **Sequencing and conditionals.** `CompoundExpression` (`;`, `HoldAll`) evaluates its arguments in
 order and returns the last. `If` (`HoldRest`) follows the source exactly: when the test is neither
@@ -3189,6 +3306,37 @@ each is either removed or turned into a D-number.
 - **SymPy: structural, or semantic where the generator marks the case**, for results whose normal
   form SymPy does not share with WL (partial-fraction order, factor order, sign normalization).
 
+**Expreduce and Mathics3, as built at 1c.** Both extractors run under Mathics3 and import the
+Wolfram extractor's parser and normalizer. A case's input stays the source's own text, read at run
+time by Cassini's infix parser, so the corpora test the parser too; a case's scope symbols are those
+of every input up to its own, since a session's state carries.
+
+- **Expreduce** is vendored as `corpus/vendor/expreduce/` (`resources/*.m` without the Rubi rule
+  files, its `LICENSE`, and a `SOURCE` naming the commit and the commands), and
+  `corpus/tools/extract_expreduce.py` writes its sessions to `cases/`, committed with it. Its
+  runner evaluates each `Tests`Name` block's `ESimpleExamples`, `EFurtherExamples` and `ETests`
+  in order in one state, so each block is a session, split at `EResetState[]`, and each `ESameTest`
+  a case; known failures, string tests and inexact tests are not cases. `ESameTest` evaluates both
+  sides, and some tests put the call on the expected side, so Mathics3 evaluates the expected value
+  fully, as the stand-in for Expreduce. A name the modules define in WL, or one named for Expreduce
+  (`ExpreduceOrderlessFn`), is one of its builtins and counts as a `System`` symbol, so a case that
+  needs Expreduce's own definitions is out of scope.
+- **Mathics3** is fetched by `corpus/fetch.sh` at the commit of its 10.0.1 release and read by
+  `corpus/tools/extract_mathics_tests.py` with `ast` into the gitignored `corpus/fetched/mathics/`.
+  Each test function's `check_evaluation` cases, in source order, are a session, split where a case
+  resets. Dropped: rows and arguments that are not literals, and the cases after one in a session;
+  functions that also evaluate outside `check_evaluation`; skipped tests; regular expressions and
+  raw strings; and cases whose failure message notes a departure from WMA. The inputs are never run
+  in Mathics3, since some create and delete files, so each expected string is evaluated in a session
+  where no input has run, unless it names an operation with side effects, which makes it unusable.
+  A held expected value is compared there by its printed form, which hides arithmetic's spelling, so
+  its arithmetic is normalized as the Wolfram corpus's outputs are.
+- Neither names its messages by `symbol::tag`, so neither compares messages; `Null` is written `-`.
+- **Divergence reasons grew** at 1c: `§N` for a section's documented choice the source departs
+  from (an enumeration order), `Expreduce` or `Mathics3` for a source departing from WL with the
+  evidence beside the entry, and `undocumented` for an answer neither the corpus nor Stack Exchange
+  shows, where the evaluator's stands.
+
 **Imported cases do not replace regression cases.** When one catches a bug, the fix still adds a
 numbered `test/regress/` case (§7.4): a corpus can be re-pinned, and the regression corpus must not
 lose a case when it is.
@@ -3400,6 +3548,12 @@ generates.
   120 MB, against 1 ms and 3 MB when the terms are alike. The evaluator always reaches them after
   step 9 has sorted the arguments, where each merge stops at the first comparison, so the
   quadratic case is the Haskell API's, not the evaluator's.
+- **Results at 1c** (2026-10-11; GHC 9.12.4, hash interning, one developer machine). Deep `D`, the
+  `n`th derivative of `f[x] g[x^2] h[x f[x]]` with unknown functions: 4.8 ms and 10 MB at order 2,
+  41 ms and 94 MB at 4, 213 ms and 493 MB at 6, growing with the number of product-rule terms, which
+  collecting keeps polynomial. `//.` over 40 parts: 0.5 ms at 10 rules, 3.9 ms at 100, 28 ms and
+  102 MB at 1000, linear in the rules, since a replacement rule list is tried in order on every part
+  and is not indexed as a definition's rules are (§4.5.5).
 - **Trigonometric expansion**, in two parts, because the obvious one cannot see what it is meant
   to guard. `TrigExpand[Sin[a₁ + … + aₙ]]` for growing `n` is the end-to-end cost, baselined; but
   its output has 2ⁿ⁻¹ terms, so its allocation is exponential under either recursion, and the naive
@@ -3429,7 +3583,9 @@ differentiation, pattern replacement and polynomial arithmetic — measured as a
 **The workload grows by milestone, and the gate is on from 1a** (§10). At 1a it is a FullForm script
 of automatic simplification and user rules through `runScript`; 1b adds the pattern builtins over
 sequence variables, `Orderless` sums and definitions that need them (43 MB allocated, from 1a's
-22 MB); 1c adds infix parsing, printing and differentiation, and 2a polynomial arithmetic. A gate that waited for the full workload would be off
+22 MB); 1c adds infix parsing, printing and differentiation: thirteen infix inputs with pure
+functions, user derivatives and repeated and partial `D`, and every output printed by
+`Cassini.Syntax.Pretty` (106 MB); and 2a polynomial arithmetic. A gate that waited for the full workload would be off
 through Stage 1, the most refactor-heavy stretch of the project. Each extension is a deliberate
 baseline regeneration, with the commit message saying what the workload gained.
 
@@ -3708,6 +3864,46 @@ built-in function; the `Function` in it is why **pure-function application gates
   (§7.8), and every in-scope case from either, over 1a–1c's builtins, is triaged as in 1a. The
   Wolfram pages of `D`, `Derivative` and `Function` are triaged too.
 
+**Done 2026-10-11**, pending its PR's CI run. `D[f[x] g[x], x]` gives both product-rule terms, and
+after `Derivative[1][f] = 3 #^2 &`, `D[f[x^2], x]` is `6 x^5`: regression cases 0055–0056 and the
+`Calculus` group's unit tests. The `Syntax` row runs in full, `parse (pretty e) ≡ Right e` over
+`genExpr` and over a generator of every operator form; the `Calculus` row compares `D` with central
+differences of the test evaluator, which learned the derivatives of its test functions; and the
+`Control` row's `Function` law, the capture-free substitution, runs too. Both suites pass under both
+`intern` settings, with `-Werror`, `hlint`, `ormolu`, the layering fixtures, the Haddock floor
+and the doctests.
+
+Corpus and oracle at completion:
+
+- **Wolfram:** 882 of the 111,806 cases are in scope, up from 744. 797 pass and are the ratchet,
+  139 of them new; 32 are in `divergences.txt`; 53 fail on pages outside this milestone. Every
+  in-scope case on the pages of `D`, `Derivative`, `Function`, `Slot`, `SlotSequence`,
+  `CompoundExpression`, `Out` and `$Line` passes or is listed. Four `pending §4.13` entries for
+  `Function` pass and are gone.
+- **Expreduce:** 400 of its 2,193 cases are in scope; 382 pass and 18 are listed (D20, D25, D29,
+  §4.15, §4.5.3, Expreduce's own departures, `undocumented`).
+- **Mathics3:** 103 of its 1,727 cases are in scope; 94 pass and 9 are listed (§4.15, §4.5.3, D36,
+  Mathics3's departures, `undocumented`).
+- **Oracle:** 297 of 366 inputs agree with Mathics3 10.0.1; 50 are listed and 19 inconclusive,
+  none of them new.
+
+The triage fixed `Protect::pssl`, `Symbol["name"]` and `Symbol::symname`, three matcher gaps
+(`Rational[n_, d_]`, all-`Optional` compound patterns, `Verbatim` heads) and `ReplaceList`'s
+count, regression cases 0059–0070, and it found the extractors' own defects first: a case's scope
+must include its session's earlier inputs, `Null` is written `-`, and Mathics3's test functions
+are read in source order.
+
+The departures it found are recorded in their sections:
+
+- `substituteFree` beside a literal `substitute`, its two modes, and slots renaming nothing
+  (§4.13); `CompoundExpression` ahead of its track (§4.13);
+- `D`'s table, `Derivative` unprotected, and `Log` waiting (§4.9, D35);
+- the parser's two departures, the printer's round trip, the session's history, `;` and `%`, and
+  the loop's interrupts (§4.10, §4.3, D33 answered);
+- the matcher's three gaps (§4.5.1);
+- the Expreduce and Mathics3 extractors, and the new divergence reasons (§7.8, D34, D36);
+- §8.4's deep `D` and `//.` results, and §8.6's workload.
+
 #### Track: elementary functions (§4.11–§4.12)
 
 Waits for 1c. **Done when** Cohen's Examples 7.15–7.18 simplify to 0 and Fig. 7.9's rows reproduce as
@@ -3856,6 +4052,7 @@ document requires it.
 | `logict` | matcher nondeterminism, confined to one module (§4.5.2) | L2 |
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
 | `megaparsec` | surface syntax (§4.10) | L5 |
+| `haskeline`, `unix` | the interactive loop's line editing and history, and its SIGINT handler (§4.10); in `cassini-repl` only (D7) | L5 |
 | `poly`, `semirings` | polynomial substrate and coefficient classes (§5.3) | A |
 | `tasty`, `tasty-hunit`, `tasty-quickcheck`, `tasty-golden`, `tasty-bench` | §7, §8 | test |
 
@@ -3909,7 +4106,10 @@ answer, not a deletion.
 | D30 | The recursion limit cuts in place, as `Hold[e]`, and evaluation continues outward (§4.3). WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input. The in-place cut also emits `$RecursionLimit::reclim` twice for one runaway evaluation: `r[n_] := r[n + 1]; Length[{r[1]}]` gives `1` with the message once where step 3 cuts the argument and again where the rule's right-hand side is cut. WL emits it once. How many messages there are follows from which evaluation is replaced, so it is fixed with the unwinding rule, not before it (found 2026-10-09 in the PR #12 review) | an oracle or corpus case that pins down which enclosing evaluation WL replaces; or `Block` (§4.13), whose own example ends in `TerminatedEvaluation`, needing the same unwinding |
 | D31 | With tracing off, steps 2–9 still call `traceStep` and build the expression it would record. The handler drops it, but the effect call and the expression are paid for, on every `Flat` and `Orderless` node among others. Equality tests that guard some of these calls are not the cost: `Eq Expr` answers from the pointer, intern id or hash. Measured 2026-10-09 (GHC 9.12.4, hash interning, one developer machine): reading the flag once a round in `fixpoint` and carrying it on `Node` saves 0.7% of the end-to-end workload's allocation and 0.8–2.2% on the fixed-point benchmarks, with time inside the noise. A no-op `traceStep` bounds the saving at 1.5% and 3.6–6.4%. Gating the traces where rules fire saved nothing more. Not taken, for a change that small, because it means regenerating both allocation baselines | the evaluation sequence prominent in a §8.4 profile, or a benchmark baseline regenerated for another reason, when the change can ride along |
 | D32 | Steps 10–13 recompute, rung by rung, what the node already has (§4.2). Both upvalue rungs (10 and 11) collect the arguments' tag symbols and look each one up, and both downvalue rungs (12 and 13) look up the head symbol that step 2 already looked up for its attributes. For k tagged arguments that is about 2k+2 extra effect calls and symbol-table lookups per node per round, on the hottest path. Collecting the tags once per round and carrying the head's `SymbolInfo` on `Node` would remove them. Not measured. Not taken in the PR #12 review (2026-10-09), for D31's reason: it changes allocation, so it means regenerating both baselines | as D31's, and taken with it |
-| D33 | Exact arithmetic has no size limit: `Power[3, 1220703125]` and `Factorial[10^10]` are computed in full, however long that takes and however much memory it needs. WL stops at a limit with `Overflow[]` and `General::ovfl`, but the corpus documents that only for machine reals (`wolfram/Power/PossibleIssues/7`, `2^(2^100.0)`), not where the limit lies for exact integers, so none is set. The test generators stay inside the limit instead (§7.3) | a corpus or oracle case that pins down WL's limit on exact integers; or the interactive loop (milestone 1c), where one mistyped exponent should not cost the session |
+| D33 | Exact arithmetic has no size limit: `Power[3, 1220703125]` and `Factorial[10^10]` are computed in full, however long that takes and however much memory it needs. WL stops at a limit with `Overflow[]` and `General::ovfl`, but the corpus documents that only for machine reals (`wolfram/Power/PossibleIssues/7`, `2^(2^100.0)`), not where the limit lies for exact integers, so none is set. The test generators stay inside the limit instead (§7.3). **Trigger fired 2026-10-11 (1c), answered: still no limit.** In the interactive loop a mistyped exponent costs the input, not the session: a second Ctrl-C is thrown at the computation and the loop carries on (§4.10). The cost is that GHC delivers it only between foreign calls, so one GMP multiplication runs to its end: `2^(3^19)` stopped about a second after the second Ctrl-C, and `2^(3^21)`'s last multiplications take longer than that | a corpus or oracle case that pins down WL's limit on exact integers; or a user's input whose single multiplication outlasts their patience |
+| D34 | String patterns are absent (§4.10's deferred list), so `Protect["x*"]` and `Unprotect["x*"]` name the symbol `x*` rather than every symbol matching. Matching names would also need a `Kernel` operation listing the symbols the kernel has seen, which WL's `Names` is (six Wolfram corpus cases, found 2026-10-11 in 1c's triage) | `Names`, `StringMatchQ` or another string-pattern builtin arriving |
+| D35 | `D`'s results are in the form its rule table builds, simplified, which is not always WL's: for `D[g[x]^3/4, {x, 2}]` WL keeps `1/4` outside a sum (`wolfram/D/Scope/FunctionsDefinedByDerivatives/3`). Equal in value, different in structure, and the corpus compares structure. WL's rule for where a constant factor stays cannot be read off one example (§4.9) | 2a's zero test, when corpus cases of `D` can be compared semantically; or such entries becoming `D`'s dominant divergence |
+| D36 | The infix syntax is §4.10's Stage 1 subset: named characters (`\[Alpha]`), character escapes in names (`\.78`, `\:0078`), `Span`, `Dot`, associations and string patterns are parse errors (three Mathics3 cases, 2026-10-11) | a corpus's in-scope cases needing one, or a builtin whose usual spelling is one (`Dot` with matrices, `Span` with `Part`) |
 
 ### 11.3 Provenance
 

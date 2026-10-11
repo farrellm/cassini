@@ -1,0 +1,41 @@
+2^(x^2+1) + x^2 /. x^2->y
+2^(x^2+1) + x^2 /. z^2->y
+a + b + c + c^2 /. c^2 + a -> d
+a + b + c + d/. x_Symbol + y_Symbol -> x^y
+a + 2*b + 5*c /. (c1_Integer*a_Symbol) -> 99*a
+a + b + c + d /. a + amatch___ -> foo[amatch]
+(x + 2)[5, 6] /. (2 + x) -> Plus
+a*b*c*d /. _Symbol -> 2
+a*b*c /. c + a -> d
+a*b*c /. c*a -> d
+2 * a + b + c + c^2 /. c^2 + a -> d
+a^2 + a + b + c + c^2 /. c^2 + a -> d
+(a*b*c) + (a*b^2*c)
+(a*b*c) + (a*b^2*c) /. c*a -> d
+(a*b*c) + (a*b^2*c) /. a*c -> d
+a + b + c /. c + a -> c + a
+a*b*c /. c*a*b -> d
+a*b*c /. c*a*b*d -> d
+a*b*c*d*e /. a*b*f -> z
+a*b*c*d*e /. a*b*c -> z
+a*b*c*d*e /. e*d*c -> z
+a*b*c*d*e /. c*e*d -> z
+a + b /. x_Symbol + y_Symbol -> x^y
+x = 2
+a + b /. x_Symbol + y_Symbol -> x^y
+x
+a == b /. j_Symbol == k_Symbol -> j^k
+a == b /. j_Equal -> 2
+a == b /. j_Equal -> j^k
+2^k /. base_Integer -> base + 1
+2^k /. base_Integer^exp_ -> (base + 1)^exp
+2^k /. base_Integer^exp_ -> (base + exp)^exp
+2^k /. base_Integer^exp_Symbol -> (base + exp)^exp
+2^k + 1 /. base_Integer^exp_Symbol -> (base + exp)^exp
+a^c + b /. test_Symbol^test_Symbol + test_Symbol -> test + 1
+a^a + a /. test_Symbol^test_Symbol + test_Symbol -> test + 1
+a^a /. (test_Symbol^test) -> 2
+a^a /. (test_Symbol^test_Symbol) -> 2
+a^a /. (test^test_Symbol) -> 2
+test^a /. (test^test_Symbol) -> 2
+a^test /. (test_Symbol^test) -> 2

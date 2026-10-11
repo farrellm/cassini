@@ -1,0 +1,21 @@
+Out[1]: bar[syma, symb]
+Out[2]: bar[syma, symb]
+Out[3]: List[syma, symb]
+Out[4]: 12
+Out[5]: Times[a, b]
+Out[6]: 1
+Out[7]: bar
+Out[8]: foo[a, b, c]
+Out[9]: foo[bar, buzz]
+Out[10]: foo[bar, buzz]
+Out[11]: foo[1, 2]
+Out[12]: f[List[List[a]]]
+Out[13]: List[List[f[a]]]
+Out[14]: List[List[List[a]]]
+Out[15]: List[f[a], f[b]]
+Out[16]: f[List[a], foo[b]]
+Out[17]: f[f[a], f[b]]
+Out[18]: f[f[a, List[c]], f[b]]
+Out[19]: f[f[a, f[c, List[d]]], f[b]]
+Out[20]: List[f[a, f[c, f[d]]], f[b]]
+Out[21]: List[f[a, f[c]], f[b]]

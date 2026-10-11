@@ -1,0 +1,2 @@
+Catch[a; b; Throw[c]; d; e]
+Catch[{a, b, Throw[c], d}]

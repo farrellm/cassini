@@ -1,0 +1,4 @@
+Product[a, {a, 1, 5}]
+Product[f[a], {a, 1, 5}]
+Product[a^2, {a, 4}]
+Product[a + b, {a, 1, 2}, {b, 1, 3}]

@@ -1,0 +1,7 @@
+Boole[{True, True, True, False}]
+Positive[{-1, 4, 5}]
+Positive[{{-1, 4, 5}}]
+Positive[{{-1, 4, 5}, {6, -1}}]
+Positive[{-1, 4, 5}, 2]
+Positive[{-1, 4, 5}, {1, 2}]
+Positive[{-1, 4, 5}, {1, 2, 3}]

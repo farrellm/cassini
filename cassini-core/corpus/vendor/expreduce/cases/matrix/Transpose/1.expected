@@ -1,0 +1,5 @@
+Out[1]: List[a, b]
+Out[2]: List[List[a, b]]
+Out[3]: List[List[a], List[b]]
+Out[4]: List[List[List[a]], List[List[b]]]
+Out[5]: Transpose[a]

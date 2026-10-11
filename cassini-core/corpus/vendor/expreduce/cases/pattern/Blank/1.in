@@ -1,0 +1,50 @@
+MatchQ[a + b, _]
+MatchQ[1, _Integer]
+MatchQ[s, _Integer]
+a*b*c*d /. _Times -> 2
+MatchQ[x+3., c1match_Real+matcha_]
+MatchQ[s, _Symbol]
+MatchQ[1, _Symbol]
+MatchQ[_Symbol, _Symbol]
+MatchQ[_Integer, _Integer]
+MatchQ[_Symbol, _Blank]
+MatchQ[_Symbol, test_Blank]
+MatchQ[_Symbol, test_Blank]
+MatchQ[_Symbol, test_Symbol]
+MatchQ[name_Symbol, test_Blank]
+MatchQ[name_Symbol, test_Pattern]
+MatchQ[_Symbol, test_Blank]
+MatchQ[_Symbol, test_Pattern]
+MatchQ[1.5, _Integer]
+MatchQ[1.5, _Real]
+_Symbol == _Symbol
+_Symbol == _Integer
+MatchQ[_Symbol, s]
+MatchQ[_Integer, 1]
+_Integer == 1
+1 == _Integer
+_Integer === 1
+1 === _Integer
+_Integer === _Integer
+_Symbol === a
+a === _Symbol
+_Symbol === _Symbol
+a == b
+a == b /. _Equal -> 2
+If[1 == k, itstrue, itsfalse]
+If[1 == k, itstrue, itsfalse] /. _If -> 99
+MatchQ[kfdsfdsf[], _Function]
+MatchQ[kfdsfdsf[], _kfdsfdsf]
+kfdsfdsf[] /. _kfdsfdsf -> 99
+a + b
+a + b /. _Plus -> 2
+a*b /. _Times -> 2
+a^b /. _Power -> 2
+a -> b /. _Rule -> 2
+a*b*c*d /. _Times -> 2
+MatchQ[x*3., c1match_Real*matcha_]
+MatchQ[3.*x, c1match_Real*matcha_]
+MatchQ[x+3., c1match_Real+matcha_]
+MatchQ[3.+x, c1match_Real+matcha_]
+MatchQ[y + x, matcha_]
+MatchQ[y*x, matcha_]

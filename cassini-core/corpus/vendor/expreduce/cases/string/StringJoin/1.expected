@@ -1,0 +1,5 @@
+Out[1]: "Hello World"
+Out[2]: "If a=2, then a^2=4"
+Out[3]: ""
+Out[4]: StringJoin["Hello", 5]
+Out[5]: "abc"

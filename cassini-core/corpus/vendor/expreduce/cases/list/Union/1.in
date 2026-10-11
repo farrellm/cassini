@@ -1,0 +1,8 @@
+Union[{b,a,a,b,a}]
+Union[{b,a,a,b,a},{y,z}]
+Union[foo[b,a,a,b,a],foo[y,z]]
+Union[foo[b,a,a,b,a],{y,z}]
+Union[]
+Union[{b,a,a,b,a},z]
+Union[{a}]
+Union[{List}]

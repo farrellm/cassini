@@ -3,6 +3,8 @@
 module Main (main) where
 
 import Test.Cassini.Attributes qualified
+import Test.Cassini.Calculus qualified
+import Test.Cassini.Control qualified
 import Test.Cassini.Core.Intern qualified
 import Test.Cassini.Core.Order qualified
 import Test.Cassini.Core.Traversal qualified
@@ -38,6 +40,8 @@ main = do
         Test.Cassini.Pattern.tests,
         Test.Cassini.Simplify.Automatic.tests,
         Test.Cassini.Eval.tests,
+        Test.Cassini.Control.tests,
+        Test.Cassini.Calculus.tests,
         Test.Cassini.Syntax.tests,
         golden
       ]

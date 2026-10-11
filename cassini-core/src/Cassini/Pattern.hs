@@ -34,7 +34,7 @@ module Cassini.Pattern
 where
 
 import Cassini.Attributes (AttributeSet)
-import Cassini.Core.Expr (Expr, apply, mkApp, pattern App, pattern Int_, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, pattern App, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
     sAlternatives,
@@ -53,12 +53,12 @@ import Cassini.Core.Symbol
     sPower,
     sRepeated,
     sRepeatedNull,
-    sSequence,
     sTimes,
     sTrue,
     sVerbatim,
     symbol,
   )
+import Cassini.Structure (Binding (..), Scoping (Literal), bindingExpr, substituteFree)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 import Text.Show (Show (showsPrec), showParen, showString)
@@ -170,49 +170,21 @@ unholdPattern = \case
   App (Sym h) as | h == sHoldPattern, [x] <- V.toList as -> unholdPattern x
   e -> e
 
--- | What a pattern variable is bound to: one expression, or a run of
--- arguments for a sequence variable.
-data Binding
-  = BOne !Expr
-  | BSeq !(V.Vector Expr)
-  deriving stock (Eq, Show)
-
 -- | A substitution: pattern variables to their bindings. All matcher state
 -- lives here, never in an effect, so a failed branch is abandoned by dropping
 -- a value (§4.5.2).
 type Subst = Map Symbol Binding
 
--- | The binding as one expression: a sequence becomes @Sequence[…]@, which
--- step 5 splices wherever it lands in an argument list.
-bindingExpr :: Binding -> Expr
-bindingExpr = \case
-  BOne x -> x
-  BSeq xs -> apply sSequence (V.toList xs)
-
 -- | Replace every bound variable by its binding, all at once. A sequence
 -- binding in an argument list is spliced into it there and then, as WL
 -- does, so @f[a, b] /. f[x__] :> Hold[g[x]]@ is @Hold[g[a, b]]@ even though
 -- nothing evaluates inside @Hold@; anywhere else it is @Sequence[…]@.
--- Subtrees with no bound variable keep their nodes. Not yet aware of
--- scoping constructs; that arrives with @Function@ (§4.13).
+-- Subtrees with no bound variable keep their nodes. A rule's right-hand
+-- side is instantiated as WL's @/.@ would, so every occurrence is replaced,
+-- but a scoping construct inside it that the substitution changes has its
+-- other local names renamed (§4.13, 'Cassini.Structure.substituteFree').
 applySubst :: Subst -> Expr -> Expr
-applySubst s u
-  | Map.null s = u
-  | otherwise = fromMaybe u (go u)
-  where
-    -- 'Nothing' means unchanged.
-    go = \case
-      Sym x -> bindingExpr <$> Map.lookup x s
-      App h as ->
-        let h' = go h
-            as' = V.map arg as
-         in if isNothing h' && V.all isNothing as'
-              then Nothing
-              else Just (mkApp (fromMaybe h h') (V.concat (V.toList (V.zipWith (fromMaybe . V.singleton) as as'))))
-      _ -> Nothing
-    arg = \case
-      Sym x | Just (BSeq xs) <- Map.lookup x s -> Just xs
-      a -> V.singleton <$> go a
+applySubst s = substituteFree Literal s Nothing
 
 -- | Bind a name, or check it against its binding: one name means one value
 -- across a pattern. A sequence of one is that one expression, so in

@@ -1,0 +1,5 @@
+Out[1]: List[f[1], f[2], f[3]]
+Out[2]: -
+Out[3]: List[5, 5, 5]
+Out[4]: List[Plus[a, b][1], Plus[a, b][2], Plus[a, b][3]]
+Out[5]: Array[a, a]

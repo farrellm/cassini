@@ -1,0 +1,4 @@
+a + 2*b + 5*c /. (c1_Integer*a_Symbol) -> 99*a
+a + 2*b + 5*c /. (c1_Integer*matcha_Symbol) + (c2_Integer*matchb_Symbol) -> 99*matcha
+a + 2*b + 5*c /. (c1_Integer*matcha_Symbol) + (c2_Integer*matcha_Symbol) -> (c1+c2)*matcha
+a + 2*b + 5*b /. (c1_Integer*matcha_Symbol) + (c2_Integer*matcha_Symbol) -> (c1+c2)*matcha

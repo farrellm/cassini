@@ -1,0 +1,6 @@
+Out[1]: Plus[1, a]
+Out[2]: Times[2, b]
+Out[3]: Times[2, b]
+Out[4]: Times[2, b]
+Out[5]: Plus[1, a]
+Out[6]: Times[2, b]

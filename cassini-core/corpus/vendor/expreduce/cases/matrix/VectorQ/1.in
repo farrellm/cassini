@@ -1,0 +1,7 @@
+VectorQ[{1, 2, c}]
+VectorQ[{1, 2, foo[a]}]
+VectorQ[foo[1, 2, 3]]
+VectorQ[{1, 2, 3, {}}]
+VectorQ[{f[a], f[b]}]
+VectorQ[{a, c}]
+VectorQ[{}]

@@ -1,0 +1,6 @@
+Out[1]: List[List[a, b], List[b, c], List[c, d]]
+Out[2]: List[]
+Out[3]: List[]
+Out[4]: List[List[a, b], List[b, c], List[c, d]]
+Out[5]: List[List[a, b], List[b, c], List[c, d]]
+Out[6]: List[]

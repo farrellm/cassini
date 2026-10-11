@@ -1,0 +1,3 @@
+Tally[{a, a, b, b}]
+Tally[{b, b, a, a}]
+Tally[{b, b, a}]

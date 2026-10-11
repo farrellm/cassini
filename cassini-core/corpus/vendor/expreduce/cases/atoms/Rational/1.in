@@ -1,0 +1,21 @@
+Times[5, 6^-1] // Head
+5/6 // Head
+Rational[5, 6] // Head
+Rational[10, 6]
+Rational[-100, 10] // Head
+test = Rational[2, 3]
+MatchQ[test, 2/3]
+MatchQ[test, Rational[a_Integer, b_Integer]]
+2/3 /. Rational[a_Integer, b_Integer] -> {a, b}
+2/3 /. a_Integer/b_Integer -> {a, b}
+Rational[10, 7]
+Rational[-100, 10]
+Rational[-10, 6]
+Rational[-10, -6]
+foo[bar, 1/2] /. foo[base_, 1/2] -> buzz[base]
+foo[bar, 1/2] /. foo[base_, Rational[1, 2]] -> buzz[base]
+foo[bar, Rational[1, 2]] /. foo[base_, 1/2] -> buzz[base]
+foo[bar, Rational[1, 2]] /. foo[base_, Rational[1, 2]] -> buzz[base]
+MatchQ[1/2, Rational[1, 2]]
+MatchQ[Rational[1, 2], 1/2]
+Hold[Rational[1, 2]] === Hold[1/2]

@@ -1,0 +1,5 @@
+Cases[{5, 2, 3.5, x, y, 4}, _]
+Cases[{5, 2, 3.5, x, y, 4}, _Integer]
+Cases[{5, 2, 3.5, x, y, 4}, _Real]
+Cases[{b^2,1,a^c},_^e_->e]
+Cases[bar[a, b, c], a]

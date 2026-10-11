@@ -1,0 +1,5 @@
+myreturnfunc:=(Return[x];hello);myreturnfunc
+ret[x_]:=(Return[x];hello);ret[3]
+myfoo:=(i=1;While[i<5,If[i===3,Return[i]];i=i+1]);myfoo
+Return[3]
+retother:=(Return[];hello);retother

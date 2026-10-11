@@ -1,0 +1,5 @@
+Transpose[{a, b}]
+Transpose[{{a}, {b}}]
+Transpose[{{a, b}}]
+Transpose[{{{a}, {b}}}]
+Transpose[a]

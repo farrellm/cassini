@@ -1,0 +1,2 @@
+mat = Table[Table[a*b^2, {b, 5}], {a, 5}]
+mat[[5, All]]

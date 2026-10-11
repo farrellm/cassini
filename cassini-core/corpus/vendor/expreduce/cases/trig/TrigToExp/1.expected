@@ -1,0 +1,4 @@
+Out[1]: Plus[Times[Rational[1, 2], Power[E, Times[Complex[0, -1], x, y]]], Times[Rational[1, 2], Power[E, Times[Complex[0, 1], x, y]]]]
+Out[2]: Plus[b, Times[Rational[1, 2], Power[E, Plus[Times[Complex[0, -1], x], Times[Complex[0, -1], y]]]], Times[Rational[1, 2], Power[E, Plus[Times[Complex[0, 1], x], Times[Complex[0, 1], y]]]]]
+Out[3]: Plus[Times[Complex[0, Rational[-1, 2]], Power[E, Plus[Times[Complex[0, 1], x], Times[Complex[0, 1], y]]]], Times[Complex[0, Rational[1, 2]], Power[E, Plus[Times[Complex[0, -1], x], Times[Complex[0, -1], y]]]]]
+Out[4]: x

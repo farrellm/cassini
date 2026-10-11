@@ -1,0 +1,3 @@
+Intersection[{a, b}, {a}]
+Intersection[{a, b, c}, {a}, {b}]
+Intersection[foo[a], foo[a]]

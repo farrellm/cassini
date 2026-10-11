@@ -1,7 +1,7 @@
 cabal-version:      3.14
 name:               cassini-repl
 version:            0.1.0.0
-synopsis:           The cassini executable: script mode, and the REPL from milestone 1c
+synopsis:           The cassini executable: the interactive loop, and script mode
 description:
   The command-line front end to cassini-core (DESIGN.md §4.10). Kept apart
   so that the REPL's terminal dependencies are not the kernel's (D7).
@@ -30,11 +30,16 @@ common extensions
 executable cassini
   import:           warnings, extensions
   main-is:          Main.hs
+  other-modules:    Cassini.REPL
   hs-source-dirs:   app
   build-depends:
     , base ^>=4.21.2.0
     , cassini-core
     , cassini-prelude
+    , effectful-core ^>=2.6.1.0
+    , haskeline ^>=0.8.4.1
+    , text ^>=2.1.4
+    , unix ^>=2.8.8.0
 
   mixins:
     base hiding (Prelude),

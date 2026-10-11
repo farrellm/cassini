@@ -13,7 +13,7 @@ relative paths (`test/regress`, `corpus/wolfram-docs`, `oracle/cases`) resolve f
 | `test-support/` | `Test.Script`, the script-format comparison that `cassini-corpus` and `cassini-oracle` share. |
 | `bench/` | `cassini-bench`, its committed baselines `bench/baseline/` and the allocation gate `bench/check-allocation.py` (§8). |
 | `oracle/` | `cassini-oracle`: differential testing against Mathics3 (§7.5), with its cases, its Python side and its whitelist. |
-| `corpus/` | Imported test corpora (§7.8–§7.9): the `cassini-corpus` suite, its ratchet `passing/`, its manifest `divergences.txt`, and `tools/extract_wolfram_docs.py`. `fetched/` and `wolfram-docs/` are gitignored. |
+| `corpus/` | Imported test corpora (§7.8–§7.9): the `cassini-corpus` suite, its ratchets `passing/<source>.txt`, its manifest `divergences.txt`, the vendored Expreduce corpus `vendor/expreduce/`, `fetch.sh` for the fetched ones, and the extractors in `tools/`. `fetched/` and `wolfram-docs/` are gitignored. |
 
 ## Rules
 
@@ -80,10 +80,20 @@ Run them from the repository root, which is no package's directory: name the tar
   `python3 cassini-core/bench/check-allocation.py cassini-core/bench/baseline/ghc-9.12.4-hash.csv /abs/out.csv`,
   or against `-intern.csv` after a `-f intern` run. CI's step 8 gates only the end-to-end workload:
   `--benchmark-options='-p EndToEnd --csv …'`, then `check-allocation.py --only All.EndToEnd`.
-- The corpus ratchet: `cabal test cassini-corpus` (skips without `corpus/wolfram-docs/`). For
-  triage, run its binary (`cabal list-bin cassini-corpus --enable-tests`) **from this directory**,
-  with `--page NAME`, `--verbose`, and `--write-passing FILE` to diff against
-  `corpus/passing/wolfram.txt`.
+- The corpus ratchet: `cabal test cassini-corpus`, over three sources, skipping any that is absent:
+  `wolfram` (`corpus/wolfram-docs/`), `expreduce` (vendored, always present) and `mathics`
+  (`corpus/fetched/mathics/`). For triage, run its binary (`cabal list-bin cassini-corpus
+  --enable-tests`) **from this directory**, with `--source NAME`, `--page NAME`, `--verbose`, and
+  `--write-passing FILE` to diff against `corpus/passing/<source>.txt`.
+- Mathics3's test suite: `corpus/fetch.sh $PWD/../.venv/bin/python`, from this directory, clones it
+  at its pinned commit and extracts its sessions; about ten seconds. Expreduce's sessions are
+  regenerated from the vendored files by the command in `corpus/vendor/expreduce/SOURCE`. Both
+  extractors need Mathics3 and import `extract_wolfram_docs.py`'s parser and normalizer.
+- An Expreduce or Mathics3 case is one input of a session its neighbours share, and its scope
+  covers every input before it. An expected value there was evaluated by Mathics3, so a failure
+  can be the normalizer's: read the source's test before blaming the evaluator. Their tests
+  sometimes depend on state no session has (Expreduce's Go builtins, a Mathics3 setup loop); the
+  extractors exclude what they can recognise, and triage lists the rest.
 - The oracle: `CASSINI_MATHICS_PYTHON=$PWD/.venv/bin/python cabal test cassini-oracle`, from the
   root, with Mathics3 installed in the root's gitignored `.venv` (`.venv/bin/pip install Mathics3`).
   It skips without the variable.

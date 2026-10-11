@@ -1,0 +1,6 @@
+Sort[{6, 2, 3.2, -5.1}]
+Sort[{"hello", "a", "aa", "zzz"}]
+Sort[{d, a, b, c}]
+Sort[{5, h, foo[y, 2], bar[a^x]}]
+Sort[foo[d, a, b, c]]
+Sort[{x, 2*x, y, 2*y, 2*y^2, 2*x^2}]

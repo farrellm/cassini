@@ -1,14 +1,18 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 -- | The evaluator benchmarks (DESIGN.md §8.4): fixed points needing 1, 5
--- and 20 rounds. Every round re-evaluates what is already settled (D14), so
--- this is where re-evaluation first shows.
+-- and 20 rounds, where re-evaluating what is already settled (D14) first
+-- shows; repeated differentiation of a product, which exercises the rule
+-- engine (D's table, the product and chain rules, Derivative's subvalues)
+-- rather than the arithmetic; and @//.@ against 10, 100 and 1000 rules.
 --
 -- The state is built by the partially applied evaluator, once, on the first
 -- iteration: a 'KernelState' holds functions and has no 'NFData' for 'env'.
 module Bench.Eval (benchmarks) where
 
 import Cassini.Builtins (standardState)
-import Cassini.Core.Expr (Expr, apply, mkSymbol)
-import Cassini.Core.Symbol (globalSymbol, sPlus, systemSymbol)
+import Cassini.Core.Expr (Expr, apply, mkSymbol, pattern Int_)
+import Cassini.Core.Symbol (globalSymbol, sList, sPlus, sRule, sTimes, systemSymbol)
 import Cassini.Eval (evaluateTop, runEvalPure)
 import Cassini.Eval.Kernel (KernelState, defaultConfig)
 import Effectful (runPureEff)
@@ -22,6 +26,16 @@ benchmarks =
         "fixed point"
         [ bench (show k <> " rounds") $ nf (evaluateIn (chainState k)) (link 0 `plus` link 0)
         | k <- [1, 5, 20 :: Int]
+        ],
+      bgroup
+        "deep D"
+        [ bench ("order " <> show n) $ nf (evaluateIn standardState) (deepD n)
+        | n <- [2, 4, 6 :: Integer]
+        ],
+      bgroup
+        "ReplaceRepeated"
+        [ bench (show k <> " rules") $ nf (evaluateIn standardState) (replaceRepeated k)
+        | k <- [10, 100, 1000 :: Int]
         ]
     ]
   where
@@ -42,3 +56,22 @@ chainState k = foldl' define standardState [0 .. k - 1]
 
 link :: Int -> Expr
 link i = mkSymbol (globalSymbol ("x" <> show i))
+
+-- | @D[f[x] g[x^2] h[x f[x]], {x, n}]@: the product rule over three factors
+-- and the chain rule through each, @n@ times, with unknown functions, so
+-- every derivative is a @Derivative[…][f][…]@ that differentiates again.
+deepD :: Integer -> Expr
+deepD n = apply (systemSymbol "D") [apply sTimes [f [x], g [apply (systemSymbol "Power") [x, Int_ 2]], h [apply sTimes [x, f [x]]]], apply sList [x, Int_ n]]
+  where
+    x = mkSymbol (globalSymbol "x")
+    f = apply (globalSymbol "f")
+    g = apply (globalSymbol "g")
+    h = apply (globalSymbol "h")
+
+-- | @{r[1], …, r[40]} //. {r[1] -> 0, …, r[k] -> 0}@ over arguments spread
+-- across the rules, so a part tries up to @k@ rules before one applies or
+-- none does: the cost of a long rule list.
+replaceRepeated :: Int -> Expr
+replaceRepeated k = apply (systemSymbol "ReplaceRepeated") [apply sList [r ((i * 37) `mod` (2 * k) + 1) | i <- [1 .. 40]], apply sList [apply sRule [r i, Int_ 0] | i <- [1 .. k]]]
+  where
+    r i = apply (globalSymbol "r") [Int_ (toInteger i)]

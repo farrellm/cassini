@@ -1,0 +1,3 @@
+(* ReplaceList's count is a non-negative integer or Infinity; anything else leaves the call, with ReplaceList::innf (Mathics3 10.0.1's test_rules). *)
+ReplaceList[f[a], RuleDelayed[f[Pattern[x, Blank[]]], x], -1]
+ReplaceList[f[a, b], RuleDelayed[f[BlankNullSequence[], Pattern[x, Blank[]], BlankNullSequence[]], x], Infinity]

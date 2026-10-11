@@ -1,0 +1,5 @@
+Out[1]: List[5, 2, 3.5, x, y, 4]
+Out[2]: List[5, 2, 4]
+Out[3]: List[3.5]
+Out[4]: List[2, c]
+Out[5]: List[a]

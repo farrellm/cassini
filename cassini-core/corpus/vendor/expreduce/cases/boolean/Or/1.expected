@@ -1,0 +1,12 @@
+Out[1]: True
+Out[2]: False
+Out[3]: Or[a, b]
+Out[4]: True
+Out[5]: True
+Out[6]: Or[a, b]
+Out[7]: Or[a, b]
+Out[8]: Or[a, b]
+Out[9]: True
+Out[10]: False
+Out[11]: False
+Out[12]: False

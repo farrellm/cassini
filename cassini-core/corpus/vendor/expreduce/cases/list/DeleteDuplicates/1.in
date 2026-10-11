@@ -1,0 +1,4 @@
+DeleteDuplicates[{b,a,b}]
+DeleteDuplicates[foo[b,a,b]]
+DeleteDuplicates[{}]
+Length[DeleteDuplicates[Range[10000]]]

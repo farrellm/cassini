@@ -1,0 +1,3 @@
+BooleanQ[True]
+BooleanQ[False]
+BooleanQ[1]

@@ -1,0 +1,2 @@
+Out[1]: 20
+Out[2]: Times[Factorial[Plus[2, k]], Power[Factorial[k], -1]]

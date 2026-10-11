@@ -1,0 +1,10 @@
+Out[1]: 1
+Out[2]: 0.5
+Out[3]: Rational[2, 3]
+Out[4]: 2
+Out[5]: Times[Rational[1, 4], Power[2, Rational[1, 2]]]
+Out[6]: Plus[1, Re[foo]]
+Out[7]: Plus[1, Re[bar], Re[foo]]
+Out[8]: Re[foo]
+Out[9]: Plus[Re[bar], Re[foo]]
+Out[10]: Times[Rational[1, 2], Re[a]]

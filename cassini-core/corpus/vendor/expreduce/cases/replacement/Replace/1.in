@@ -1,0 +1,4 @@
+Replace[a+b,a+b->2]
+Replace[a+b,a->2]
+Replace[a+b,_->2]
+Replace[a+b,{a+b->c+d,c+d->3}]

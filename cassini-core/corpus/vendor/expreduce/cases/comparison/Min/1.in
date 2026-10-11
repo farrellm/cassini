@@ -1,0 +1,7 @@
+Min[1,2,3]
+Min[1,a,3]
+Min[b,1,a,3]
+Min[b,1,a,3,3.]
+Min[b,1,a,3,3.,3.1]
+Min[b,1,a,3,3.,3.1 ,Rational[99,2]]
+Min[]

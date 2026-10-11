@@ -1,0 +1,5 @@
+Out[1]: Power[Plus[-1, Power[x, 2]], 2]
+Out[2]: Times[Plus[1, Times[2, x], Times[2, Power[x, 2]], Power[x, 3]], Power[Plus[-1, x], 2]]
+Out[3]: Times[Plus[2, Times[-3, x], Power[x, 2]], Power[Plus[-3, x], 2]]
+Out[4]: Times[Plus[-4, Power[x, 2]], Power[Plus[-1, Power[x, 2]], 2], Power[Plus[3, x], 3]]
+Out[5]: Times[a, Plus[b, c]]

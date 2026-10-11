@@ -1,0 +1,4 @@
+Which[1>2, a, 1<2, b]
+Which[2>2, a, 2<2, b]
+Which[True, a, b]
+Which[False,a,False,b]

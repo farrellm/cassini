@@ -1,0 +1,6 @@
+Sqrt[3]
+Sqrt[-1]
+Sqrt[-3]
+Sqrt[1]
+Sqrt[0]
+(-2)(x^y+2)//Sqrt
