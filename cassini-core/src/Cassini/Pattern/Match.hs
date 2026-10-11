@@ -38,9 +38,9 @@ where
 
 import Cassini.Attributes (Attribute (OneIdentity), AttributeSet, isFlat, isOrderless, member)
 import Cassini.Core.Expr (Expr, exprHead, pattern App, pattern Sym)
-import Cassini.Core.Symbol (sCondition, sTrue)
+import Cassini.Core.Symbol (sCondition)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
-import Cassini.Pattern (MatchOps (..), PatternView (..), PreparedRule (..), Subst, applySubst, argRange, bindDefault, builtinDefault, isOptional, viewPattern)
+import Cassini.Pattern (MatchOps (..), PatternView (..), PreparedRule (..), Subst, applySubst, argRange, bindDefault, builtinDefault, isOptional, isTrue, viewPattern)
 import Cassini.Pattern.Commutative (matchCommutative)
 import Cassini.Pattern.Sequence (ArgContext (..), matchArgs)
 import Cassini.Pattern.Syntactic (matchSyntactic)
@@ -158,9 +158,8 @@ matchBody lhs body e = do
     App (Sym c) xs
       | c == sCondition,
         [rhs, test] <- V.toList xs ->
-          liftMatch (evaluate (applySubst sigma test)) >>= \case
-            Sym t | t == sTrue -> pure (applySubst sigma rhs)
-            _ -> empty
+          liftMatch (evaluate (applySubst sigma test)) >>= \decided ->
+            applySubst sigma rhs <$ guard (isTrue decided)
     _ -> pure (applySubst sigma body)
 
 -- | The first match, if there is one.

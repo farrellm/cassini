@@ -20,6 +20,7 @@ module Cassini.Pattern.Sequence
   ( ArgContext (..),
     matchArgs,
     matchRun,
+    runLengths,
   )
 where
 
@@ -63,15 +64,23 @@ matchArgs ops ctx ps ss = go elements 0
     restOf (lo, hi) (accLo, accHi) = (lo + accLo, (+) <$> hi <*> accHi)
     go es start sigma = case es of
       [] -> sigma <$ guard (start == n)
-      (i, p, (lo, hi), (restLo, restHi)) : rest -> do
-        let avail = n - start
-            longest = maybe id min hi (avail - restLo)
-            shortest = max lo (maybe 0 (avail -) restHi)
-            lengths = if prefersLong p then [longest, longest - 1 .. shortest] else [shortest .. longest]
+      (i, p, range, restRange) : rest ->
         asum
           [ matchRun ops ctx i m p (V.slice start k ss) sigma >>= \(sigma', _) -> go rest (start + k) sigma'
-          | k <- lengths
+          | k <- runLengths p range restRange (n - start)
           ]
+
+-- | The run lengths to try for one element, in order: from what its range
+-- allows and what the elements after it need at least and can take at most,
+-- given how many arguments remain. Shortest first, unless the element
+-- prefers long runs ('prefersLong').
+runLengths :: PatternView -> (Int, Maybe Int) -> (Int, Maybe Int) -> Int -> [Int]
+runLengths p (lo, hi) (restLo, restHi) avail
+  | prefersLong p = [longest, longest - 1 .. shortest]
+  | otherwise = [shortest .. longest]
+  where
+    longest = maybe id min hi (avail - restLo)
+    shortest = max lo (maybe 0 (avail -) restHi)
 
 -- | Match one pattern element against a run of arguments, giving the
 -- extended substitution and what the element binds: one expression, or the

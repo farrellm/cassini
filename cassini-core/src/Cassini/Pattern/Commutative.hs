@@ -35,10 +35,9 @@ import Cassini.Pattern
     PatternView (..),
     Subst,
     argRange,
-    prefersLong,
     requiredHead,
   )
-import Cassini.Pattern.Sequence (ArgContext (..), matchRun)
+import Cassini.Pattern.Sequence (ArgContext (..), matchRun, runLengths)
 import Data.List (partition)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
@@ -109,18 +108,12 @@ matchCommutative prune ops ctx ps ss sigma0 = do
       solve (filter ((/= i) . fst) rest) pending' sigma'
 
     -- Step 5: a sub-multiset of what remains, shortest first.
-    runStep el pending' rest sigma = do
-      let (lo, hi) = argRange ctx.acFlat el.elPattern
-          (restLo, restHi) = totals pending'
-          avail = length rest
-          longest = maybe id min hi (avail - restLo)
-          shortest = max lo (maybe 0 (avail -) restHi)
-          sizes = if prefersLong el.elPattern then [longest, longest - 1 .. shortest] else [shortest .. longest]
+    runStep el pending' rest sigma =
       asum
         [ do
             (sigma', _) <- matchRun ops ctx el.elPos arity el.elPattern (V.fromList (map snd chosen)) sigma
             solve (filter ((`notElem` map fst chosen) . fst) rest) pending' sigma'
-        | k <- sizes,
+        | k <- runLengths el.elPattern (argRange ctx.acFlat el.elPattern) (totals pending') (length rest),
           chosen <- sortOn fst <$> combinations k (groups rest)
         ]
 
