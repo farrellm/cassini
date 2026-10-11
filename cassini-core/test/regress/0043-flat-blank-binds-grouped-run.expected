@@ -1,0 +1,9 @@
+Out[1]: -
+Out[2]: List[f[b, c]]
+Out[3]: -
+Out[4]: 3
+Out[5]: List[f[a], f[b, c]]
+Out[6]: -
+Out[7]: List[a, fo[b, c]]
+Out[8]: -
+Out[9]: Plus[a, b, c, d]

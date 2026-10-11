@@ -21,8 +21,10 @@ import Test.QuickCheck (Gen, choose)
 -- | The value at a point, or 'Nothing' where the expression is undefined
 -- there, complex, or too large to compare: a negative base under a
 -- non-integer power, a non-positive power of zero, a factorial of anything
--- but a small natural number, or any head this evaluator does not know.
--- The functions @f@ and @g@ are fixed real functions of their arguments.
+-- but a small natural number, @f@ or @g@ of arguments too large for a
+-- periodic function to keep the tolerance, or any head this evaluator does
+-- not know. The functions @f@ and @g@ are fixed real functions of their
+-- arguments.
 evalAt :: Map Text Double -> Expr -> Maybe Double
 evalAt point = go
   where
@@ -38,10 +40,15 @@ evalAt point = go
             e' <- go e
             power b' e'
         | h == sFactorial, [x] <- V.toList as -> go x >>= factorial
-        | h.symName == "f" -> (\xs -> sin (1.3 * weighted xs)) <$> traverse go (V.toList as)
-        | h.symName == "g" -> (\xs -> cos (0.7 * weighted xs) + 2) <$> traverse go (V.toList as)
+        | h.symName == "f" -> traverse go (V.toList as) >>= periodic (\w -> sin (1.3 * w))
+        | h.symName == "g" -> traverse go (V.toList as) >>= periodic (\w -> cos (0.7 * w) + 2)
       _ -> Nothing
-    weighted xs = sum (zipWith (*) [1 ..] xs)
+    -- Rounding makes the argument's absolute error about 1e-16 of its size,
+    -- and a periodic function passes it on whole: beyond 1e6, two spellings
+    -- of one value can differ by more than 'approxEqual' allows.
+    periodic k xs =
+      let w = sum (zipWith (*) [1 ..] xs)
+       in if abs w > 1e6 then Nothing else Just (k w)
     power b e
       | b == 0 && e <= 0 = Nothing
       | b < 0 && not (isWhole e) = Nothing

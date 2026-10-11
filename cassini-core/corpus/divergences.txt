@@ -40,8 +40,16 @@ wolfram/HoldAll/PropertiesAndRelations/8 pending §4.13
 wolfram/HoldFirst/PropertiesAndRelations/4 pending §4.13
 wolfram/HoldRest/PropertiesAndRelations/2 pending §4.13
 
-# A Flat head's arguments grouped to fit a pattern, with the sequence matcher (§4.5.3, milestone 1b).
-wolfram/Flat/PropertiesAndRelations/2 pending §4.5.3
+# WL's RepeatedNull[p, {0, Infinity}] fails on an empty run, though
+# RepeatedNull[p, {0, 2}] matches one (wolfram/RepeatedNull/PropertiesAndRelations/4)
+# and RepeatedNull[p] is documented as zero or more. No rule for the
+# exception is documented, so it is not emulated (§4.5.1).
+wolfram/RepeatedNull/PropertiesAndRelations/1 §4.5.1
+
+# D27: the expected outputs are numbered in the notebook's cell order, the
+# reverse of the inputs': Out[1] is Replace's answer and Out[2] ReplaceList's.
+# Both answers are what this evaluator gives, each for its own input.
+wolfram/ReplaceList/PropertiesAndRelations/1 D27
 
 # Radicals of rationals (§4.15), as above.
 wolfram/Map/PropertiesAndRelations/5 pending §4.15

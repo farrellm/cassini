@@ -1,0 +1,2 @@
+Out[1]: Hold[List[1, 2, Sequence[3, 4]]]
+Out[2]: Hold[List[1, 2, 3, 4]]

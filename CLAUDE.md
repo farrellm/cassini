@@ -3,12 +3,13 @@
 A computer algebra system for Haskell: a Wolfram-Language-style term rewriting kernel over an exact
 numeric and polynomial substrate.
 
-**Stage 0 and milestone 1a are built.** Stage 0 is the foundations: exact numbers, symbols, `Expr`
-with switchable interning, canonical order, traversal and structural operators, under the tooling
-that enforces the rules below. 1a is the evaluator: attributes, the rule tables, the `Kernel` effect,
-the standard evaluation sequence, the syntactic matcher, Cohen's automatic simplification, the
-arithmetic, structural and assignment builtins, FullForm and script mode. Milestone 1b, the
-sequence and commutative matchers, is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and it is ahead of the code.
+**Stage 0 and milestones 1a and 1b are built.** Stage 0 is the foundations: exact numbers, symbols,
+`Expr` with switchable interning, canonical order, traversal and structural operators, under the
+tooling that enforces the rules below. 1a is the evaluator: attributes, the rule tables, the `Kernel`
+effect, the standard evaluation sequence, the syntactic matcher, Cohen's automatic simplification,
+the arithmetic, structural and assignment builtins, FullForm and script mode. 1b is the matcher: the
+sequence and commutative matchers, the rule index, and the pattern builtins (`MatchQ`, `Cases`, the
+`Replace` family). Milestone 1c, pure functions, `D` and the surface syntax, is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and it is ahead of the code.
 Where the two disagree, the design is the intent and the code is behind.
 
 Three packages under one `cabal.project` (`DESIGN.md` §2.1, D7). Each has its own `CLAUDE.md`
