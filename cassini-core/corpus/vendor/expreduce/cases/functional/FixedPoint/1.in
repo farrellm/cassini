@@ -1,0 +1,1 @@
+FixedPoint[D[#, x] &, x^3]

@@ -1,0 +1,5 @@
+Denominator[a/(b*c)]
+Denominator[a^2*b]
+Denominator[a^2*b^-2*c^-3]
+Denominator[a^2*b^-a*c^-d]
+Denominator[2/3]

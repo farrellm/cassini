@@ -1,0 +1,3 @@
+Out[1]: Function[v$, f[x, v$]]
+Out[2]: Function[v, f[x, v]]
+Out[3]: f[x, y]

@@ -1,0 +1,3 @@
+PolynomialQuotient[2 + x^2 + x^3, 2 + 2*x, x]
+PolynomialQuotient[x^3, x + y, x]
+PolynomialQuotient[1 + x^3, 1 + a*x^2, x]

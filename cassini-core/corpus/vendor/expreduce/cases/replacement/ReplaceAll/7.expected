@@ -1,0 +1,43 @@
+Out[1]: Plus[Times[2, Power[a, 2]], Times[-2, Power[b, 2]]]
+Out[2]: Plus[Times[3, Power[a, 2]], Times[5, Power[b, 2]]]
+Out[3]: Plus[Times[2, Power[a, 2]], Times[-2, Power[b, 2]]]
+Out[4]: Plus[Times[2, Power[a, 2]], Times[-2, Power[b, 2]]]
+Out[5]: Plus[Times[2, Power[a, 2]], Times[-2, Power[b, 2]]]
+Out[6]: Plus[Times[2, Power[a, 2]], Times[-2, Power[b, 2]]]
+Out[7]: test[]
+Out[8]: 11
+Out[9]: 2[2, 2, 2, 2]
+Out[10]: 2
+Out[11]: foo[]
+Out[12]: foo[b, c, d]
+Out[13]: foo[Plus[a, b, c, d]]
+Out[14]: Plus[a, b]
+Out[15]: foo[b, c, d]
+Out[16]: foo[Plus[a, b, c, d]]
+Out[17]: 3
+Out[18]: 1
+Out[19]: bar[m, n]
+Out[20]: foo[False, y, 5]
+Out[21]: foo[5, y, x]
+Out[22]: k
+Out[23]: foo[k]
+Out[24]: k
+Out[25]: foo[bla]
+Out[26]: Plus[Times[2, a], Times[12, b]]
+Out[27]: Plus[a, Times[24, b]]
+Out[28]: False
+Out[29]: And[f, c]
+Out[30]: False
+Out[31]: False
+Out[32]: And[jjj, eee, c]
+Out[33]: myand[a, b, c]
+Out[34]: And[a, b, c]
+Out[35]: Plus[c, eee, jjj]
+Out[36]: Plus[c, eee, jjj]
+Out[37]: And[a, b, c]
+Out[38]: And[1, 2, a, b, jjj, eee]
+Out[39]: And[1, 2, a, b, c]
+Out[40]: And[jjj, eee, b, c]
+Out[41]: Sequence[jjj, eee]
+Out[42]: And[1, 2, a, b, c]
+Out[43]: And[1, 2, jjj, eee, b, c]

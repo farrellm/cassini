@@ -1,0 +1,15 @@
+Map[foo, {a, b, c}]
+foo /@ {a, b, c}
+Times /@ {2, 4, 9}
+Map[foo, {{a, b}, c}]
+Map[foo]
+Map[foo, foo]
+Map[foo, foo, foo]
+Function[x, x^2] /@ {2,4}
+Function[#^2] /@ {2,4}
+f[a[f[b[f[c], f[d], f[e]]], f[l[f[g[f[h], f[j]]], f[k]]]]]
+a[f[b[f[c], f[d], f[e]]], f[l[f[g[f[h], f[j]]], f[k]]]]
+a[f[b[f[c], f[d], f[e]]], l[f[g[f[h], f[j]]], f[k]]]
+a[b[c, d, e], l[f[g[h, j]], k]]
+a[f[b[f[c], f[d], f[e]]], f[l[f[g[h, j]], f[k]]]]
+a[f[b[c, d, e]], f[l[f[g[h, j]], k]]]

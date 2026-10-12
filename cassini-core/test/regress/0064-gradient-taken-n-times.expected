@@ -1,0 +1,2 @@
+Out[1]: List[Times[2, x], Times[15, Power[y, 2]]]
+Out[2]: List[List[2, 0], List[0, Times[30, y]]]

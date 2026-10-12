@@ -51,7 +51,9 @@ tests =
             evalStd ["SetDelayed[f[Pattern[x, Blank[]]], x]", "f[1][2]"] @?= "1[2]",
           testCase "13: built-in downvalues: Plus collects" $ evalStd ["Plus[a, Plus[b, a]]"] @?= "Plus[Times[2, a], b]",
           testCase "Function's third argument gives its attributes" $
-            evalStd ["Function[x, y, HoldAll][Plus[1, 1]]"] @?= "Function[x, y, HoldAll][Plus[1, 1]]"
+            evalStd ["Function[x, Hold[x], HoldAll][Plus[1, 1]]"] @?= "Hold[Plus[1, 1]]",
+          testCase "without them, a pure function's arguments are evaluated" $
+            evalStd ["Function[x, Hold[x]][Plus[1, 1]]"] @?= "Hold[2]"
         ],
       testGroup
         "limits"

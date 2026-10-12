@@ -1,0 +1,3 @@
+Join[{a},{b,c}]
+Join[]
+Join[foo[a],foo[b,c]]

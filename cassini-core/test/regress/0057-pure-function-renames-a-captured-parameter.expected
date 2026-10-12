@@ -1,0 +1,3 @@
+Out[1]: Function[List[y$], Plus[Times[2, y], y$]]
+Out[2]: Plus[a, Times[2, y]]
+Out[3]: Function[List[x], Plus[x, y]]

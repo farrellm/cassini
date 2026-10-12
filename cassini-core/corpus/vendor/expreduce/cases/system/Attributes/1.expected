@@ -1,0 +1,6 @@
+Out[1]: List[Protected, ReadProtected]
+Out[2]: List[HoldAll, Listable, Protected]
+Out[3]: List[Flat, Listable, NumericFunction, OneIdentity, Orderless, Protected]
+Out[4]: List[]
+Out[5]: List[Protected]
+Out[6]: List[Listable, NumericFunction, OneIdentity, Protected]

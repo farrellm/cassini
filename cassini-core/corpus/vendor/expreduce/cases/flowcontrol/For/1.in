@@ -1,0 +1,1 @@
+For[n = 1, n < 1000, n++, If[PrimeQ[n] && (n > 7), Return[]]]; n

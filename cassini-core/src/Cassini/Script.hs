@@ -12,25 +12,30 @@
 -- nothing), followed by one @Message[k]: symbol::tag@ line per message, in
 -- the order emitted. This is the Wolfram documentation corpus's format
 -- (§7.9), so its cases and the regression corpus run through the same
--- function, and messages compare by name, never by text.
+-- function, and messages compare by name, never by text. Each input is
+-- recorded in the session's history as it would be interactively, so @%@
+-- (@Out[]@) is the previous output.
 module Cassini.Script
   ( runScript,
     runScriptWith,
     traceScript,
+    evaluateInput,
     resolveName,
   )
 where
 
-import Cassini.Builtins (standardState, systemNames)
-import Cassini.Core.Expr (Expr, pattern Sym)
-import Cassini.Core.Symbol (Symbol, globalSymbol, sNull, systemSymbol)
+import Cassini.Builtins (resolveName, standardState)
+import Cassini.Builtins.Session (recordLine)
+import Cassini.Core.Expr (Expr, apply, pattern App, pattern Sym)
+import Cassini.Core.Symbol (sCompoundExpression, sNull)
 import Cassini.Eval (evaluateTop, runEvalIO)
-import Cassini.Eval.Kernel (EvalConfig (..), KernelState (..), TraceEntry (..), Unwind (..), defaultConfig)
+import Cassini.Eval.Kernel (EvalConfig (..), Kernel, KernelState (..), TraceEntry (..), Unwind (..), defaultConfig)
 import Cassini.Eval.Message (messageName)
 import Cassini.Syntax.FullForm (fullForm, parseFullForm)
-import Data.HashSet qualified as HashSet
+import Data.List (unsnoc)
 import Data.Text qualified as T
-import Effectful (runEff)
+import Data.Vector qualified as V
+import Effectful (Eff, runEff, (:>))
 
 -- | Run a script against the standard builtins.
 runScript :: Text -> IO Text
@@ -50,7 +55,7 @@ runScriptWith cfg st src = do
     case parseFullForm resolveName line of
       Left _ -> pure [label "Out" k <> "$Failed", label "Message" k <> "Syntax::sntx"]
       Right e -> do
-        r <- runEff (runEvalIO cfg ref (evaluateTop e))
+        r <- runEff (runEvalIO cfg ref (evaluateInput (toInteger k) e))
         after <- readIORef ref
         writeIORef ref after {ksMessages = mempty, ksTrace = mempty}
         let traced = [label "Trace" k <> T.replicate (2 * (t.teDepth - 1)) " " <> t.teStep <> ": " <> fullForm t.teExpr | t <- toList after.ksTrace]
@@ -71,9 +76,18 @@ runScriptWith cfg st src = do
     unwound :: Either Unwind Expr -> Either () Expr
     unwound = first (const ())
 
--- | A name without a context is @System`@ if the registry defines it, else
--- @Global`@.
-resolveName :: Text -> Symbol
-resolveName n
-  | HashSet.member n systemNames = systemSymbol n
-  | otherwise = globalSymbol n
+-- | Evaluate input @k@ at the top level and record it in the session's
+-- history ("Cassini.Builtins.Session"). An input that ends in @;@,
+-- @CompoundExpression[…, Null]@, gives @Null@, so the front end shows
+-- nothing, but @Out[k]@ is the value of what precedes the semicolon, as in
+-- WL: after @n = 2^200;@, @%@ is @2^200@
+-- (@wolfram/CompoundExpression/BasicExamples/3@).
+evaluateInput :: (Kernel :> es) => Integer -> Expr -> Eff es Expr
+evaluateInput k e = case e of
+  App (Sym c) as
+    | c == sCompoundExpression,
+      Just (before@(_ : _), Sym n) <- unsnoc (V.toList as),
+      n == sNull -> do
+        v <- evaluateTop (apply sCompoundExpression before)
+        Sym sNull <$ recordLine k e v
+  _ -> evaluateTop e >>= \v -> v <$ recordLine k e v

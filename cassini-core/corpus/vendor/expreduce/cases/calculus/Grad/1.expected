@@ -1,0 +1,1 @@
+Out[1]: List[Times[-1, Sin[Plus[x, Times[2, y]]]], Times[-2, Sin[Plus[x, Times[2, y]]]]]

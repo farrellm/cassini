@@ -1,0 +1,5 @@
+Out[1]: "h"
+Out[2]: StringTake["hello", List[0, 1]]
+Out[3]: "hello"
+Out[4]: ""
+Out[5]: StringTake["hello", List[2, 999]]

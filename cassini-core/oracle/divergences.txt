@@ -93,3 +93,34 @@ patterns 17 Mathics3
 0053-repeated-bound-may-be-infinity-without-braces 1 Mathics3
 0053-repeated-bound-may-be-infinity-without-braces 2 Mathics3
 0053-repeated-bound-may-be-infinity-without-braces 3 Mathics3
+# Mathics3: renames an inner parameter that shields its body; WL does not
+# ("the formal parameter x in the inner function shields the body of the
+# function, so no renaming is needed", wolfram_ref_modularity_and_naming.html).
+0057-pure-function-renames-a-captured-parameter 3 Mathics3
+# Mathics3: Protect of a number raises a Python exception; WL leaves it with
+# Protect::pssl (wolfram/HoldAll/PropertiesAndRelations/2).
+0059-protect-non-symbol-is-pssl 2 Mathics3
+# Mathics3: renames a named parameter into a list; WL keeps Function[v$, …]
+# (wolfram/Slot/PossibleIssues/1).
+0061-slot-fill-renames-nothing 1 Mathics3
+# Mathics3: fills ##5 from three arguments with nothing; WL leaves it, with
+# Function::slots (wolfram/SlotSequence/PossibleIssues/1).
+0062-slot-sequence-beyond-the-arguments 1 Mathics3
+# Mathics3: gives a named function's derivative in slot form; WL keeps the
+# parameter (wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1).
+0063-derivative-of-named-function-keeps-parameters 1 Mathics3
+# Mathics3: Rational[n_, d_] does not match a fraction there; WL's does
+# (wolfram/Rational/Scope/7).
+0066-rational-pattern-matches-a-fraction 1 Mathics3
+0066-rational-pattern-matches-a-fraction 2 Mathics3
+# Mathics3: drops a compound head's dependence on the variable, giving 0
+# (and only the argument term for [2]); WL 15.0.1, evaluated through the
+# Wolfram Cloud MCP, gives the head term D[h, x][args] (DESIGN.md §4.9).
+0073-compound-head-differentiated-symbol-head-not 1 Mathics3
+0073-compound-head-differentiated-symbol-head-not 2 Mathics3
+0073-compound-head-differentiated-symbol-head-not 5 Mathics3
+0073-compound-head-differentiated-symbol-head-not 6 Mathics3
+0073-compound-head-differentiated-symbol-head-not 7 Mathics3
+# Mathics3: refuses the string escape \' ; WL 15.0.1, evaluated through the
+# Wolfram Cloud MCP, keeps the two characters as written (DESIGN.md §4.10).
+0074-string-escapes-are-wl-not-haskell 3 Mathics3

@@ -1,0 +1,5 @@
+(* DESIGN.md §10, milestone 1c's criterion: after Derivative[1][f] = 3 #^2 &, D[f[x^2], x] is 6 x^5. *)
+(* The derivative is a user subvalue on Derivative, which is not Protected; the Function in it applies at step 13. *)
+Set[Derivative[1][f], Function[Times[3, Power[Slot[1], 2]]]]
+D[f[Power[x, 2]], x]
+Derivative[1][f][y]

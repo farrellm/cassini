@@ -1,0 +1,2 @@
+Out[1]: -
+Out[2]: Plus[Times[b, Log[a]], Times[Log[b], Power[c, d]]]

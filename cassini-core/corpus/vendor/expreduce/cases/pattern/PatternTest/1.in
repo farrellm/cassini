@@ -1,0 +1,6 @@
+MatchQ[1, _?NumberQ]
+MatchQ[a, _?NumberQ]
+MatchQ[1, 1?NumberQ]
+MatchQ[1, 1.5?NumberQ]
+MatchQ[1.5, 1.5?NumberQ]
+Cases[{5, 2, a^b, x, y, 4.5}, _?NumberQ]

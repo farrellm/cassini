@@ -1,0 +1,6 @@
+Out[1]: Plus[1, x]
+Out[2]: Plus[1, x, Times[2, y]]
+Out[3]: True
+Out[4]: True
+Out[5]: Plus[Times[2, a], Times[4, b]]
+Out[6]: foo[test, k]

@@ -1,0 +1,2 @@
+Out[1]: Times[Rational[1, 2], Power[2, Rational[1, 2]], Power[σ, -1], Power[Pi, Rational[-1, 2]], Power[E, Times[Rational[-1, 2], Power[σ, -2], Power[Plus[x, Times[-1, μ]], 2]]]]
+Out[2]: Piecewise[List[List[Times[1, Power[Times[Power[E, Times[Power[Plus[Times[-1, μ], Log[x]], 2], Power[Times[2, Power[σ, 2]], -1]]], Sqrt[Times[2, Pi]], x, σ], -1]], Greater[x, 0]]], 0]

@@ -1,0 +1,3 @@
+(* wolfram/CompoundExpression/BasicExamples/3: an input ending in ; shows nothing, but % is its value. *)
+CompoundExpression[Set[n, Power[2, 10]], Null]
+Out[]

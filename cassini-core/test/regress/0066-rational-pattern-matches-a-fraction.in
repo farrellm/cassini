@@ -1,0 +1,3 @@
+(* wolfram/Rational/Scope/7, wolfram/Rational/Applications/1: Rational[n_, d_] matches a fraction as Rational[n, d]; an integer is not one. *)
+ReplaceAll[f[Rational[22, 7], Rational[201, 64], x, 3], RuleDelayed[Rational[Pattern[n, Blank[]], Pattern[d, Blank[]]], Times[d, Power[n, -1]]]]
+MatchQ[Rational[2, 3], Rational[Pattern[a, Blank[Integer]], Pattern[b, Blank[Integer]]]]

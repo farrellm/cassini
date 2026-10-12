@@ -1,0 +1,41 @@
+Out[1]: Plus[y, Power[2, Plus[1, y]]]
+Out[2]: Plus[Power[x, 2], Power[2, Plus[1, Power[x, 2]]]]
+Out[3]: Plus[b, c, d]
+Out[4]: Plus[c, d, Power[a, b]]
+Out[5]: Plus[a, Times[99, b], Times[99, c]]
+Out[6]: foo[b, c, d]
+Out[7]: 11
+Out[8]: 2[2, 2, 2, 2]
+Out[9]: Times[a, b, c]
+Out[10]: Times[b, d]
+Out[11]: Plus[Times[2, a], b, c, Power[c, 2]]
+Out[12]: Plus[Power[a, 2], b, c, d]
+Out[13]: Plus[Times[a, b, c], Times[a, Power[b, 2], c]]
+Out[14]: Plus[Times[b, d], Times[Power[b, 2], d]]
+Out[15]: Plus[Times[b, d], Times[Power[b, 2], d]]
+Out[16]: Plus[a, b, c]
+Out[17]: d
+Out[18]: Times[a, b, c]
+Out[19]: Times[a, b, c, d, e]
+Out[20]: Times[d, e, z]
+Out[21]: Times[a, b, z]
+Out[22]: Times[a, b, z]
+Out[23]: Power[a, b]
+Out[24]: 2
+Out[25]: Power[2, b]
+Out[26]: 2
+Out[27]: Power[a, b]
+Out[28]: 2
+Out[29]: Power[Equal[a, b], k]
+Out[30]: Power[3, k]
+Out[31]: Power[3, k]
+Out[32]: Power[Plus[2, k], k]
+Out[33]: Power[Plus[2, k], k]
+Out[34]: Plus[1, Power[Plus[2, k], k]]
+Out[35]: Plus[b, Power[a, c]]
+Out[36]: Plus[1, a]
+Out[37]: Power[a, a]
+Out[38]: 2
+Out[39]: Power[a, a]
+Out[40]: 2
+Out[41]: 2

@@ -1,0 +1,2 @@
+Out[1]: Plus[Times[e, Plus[Times[d, Log[c]], Log[b]]], Log[a]]
+Out[2]: List[Times[Complex[0, 1], Power[a, Rational[1, 2]]], a, Times[Power[a, Rational[1, 2]], Power[b, Rational[-1, 2]]]]

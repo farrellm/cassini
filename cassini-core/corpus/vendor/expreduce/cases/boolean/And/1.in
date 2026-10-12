@@ -1,0 +1,13 @@
+True && False
+True && True && True
+And[]
+1 && True && True
+True && False
+False && True
+True && True
+False && 1
+1 && False
+1 && 1
+1 && 1 && kfdkkfd
+1 && 1 && True && kfdkkfd
+1 && 1 && True && False && kfdkkfd

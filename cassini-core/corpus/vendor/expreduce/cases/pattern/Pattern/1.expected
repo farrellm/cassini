@@ -1,0 +1,6 @@
+Out[1]: 2
+Out[2]: foo[2, 1]
+Out[3]: 2
+Out[4]: True
+Out[5]: False
+Out[6]: bar[2, 1]

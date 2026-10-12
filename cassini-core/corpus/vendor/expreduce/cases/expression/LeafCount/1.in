@@ -1,0 +1,3 @@
+LeafCount[a+b]
+LeafCount[a^2 + b^(c!)]
+LeafCount[a]

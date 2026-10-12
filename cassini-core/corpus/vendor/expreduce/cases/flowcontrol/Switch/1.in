@@ -1,0 +1,6 @@
+Switch[z,_,b,z,c]
+Switch[z,k_Symbol,k]
+Switch[z,1]
+Switch[z,d,b,l,c]
+Switch[]
+Switch[z]

@@ -1,0 +1,43 @@
+2 * a^2 - 2 * b^2 /. matcha_ - matchb_ -> 2
+2 * a^2 - 2 * b^2 /. 2*matcha_ - 2*matchb_ -> 3*matcha + 5*matchb
+2 * a^2 - 2 * b^2 /. _Integer*matcha_ - _Integer*matchb_ -> 2
+2 * a^2 - 2 * b^2 /. _*matcha_ - _*matchb_ -> 2
+2 * a^2 - 2 * b^2 /. _ - _ -> 2
+2 * a^2 - 2 * b^2 /. _ - 2*_ -> 2
+kfdsfdsf[] /. _Symbol -> test
+(x + 2)[5, 6] /. (2 + x) -> Plus
+a*b*c*d /. _Symbol -> 2
+foo[2*x, x] /. foo[matcha_Integer*matchx_, matchx_] -> matcha
+a + b /. a + b + amatch___ -> foo[amatch]
+a + b + c + d /. a + amatch___ -> foo[amatch]
+a + b + c + d /. amatch___ -> foo[amatch]
+a + b /. a + b + amatch__ -> foo[amatch]
+a + b + c + d /. a + amatch__ -> foo[amatch]
+a + b + c + d /. amatch__ -> foo[amatch]
+{a, b, c} /. {n__} :> Length[{n}]
+{a, b, c} /. {n__} -> Length[{n}]
+foo[m, n] /. foo[a_, m_] -> bar[a, m]
+foo[x == 2, y, x] /. x -> 5
+foo[x * 2, y, x] /. x * 2 -> 5
+foo[k] /. foo[k] -> k
+foo[foo[k]] /. foo[k] -> k
+(foo[foo[k]] /. foo[k] -> k) /. foo[k] -> k
+foo[foo[k]] /. foo[k] -> bla
+foo[1, 2, 3, 4] /. foo[1, amatch__Integer, bmatch___Integer] -> a*Times[amatch] + b*Times[bmatch]
+foo[1, 2, 3, 4] /. foo[1, amatch___Integer, bmatch___Integer] -> a*Times[amatch] + b*Times[bmatch]
+MatchQ[Plus[a, b], Plus[a, b, c]]
+And[a, b, c] /. And[a, b] -> f
+MatchQ[And[a, b, c], And[b, c]]
+MatchQ[And[a, b, c], And[a, b]]
+And[a, b, c] /. And[a, b] -> Sequence[jjj, eee]
+myand[a, b, c] /. myand[a, b] -> f
+And[a, b, c] /. And[b, a] -> Sequence[jjj, eee]
+Plus[a, b, c] /. Plus[b, a] -> Sequence[jjj, eee]
+Plus[a, b, c] /. Plus[a, b] -> Sequence[jjj, eee]
+And[a, b, c] /. And[a, c] -> Sequence[jjj, eee]
+And[1, 2, a, b, c] /. And[___Integer, c] -> Sequence[jjj, eee]
+And[1, 2, a, b, c] /. And[__Integer, c] -> Sequence[jjj, eee]
+And[1, 2, a, b, c] /. And[__Integer, a] -> Sequence[jjj, eee]
+And[1, 2, a, b, c] /. And[__Integer, a, __Symbol] -> Sequence[jjj, eee]
+And[1, 2, a, b, c] /. And[__Symbol, a, __Integer] -> Sequence[jjj, eee]
+And[1, 2, a, b, c] /. And[___Symbol, a, ___Integer] -> Sequence[jjj, eee]

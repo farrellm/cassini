@@ -1,0 +1,5 @@
+FactorSquareFree[1 - 2*x^2 + x^4]
+FactorSquareFree[1 - x^2 - x^3 + x^5]
+FactorSquareFree[18 - 39*x + 29*x^2 - 9*x^3 + x^4]
+FactorSquareFree[-108 - 108*x + 207*x^2 + 239*x^3 - 81*x^4 - 153*x^5 - 27*x^6 + 21*x^7 + 9*x^8 + x^9]
+FactorSquareFree[a b+a c]

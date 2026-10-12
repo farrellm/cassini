@@ -1,0 +1,7 @@
+(* wolfram/Symbol/BasicExamples/1: Symbol["x"] is the symbol x, resolved as the front end resolves a name. *)
+Symbol["x"]
+Head[Out[]]
+MatchQ[Symbol["Plus"], Verbatim[Plus]]
+Symbol["abc`x"]
+(* wolfram/Symbol/PossibleIssues/1: a string that is not a name stays, with Symbol::symname. *)
+Symbol["1x"]

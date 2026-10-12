@@ -1,0 +1,5 @@
+ToString[Global`a^2, InputForm]
+ToString[Sin[1], TeXForm]
+"Hello World" // ToString
+ToString[Sin[], TeXForm]
+ToString[Sin[1, 2], TeXForm]

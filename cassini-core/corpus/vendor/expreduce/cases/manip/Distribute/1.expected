@@ -1,0 +1,18 @@
+Out[1]: Plus[Times[a, c], Times[a, d], Times[b, c], Times[b, d]]
+Out[2]: Plus[Times[a, c], Times[b, c]]
+Out[3]: Plus[foo[a, c], foo[b, c]]
+Out[4]: foo[a, b]
+Out[5]: Plus[foo[c], foo[a, b]]
+Out[6]: Plus[a, Times[c, Plus[a, b]]]
+Out[7]: Plus[Times[c, e, Plus[a, b]], Times[c, f, Plus[a, b]], Times[d, e], Times[d, f]]
+Out[8]: test[foo[a, b]]
+Out[9]: test[foo[a, b], foo[a, c]]
+Out[10]: test[foo[a, b, d], foo[a, b, e], foo[a, c, d], foo[a, c, e]]
+Out[11]: test[foo[a, b, d, bar[a]], foo[a, b, e, bar[a]], foo[a, c, d, bar[a]], foo[a, c, e, bar[a]]]
+Out[12]: a
+Out[13]: 1[Plus[a, b]]
+Out[14]: test[bar[a, b, d], bar[a, b, e], bar[a, c, d], bar[a, c, e]]
+Out[15]: test[test[f, g][a, b, d], test[f, g][a, b, e], test[f, g][a, c, d], test[f, g][a, c, e]]
+Out[16]: test[foo[]]
+Out[17]: test[][foo[]]
+Out[18]: foo

@@ -1,0 +1,7 @@
+Out[1]: 1
+Out[2]: Min[1, a]
+Out[3]: Min[1, a, b]
+Out[4]: Min[1, a, b]
+Out[5]: Min[1, a, b]
+Out[6]: Min[1, a, b]
+Out[7]: DirectedInfinity[1]

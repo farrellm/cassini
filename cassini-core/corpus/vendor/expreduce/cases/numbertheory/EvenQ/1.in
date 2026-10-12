@@ -1,0 +1,5 @@
+EvenQ[6]
+EvenQ[-2]
+EvenQ[1]
+EvenQ[2.]
+EvenQ[a]

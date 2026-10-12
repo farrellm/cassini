@@ -1,0 +1,5 @@
+(* wolfram_ref_modularity_and_naming.html, "Variables in Pure Functions and Rules": the inner y is renamed. *)
+Function[List[x], Function[List[y], Plus[x, y]]][Times[2, y]]
+Out[][a]
+(* An inner parameter of the same name shields its body; nothing is renamed. *)
+Function[List[x], Function[List[x], Plus[x, y]]][a]

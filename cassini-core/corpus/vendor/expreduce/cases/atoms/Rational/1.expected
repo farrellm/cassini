@@ -1,0 +1,21 @@
+Out[1]: Rational
+Out[2]: Rational
+Out[3]: Rational
+Out[4]: Rational[5, 3]
+Out[5]: Integer
+Out[6]: Rational[2, 3]
+Out[7]: True
+Out[8]: True
+Out[9]: List[2, 3]
+Out[10]: Rational[2, 3]
+Out[11]: Rational[10, 7]
+Out[12]: -10
+Out[13]: Rational[-5, 3]
+Out[14]: Rational[5, 3]
+Out[15]: buzz[bar]
+Out[16]: buzz[bar]
+Out[17]: buzz[bar]
+Out[18]: buzz[bar]
+Out[19]: True
+Out[20]: True
+Out[21]: False

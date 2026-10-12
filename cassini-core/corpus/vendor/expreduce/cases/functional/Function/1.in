@@ -1,0 +1,6 @@
+Function[1 + #][x]
+Function[1 + # + 2#2][x, y]
+Function[x, x^2][a]
+Function[x, x^2][a, b]
+Function[x, x^2][x]
+Function[x, x^2][-2]

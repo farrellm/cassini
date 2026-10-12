@@ -1,0 +1,9 @@
+c | d
+MatchQ[b, c | d]
+MatchQ[c, c | d]
+MatchQ[d, c | d]
+Cases[{a, b, c, 1, 2}, c | _Integer]
+{a, b, c, 1., 2} /. amatch_Symbol | amatch_Integer -> amatch + 1
+Cases[{a, b, c, d, e, f}, b | c | d | e]
+MatchQ[{a, b}, {a_, k | a_}]
+MatchQ[c || a || Not[b], Or[___, a_, ___, Not[And[___, a_, ___] | a_], ___]]

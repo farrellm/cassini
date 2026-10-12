@@ -1,0 +1,25 @@
+ClearAll[myfoo]
+myfoo[_] := a /; b;
+Length[DownValues[myfoo]]
+myfoo[_] := a /; b;
+Length[DownValues[myfoo]]
+myfoo[_] := b /; b;
+Length[DownValues[myfoo]]
+myfoo[_] := a /; c;
+Length[DownValues[myfoo]]
+myfoo[_] := With[{}, a /; c];
+Length[DownValues[myfoo]]
+myfoo[_] := With[{}, b /; c];
+Length[DownValues[myfoo]]
+myfoo[_] := With[{a=2}, b /; c];
+Length[DownValues[myfoo]]
+myfoo[_] := With[{a=3}, b /; c];
+Length[DownValues[myfoo]]
+myfoo[_] := With[{a=2}, c /; c];
+Length[DownValues[myfoo]]
+myfoo[_] := With[{a=2}, c /; c] /; True;
+Length[DownValues[myfoo]]
+Length[DownValues[myfoo]]
+DownValues[dvAssignTest] = { HoldPattern[dvAssignTest[1]] :> 123, HoldPattern[dvAssignTest[_]] :> 321 };
+dvAssignTest[1]
+dvAssignTest[2]

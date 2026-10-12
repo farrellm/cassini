@@ -1,0 +1,5 @@
+Out[1]: List[5, 6]
+Out[2]: Plus[b, c]
+Out[3]: Rest[a]
+Out[4]: Rest[List[]]
+Out[5]: List[]

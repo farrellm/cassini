@@ -1,0 +1,4 @@
+Out[1]: b
+Out[2]: -
+Out[3]: Which[True, a, b]
+Out[4]: -

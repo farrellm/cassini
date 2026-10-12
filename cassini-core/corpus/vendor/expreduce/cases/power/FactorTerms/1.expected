@@ -1,0 +1,3 @@
+Out[1]: Times[2, Sin[Times[8, k]]]
+Out[2]: Times[Rational[1, 2], Plus[a, x]]
+Out[3]: Plus[a, x]

@@ -1,0 +1,4 @@
+Out[1]: List[1, f[1, 2], f[f[1, 2], 3]]
+Out[2]: List[1, f[1, 2], f[f[1, 2], 3]]
+Out[3]: h[e1, f[e1, e2], f[f[e1, e2], e3], f[f[f[e1, e2], e3], e4]]
+Out[4]: List[h]

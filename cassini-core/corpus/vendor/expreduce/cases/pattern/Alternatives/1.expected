@@ -1,0 +1,9 @@
+Out[1]: Alternatives[c, d]
+Out[2]: False
+Out[3]: True
+Out[4]: True
+Out[5]: List[c, 1, 2]
+Out[6]: Plus[1, List][Plus[1, a], Plus[1, b], Plus[1, c], 1.0, 3]
+Out[7]: List[b, c, d, e]
+Out[8]: False
+Out[9]: False

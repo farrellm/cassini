@@ -8,9 +8,12 @@
 -- 'Native' rule on the symbol's table (§4.2), and sets the symbol's
 -- attributes. The registry also defines the attribute-only symbols the
 -- evaluator itself relies on: @Hold@ and its relatives, @Sequence@,
--- @Unevaluated@, @Function@, the pattern heads, and the Boolean constants.
+-- @Unevaluated@, the pattern heads, and the Boolean constants. @Function@,
+-- which the evaluator consults for a head's attributes (§4.4), is
+-- "Cassini.Builtins.Control"'s, with its application rule.
 module Cassini.Builtins
   ( standardState,
+    resolveName,
     definitions,
     install,
     systemNames,
@@ -20,11 +23,14 @@ where
 import Cassini.Attributes (Attribute (..), attributeName, attributeSet)
 import Cassini.Builtins.Arithmetic qualified as Arithmetic
 import Cassini.Builtins.Assign qualified as Assign
-import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down)
+import Cassini.Builtins.Calculus qualified as Calculus
+import Cassini.Builtins.Control qualified as Control
+import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down, message)
 import Cassini.Builtins.Pattern qualified as Pattern
+import Cassini.Builtins.Session qualified as Session
 import Cassini.Builtins.Structural qualified as Structural
-import Cassini.Core.Expr (apply, pattern Sym)
-import Cassini.Core.Symbol (sBlankNullSequence, sSequence, symName)
+import Cassini.Core.Expr (apply, pattern Str, pattern Sym)
+import Cassini.Core.Symbol (Symbol, globalSymbol, parseName, sBlankNullSequence, sSequence, symName, systemSymbol)
 import Cassini.Eval.Kernel (KernelState (..), emptyState)
 import Cassini.Rules (BuiltinId (..), Origin (..), RuleBody (..), SymbolInfo (..), ValueKind (..), emptyInfo, insertRule, mkRule, modifyRules)
 import Data.HashSet qualified as HashSet
@@ -38,7 +44,16 @@ standardState = install definitions emptyState
 
 -- | Every builtin definition, in installation order.
 definitions :: [Definition]
-definitions = kernel <> attributeSymbols <> Arithmetic.definitions <> Structural.definitions <> Pattern.definitions <> Assign.definitions
+definitions =
+  kernel
+    <> attributeSymbols
+    <> Arithmetic.definitions
+    <> Structural.definitions
+    <> Pattern.definitions
+    <> Assign.definitions
+    <> Control.definitions
+    <> Calculus.definitions
+    <> Session.definitions
 
 -- | The attribute names as @System`@ symbols, so that the @Flat@ a user
 -- writes is the @Flat@ that @Attributes@ returns.
@@ -59,7 +74,6 @@ kernel =
     define "Unevaluated" [HoldAllComplete, Protected] [],
     define "Sequence" [Protected] [],
     define "Evaluate" [Protected] [down evaluateRule],
-    define "Function" [HoldAll, Protected] [],
     define "Rule" [Protected, SequenceHold] [],
     define "RuleDelayed" [HoldRest, Protected, SequenceHold] [],
     define "Blank" [Protected] [],
@@ -79,7 +93,7 @@ kernel =
     define "Integer" [Protected] [],
     define "Rational" [Protected] [],
     define "String" [Protected] [],
-    define "Symbol" [Protected] [],
+    define "Symbol" [Locked, Protected] [down symbolRule],
     define "True" [Locked, Protected] [],
     define "False" [Locked, Protected] [],
     define "Null" [Locked, Protected] []
@@ -89,6 +103,22 @@ kernel =
     evaluateRule e = pure $ case args e of
       [x] -> Just x
       xs -> Just (apply sSequence xs)
+    -- Symbol["name"] is the symbol, resolved as the front end resolves
+    -- a name (wolfram/Symbol/BasicExamples/1); a context may be given. A
+    -- string that is not a name stays, with Symbol::symname
+    -- (wolfram/Symbol/PossibleIssues/1).
+    symbolRule e = case args e of
+      [Str t] -> case parseName resolveName t of
+        Just s -> pure (Just (Sym s))
+        Nothing -> Nothing <$ message "Symbol" "symname" [Str t]
+      _ -> pure Nothing
+
+-- | A name without a context is @System`@ if the registry defines it, else
+-- @Global`@: how the front end resolves a bare name, and @Symbol["…"]@ too.
+resolveName :: Text -> Symbol
+resolveName n
+  | HashSet.member n systemNames = systemSymbol n
+  | otherwise = globalSymbol n
 
 -- | Install definitions: attributes are added, and each native rule gets the
 -- next id. A native rule's left-hand side is never matched (its

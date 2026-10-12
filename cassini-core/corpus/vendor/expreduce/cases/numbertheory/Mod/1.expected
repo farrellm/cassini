@@ -1,0 +1,18 @@
+Out[1]: 2
+Out[2]: 0
+Out[3]: Indeterminate
+Out[4]: Pi
+Out[5]: 1
+Out[6]: Mod[a, 3]
+Out[7]: Indeterminate
+Out[8]: Mod[2, a]
+Out[9]: Mod[0, a]
+Out[10]: 1
+Out[11]: Rational[5, 4]
+Out[12]: Rational[3, 2]
+Out[13]: Rational[7, 4]
+Out[14]: 0
+Out[15]: Rational[1, 4]
+Out[16]: Rational[1, 2]
+Out[17]: Rational[3, 4]
+Out[18]: 1

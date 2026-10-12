@@ -1,0 +1,4 @@
+Apart[(a + b)^3]
+Apart[(3x-8)/((x+1)*(x-5)),x]
+Apart[(x^6/((a+(b*x))*(a+(b*x)))),x]
+Apart[(x^6*(a+(b*x))^-2),x]

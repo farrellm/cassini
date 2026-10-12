@@ -1,0 +1,4 @@
+FoldList[f, 1, {2, 3}]
+FoldList[f, {1, 2, 3}]
+FoldList[f, e1, h[e2, e3, e4]]
+FoldList[f, h, {}]

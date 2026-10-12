@@ -1,0 +1,3 @@
+ListQ[{a}]
+ListQ[a]
+ListQ[{}]

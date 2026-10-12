@@ -1,0 +1,6 @@
+PolynomialQuotientRemainder[2 + x^2 + x^3, 2 + 2*x, x]
+PolynomialQuotientRemainder[x^3, x + y, x]
+PolynomialQuotientRemainder[1 + x^3, 1 + a*x^2, x]
+PolynomialQuotientRemainder[a+b*x,x,a]
+PolynomialQuotientRemainder[a+b*x,1,a]
+PolynomialQuotientRemainder[a+b*x,c,a]

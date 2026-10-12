@@ -1,0 +1,3 @@
+MatchQ[2x+2y,2_+2_]
+MatchQ[2x+2y,HoldPattern[2_+2_]]
+MatchQ[2x+2y,HoldPattern[2_+HoldPattern[2_]]]

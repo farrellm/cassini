@@ -1,0 +1,24 @@
+Out[1]: True
+Out[2]: LessEqual[0, a]
+Out[3]: And[Less[c, 0], Less[0, a]]
+Out[4]: Less[c, 0]
+Out[5]: Inequality[c, Less]
+Out[6]: True
+Out[7]: Inequality[]
+Out[8]: True
+Out[9]: Inequality[-1, Less]
+Out[10]: And[Less[-1, a], Less[a, 0]]
+Out[11]: And[Less[0, a], Less[a, 1]]
+Out[12]: False
+Out[13]: GreaterEqual[0, a]
+Out[14]: And[Less[0, a], Greater[a, 0], Greater[0, k]]
+Out[15]: And[Greater[0, a], Less[a, 0]]
+Out[16]: And[Less[0, a], Less[a, 1]]
+Out[17]: And[Less[0, a], Less[a, 1]]
+Out[18]: And[Less[a, b], LessEqual[b, c]]
+Out[19]: And[Less[a, b], LessEqual[b, c], Equal[c, d], GreaterEqual[d, e], Greater[e, f]]
+Out[20]: And[Greater[a, b], GreaterEqual[b, c], Equal[c, d], LessEqual[d, e], Less[e, f]]
+Out[21]: And[Greater[a, b], GreaterEqual[b, c], Equal[c, d], GreaterEqual[d, e], Less[e, f]]
+Out[22]: False
+Out[23]: And[Less[a, 1], LessEqual[4, b]]
+Out[24]: And[Less[a, 1], LessEqual[4, b], Less[b, 5]]

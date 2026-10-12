@@ -1,0 +1,2 @@
+Prepend[{a,b},c]
+Prepend[foo[a,b],c]

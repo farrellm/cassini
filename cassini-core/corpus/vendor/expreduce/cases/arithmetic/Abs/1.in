@@ -1,0 +1,9 @@
+Abs[-5]
+Abs[5]
+Abs[a]
+Abs[-Sin[x]]
+Abs[-5.2] > 0
+Abs[0]
+Abs[-x^a]
+Abs[-x^(a + b)]
+Abs[1/2 E^(\[ImaginaryJ]*\[Pi]/4)]

@@ -1,0 +1,2 @@
+(* wolfram_ref_verbatim.html: Verbatim[expr] is matched "with no substitutions for blanks or other transformations", so a Verbatim[Plus] head matches its arguments in order, without Plus's Flat and Orderless (Expreduce's and Mathics3 10.0.1's answer). *)
+ReplaceList[Plus[a, b, c, d], Rule[Verbatim[Plus][BlankNullSequence[], Pattern[x, Blank[]], Pattern[y, Blank[]], BlankNullSequence[]], List[x, y]]]

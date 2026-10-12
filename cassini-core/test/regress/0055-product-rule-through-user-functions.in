@@ -1,0 +1,2 @@
+(* DESIGN.md §10, milestone 1c's criterion: D[f[x] g[x], x] gives both product-rule terms. *)
+D[Times[f[x], g[x]], x]
