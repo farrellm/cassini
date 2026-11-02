@@ -1,0 +1,4 @@
+NestWhile[#^2 &, 2, # < 256 &]
+NestWhile[#+1 &, 1, # + #4 < 10 &, 4]
+NestWhile[#+1 &, 1, True &, 1, 4]
+NestWhile[#+1 &, 1, True &, 1, 4, 5]

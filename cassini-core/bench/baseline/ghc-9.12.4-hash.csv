@@ -1,70 +1,76 @@
 Name,Mean (ps),2*Stdev (ps),Allocated,Copied,Peak Memory
-All.Core.construct.tree depth 10,236072712,10641002,540153,13155,6291456
-All.Core.construct.tree depth 14,7380980750,496651100,8651356,3895030,14680064
-"All.Core.equality.equal, built apart",792882625,67180758,524274,158,19922944
-All.Core.equality.differing at the last leaf,3067,256,0,0,33554432
-All.Core.compareCanonical.depth 10,671041,57504,320,0,33554432
-All.Core.compareCanonical.depth 100,5776896,577288,3201,1,33554432
-All.Core.compareCanonical.depth 1000,66980258,1298804,97538,19,34603008
-All.Core.sortBy compareCanonical.10 arguments,4669117,204058,3048,1,34603008
-All.Core.sortBy compareCanonical.100 arguments,112964291,2129902,59658,41,34603008
-All.Core.sortBy compareCanonical.1000 arguments,2389193084,59017044,1133541,4575,37748736
-"All.Core.substitute, deep tree",8284419143,351150744,10092581,5451887,66060288
-All.Core.expression swell.(a+b+c+d)^10,490509550,25756560,1107253,50032,66060288
-All.Core.expression swell.(a+b+c+d)^20,7644829693,296864212,8506756,5745274,70254592
-All.Core.expression swell.(a+b+c+d)^30,28328336287,2503002170,32955291,17059021,83886080
-All.Eval.fixed point.1 rounds,11625060,275318,38752,31,83886080
-All.Eval.fixed point.5 rounds,16356726,1406148,53856,42,83886080
-All.Eval.fixed point.20 rounds,32288994,958642,110497,93,83886080
-All.Pattern.syntactic.4 arguments,3101601,92710,13192,7,83886080
-All.Pattern.syntactic.16 arguments,9444588,766998,38540,45,83886080
-All.Pattern.syntactic.64 arguments,41019932,3044212,146537,645,83886080
-All.Pattern.sequence.k=1 n=4 (1 matches),2144992,209036,9264,3,83886080
-All.Pattern.sequence.k=1 n=8 (1 matches),2126836,163778,9264,3,83886080
-All.Pattern.sequence.k=1 n=16 (1 matches),2138583,131228,9264,3,83886080
-All.Pattern.sequence.k=1 n=32 (1 matches),2103027,30852,9264,2,83886080
-All.Pattern.sequence.k=2 n=4 (3 matches),5607899,279100,22184,18,83886080
-All.Pattern.sequence.k=2 n=8 (7 matches),9683054,692936,41225,43,83886080
-All.Pattern.sequence.k=2 n=16 (15 matches),20179903,1081004,79304,98,83886080
-All.Pattern.sequence.k=2 n=32 (31 matches),41703330,855702,155465,233,83886080
-All.Pattern.sequence.k=3 n=4 (3 matches),7128047,157804,28312,22,83886080
-All.Pattern.sequence.k=3 n=8 (21 matches),31726129,935762,125193,42,83886080
-All.Pattern.sequence.k=3 n=16 (105 matches),138640559,12503032,549754,2336,83886080
-All.Pattern.sequence.k=3 n=32 (465 matches),576922259,46563882,2322034,34407,83886080
-All.Pattern.sequence.k=4 n=4 (1 matches),4970276,41948,19656,18,83886080
-All.Pattern.sequence.k=4 n=8 (35 matches),59934246,3211114,233585,568,83886080
-All.Pattern.sequence.k=4 n=16 (455 matches),652371537,47238068,2514115,45236,83886080
-All.Pattern.sequence.k=4 n=32 (4495 matches),7802404615,134470294,23338714,3103115,83886080
-"All.Pattern.commutative.3 arguments, steps 1-2 on",5011985,219314,16704,16,83886080
-"All.Pattern.commutative.3 arguments, steps 1-2 off",6208720,164508,23096,6,83886080
-"All.Pattern.commutative.5 arguments, steps 1-2 on",5304300,184326,17888,13,83886080
-"All.Pattern.commutative.5 arguments, steps 1-2 off",9890139,980764,40556,49,83886080
-"All.Pattern.commutative.8 arguments, steps 1-2 on",5615130,326236,19664,15,83886080
-"All.Pattern.commutative.8 arguments, steps 1-2 off",22140688,904614,78497,93,83886080
-"All.Pattern.commutative.12 arguments, steps 1-2 on",5231603,278432,22033,13,83886080
-"All.Pattern.commutative.12 arguments, steps 1-2 off",40644204,3679594,151042,280,83886080
-"All.Pattern.adversarial.linear, 8 arguments",1029112436,26145790,3236510,43294,83886080
-"All.Pattern.adversarial.non-linear, 8 arguments",80551332,2111784,237017,488,83886080
-All.Pattern.net.1 subjects.one-to-one,37601908,918688,121834,58,83886080
-All.Pattern.net.1 subjects.indexed,1951431,146412,8576,2,83886080
-All.Pattern.net.10 subjects.one-to-one,290374398,19978930,922906,502,83886080
-All.Pattern.net.10 subjects.indexed,19725961,1466470,50777,25,83886080
-All.Pattern.net.100 subjects.one-to-one,2743614531,68612626,7968582,7954,83886080
-All.Pattern.net.100 subjects.indexed,160478688,14531034,472692,320,83886080
-All.Pattern.net.1000 subjects.one-to-one,25221475012,1636795778,79649019,58159,83886080
-All.Pattern.net.1000 subjects.indexed,1627669760,63940200,4691924,12508,83886080
-All.Pattern.net.10000 subjects.one-to-one,261102502050,10217264962,796612729,531195,83886080
-All.Pattern.net.10000 subjects.indexed,19052654000,1850151712,47054009,309677,83886080
-All.Simplify.sum.10 terms.distinct,10731518,911596,23760,5,83886080
-All.Simplify.sum.10 terms.like terms,7471317,150138,19832,7,83886080
-All.Simplify.sum.100 terms.distinct,548977117,6176884,1324780,619,83886080
-All.Simplify.sum.100 terms.like terms,104831291,7508044,299201,165,83886080
-All.Simplify.sum.1000 terms.distinct,68157118187,938814536,123650095,334071,83886080
-All.Simplify.sum.1000 terms.like terms,1199727214,82749556,3092865,1748,83886080
-All.Simplify.product.10 terms.distinct,12100369,977620,27056,7,83886080
-All.Simplify.product.10 terms.like terms,6888951,479490,23658,9,83886080
-All.Simplify.product.100 terms.distinct,539629219,29049516,1325961,666,83886080
-All.Simplify.product.100 terms.like terms,109229012,9829580,341817,205,83886080
-All.Simplify.product.1000 terms.distinct,59679389400,5770272696,120234618,459544,83886080
-All.Simplify.product.1000 terms.like terms,1157732086,86061480,3663084,2313,83886080
-All.EndToEnd.workload,13533395400,753909100,42797138,516543,83886080
+All.Core.construct.tree depth 10,234511906,5596834,540148,13201,6291456
+All.Core.construct.tree depth 14,8483119931,309192382,8650830,3883622,17825792
+"All.Core.equality.equal, built apart",916481136,15318236,524333,180,19922944
+All.Core.equality.differing at the last leaf,2888,140,0,0,33554432
+All.Core.compareCanonical.depth 10,550581,35026,320,0,33554432
+All.Core.compareCanonical.depth 100,5816717,87588,3200,1,33554432
+All.Core.compareCanonical.depth 1000,62973638,3630876,97555,23,34603008
+All.Core.sortBy compareCanonical.10 arguments,3831989,215614,3049,1,34603008
+All.Core.sortBy compareCanonical.100 arguments,108139059,671688,59660,43,34603008
+All.Core.sortBy compareCanonical.1000 arguments,2048266840,9941790,1133285,4521,37748736
+"All.Core.substitute, deep tree",7292816112,335159924,10092304,5559986,69206016
+All.Core.expression swell.(a+b+c+d)^10,452470749,36444956,1107142,51223,69206016
+All.Core.expression swell.(a+b+c+d)^20,8009576081,117463278,8506784,5747474,71303168
+All.Core.expression swell.(a+b+c+d)^30,31360731100,1139943876,32956419,17525352,79691776
+All.Eval.fixed point.1 rounds,10734161,371322,40074,30,79691776
+All.Eval.fixed point.5 rounds,16140319,1561672,56200,44,79691776
+All.Eval.fixed point.20 rounds,32028682,1767518,116689,105,79691776
+All.Eval.deep D.order 2,3454745237,218431376,10294406,103043,79691776
+All.Eval.deep D.order 4,32903797700,2541116394,98592921,1766995,79691776
+All.Eval.deep D.order 6,200770037400,16937989980,517456095,9946047,79691776
+All.Eval.ReplaceRepeated.10 rules,491980143,44941150,1932881,7641,79691776
+All.Eval.ReplaceRepeated.100 rules,3317360675,210228290,13195378,177564,79691776
+All.Eval.ReplaceRepeated.1000 rules,28586271212,1588608848,107188041,1980106,79691776
+All.Pattern.syntactic.4 arguments,2962540,116198,13312,7,79691776
+All.Pattern.syntactic.16 arguments,9837489,822350,38945,40,79691776
+All.Pattern.syntactic.64 arguments,38844316,3129792,148116,240,79691776
+All.Pattern.sequence.k=1 n=4 (1 matches),2121128,160946,9304,5,79691776
+All.Pattern.sequence.k=1 n=8 (1 matches),2131782,77984,9304,5,79691776
+All.Pattern.sequence.k=1 n=16 (1 matches),2104964,92460,9304,5,79691776
+All.Pattern.sequence.k=1 n=32 (1 matches),2234686,191254,9304,5,79691776
+All.Pattern.sequence.k=2 n=4 (3 matches),5208479,356272,22352,21,79691776
+All.Pattern.sequence.k=2 n=8 (7 matches),10163044,565602,41617,40,79691776
+All.Pattern.sequence.k=2 n=16 (15 matches),19548987,844996,80148,79,79691776
+All.Pattern.sequence.k=2 n=32 (31 matches),38792902,2322642,157209,257,79691776
+All.Pattern.sequence.k=3 n=4 (3 matches),6857640,468256,28513,26,79691776
+All.Pattern.sequence.k=3 n=8 (21 matches),32043888,542286,126464,186,79691776
+All.Pattern.sequence.k=3 n=16 (105 matches),144841594,4638134,555850,2344,79691776
+All.Pattern.sequence.k=3 n=32 (465 matches),788996878,63473688,2348560,35012,79691776
+All.Pattern.sequence.k=4 n=4 (1 matches),4495801,105996,19744,6,79691776
+All.Pattern.sequence.k=4 n=8 (35 matches),60278290,1596122,235856,587,79691776
+All.Pattern.sequence.k=4 n=16 (455 matches),676596478,57346002,2541416,44542,79691776
+All.Pattern.sequence.k=4 n=32 (4495 matches),9714481525,374793306,23598191,3111081,79691776
+"All.Pattern.commutative.3 arguments, steps 1-2 on",4803575,208504,16552,16,79691776
+"All.Pattern.commutative.3 arguments, steps 1-2 off",7910838,669372,22604,17,79691776
+"All.Pattern.commutative.5 arguments, steps 1-2 on",4835635,254720,17753,5,79691776
+"All.Pattern.commutative.5 arguments, steps 1-2 off",11125625,1063880,39788,39,79691776
+"All.Pattern.commutative.8 arguments, steps 1-2 on",5421947,403132,19554,14,79691776
+"All.Pattern.commutative.8 arguments, steps 1-2 off",21516794,704776,77321,106,79691776
+"All.Pattern.commutative.12 arguments, steps 1-2 on",5950992,452164,21954,19,79691776
+"All.Pattern.commutative.12 arguments, steps 1-2 off",42881150,3872664,149322,282,79691776
+"All.Pattern.adversarial.linear, 8 arguments",1052507137,98140910,3132813,41732,79691776
+"All.Pattern.adversarial.non-linear, 8 arguments",77984722,5648030,232190,432,79691776
+All.Pattern.net.1 subjects.one-to-one,39909922,2956292,119828,66,79691776
+All.Pattern.net.1 subjects.indexed,2228817,59354,8752,2,79691776
+All.Pattern.net.10 subjects.one-to-one,256906738,11118060,907487,521,79691776
+All.Pattern.net.10 subjects.indexed,16636984,990220,52168,26,79691776
+All.Pattern.net.100 subjects.one-to-one,2320294087,132111284,7836501,7219,79691776
+All.Pattern.net.100 subjects.indexed,147126160,8222860,486369,385,79691776
+All.Pattern.net.1000 subjects.one-to-one,22116817000,1519202472,78330363,55438,79691776
+All.Pattern.net.1000 subjects.indexed,1774292203,22850964,4827966,13838,79691776
+All.Pattern.net.10000 subjects.one-to-one,232090101500,13319242884,783372921,543544,79691776
+All.Pattern.net.10000 subjects.indexed,17436401550,1406208814,48412533,339080,79691776
+All.Simplify.sum.10 terms.distinct,9297250,486286,23760,6,79691776
+All.Simplify.sum.10 terms.like terms,6979835,311576,19832,7,79691776
+All.Simplify.sum.100 terms.distinct,522629480,36022372,1324822,637,79691776
+All.Simplify.sum.100 terms.like terms,99545547,8884866,299211,169,79691776
+All.Simplify.sum.1000 terms.distinct,60162973600,3377545796,123700076,492712,79691776
+All.Simplify.sum.1000 terms.like terms,1155387887,113650698,3093407,1828,79691776
+All.Simplify.product.10 terms.distinct,9669433,891380,27060,8,79691776
+All.Simplify.product.10 terms.like terms,7349264,478242,23658,9,79691776
+All.Simplify.product.100 terms.distinct,522133585,25726240,1325971,681,79691776
+All.Simplify.product.100 terms.like terms,111480455,11060542,341846,210,79691776
+All.Simplify.product.1000 terms.distinct,55777845200,1835780950,120190574,346007,79691776
+All.Simplify.product.1000 terms.like terms,1198090371,93120518,3663355,2369,79691776
+All.EndToEnd.workload,36469021300,2791109130,109836784,1847820,79691776

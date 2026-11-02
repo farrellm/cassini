@@ -1,0 +1,2 @@
+HoldComplete[Evaluate[a+a],2+2,Sequence[a,b]]
+HoldComplete[Evaluate[a + a], 2 + 2, Sequence[a, b]] // Length

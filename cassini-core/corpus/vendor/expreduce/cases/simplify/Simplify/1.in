@@ -1,0 +1,34 @@
+b && b // Simplify
+a && b && !b // Simplify
+(a || b) && (a || c) // Simplify
+a || ! a && b // Simplify
+a || b || ! a || ! b // Simplify
+a || (a && Infinity) // Simplify
+(b || a) && (c || a) // Simplify
+(a || b || c || Not[(a && b && c)]) // Simplify
+(a || b || c || Not[(a && b && c && d)]) // Simplify
+(a || b || c || d || Not[(a && b && c)]) // Simplify
+(a || b || c || d || Not[a]) // Simplify
+(az || b || cz || Not[(ay && b && cy && dy)]) // Simplify
+a || (a && b && c && d) // Simplify
+d || (a && b && c && d) // Simplify
+d || e || (a && b && c && d) // Simplify
+d || b || (a && b && c && d) // Simplify // Sort
+d || b || (a && b && c && d) || ! b // Simplify
+foo[d || b || (a && b && c && d) || ! b] // Simplify
+d || e || (a && b && c) // Simplify
+z || z // Simplify
+z || a || z // Simplify // Sort
+a || a && b // Simplify
+a || !a && b // Simplify
+a || c || ! a && b // Simplify // Sort
+a || c || ! a && ! c && b // Simplify // Sort
+a || c || ! a && ! c && ! b // Simplify // Sort
+a || c || ! a && ! c && ! b && d // Simplify // Sort
+c || a || Not[b] // Simplify // Sort
+And[x1, a, x2, Not[Or[x3, a, x4]], x5] // Simplify
+And[x1, a, x2, Or[x3, a, x4], x5] // Simplify
+a&&b&&a//Simplify
+(16 + 8 (-6 + 4 x - 2 x^2))^9 // Simplify
+(1/3+(1/3)*(-2)^(-1/3)*2^(-2/3)*(1+(0+1*I)*3^(1/2))+(1/6)*(-1)^(1/3)*(1+(0+-1*I)*3^(1/2)))^2//Simplify
+(1/3+(1/3)*(-2)^(-1/3)*2^(-2/3)*(1+(0+-1*I)*3^(1/2))+(1/6)*(-1)^(1/3)*(1+(0+1*I)*3^(1/2)))^2//Simplify

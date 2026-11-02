@@ -1,0 +1,7 @@
+NumberQ[2]
+NumberQ[2.2]
+NumberQ[Rational[5, 2]]
+NumberQ[Infinity]
+NumberQ[Sqrt[2]]
+NumberQ[randomvar]
+NumberQ["hello"]

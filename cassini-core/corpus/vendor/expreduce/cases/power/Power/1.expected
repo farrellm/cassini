@@ -1,0 +1,75 @@
+Out[1]: Rational[-1, 125]
+Out[2]: Power[m, 4.0]
+Out[3]: DirectedInfinity[]
+Out[4]: Plus[1, x]
+Out[5]: -5
+Out[6]: -5.5
+Out[7]: Plus[1, x]
+Out[8]: -5
+Out[9]: -5.5
+Out[10]: -1
+Out[11]: -1
+Out[12]: -1
+Out[13]: Rational[1, 125]
+Out[14]: -125
+Out[15]: Rational[-1, 125]
+Out[16]: -1
+Out[17]: -1
+Out[18]: -0.5
+Out[19]: Rational
+Out[20]: Integer
+Out[21]: Integer
+Out[22]: Rational
+Out[23]: Rational
+Out[24]: Power[m, 4]
+Out[25]: Power[m, 4]
+Out[26]: Power[Power[m, 2], 2.0]
+Out[27]: Power[Power[m, 2.0], 2.0]
+Out[28]: Power[m, 4.0]
+Out[29]: DirectedInfinity[]
+Out[30]: List[1]
+Out[31]: 0
+Out[32]: 0
+Out[33]: Indeterminate
+Out[34]: Indeterminate
+Out[35]: Indeterminate
+Out[36]: DirectedInfinity[1]
+Out[37]: DirectedInfinity[]
+Out[38]: Indeterminate
+Out[39]: Indeterminate
+Out[40]: Indeterminate
+Out[41]: 2
+Out[42]: 2.0
+Out[43]: True
+Out[44]: True
+Out[45]: 0
+Out[46]: 8
+Out[47]: 0
+Out[48]: 0
+Out[49]: 2
+Out[50]: Power
+Out[51]: Power
+Out[52]: Rational[1, 2]
+Out[53]: DirectedInfinity[]
+Out[54]: DirectedInfinity[]
+Out[55]: Rational[1, 3]
+Out[56]: Power
+Out[57]: Power
+Out[58]: 27
+Out[59]: Rational[1, 27]
+Out[60]: Times[4, Power[2, Rational[1, 3]]]
+Out[61]: Times[4, Power[-2, Rational[1, 3]]]
+Out[62]: Times[15, Power[7, Rational[2, 3]], Power[57, Rational[1, 3]]]
+Out[63]: Times[15, Power[7, Rational[2, 3]], Power[57, Rational[1, 3]]]
+Out[64]: Times[3, Power[3, Rational[1, 3]]]
+Out[65]: Times[3, Power[3, Rational[1, 3]]]
+Out[66]: Times[15, Power[7, Rational[2, 3]], Power[57, Rational[1, 3]]]
+Out[67]: Times[15, Power[7, Rational[2, 3]], Power[57, Rational[1, 3]]]
+Out[68]: Times[3, Power[3, Rational[1, 3]]]
+Out[69]: Times[3, Power[3, Rational[1, 3]]]
+Out[70]: Power[a, Rational[4, 3]]
+Out[71]: Times[-1, Power[-1, Rational[1, 3]]]
+Out[72]: Power[-1, Rational[2, 3]]
+Out[73]: Complex[0, Rational[-1, 2]]
+Out[74]: Indeterminate
+Out[75]: 1.0

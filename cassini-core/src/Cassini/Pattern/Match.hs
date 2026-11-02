@@ -37,8 +37,8 @@ module Cassini.Pattern.Match
 where
 
 import Cassini.Attributes (Attribute (OneIdentity), AttributeSet, isFlat, isOrderless, member)
-import Cassini.Core.Expr (Expr, exprHead, pattern App, pattern Sym)
-import Cassini.Core.Symbol (sCondition)
+import Cassini.Core.Expr (Expr, apply, exprHead, pattern App, pattern Int_, pattern Rat_, pattern Sym)
+import Cassini.Core.Symbol (sCondition, sRational)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
 import Cassini.Pattern (MatchOps (..), PatternView (..), PreparedRule (..), Subst, applySubst, argRange, bindDefault, builtinDefault, isOptional, isTrue, viewPattern)
 import Cassini.Pattern.Commutative (matchCommutative)
@@ -100,12 +100,24 @@ matchWith cfg = go
           attributesM = liftMatch . headAttributes
         }
     go p s sigma = case p of
-      PCompound h qs -> compound h qs s sigma <|> oneIdentity h qs s sigma
+      PCompound h qs -> compound h qs (asApplication h s) sigma <|> oneIdentity h qs s sigma
       _ -> matchSyntactic ops p s sigma
+    -- A rational number is Rational[p, q] to a compound pattern whose head
+    -- is literally Rational, so Rational[n_, d_] matches 22/7
+    -- (wolfram/Rational/Scope/7). It is still an atom to any other head, so
+    -- _[_, _] does not match it.
+    asApplication h s = case (h, s) of
+      (PLiteral (Sym r), Rat_ q) | r == sRational -> apply sRational [Int_ (numerator q), Int_ (denominator q)]
+      _ -> s
     compound h qs s sigma = case s of
       App sh sargs -> do
         sigma' <- go h sh sigma
-        attrs <- ops.attributesM sh
+        -- A Verbatim head is matched "with no substitutions for blanks or
+        -- other transformations" (wolfram_ref_verbatim.html): its arguments
+        -- in order, without the head's Flat and Orderless.
+        attrs <- case h of
+          PVerbatim _ -> pure mempty
+          _ -> ops.attributesM sh
         let ctx = ArgContext {acHead = sh, acFlat = isFlat attrs, acOneIdentity = member OneIdentity attrs}
         if
           | isOrderless attrs -> matchCommutative cfg.pruneCommutative ops ctx qs sargs sigma'
@@ -115,7 +127,9 @@ matchWith cfg = go
       _ -> empty
     -- Under a OneIdentity head, f[p, q:.d, …] matches what p matches, the
     -- optional arguments taking their defaults, when the subject is not an
-    -- f[…] itself (§4.5.1): x matches n_. x_ with n = 1.
+    -- f[…] itself (§4.5.1): x matches n_. x_ with n = 1. When every argument
+    -- is optional, one of them takes the subject, the last first, so that x
+    -- matches b_. x_. with b = 1 and x_.^m_. with m = 1.
     -- Every failed match against a subject with another head comes through
     -- here, so the checks that allocate nothing go first: the head, then
     -- whether any argument is Optional, which few patterns have. Only then
@@ -126,10 +140,13 @@ matchWith cfg = go
           V.any isOptional qs -> do
             attrs <- ops.attributesM hd
             guard (member OneIdentity attrs)
-            case partition (isOptional . snd) (zip [1 ..] (V.toList qs)) of
-              (optionals, [(_, q)]) -> do
-                sigma' <- foldlM (\acc (i, o) -> defaulted f (V.length qs) i o acc) sigma optionals
-                go q s sigma'
+            let indexed = zip [1 ..] (V.toList qs)
+                taking (i, q) = do
+                  sigma' <- foldlM (\acc (j, o) -> defaulted f (V.length qs) j o acc) sigma [a | a@(j, _) <- indexed, j /= i]
+                  go q s sigma'
+            case partition (isOptional . snd) indexed of
+              (_, [one]) -> taking one
+              (optionals, []) -> asum [taking (i, q) | (i, POptional q _) <- reverse optionals]
               _ -> empty
       _ -> empty
     defaulted f n i o sigma = case o of

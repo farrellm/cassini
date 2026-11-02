@@ -1,0 +1,21 @@
+Apply[bar, foo[syma, symb]]
+bar@@foo[syma, symb]
+List@@(syma + symb)
+Times @@ {2, 6}
+Times @@ {a, b}
+foo @@ 1
+foo @@ bar
+Apply[foo, {a,b,c}]
+Apply[foo, {bar, buzz}]
+foo @@ {bar, buzz}
+foo @@ {1, 2}
+Apply[f,{{{a}}}]
+Apply[f,{{{a}}},{2}]
+Apply[f,{{{a}}},{3}]
+f@@@{{a},foo[b]}
+Apply[f,{{a},foo[b]},{0}]
+Apply[f,{{a},foo[b]},{0,1}]
+Apply[f,{{a,{c}},foo[b]},{0,1}]
+Apply[f,{{a,{c,{d}}},foo[b]},{0,2}]
+Apply[f,{{a,{c,{d}}},foo[b]},Infinity]
+Apply[f,{{a,{c}},foo[b]},2]

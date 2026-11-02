@@ -1,0 +1,4 @@
+Out[1]: Hold[ExpreduceNonConditional]
+Out[2]: Hold[With[List[], Condition[ExpreduceNonConditional, c]]]
+Out[3]: Hold[Condition[With[List[Set[a, 2]], Condition[ExpreduceNonConditional, c]], True]]
+Out[4]: Hold[ExpreduceNonConditional]

@@ -19,7 +19,7 @@ module Cassini.Builtins.Pattern (definitions) where
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Bound (..), Definition, args, define, down, inLevel, levelParts, levelSpec, message, rebuildM, sFalseE, sTrueE, sub)
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (sList, sRule, sRuleDelayed)
+import Cassini.Core.Symbol (sDirectedInfinity, sList, sRule, sRuleDelayed)
 import Cassini.Eval (firstJustM)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Pattern (PreparedRule, prepareRule, viewPattern)
@@ -158,11 +158,14 @@ replaceRepeatedRule e = case args e of
 
 -- | @ReplaceList[expr, rules, n]@: every way the rules apply to the whole
 -- expression, rule by rule, each rule's in match order; at most @n@, and
--- no more matches are enumerated than that.
+-- no more matches are enumerated than that. @n@ is a non-negative integer
+-- or @Infinity@; anything else is @ReplaceList::innf@, and the call stays.
 replaceListRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 replaceListRule e = case args e of
   [x, rules] -> withReplacements "ReplaceList" rules (fmap (apply sList) . every x)
-  [x, rules, Int_ n] -> withReplacements "ReplaceList" rules (fmap (apply sList) . upTo (clamp n) x)
+  [x, rules, Int_ n] | n >= 0 -> withReplacements "ReplaceList" rules (fmap (apply sList) . upTo (clamp n) x)
+  [x, rules, App (Sym d) is] | d == sDirectedInfinity, [Int_ 1] <- V.toList is -> withReplacements "ReplaceList" rules (fmap (apply sList) . every x)
+  [_, _, _] -> Nothing <$ message "ReplaceList" "innf" [Int_ 3, e]
   _ -> pure Nothing
   where
     every x rs = concat <$> traverse (\r -> observeAll (matchRule r x)) rs

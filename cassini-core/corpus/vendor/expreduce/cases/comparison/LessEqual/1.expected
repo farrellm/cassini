@@ -1,0 +1,7 @@
+Out[1]: LessEqual[a, b]
+Out[2]: True
+Out[3]: True
+Out[4]: False
+Out[5]: True
+Out[6]: True
+Out[7]: True

@@ -1,0 +1,5 @@
+Array[f, 3]
+mytest[x_] := 5
+Array[mytest, 3]
+Array[a + b, 3]
+Array[a, a]

@@ -1,0 +1,1 @@
+l = {a, b}; AppendTo[l, c]; l

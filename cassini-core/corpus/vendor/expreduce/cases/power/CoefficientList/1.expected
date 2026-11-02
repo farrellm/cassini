@@ -1,0 +1,6 @@
+Out[1]: List[b, 3, 5]
+Out[2]: List[0, 0, 5]
+Out[3]: List[Times[-1, a, Power[b, -1]], Power[b, -1]]
+Out[4]: List[b, 3, 0, 5]
+Out[5]: List[Plus[b, Times[3, x], Times[5, Power[x, 3]]]]
+Out[6]: List[Plus[Times[3, x], Times[5, Power[x, 3]]], 1]

@@ -1,0 +1,3 @@
+Out[1]: List[a, b, c]
+Out[2]: List[]
+Out[3]: foo[a, b, c]

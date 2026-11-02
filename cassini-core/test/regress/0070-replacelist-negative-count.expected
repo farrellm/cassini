@@ -1,0 +1,3 @@
+Out[1]: ReplaceList[f[a], RuleDelayed[f[Pattern[x, Blank[]]], x], -1]
+Message[1]: ReplaceList::innf
+Out[2]: List[a, b]

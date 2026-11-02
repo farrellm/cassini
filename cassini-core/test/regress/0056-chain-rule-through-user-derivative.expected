@@ -1,0 +1,3 @@
+Out[1]: Function[Times[3, Power[Slot[1], 2]]]
+Out[2]: Times[6, Power[x, 5]]
+Out[3]: Times[3, Power[y, 2]]

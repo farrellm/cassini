@@ -1,0 +1,11 @@
+20!
+Factorial[5]
+Factorial[0]
+Factorial[-1]
+Factorial[1]
+Factorial[0]
+Factorial[-0]
+Factorial[-10]
+Factorial[5]
+0 * Infinity
+0 * ComplexInfinity

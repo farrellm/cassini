@@ -1,0 +1,8 @@
+Out[1]: 0
+Out[2]: 0
+Out[3]: 0
+Out[4]: 1
+Out[5]: Times[Rational[1, 4], Power[2, Rational[1, 2]]]
+Out[6]: Times[Rational[-1, 2], Power[2, Rational[1, 2]]]
+Out[7]: Plus[Times[Re[a], Re[b]], Times[-1, Im[a], Im[b]]]
+Out[8]: Times[Rational[-1, 4], Power[2, Rational[1, 2]]]

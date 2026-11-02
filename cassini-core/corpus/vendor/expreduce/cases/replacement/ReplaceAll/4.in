@@ -1,0 +1,4 @@
+a + 2*b + 5*c /. (c1_Integer*a_Symbol) -> 99*a
+a + 2*b + 5*c /. (2*a_Symbol) -> 99*a
+a + 2*b + 2*c /. (2*a_Symbol) -> 99*a
+a + 2*b + 3*c + 3*d /. (cl_Integer*a_Symbol) -> 99*a

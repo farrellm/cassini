@@ -1,0 +1,6 @@
+Out[1]: Plus[1, x]
+Out[2]: Plus[1, x, Times[2, y]]
+Out[3]: Power[a, 2]
+Out[4]: Power[a, 2]
+Out[5]: Power[x, 2]
+Out[6]: 4

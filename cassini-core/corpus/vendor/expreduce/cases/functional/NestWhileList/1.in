@@ -1,0 +1,5 @@
+Length@NestWhileList[(# + 3/#)/2 &, 1.0, UnsameQ[#1, #2] &, 2]
+NestWhileList[#^2 &, 2, # < 256 &]
+NestWhileList[#+1 &, 1, # + #4 < 10 &, 4]
+NestWhileList[#+1 &, 1, True &, 1, 4]
+NestWhileList[#+1 &, 1, True &, 1, 4, 5]

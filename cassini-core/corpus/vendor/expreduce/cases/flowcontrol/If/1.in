@@ -1,0 +1,6 @@
+If[1 == 2, itstrue, itsfalse]
+If[1 == 2, itstrue, itsfalse] /. (2 -> 1)
+If[1 == k, itstrue, itsfalse] /. (k -> 1)
+If[1 == k, itstrue, itsfalse]
+If[True, a]
+If[False, a]

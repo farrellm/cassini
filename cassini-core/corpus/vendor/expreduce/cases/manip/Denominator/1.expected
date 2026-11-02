@@ -1,0 +1,5 @@
+Out[1]: Times[b, c]
+Out[2]: 1
+Out[3]: Times[Power[b, 2], Power[c, 3]]
+Out[4]: Times[Power[b, a], Power[c, d]]
+Out[5]: 3

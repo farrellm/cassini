@@ -1,0 +1,4 @@
+(* String escapes are WL's, as WL 15.0.1 reads them: three octal digits, \.hh, \:hhhh, \|hhhhhh, and \' as written; control characters print as escapes. *)
+List["\101", "\1012", "\.41\:0042\|000043"]
+List["a\b\r\f"]
+List["\'"]

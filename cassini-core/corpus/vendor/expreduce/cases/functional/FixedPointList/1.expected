@@ -1,0 +1,2 @@
+Out[1]: 7
+Out[2]: List[Power[x, 3], Times[3, Power[x, 2]], Times[6, x], 6, 0, 0]

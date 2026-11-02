@@ -1,0 +1,2 @@
+NestList[f, x, 3]
+NestList[#^2 &, {1, 2, 3}, 3]

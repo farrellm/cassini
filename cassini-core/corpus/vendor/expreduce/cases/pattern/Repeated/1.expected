@@ -1,0 +1,21 @@
+Out[1]: True
+Out[2]: False
+Out[3]: True
+Out[4]: False
+Out[5]: True
+Out[6]: False
+Out[7]: 2
+Out[8]: matches[1, 2, 3]
+Out[9]: foo[1, 2, 3]
+Out[10]: matches[1, 1, 1]
+Out[11]: True
+Out[12]: False
+Out[13]: False
+Out[14]: False
+Out[15]: False
+Out[16]: True
+Out[17]: False
+Out[18]: True
+Out[19]: True
+Out[20]: False
+Out[21]: x

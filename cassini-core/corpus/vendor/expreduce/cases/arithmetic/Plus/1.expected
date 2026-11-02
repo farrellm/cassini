@@ -1,0 +1,37 @@
+Out[1]: 2
+Out[2]: 0.0
+Out[3]: Plus[a, Times[6, Power[b, 2]]]
+Out[4]: Plus[Times[3, d], Times[5, Power[c, a]]]
+Out[5]: Times[-3, a, b, c, d, e, f]
+Out[6]: 0.0
+Out[7]: 0
+Out[8]: 0
+Out[9]: Plus[a, Times[7, b]]
+Out[10]: Plus[a, Times[7, b]]
+Out[11]: Plus[a, Times[7, Power[b, 2]]]
+Out[12]: Plus[a, Times[3, Power[b, 2]]]
+Out[13]: Plus[a, Times[6, Power[b, 2]]]
+Out[14]: a
+Out[15]: Plus[a, b]
+Out[16]: 0
+Out[17]: 0
+Out[18]: 0
+Out[19]: 0
+Out[20]: 0
+Out[21]: 0
+Out[22]: d
+Out[23]: Plus[Times[3, d], Times[5, Power[c, a]]]
+Out[24]: Plus[87.5, Times[3, x]]
+Out[25]: Plus[87.5, Times[7.0, x]]
+Out[26]: Times[50, a]
+Out[27]: Plus[Times[-3, m], Times[-10, n]]
+Out[28]: Plus[Times[7, a, b], Times[-2, a, c]]
+Out[29]: Plus[Times[-3, a], Times[-2, b], Times[3, a, b]]
+Out[30]: Plus[Times[7, x], Times[-11, y], Times[x, y]]
+Out[31]: Times[-3, a, b, c, d, e, f]
+Out[32]: Times[-3, a, b, c, d, e, f]
+Out[33]: Times[-3, a, b, c, d, e, f]
+Out[34]: Plus[Times[2, r], Times[2, t]]
+Out[35]: Plus[Times[-4, x, y], Times[2, Plus[-1, Times[x, y]]], Times[3, Plus[x, Times[-2, y]]]]
+Out[36]: Plus[Times[-4, s], Times[4, r, s], Times[-3, Plus[1, Times[r, s]]]]
+Out[37]: Plus[Times[7, y], Times[-1, z], Times[3, y, z]]

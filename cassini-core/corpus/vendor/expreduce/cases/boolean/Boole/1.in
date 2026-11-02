@@ -1,0 +1,5 @@
+Boole[True]
+Boole[False]
+Boole[1]
+Boole[a]
+Boole[False, False]

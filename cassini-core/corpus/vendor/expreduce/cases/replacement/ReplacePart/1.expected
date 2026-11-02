@@ -1,0 +1,16 @@
+Out[1]: List[1, foo, 3, 4]
+Out[2]: List[1, 2, foo, 4]
+Out[3]: List[1, 2, foo, 4]
+Out[4]: List[1, 2, 3, 4]
+Out[5]: List[foo, foo, foo, foo]
+Out[6]: List[1, 2, 3, 4]
+Out[7]: Plus[a, Power[b, foo]]
+Out[8]: Plus[a, Power[b, c]]
+Out[9]: Plus[a, Power[foo, foo]]
+Out[10]: Plus[a, Power[b, foo]]
+Out[11]: Plus[foo, Power[b, foo]]
+Out[12]: Plus[foo, Power[b, foo]]
+Out[13]: ReplacePart[Plus[a, Power[b, c]], List[Rule[List[1], foo], bar]]
+Out[14]: 3
+Out[15]: hi
+Out[16]: Plus[a, Power[foo[1], foo[2]]]

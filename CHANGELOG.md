@@ -4,6 +4,55 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Milestone 1c, calculus in the kernel (DESIGN.md §4.9, §4.10, §4.13, §10):
+  * Pure functions (`Cassini.Builtins.Control`): `Function` in slot and named form applies as a
+    built-in subvalue, with `Slot`, `SlotSequence`, `Function::slotn`, `Function::slots` and
+    `Function::fpct`; `CompoundExpression`. Substitution respects scoping constructs, renaming a
+    construct's names to `x$` as WL does (`Cassini.Structure.substituteFree`, which a rule's
+    right-hand side now uses too).
+  * `D` as a table of built-in downvalues (`Cassini.Builtins.Calculus`): several variables,
+    `{x, n}`, gradients, lists, the sum, product, power and chain rules; `Derivative`'s subvalues
+    add orders and differentiate pure functions, numbers, `List` and functions given by user
+    downvalues. `Derivative` is not `Protected`, so a user's derivative is an ordinary subvalue.
+  * The infix parser (`Cassini.Syntax.Lexer`, `.Parser`) over a precedence table that the
+    printer (`Cassini.Syntax.Pretty`) shares, with message formatting; `parse (pretty e) ≡ e` is a
+    property.
+  * The interactive loop (`Cassini.REPL`): `In[n]`/`Out[n]`, `%`, messages, `:trace`, `:timing`,
+    `:fullform`, line editing and history, and Ctrl-C as an abort at the next evaluation step
+    (`runKernelInterruptible`), a second one thrown at once. Script mode and the loop record
+    each input (`In`, `Out`, `$Line`), so `%` works in scripts too, and an input ending in `;`
+    records the value before the semicolon.
+  * Expreduce (vendored) and Mathics3 (fetched by `corpus/fetch.sh`) join `cassini-corpus`, each
+    with an extractor, an adapter and a ratchet.
+  * Benchmarks of deep `D` and of `//.` against 10, 100 and 1000 rules; the end-to-end workload
+    gains parsing, printing and differentiation, and both baselines are regenerated.
+  * Regression cases 0055–0058 seed the criterion, renaming and `%`; 0059–0070 pin the triage's
+    fixes below and the 1c behaviours the corpora checked.
+  * Fix: `Protect` of something that is not a symbol or a name emits `Protect::pssl`
+    (regression case 0059).
+  * Fix: `Symbol["name"]` makes the symbol, and `Symbol::symname` refuses a string that is not a
+    name (regression case 0060).
+  * Fix: `Rational[n_, d_]` matches a fraction (regression case 0066).
+  * Fix: under a `OneIdentity` head, a compound pattern whose arguments are all `Optional`, such as
+    `a_. + b_.`, matches a subject without its head (regression case 0067).
+  * Fix: a `Verbatim[h]` pattern head matches its arguments in order, without `h`'s `Flat` and
+    `Orderless` (regression case 0068).
+  * Fix: `ReplaceList` with a negative count stays, with `ReplaceList::innf`, and takes
+    `Infinity` as no limit (regression case 0070).
+  * Fix: a named pure function's derivative, `Function[x, x^2]'`, is taken in fresh variables, so
+    a global value of `x` no longer leaves it unevaluated (regression case 0071).
+  * Fix: only a literal `Rational` head sees a fraction as `Rational[n, d]`; `_[_, _]` no longer
+    matches `1/2` (regression case 0072).
+  * Fix: `substituteFree` traverses a scoping construct's inside once, not twice, so filling
+    slots under nested pure functions is linear, not exponential, in their depth.
+  * Fix: `:trace` is interruptible like any input, and a second Ctrl-C during it no longer ends
+    the loop.
+  * Fix: `D` differentiates a compound head that depends on the variable, as WL does:
+    `D[f[x][y], x]` is `f'[x][y]`, not 0, while `D[x[t], x]` stays 0 (regression case 0073).
+  * Fix: string escapes are WL's, not Haskell's, in both parsers: `"\101"` is `"A"` (octal), `\.hh`,
+    `\:hhhh` and `\|hhhhhh` are read, and `\SOH`, `\&` and `\x41` are errors. Both printers write
+    control characters as escapes (regression case 0074).
+
 * Milestone 1b, the matcher (DESIGN.md §4.5, §10):
   * Sequence matching (`Cassini.Pattern.Sequence`): `__`, `___`, `Repeated` with its counts,
     `Optional` with explicit and built-in defaults, and blanks under `Flat` heads, shortest run

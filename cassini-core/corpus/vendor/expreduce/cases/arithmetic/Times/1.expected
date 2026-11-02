@@ -1,0 +1,41 @@
+Out[1]: Rational[3, 2]
+Out[2]: Power[a, Plus[2, c]]
+Out[3]: Times[a, Power[b, -1], Power[c, -1], Power[d, -1]]
+Out[4]: Rational[-2, 3]
+Out[5]: 1
+Out[6]: 1
+Out[7]: 1
+Out[8]: 1
+Out[9]: 25
+Out[10]: 50
+Out[11]: 50
+Out[12]: Rational[5, 4]
+Out[13]: Rational[1, 4]
+Out[14]: Times[a, Power[b, -1], Power[c, -1], Power[d, -1]]
+Out[15]: Rational[40, 3]
+Out[16]: Rational[20, 3]
+Out[17]: Rational[-2, 3]
+Out[18]: Rational[3, 2]
+Out[19]: Power[a, Plus[2, c]]
+Out[20]: Power[a, Plus[2, Times[-1, c]]]
+Out[21]: Power[m, 2]
+Out[22]: 1
+Out[23]: 1
+Out[24]: Times[Rational[1, 2], Power[2, Rational[1, 2]], a]
+Out[25]: True
+Out[26]: Times[Power[-1, Rational[1, 3]], a, b, c]
+Out[27]: Rational[1, 12]
+Out[28]: Times[Complex[0, Rational[1, 12]], Power[3, Rational[1, 2]]]
+Out[29]: Times[Rational[1, 12], Power[3, Rational[1, 2]]]
+Out[30]: Times[Complex[0, Rational[-1, 12]], Power[3, Rational[1, 2]]]
+Out[31]: Times[Rational[-1, 12], Power[3, Rational[1, 2]]]
+Out[32]: Times[Rational[-5, 12], Power[3, Rational[1, 2]]]
+Out[33]: Times[Complex[1, Rational[1, 12]], Power[3, Rational[1, 2]]]
+Out[34]: Times[Complex[0, Rational[1, 4]], Power[3, Rational[1, 2]]]
+Out[35]: Times[Complex[0, Rational[-1, 6]], Power[3, Rational[1, 2]]]
+Out[36]: Times[Complex[0, Rational[-1, 6]], Power[3, Rational[1, 2]]]
+Out[37]: Times[Complex[1, Rational[5, 12]], Power[3, Rational[1, 2]]]
+Out[38]: Times[Complex[0, Rational[1, 6]], Power[3, Rational[1, 2]], Power[a, -2]]
+Out[39]: Times[Rational[1, 9], Power[3, Rational[1, 2]]]
+Out[40]: Times[Power[2, Rational[1, 2]], Power[Pi, Rational[-1, 2]]]
+Out[41]: Times[Rational[1, 2], Power[6, Rational[1, 2]], Power[Pi, Rational[-1, 2]]]

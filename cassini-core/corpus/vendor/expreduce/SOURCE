@@ -1,0 +1,14 @@
+Expreduce, https://github.com/corywalker/expreduce (MIT; LICENSE beside this file).
+Commit 9c5d539cbd3dd8990d852c01801f91aed159d9ce (2024-11-30).
+
+resources/ is that commit's expreduce/resources/*.m, without the Rubi rule
+files (rubi/, rubi.m, rubi_loader.m), which hold no test cases:
+
+    git clone https://github.com/corywalker/expreduce
+    git -C expreduce checkout 9c5d539cbd3dd8990d852c01801f91aed159d9ce
+    cp expreduce/expreduce/resources/*.m resources/ && rm resources/rubi*.m
+
+cases/ is generated from resources/ by corpus/tools/extract_expreduce.py,
+run from cassini-core/ in a Python environment with Mathics3 10.0.1:
+
+    python corpus/tools/extract_expreduce.py corpus/vendor/expreduce corpus/vendor/expreduce/cases

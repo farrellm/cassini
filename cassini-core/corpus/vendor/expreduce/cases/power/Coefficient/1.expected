@@ -1,0 +1,16 @@
+Out[1]: 3
+Out[2]: j
+Out[3]: a
+Out[4]: 24
+Out[5]: 29
+Out[6]: 1
+Out[7]: 4
+Out[8]: 1
+Out[9]: Times[-1, a]
+Out[10]: Plus[Times[-1, Power[a, -1]], b]
+Out[11]: Rational[1, 2]
+Out[12]: a
+Out[13]: Times[a, b]
+Out[14]: Plus[Times[a, b], Power[c, d]]
+Out[15]: Plus[Times[a, b], Power[c, d]]
+Out[16]: 0

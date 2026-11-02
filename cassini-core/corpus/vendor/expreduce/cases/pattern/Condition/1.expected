@@ -1,0 +1,22 @@
+Out[1]: True
+Out[2]: False
+Out[3]: True
+Out[4]: False
+Out[5]: True
+Out[6]: False
+Out[7]: True
+Out[8]: List[1, 2, 3, 5]
+Out[9]: myfn[1]
+Out[10]: -1
+Out[11]: 4
+Out[12]: foo[3, 3]
+Out[13]: foo[2, 4]
+Out[14]: 4
+Out[15]: bar[3]
+Out[16]: 4
+Out[17]: foo[3, 3]
+Out[18]: foo[2, 4]
+Out[19]: 4
+Out[20]: bar[3]
+Out[21]: 4
+Out[22]: 3

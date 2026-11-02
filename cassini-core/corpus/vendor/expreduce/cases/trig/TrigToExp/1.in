@@ -1,0 +1,4 @@
+TrigToExp[Cos[x*y]]
+TrigToExp[Cos[x+y]+b]
+TrigToExp[Sin[x+y]]
+TrigToExp[x]

@@ -1,0 +1,13 @@
+Out[1]: False
+Out[2]: True
+Out[3]: True
+Out[4]: 1
+Out[5]: False
+Out[6]: False
+Out[7]: True
+Out[8]: False
+Out[9]: False
+Out[10]: And[1, 1]
+Out[11]: And[1, 1, kfdkkfd]
+Out[12]: And[1, 1, kfdkkfd]
+Out[13]: False
