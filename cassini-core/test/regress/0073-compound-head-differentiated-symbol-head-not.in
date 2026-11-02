@@ -1,0 +1,9 @@
+(* A compound head that depends on the variable adds the term D[h, x][args]; a symbol head is a function's name, not the variable. Every output is WL 15.0.1's, evaluated through the Wolfram Cloud MCP. *)
+D[f[x][y], x]
+D[f[x][x], x]
+D[x[t], x]
+D[x[y][z], x]
+D[f[x][y][z], x]
+D[Plus[a, x][y], x]
+D[f[x][y], List[x, 2]]
+D[f[a][x], x]

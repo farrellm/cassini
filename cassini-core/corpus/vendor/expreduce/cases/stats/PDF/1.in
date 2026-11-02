@@ -1,0 +1,2 @@
+PDF[NormalDistribution[\[Mu],\[Sigma]],x]
+PDF[LogNormalDistribution[\[Mu],\[Sigma]],x]

@@ -1,0 +1,15 @@
+Out[1]: foo[a, 2, 3]
+Out[2]: Sequence[2, 3]
+Out[3]: 14
+Out[4]: 120
+Out[5]: foo[]
+Out[6]: Sequence[2]
+Out[7]: Sequence[2, 3]
+Out[8]: foo[2, 3]
+Out[9]: foo[2]
+Out[10]: foo[14]
+Out[11]: foo[2, 3, 5, 4]
+Out[12]: False
+Out[13]: True
+Out[14]: False
+Out[15]: True

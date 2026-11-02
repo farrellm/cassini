@@ -1,0 +1,1 @@
+Grad[Cos[x+2y],{x,y}]

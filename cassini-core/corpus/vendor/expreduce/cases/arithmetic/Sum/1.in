@@ -1,0 +1,14 @@
+Sum[i, {i, 5, 10}]
+Sum[i, {i, 1, 10}]
+Sum[i, {i, 0, 10}]
+Sum[i, {i, 1, 30000}]
+Sum[i, {i, 0, 30000}]
+Sum[i, {i, 0, n}]
+Sum[i, {i, 1, n}]
+Sum[a + b, {a, 0, 2}, {b, 0, 3}]
+Sum[a, {a, {b, c, d, e}}]
+Sum[a*f, {a, {b, c, d, e}}, {f, {g, h}}]
+Sum[i, {i, n*50}]
+Pi^2/6
+Pi^2/6
+Pi^2

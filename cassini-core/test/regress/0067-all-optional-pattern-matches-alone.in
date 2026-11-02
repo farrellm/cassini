@@ -1,0 +1,5 @@
+(* Under a OneIdentity head, a compound pattern whose arguments are all Optional matches a subject without its head: one argument takes the subject, the last first, the rest their defaults (Mathics3 10.0.1's test_matchq and test_pattern_rules; WL documents the one-required-argument case, wolfram/OneIdentity/BasicExamples/1). *)
+MatchQ[x, Plus[Optional[Pattern[a, Blank[]]], Optional[Pattern[b, Blank[]]]]]
+MatchQ[1, Power[Optional[Pattern[x, Blank[]]], Optional[Pattern[m, Blank[]]]]]
+ReplaceAll[A[B[x]], Rule[A[Plus[Optional[Pattern[a, Blank[]]], B[Times[Optional[Pattern[b, Blank[]]], Optional[Pattern[x, Blank[]]]]]]], List[a, b, x]]]
+ReplaceAll[A[x], Rule[A[Power[Optional[Pattern[x, Blank[]]], Optional[Pattern[n, Blank[]]]]], List[x, n]]]

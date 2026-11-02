@@ -1,0 +1,4 @@
+ExpreduceMaskNonConditional[a+b]
+ExpreduceMaskNonConditional[With[{}, a /; c]]
+ExpreduceMaskNonConditional[With[{a=2}, c /; c] /; True]
+ExpreduceMaskNonConditional[With[{}, a]]

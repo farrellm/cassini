@@ -1,0 +1,4 @@
+SquareFreeQ[(x+1)(x+2)^2//Expand]
+SquareFreeQ[(x + 1) (x + 2)]
+SquareFreeQ[(2 x + 3) (x + 2) // Expand]
+SquareFreeQ[(2 x + 3)^2]

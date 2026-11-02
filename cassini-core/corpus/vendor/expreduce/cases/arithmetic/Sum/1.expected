@@ -1,0 +1,14 @@
+Out[1]: 45
+Out[2]: 55
+Out[3]: 55
+Out[4]: 450015000
+Out[5]: 450015000
+Out[6]: Times[Rational[1, 2], n, Plus[1, n]]
+Out[7]: Times[Rational[1, 2], n, Plus[1, n]]
+Out[8]: 30
+Out[9]: Plus[b, c, d, e]
+Out[10]: Plus[Times[b, g], Times[b, h], Times[c, g], Times[c, h], Times[d, g], Times[d, h], Times[e, g], Times[e, h]]
+Out[11]: Times[25, n, Plus[1, Times[50, n]]]
+Out[12]: Times[Rational[1, 6], Power[Pi, 2]]
+Out[13]: Times[Rational[1, 6], Power[Pi, 2]]
+Out[14]: Power[Pi, 2]

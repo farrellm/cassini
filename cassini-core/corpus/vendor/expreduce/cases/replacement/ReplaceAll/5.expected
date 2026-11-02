@@ -1,0 +1,4 @@
+Out[1]: Plus[a, Times[99, b], Times[99, c]]
+Out[2]: Plus[a, Times[99, b]]
+Out[3]: Plus[a, Times[2, b], Times[5, c]]
+Out[4]: Plus[a, Times[7, b]]

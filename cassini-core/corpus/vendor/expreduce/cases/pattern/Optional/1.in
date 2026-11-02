@@ -1,0 +1,29 @@
+foo[a]/.foo[a,b_.]->{a,b}
+foo[a,b]/.foo[a,b_.]->{a,b}
+foo[a]/.foo[a,b_:c]->{a,b}
+foo[a,b]/.foo[a,b_:c]->{a,b}
+foo[a,b]/.foo[a___,b_.]->{{a},{b}}
+foo[a,b]/.foo[a___,b_:c]->{{a},{b}}
+foo[a,b]/.foo[a___,b_:c,d_:e]->{{a},{b},{d}}
+foo[x]/.foo[a_,b_:y,c_:z]->{{a},{b},{c}}
+foo[]/.foo[a_,b_:y,c_:z]->{{a},{b},{c}}
+foo[x,i,j]/.foo[a_,b_:y,c_:z]->{{a},{b},{c}}
+a /. foo[a, c_.] -> {{c}}
+a /. a + c_. -> {{c}}
+MatchQ[a,foo[a,c_.]]
+MatchQ[a,a+c_.]
+MatchQ[foo[a],a+c_.]
+a/.a+c_.+d_.->{{c},{d}}
+Cos[x]/.(_+c_.+d_.)->{{c},{d}}
+5*a/.Optional[c1_?NumberQ]*a_->{{c1},{a}}
+a/.Optional[c1_?NumberQ]*a_->{{c1},{a}}
+MatchQ[foo[a,b],foo[c1__?NumberQ]]
+MatchQ[foo[1,2],foo[c1__?NumberQ]]
+MatchQ[foo[1,2],foo[Optional[c1__?NumberQ]]]
+MatchQ[foo[1],foo[Optional[c1__?NumberQ]]]
+ReplaceList[{a,b,c},{a_:5,b__}->{{a},{b}}]
+ReplaceList[{a,b,c},{a_:5,b_:6,c___}->{{a},{b},{c}}]
+MatchQ[-x,p_.]
+MatchQ[-x*a,p_.*a]
+MatchQ[__, Optional[1]*a_]
+MatchQ[x^x, x^Optional[exp_]]

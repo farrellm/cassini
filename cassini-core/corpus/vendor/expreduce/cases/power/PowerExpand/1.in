@@ -1,0 +1,2 @@
+PowerExpand[Log[a (b c^d)^e]]
+{Sqrt[-a],Sqrt[a^2],Sqrt[a/b]}//PowerExpand

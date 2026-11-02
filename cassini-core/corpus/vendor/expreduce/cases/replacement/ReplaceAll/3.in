@@ -1,0 +1,8 @@
+test = 99^k
+99^k /. test -> 2
+99^k /. test_ -> 2
+test2 = 3
+99 /. test2_Integer -> test2
+a^b /. test3_Symbol^test3_Symbol -> k
+test3 = 5
+a^b /. test3_Symbol^test3_Symbol -> k

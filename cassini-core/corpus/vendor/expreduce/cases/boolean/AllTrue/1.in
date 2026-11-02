@@ -1,0 +1,2 @@
+AllTrue[{1, a}, NumberQ]
+AllTrue[{1, 2}, NumberQ]

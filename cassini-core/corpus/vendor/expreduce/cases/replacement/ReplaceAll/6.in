@@ -1,0 +1,7 @@
+a + b /. (d_Symbol + c_Symbol) -> 2
+a + b + c /. (d_Symbol + c_Symbol) -> 2
+a + b + c + d /. (d_Symbol + c_Symbol) -> 2
+a + b + c + d /. (dmatch_Symbol + cmatch_Symbol) -> cmatch + 99
+a + b + c + d /. (d_Symbol + c_Symbol) -> c*d
+d = 98
+a + b + c + d /. (dmatch_Symbol + cmatch_Symbol) -> cmatch*dmatch

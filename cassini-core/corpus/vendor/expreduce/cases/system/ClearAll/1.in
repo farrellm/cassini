@@ -1,0 +1,8 @@
+Attributes[mytestsym] = {HoldAll}
+mytestsym[5] := 6
+mytestsym[7] := 8
+Length[Attributes[mytestsym]]
+Length[DownValues[mytestsym]]
+ClearAll[mytestsym]
+Length[Attributes[mytestsym]]
+Length[DownValues[mytestsym]]

@@ -1,0 +1,8 @@
+NumericQ[5]
+NumericQ[a]
+NumericQ[Sin[a]]
+NumericQ[Sin[2]]
+NumericQ[Cos[2]]
+NumericQ[Sqrt[a]]
+NumericQ[Sqrt[Sin[2]]*Sqrt[Sin[x]]]
+NumericQ[Sqrt[2]]

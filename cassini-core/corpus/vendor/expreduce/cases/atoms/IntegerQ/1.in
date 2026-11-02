@@ -1,0 +1,3 @@
+IntegerQ[a]
+IntegerQ[1]
+IntegerQ[2.]

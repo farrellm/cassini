@@ -20,6 +20,7 @@ module Cassini.Eval
     evaluateTop,
     runEvalPure,
     runEvalIO,
+    runEvalInterruptible,
 
     -- * The steps, exported for their unit tests
     Node (..),
@@ -89,6 +90,7 @@ import Cassini.Eval.Kernel
     lookupBuiltin,
     lookupSymbol,
     runKernelIO,
+    runKernelInterruptible,
     runKernelPure,
     spendIteration,
     traceStep,
@@ -499,3 +501,8 @@ runEvalPure = runKernelPure (Sequence evalSequence)
 -- | The 'IO' evaluator over a session's state.
 runEvalIO :: (IOE :> es) => EvalConfig -> IORef KernelState -> Eff (Kernel : es) a -> Eff es (Either Unwind a)
 runEvalIO = runKernelIO (Sequence evalSequence)
+
+-- | The 'IO' evaluator, polling an interrupt flag at every step: the
+-- interactive loop's.
+runEvalInterruptible :: (IOE :> es) => EvalConfig -> IORef KernelState -> IORef Bool -> Eff (Kernel : es) a -> Eff es (Either Unwind a)
+runEvalInterruptible = runKernelInterruptible (Sequence evalSequence)

@@ -1,0 +1,1 @@
+Out[1]: Plus[Times[Derivative[1][g][x], f[x]], Times[Derivative[1][f][x], g[x]]]

@@ -1,0 +1,6 @@
+Out[1]: itsfalse
+Out[2]: itsfalse
+Out[3]: itstrue
+Out[4]: If[Equal[1, k], itstrue, itsfalse]
+Out[5]: a
+Out[6]: -

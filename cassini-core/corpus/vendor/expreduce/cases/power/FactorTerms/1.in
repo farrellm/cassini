@@ -1,0 +1,3 @@
+FactorTerms[2*Sin[8*k]]
+FactorTerms[a/2 + x/2]
+FactorTerms[a + x]

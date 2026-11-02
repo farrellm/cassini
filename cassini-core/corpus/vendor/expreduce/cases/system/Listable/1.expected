@@ -1,0 +1,7 @@
+Out[1]: List[1, 1, 1, 0]
+Out[2]: List[False, True, True]
+Out[3]: List[List[False, True, True]]
+Out[4]: List[List[False, True, True], List[True, False]]
+Out[5]: List[Positive[-1, 2], Positive[4, 2], Positive[5, 2]]
+Out[6]: Positive[List[-1, 4, 5], List[1, 2]]
+Out[7]: List[Positive[-1, 1], Positive[4, 2], Positive[5, 3]]

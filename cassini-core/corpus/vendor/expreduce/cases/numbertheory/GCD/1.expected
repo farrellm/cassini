@@ -1,0 +1,37 @@
+Out[1]: 3
+Out[2]: 5
+Out[3]: 1
+Out[4]: 10
+Out[5]: 3
+Out[6]: 10
+Out[7]: 10
+Out[8]: 1
+Out[9]: 10
+Out[10]: 60
+Out[11]: ?normalizer-error:AbortInterrupt
+Out[12]: GCD[0.5]
+Out[13]: GCD[1, a]
+Out[14]: GCD[a, a]
+Out[15]: 0
+Out[16]: 1
+Out[17]: GCD[a]
+Out[18]: 1000
+Out[19]: 5
+Out[20]: 5
+Out[21]: 5
+Out[22]: 1
+Out[23]: Rational[5, 2]
+Out[24]: Rational[5, 3]
+Out[25]: GCD[Rational[5, 3], a]
+Out[26]: GCD[a, b, c]
+Out[27]: 0
+Out[28]: 0
+Out[29]: 99
+Out[30]: Rational[5, 2]
+Out[31]: 5
+Out[32]: 1
+Out[33]: Rational[5, 2]
+Out[34]: Rational[5, 2]
+Out[35]: Rational[5, 3]
+Out[36]: Rational[5, 3]
+Out[37]: GCD[Rational[-5, 3], a]

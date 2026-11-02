@@ -1,0 +1,6 @@
+Out[1]: List[-5.1, 2, 3.2, 6]
+Out[2]: List["a", "aa", "hello", "zzz"]
+Out[3]: List[a, b, c, d]
+Out[4]: List[5, h, bar[Power[a, x]], foo[y, 2]]
+Out[5]: foo[a, b, c, d]
+Out[6]: List[x, Times[2, x], Times[2, Power[x, 2]], y, Times[2, y], Times[2, Power[y, 2]]]

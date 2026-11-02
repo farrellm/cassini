@@ -1,0 +1,4 @@
+Scan[(If[# > 5, Return[#]]) &, {1, 6, 9}]
+Catch[Scan[Function[If[IntegerQ[#], Null, Throw[False]]], {a}]; True]
+Catch[Scan[Function[If[IntegerQ[#], Null, Throw[False]]], {1, 2}]; True]
+Catch[Scan[Function[If[IntegerQ[#], Null, Throw[False]]], {1, a}]; True]

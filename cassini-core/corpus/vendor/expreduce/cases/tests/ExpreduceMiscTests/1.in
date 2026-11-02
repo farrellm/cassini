@@ -1,0 +1,35 @@
+LoadRubiBundledSnapshot[]
+z=1/2 E^(\[ImaginaryJ]*Pi/4)
+Re[z]
+1/2*Cos[Pi/4]
+Im[z]
+1/2*Sin[Pi/4]
+Abs[z]
+Arg[z]
+Conjugate[z]//Im
+z+Conjugate[z]//FullSimplify
+Cos[Pi/4]
+ReIm[1/2 E^(\[ImaginaryJ]*Pi)]
+ReIm[1/2 E^(-\[ImaginaryJ]*Pi)]
+ReIm[E^(\[ImaginaryJ]*Pi/2)]
+ReIm[E^(-\[ImaginaryJ]*Pi/2)]
+ReIm[E^(\[ImaginaryJ]*5Pi/2)]
+ReIm[5*E^(\[ImaginaryJ](0))]
+ReIm[2*E^(\[ImaginaryJ](Pi))]
+ReIm[3*E^(\[ImaginaryJ](-Pi/2))]
+ReIm[1*E^(\[ImaginaryJ](-2Pi/6))]
+ReIm[Sqrt[2]*E^(\[ImaginaryJ](Pi/4))]
+ReIm[\[ImaginaryJ]*E^(\[ImaginaryJ]*10*t)]
+myf[t_]:=E^((-1+\[ImaginaryJ])t);
+myf[t]==E^-t*E^(\[ImaginaryJ]*t)
+ClearAll[z, myf]
+TrigToExp[Cos[Subscript[\[Omega], 0]*t]]
+TrigToExp[Sin[Subscript[\[Omega], 0]*t]]
+TrigToExp[Cos[2t+Pi/4]]
+TrigToExp[Cos[4t]+Sin[6t]]
+TrigToExp[Sin[t]^2]
+1/(2\[ImaginaryJ])//FullSimplify
+-1/(2\[ImaginaryJ])//FullSimplify
+1/Subscript[T, 0]*Integrate[A*E^(-I*k*Subscript[\[Omega], 0]t)/.k->0,{t,0,Subscript[T, 0]/2}]
+Integrate[Cos[(2Pi*k*t)/Subscript[T, 0]],{t,0,Subscript[T, 0]/2}]
+Integrate[I*Sin[(2Pi*k*t)/Subscript[T, 0]],{t,0,Subscript[T, 0]/2}]

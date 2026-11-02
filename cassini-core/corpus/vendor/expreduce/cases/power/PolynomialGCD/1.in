@@ -1,0 +1,3 @@
+PolynomialGCD[15+13 a+2 a^2,10+7 a+a^2]
+PolynomialGCD[15+13 a+5 a^2+2 a^3,10+7 a+3 a^2+a^3]
+PolynomialGCD[15+13 a-a^2-2 a^3,5+a-a^2]

@@ -1,0 +1,11 @@
+a
+a = 5
+b = 6
+c = 7
+a
+Clear[a, 99, b]
+Head[a]
+Head[b]
+Head[c]
+Clear[c]
+Head[c]

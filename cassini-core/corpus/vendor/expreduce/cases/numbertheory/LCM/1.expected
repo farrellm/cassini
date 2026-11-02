@@ -1,0 +1,10 @@
+Out[1]: 70
+Out[2]: 2380
+Out[3]: Rational[2, 3]
+Out[4]: Rational[10, 3]
+Out[5]: 30
+Out[6]: List[Rational[2, 3], Rational[10, 3], 6]
+Out[7]: List[Rational[10, 3], Rational[10, 3], 30]
+Out[8]: LCM[a, b]
+Out[9]: LCM[a, b, c]
+Out[10]: LCM[30, c]

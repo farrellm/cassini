@@ -1,0 +1,17 @@
+Out[1]: Equal[List[1, 2, 3], Blank[List]]
+Out[2]: True
+Out[3]: True
+Out[4]: True
+Out[5]: Equal[foo[Equal[x, 2], y, x], foo[Equal[x, 2.0], y, y]]
+Out[6]: Equal[foo[Equal[x, 2], y, x], bar[Equal[x, 2], y, x]]
+Out[7]: True
+Out[8]: True
+Out[9]: True
+Out[10]: True
+Out[11]: False
+Out[12]: True
+Out[13]: True
+Out[14]: True
+Out[15]: False
+Out[16]: True
+Out[17]: True

@@ -1,0 +1,12 @@
+foo[x == 2, y, x] === foo[x == 2, y, x]
+foo[x == 2, y, x] === foo[x == 2., y, x]
+{1, 2, 3} === _List
+MatchQ[{1, 2, 3}, _List]
+foo[x == 2, y, x] === foo[x == 2., y, y]
+foo[x == 2, y, x] === bar[x == 2, y, x]
+foo[x, y, z] === foo[x, y]
+foo[x, y, z] === foo[x, y, 1]
+foo[x, y, 1] === foo[x, y, 1]
+foo[x, y, 1.] === foo[x, y, 1]
+SameQ[test]
+SameQ[]

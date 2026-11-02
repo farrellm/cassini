@@ -1,0 +1,34 @@
+Out[1]: b
+Out[2]: False
+Out[3]: Or[a, And[b, c]]
+Out[4]: Or[a, b]
+Out[5]: True
+Out[6]: a
+Out[7]: Or[a, And[b, c]]
+Out[8]: True
+Out[9]: True
+Out[10]: True
+Out[11]: True
+Out[12]: True
+Out[13]: a
+Out[14]: d
+Out[15]: Or[d, e]
+Out[16]: Or[b, d]
+Out[17]: True
+Out[18]: foo[True]
+Out[19]: Or[d, e, And[a, b, c]]
+Out[20]: z
+Out[21]: Or[a, z]
+Out[22]: a
+Out[23]: Or[a, b]
+Out[24]: Or[a, b, c]
+Out[25]: Or[a, b, c]
+Out[26]: Or[a, c, Not[b]]
+Out[27]: Or[a, c, And[Not[b], d]]
+Out[28]: Or[a, c, Not[b]]
+Out[29]: False
+Out[30]: And[a, x1, x2, x5]
+Out[31]: And[a, b]
+Out[32]: Power[Plus[-32, Times[32, x], Times[-16, Power[x, 2]]], 9]
+Out[33]: 1
+Out[34]: 0

@@ -1,0 +1,11 @@
+Out[1]: Plus[Times[a, c], Times[b, d]]
+Out[2]: Inner[Times, List[a, b], List[c, d, e], Plus]
+Out[3]: Dot[1, List[c, d, e]]
+Out[4]: 0
+Out[5]: Inner[Times, List[List[a, b], List[c, d]], List[e, f, g], Plus]
+Out[6]: List[a, b]
+Out[7]: a
+Out[8]: 1
+Out[9]: List[List[Plus[Times[a, e], Times[b, g]], Plus[Times[a, f], Times[b, h]]], List[Plus[Times[c, e], Times[d, g]], Plus[Times[c, f], Times[d, h]]]]
+Out[10]: List[List[Plus[Times[a, e], Times[b, f]]], List[Plus[Times[c, e], Times[d, f]]]]
+Out[11]: Inner[Times, List[List[a, b], List[c, d]], List[List[e, f]], Plus]

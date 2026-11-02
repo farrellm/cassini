@@ -1,0 +1,7 @@
+(* DESIGN.md §4.10: each input is recorded, so Out[] (%) is the last output and Out[-2] (%%) the one before. *)
+Plus[a, 1]
+Times[2, b]
+Out[]
+Out[-2]
+Out[1]
+In[2]

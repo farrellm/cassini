@@ -1,0 +1,5 @@
+"Hello" <> " " <> "World"
+"If a=2, then " <> ToString[Global`a^2, InputForm] <> "=" <> ToString[a^2 /. a -> 2, InputForm]
+StringJoin[]
+StringJoin["Hello", 5]
+StringJoin[{"a", "b", "c"}]
