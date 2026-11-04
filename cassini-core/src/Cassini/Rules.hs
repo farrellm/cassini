@@ -37,7 +37,7 @@ module Cassini.Rules
 where
 
 import Cassini.Attributes (AttributeSet, isFlat, isOrderless)
-import Cassini.Core.Expr (Expr, pattern App, pattern Sym)
+import Cassini.Core.Expr (Expr, pattern App, pattern Call)
 import Cassini.Core.Symbol (sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sPattern)
 import Cassini.Pattern (PreparedRule, isPatternFree, prepareRule, unholdPattern)
 import Cassini.Pattern.Net qualified as Net
@@ -95,17 +95,17 @@ specificity e = let (b, l) = go e in Specificity (b, negate l)
     go u
       | isPatternFree u = (0, size u)
     go u = case u of
-      App (Sym h) as
-        | h == sPattern, [_, p] <- V.toList as -> go p
-        | h == sHoldPattern, [p] <- V.toList as -> go p
+      Call h as
+        | h == sPattern, [_, p] <- as -> go p
+        | h == sHoldPattern, [p] <- as -> go p
         | h == sBlank -> (1, constrained as)
         | h == sBlankSequence -> (2, constrained as)
         | h == sBlankNullSequence -> (3, constrained as)
-        | h == sCondition, [p, _] <- V.toList as -> second (+ 1) (go p)
+        | h == sCondition, [p, _] <- as -> second (+ 1) (go p)
       App h as -> foldl' add (second (+ 1) (go h)) (V.map go as)
       _ -> (0, 1)
     add (a, b) (c, d) = (a + c, b + d)
-    constrained as = min 1 (V.length as)
+    constrained as = min 1 (length as)
     size = \case
       App h as -> 1 + size h + sum (V.map size as)
       _ -> 1 :: Int
@@ -194,7 +194,7 @@ bodyCondition = \case
   Native _ -> Nothing
   where
     condition = \case
-      App (Sym c) as | c == sCondition, [_, t] <- V.toList as -> Just t
+      Call c [_, t] | c == sCondition -> Just t
       _ -> Nothing
 
 -- | Remove every user rule with this left-hand side, if there is one.

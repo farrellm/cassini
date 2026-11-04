@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 -- | Assignment and attributes: @Set@, @SetDelayed@, @UpSet@,
@@ -14,12 +15,12 @@
 -- tag.
 module Cassini.Builtins.Assign (definitions) where
 
-import Cassini.Attributes (Attribute (..), attributeFromName, attributeList, attributeName, holdsArgument, isProtected)
+import Cassini.Attributes (Attribute (..), attributeFromName, attributeList, attributeName, holdsArgument, isLocked, isProtected)
 import Cassini.Attributes qualified as Attributes
 import Cassini.Builtins.Define (Definition, PartSpec (..), args, define, down, message, partSpec, sFailedE, sNullE)
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkString, pattern App, pattern Str, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkString, symbolOf, pattern App, pattern Call, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sList, sPattern, sPatternTest, symName, systemSymbol)
-import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol, modifySymbol)
+import Cassini.Eval.Kernel (Kernel, evaluate, lookupAttributes, lookupSymbol, modifySymbol)
 import Cassini.Pattern (unholdPattern)
 import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), hasRules, insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
 import Data.Vector qualified as V
@@ -28,12 +29,12 @@ import Effectful (Eff, (:>))
 -- | The assignment and attribute builtins, with WL's attributes.
 definitions :: [Definition]
 definitions =
-  [ define "Set" [HoldFirst, Protected, SequenceHold] [down (assignment "Set" Immediate)],
-    define "SetDelayed" [HoldAll, Protected, SequenceHold] [down (assignment "SetDelayed" Delayed)],
-    define "UpSet" [HoldFirst, Protected, SequenceHold] [down (upAssignment "UpSet" Immediate)],
-    define "UpSetDelayed" [HoldAll, Protected, SequenceHold] [down (upAssignment "UpSetDelayed" Delayed)],
-    define "TagSet" [HoldAll, Protected, SequenceHold] [down (tagAssignment "TagSet" Immediate)],
-    define "TagSetDelayed" [HoldAll, Protected, SequenceHold] [down (tagAssignment "TagSetDelayed" Delayed)],
+  [ define "Set" [HoldFirst, Protected, SequenceHold] [down (assignment Now)],
+    define "SetDelayed" [HoldAll, Protected, SequenceHold] [down (assignment Later)],
+    define "UpSet" [HoldFirst, Protected, SequenceHold] [down (upAssignment Now)],
+    define "UpSetDelayed" [HoldAll, Protected, SequenceHold] [down (upAssignment Later)],
+    define "TagSet" [HoldAll, Protected, SequenceHold] [down (tagAssignment Now)],
+    define "TagSetDelayed" [HoldAll, Protected, SequenceHold] [down (tagAssignment Later)],
     define "Unset" [HoldFirst, Listable, Protected, ReadProtected] [down unset],
     define "Attributes" [HoldAll, Listable, Protected] [down attributes],
     define "SetAttributes" [HoldFirst, Protected] [down (changeAttributes Attributes.insert)],
@@ -42,6 +43,31 @@ definitions =
     define "Unprotect" [HoldAll, Protected] [down (protection False)],
     define "$Failed" [Protected] []
   ]
+
+-- | Which of a pair of assignments: @=@, whose right-hand side is
+-- evaluated once, at definition, or @:=@, whose right-hand side is held and
+-- evaluated at each application.
+data Timing = Now | Later
+  deriving stock (Eq)
+
+-- | The rule body an assignment of this timing writes.
+timedBody :: Timing -> Expr -> RuleBody
+timedBody = \case
+  Now -> Immediate
+  Later -> Delayed
+
+-- | The builtin's name, for its messages: @timedName "Set" Later@ is
+-- @SetDelayed@.
+timedName :: Text -> Timing -> Text
+timedName base = \case
+  Now -> base
+  Later -> base <> "Delayed"
+
+-- | What a written assignment returns: @=@ its right-hand side, @:=@ @Null@.
+timedResult :: Timing -> Expr -> Expr
+timedResult = \case
+  Now -> id
+  Later -> const sNullE
 
 -- | Which table an assignment writes.
 data Target = Target !Symbol !ValueKind
@@ -61,10 +87,10 @@ target lhs = case lhsCore lhs of
 tagSymbol :: Expr -> Maybe Symbol
 tagSymbol = \case
   Sym s -> Just s
-  App (Sym h) as
-    | h == sPattern, [_, p] <- V.toList as -> tagSymbol p
-    | h `elem` [sHoldPattern, sCondition, sPatternTest], p : _ <- V.toList as -> tagSymbol p
-    | h `elem` [sBlank, sBlankSequence, sBlankNullSequence] -> case V.toList as of
+  Call h as
+    | h == sPattern, [_, p] <- as -> tagSymbol p
+    | h `elem` [sHoldPattern, sCondition, sPatternTest], p : _ <- as -> tagSymbol p
+    | h `elem` [sBlank, sBlankSequence, sBlankNullSequence] -> case as of
         [c] -> tagSymbol c
         _ -> Nothing
   App h _ -> tagSymbol h
@@ -75,7 +101,7 @@ tagSymbol = \case
 -- an upvalue for @g@, whose argument tags are @f[g[x_]]@'s.
 lhsCore :: Expr -> Expr
 lhsCore e = case unholdPattern e of
-  App (Sym c) as | c == sCondition, [p, _] <- V.toList as -> lhsCore p
+  Call c [p, _] | c == sCondition -> lhsCore p
   e' -> e'
 
 -- | The tags of the left-hand side's arguments, which upvalues go on.
@@ -92,9 +118,7 @@ prepareLhs :: (Kernel :> es) => Expr -> Eff es Expr
 prepareLhs lhs = case lhs of
   App (Sym h) _ | h == sHoldPattern -> pure lhs
   App h as -> do
-    attrs <- case h of
-      Sym s -> (\si -> si.siAttributes) <$> lookupSymbol s
-      _ -> pure mempty
+    attrs <- maybe (pure mempty) lookupAttributes (symbolOf h)
     let n = V.length as
     mkApp h <$> V.imapM (\i a -> if holdsArgument attrs (i + 1) n then pure a else evaluate a) as
   _ -> pure lhs
@@ -122,35 +146,33 @@ writeUp name s lhs body = do
     else True <$ modifySymbol s (modifyRules UpValue (insertRule (mkRule User lhs body)))
 
 -- | @Set@ and @SetDelayed@. @Set@ returns its (evaluated) right-hand side,
--- and @SetDelayed@ returns @Null@, or @$Failed@ when the write is refused.
--- @{x, {y, z}} = {1, {2, 3}}@ assigns elementwise, at every depth.
-assignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
-assignment name body e = case args e of
-  [App (Sym p) xs, rhs]
+-- even when the write is refused, and @SetDelayed@ returns @Null@, or
+-- @$Failed@ when the write is refused. @{x, {y, z}} = {1, {2, 3}}@ assigns
+-- elementwise, at every depth.
+assignment :: (Kernel :> es) => Timing -> Expr -> Eff es (Maybe Expr)
+assignment timing e = case args e of
+  [Call p (Sym s : is@(_ : _)), rhs]
     | p == sPart,
-      name == "Set",
-      Sym s : is@(_ : _) <- V.toList xs ->
+      timing == Now ->
         Just rhs <$ partAssignment s is rhs
   [App (Sym l) ls, rhs]
     | l == sList,
-      name == "Set" ->
+      timing == Now ->
         Just rhs <$ elementwise ls rhs
-  [App (Sym a) xs, rhs]
+  [Call a [Sym s], rhs]
     | a == sAttributes,
-      name == "Set",
-      [Sym s] <- V.toList xs,
+      timing == Now,
       Just attrs <- traverse attributeOf (listOf rhs) ->
         Just rhs <$ replaceAttributes s attrs
   [lhs, rhs] -> do
     lhs' <- prepareLhs lhs
-    ok <- write name lhs' (body rhs)
-    pure (Just (result ok rhs))
+    ok <- write name lhs' (timedBody timing rhs)
+    pure . Just $ case timing of
+      Now -> rhs
+      Later -> if ok then sNullE else sFailedE
   _ -> pure Nothing
   where
-    result ok rhs
-      | name == "Set" = rhs
-      | ok = sNullE
-      | otherwise = sFailedE
+    name = timedName "Set" timing
     elementwise ls rhs = case rhs of
       App (Sym l') rs
         | l' == sList,
@@ -159,7 +181,7 @@ assignment name body e = case args e of
       _ -> message name "shape" [apply sList (V.toList ls), rhs]
     one x v = case x of
       App (Sym l) xs | l == sList -> elementwise xs v
-      _ -> prepareLhs x >>= \x' -> void (write name x' (body v))
+      _ -> prepareLhs x >>= \x' -> void (write name x' (timedBody timing v))
 
 -- | @s[[i, …]] = v@: replace a part of @s@'s own value, which must exist.
 -- An index is an integer (negative from the end, 0 the head), a list of
@@ -215,38 +237,39 @@ setPart x is v = case is of
       _ -> Nothing
 
 -- | @UpSet@ and @UpSetDelayed@: an upvalue for the tag of every argument.
-upAssignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
-upAssignment name body e = case args e of
+upAssignment :: (Kernel :> es) => Timing -> Expr -> Eff es (Maybe Expr)
+upAssignment timing e = case args e of
   [lhs, rhs] -> do
     lhs' <- prepareLhs lhs
     case ordNub (argumentTags lhs') of
       [] -> Just sFailedE <$ message name "nosym" [lhs']
       tags -> do
-        for_ tags $ \s -> writeUp name s lhs' (body rhs)
-        pure (Just (if name == "UpSet" then rhs else sNullE))
+        for_ tags $ \s -> writeUp name s lhs' (timedBody timing rhs)
+        pure (Just (timedResult timing rhs))
   _ -> pure Nothing
+  where
+    name = timedName "UpSet" timing
 
 -- | @TagSet@ and @TagSetDelayed@: the rule goes on the named tag, as a
 -- down, sub or own value if the tag is the left-hand side's own, else as an
 -- upvalue if it is an argument's.
-tagAssignment :: (Kernel :> es) => Text -> (Expr -> RuleBody) -> Expr -> Eff es (Maybe Expr)
-tagAssignment name body e = case args e of
+tagAssignment :: (Kernel :> es) => Timing -> Expr -> Eff es (Maybe Expr)
+tagAssignment timing e = case args e of
   [Sym s, lhs, rhs0] -> do
-    rhs <- if name == "TagSet" then evaluate rhs0 else pure rhs0
+    -- HoldAll: TagSet evaluates its right-hand side itself.
+    rhs <- case timing of
+      Now -> evaluate rhs0
+      Later -> pure rhs0
     lhs' <- prepareLhs lhs
-    let own = target lhs'
-        argTags = argumentTags lhs'
-        result = if name == "TagSet" then rhs else sNullE
-    case own of
-      Just (Target t _) | t == s -> do
-        ok <- write name lhs' (body rhs)
-        pure (Just (if ok then result else sFailedE))
+    let result ok = Just (if ok then timedResult timing rhs else sFailedE)
+    case target lhs' of
+      Just (Target t _) | t == s -> result <$> write name lhs' (timedBody timing rhs)
       _
-        | s `elem` argTags -> do
-            ok <- writeUp name s lhs' (body rhs)
-            pure (Just (if ok then result else sFailedE))
+        | s `elem` argumentTags lhs' -> result <$> writeUp name s lhs' (timedBody timing rhs)
         | otherwise -> Just sFailedE <$ message name "tagnf" [Sym s, lhs']
   _ -> pure Nothing
+  where
+    name = timedName "TagSet" timing
 
 -- | @Unset[lhs]@: remove the user rule with this left-hand side. @Null@, or
 -- @$Failed@ with @Unset::norep@ when there is none, and with @Unset::wrsym@
@@ -289,10 +312,10 @@ attributes e = case args e of
 -- symbol refuses with @Attributes::locked@, as @SetAttributes@ does.
 replaceAttributes :: (Kernel :> es) => Symbol -> [Attribute] -> Eff es ()
 replaceAttributes s attrs = do
-  info <- lookupSymbol s
-  if Attributes.member Locked info.siAttributes
+  locked <- isLocked <$> lookupAttributes s
+  if locked
     then message "Attributes" "locked" [Sym s]
-    else modifySymbol s (\si -> si {siAttributes = foldr Attributes.insert mempty attrs})
+    else modifySymbol s (\si -> si {siAttributes = Attributes.attributeSet attrs})
 
 -- | @SetAttributes@ and @ClearAttributes@: one symbol or a list, and one
 -- attribute or a list. A @Locked@ symbol refuses with @Attributes::locked@.
@@ -303,8 +326,8 @@ changeAttributes f e = case args e of
     case (symbolList ss, traverse attributeOf (listOf as)) of
       (Just syms, Just attrs) -> do
         for_ syms $ \s -> do
-          info <- lookupSymbol s
-          if Attributes.member Locked info.siAttributes
+          locked <- isLocked <$> lookupAttributes s
+          if locked
             then message "Attributes" "locked" [Sym s]
             else modifySymbol s (\si -> si {siAttributes = foldr f si.siAttributes attrs})
         pure (Just sNullE)
@@ -322,16 +345,13 @@ protection protect e =
     Just symss -> do
       let syms = concat symss
       changed <- fmap catMaybes . forM syms $ \s -> do
-        info <- lookupSymbol s
-        let was = isProtected info.siAttributes
-        if Attributes.member Locked info.siAttributes
-          then Nothing <$ message "Protect" "locked" [Sym s]
-          else
-            if was == protect
-              then pure Nothing
-              else do
-                modifySymbol s (\si -> si {siAttributes = (if protect then Attributes.insert else Attributes.delete) Protected si.siAttributes})
-                pure (Just (mkString s.symName))
+        attrs <- lookupAttributes s
+        if
+          | isLocked attrs -> Nothing <$ message "Protect" "locked" [Sym s]
+          | isProtected attrs == protect -> pure Nothing
+          | otherwise -> do
+              modifySymbol s (\si -> si {siAttributes = (if protect then Attributes.insert else Attributes.delete) Protected si.siAttributes})
+              pure (Just (mkString s.symName))
       pure (Just (apply sList changed))
     Nothing -> do
       for_ (viaNonEmpty head [a | (a, Nothing) <- zip (args e) xs]) $ \a ->
@@ -342,7 +362,7 @@ protection protect e =
     symbolsOf = \case
       Sym s -> pure (Just [s])
       Str t -> Just . pure <$> named t
-      App (Sym l) xs | l == sList -> fmap concat . sequence <$> traverse symbolsOf (V.toList xs)
+      Call l xs | l == sList -> fmap concat . sequence <$> traverse symbolsOf xs
       _ -> pure Nothing
 
 -- | The symbol a name means: the System` symbol if the kernel knows one,
@@ -358,9 +378,9 @@ attributeOf = \case
   _ -> Nothing
 
 symbolList :: Expr -> Maybe [Symbol]
-symbolList = traverse (\case Sym s -> Just s; _ -> Nothing) . listOf
+symbolList = traverse symbolOf . listOf
 
 listOf :: Expr -> [Expr]
 listOf = \case
-  App (Sym l) xs | l == sList -> V.toList xs
+  Call l xs | l == sList -> xs
   x -> [x]

@@ -33,8 +33,8 @@ module Cassini.Builtins.Define
 where
 
 import Cassini.Attributes (Attribute)
-import Cassini.Core.Expr (Expr, exprArgs, mkApp, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sFalse, sList, sNull, sTrue, systemSymbol)
+import Cassini.Core.Expr (Expr, exprArgs, mkApp, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Sym)
+import Cassini.Core.Symbol (Symbol, sFalse, sList, sNull, sTrue, systemSymbol)
 import Cassini.Eval.Kernel (BuiltinFn (..), Kernel, emitMessage)
 import Cassini.Eval.Message (MessageTag (..))
 import Cassini.Rules (ValueKind (..))
@@ -104,14 +104,16 @@ partSpec :: Expr -> Either Expr PartSpec
 partSpec = \case
   Int_ i -> Right (Index i)
   Sym a | a == sAll -> Right AllParts
-  j@(App (Sym l) js)
-    | l == sList -> maybeToRight j (Indices <$> traverse intIndex (V.toList js))
+  j@(Call l js)
+    | l == sList -> maybeToRight j (Indices <$> traverse intIndex js)
   j -> Left j
   where
-    sAll = systemSymbol "All"
     intIndex = \case
       Int_ i -> Just i
       _ -> Nothing
+
+sAll :: Symbol
+sAll = systemSymbol "All"
 
 -- | One bound of a level specification.
 data Bound = Level !Integer | Infinite
@@ -120,16 +122,16 @@ data Bound = Level !Integer | Infinite
 -- @All@ is @{0, Infinity}@.
 levelSpec :: Expr -> Maybe (Bound, Bound)
 levelSpec spec = case spec of
-  App (Sym l) ns | l == sList -> case V.toList ns of
+  Call l ns | l == sList -> case ns of
     [n] -> (\b -> (b, b)) <$> bound n
     [m, n] -> (,) <$> bound m <*> bound n
     _ -> Nothing
-  Sym a | a == systemSymbol "All" -> Just (Level 0, Infinite)
+  Sym a | a == sAll -> Just (Level 0, Infinite)
   _ -> (Level 1,) <$> bound spec
   where
     bound = \case
       Int_ n -> Just (Level n)
-      App (Sym d) xs | d == sDirectedInfinity, [Int_ 1] <- V.toList xs -> Just Infinite
+      Infinity -> Just Infinite
       _ -> Nothing
 
 -- | Whether a part at level @p@ with depth @d@ is in the specification: a

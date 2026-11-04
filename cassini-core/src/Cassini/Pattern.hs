@@ -34,7 +34,7 @@ module Cassini.Pattern
 where
 
 import Cassini.Attributes (AttributeSet)
-import Cassini.Core.Expr (Expr, apply, pattern App, pattern Int_, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
     sAlternatives,
@@ -42,7 +42,6 @@ import Cassini.Core.Symbol
     sBlankNullSequence,
     sBlankSequence,
     sCondition,
-    sDirectedInfinity,
     sExcept,
     sHoldPattern,
     sList,
@@ -102,6 +101,9 @@ data PatternView
 -- matched by equality.
 viewPattern :: Expr -> PatternView
 viewPattern e = case e of
+  -- Each guard tests the head before it reads the arguments, so a node with
+  -- an ordinary head builds no argument list: this runs on every node of
+  -- every pattern read.
   App (Sym h) as
     | h == sBlank, Just c <- constraint as -> PBlank c
     | h == sBlankSequence, Just c <- constraint as -> PBlankSeq c
@@ -136,7 +138,7 @@ viewPattern e = case e of
 -- @Repeated[_, {1, Infinity}]@ identical (@mathematica.stackexchange.com/a/7904@).
 repeatSpec :: Int -> Expr -> Maybe (Int, Maybe Int)
 repeatSpec lo = \case
-  App (Sym l) ns | l == sList -> case V.toList ns of
+  Call l ns | l == sList -> case ns of
     [n] -> count n >>= \k -> pure (k, Just k)
     [m, n] -> (,) <$> count m <*> bound n
     _ -> Nothing
@@ -146,7 +148,7 @@ repeatSpec lo = \case
       Int_ k | k >= 0 -> toIntegralSized k
       _ -> Nothing
     bound = \case
-      App (Sym d) xs | d == sDirectedInfinity, [Int_ 1] <- V.toList xs -> Just Nothing
+      Infinity -> Just Nothing
       n -> Just <$> count n
 
 -- | Whether the expression contains no pattern object, heads included. Such a
@@ -309,7 +311,7 @@ prepareRule lhs body = case runTarget lhs of
     let around before after =
           let wrap x = apply f (map runName before <> [x] <> map runName after)
               body' = case body of
-                App (Sym c) xs | c == sCondition, [x, test] <- V.toList xs -> apply sCondition [wrap x, test]
+                Call c [x, test] | c == sCondition -> apply sCondition [wrap x, test]
                 _ -> wrap body
            in (viewPattern (conditioned (apply f (before <> V.toList ps <> after))), body')
      in base
@@ -326,9 +328,8 @@ prepareRule lhs body = case runTarget lhs of
     -- @f[ps]@ through @HoldPattern@ and conditions, with the conditions to
     -- put back around a run form.
     runTarget e = case unholdPattern e of
-      App (Sym c) xs
-        | c == sCondition,
-          [p, test] <- V.toList xs ->
+      Call c [p, test]
+        | c == sCondition ->
             (\(f, ps, k) -> (f, ps, \x -> apply sCondition [k x, test])) <$> runTarget p
       App (Sym f) ps -> Just (f, ps, id)
       _ -> Nothing

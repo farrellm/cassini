@@ -651,8 +651,8 @@ data Shape
 module Cassini.Core.Expr
   ( Expr
   , pattern Num, pattern Str, pattern Sym, pattern App
-  , pattern Int_, pattern Rat_
-  , exprHead, exprArgs, exprArity
+  , pattern Call, pattern Int_, pattern Rat_, pattern Infinity
+  , exprHead, exprArgs, exprArity, symbolOf
   ) where
 
 pattern Num :: Number -> Expr
@@ -683,6 +683,17 @@ constructors, not at every call site, so §3.4 can change without a repository-w
 read on every evaluation step and arguments are indexed far less often, so `exprHead` stays a field
 access; `Cassini.Structure.part` restores the 0-index convention at the API boundary. On an atom,
 `exprHead` is WL's `Head`: the symbol `Integer`, `Rational`, `String` or `Symbol`.
+
+`Call f xs` is `App (Sym f) as` with the arguments as a list, for the language's fixed forms:
+`Call c [p, test] | c == sCondition` reads as the form it matches, where the `App` spelling needs a
+second guard to convert and destructure the vector. Code that wants the arguments as a vector, for
+lengths, slices or bulk maps, matches `App`. `Call` is not for the evaluator's or the matcher's
+per-node paths: Haskell matches a pattern before its guard, so `Call c [p, test]` lists the
+arguments of every symbol-headed node it is tried on, and a `Call h as` with several guards
+allocates the lazy list for each node. There the head is tested first, `App (Sym c) as | c ==
+sCondition, [p, test] <- V.toList as`, and the allocation gate (§8.6) holds the line. `Call` is
+`INLINE`: an out-of-line matcher allocates its continuation at every match. `Infinity` is `DirectedInfinity[1]`, the bound that level specifications,
+`Repeated` and `ReplaceList` all accept.
 
 `Int_` is bidirectional. `Rat_` matches only: building a fraction goes through
 `Cassini.Number.fromRational'`, which normalizes `4/2` to an integer. A bidirectional `Rat_` would

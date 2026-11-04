@@ -18,12 +18,13 @@ module Cassini.Builtins.Pattern (definitions) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Bound (..), Definition, args, define, down, inLevel, levelParts, levelSpec, message, rebuildM, sFalseE, sTrueE, sub)
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (sDirectedInfinity, sList, sRule, sRuleDelayed)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Sym)
+import Cassini.Core.Symbol (sList, sRule, sRuleDelayed)
 import Cassini.Eval (firstJustM)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Pattern (PreparedRule, prepareRule, viewPattern)
 import Cassini.Pattern.Match (match, matchRule, matchRuleOrRun, observeAll, observeFirst, observeMany)
+import Cassini.Structure (rebuildChanged)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 
@@ -55,25 +56,19 @@ data Replacements = One ![Replacement] | Several ![[Replacement]]
 
 readRule :: Expr -> Maybe Replacement
 readRule = \case
-  App (Sym r) xs
-    | r == sRule || r == sRuleDelayed,
-      [lhs, rhs] <- V.toList xs ->
-        Just (prepareRule lhs rhs)
+  Call r [lhs, rhs]
+    | r == sRule || r == sRuleDelayed -> Just (prepareRule lhs rhs)
   _ -> Nothing
 
 readReplacements :: Expr -> Maybe Replacements
 readReplacements e = case e of
-  App (Sym l) xs
+  Call l xs
     | l == sList,
-      not (V.null xs),
+      not (null xs),
       all isList xs ->
-        Several <$> traverse (traverse readRule . V.toList . exprArgs) (V.toList xs)
-    | l == sList -> One <$> traverse readRule (V.toList xs)
+        Several <$> traverse (traverse readRule . V.toList . exprArgs) xs
+    | l == sList -> One <$> traverse readRule xs
   _ -> One . pure <$> readRule e
-  where
-    isList = \case
-      App (Sym l) _ -> l == sList
-      _ -> False
 
 -- | Run a replacement over its rules, or emit @symbol::reps@ and stay.
 withReplacements :: (Kernel :> es) => Text -> Expr -> ([Replacement] -> Eff es Expr) -> Eff es (Maybe Expr)
@@ -82,9 +77,13 @@ withReplacements name rules f = case readReplacements rules of
   Just (Several rss) -> Just . apply sList <$> traverse f rss
   Nothing -> Nothing <$ message name "reps" [listed]
   where
-    listed = case rules of
-      App (Sym l) _ | l == sList -> rules
-      _ -> apply sList [rules]
+    listed = if isList rules then rules else apply sList [rules]
+
+-- | Whether the expression is a list.
+isList :: Expr -> Bool
+isList = \case
+  App (Sym l) _ -> l == sList
+  _ -> False
 
 -- | The first rule that applies to the whole expression, by its first match.
 applyFirst :: (Kernel :> es) => [Replacement] -> Expr -> Eff es (Maybe Expr)
@@ -120,14 +119,7 @@ replaceAllOnce rs x0 = fromMaybe x0 <$> go x0
       applyWithRuns rs x >>= \case
         Just r -> pure (Just r)
         Nothing -> case x of
-          App h as -> do
-            h' <- go h
-            as' <- V.mapM go as
-            pure
-              ( if isNothing h' && V.all isNothing as'
-                  then Nothing
-                  else Just (mkApp (fromMaybe h h') (V.zipWith fromMaybe as as'))
-              )
+          App h as -> rebuildChanged h as <$> go h <*> V.mapM go as
           _ -> pure Nothing
 
 -- | @Replace[expr, rules, levelspec]@: by default the whole expression only;
@@ -164,7 +156,7 @@ replaceListRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 replaceListRule e = case args e of
   [x, rules] -> withReplacements "ReplaceList" rules (fmap (apply sList) . every x)
   [x, rules, Int_ n] | n >= 0 -> withReplacements "ReplaceList" rules (fmap (apply sList) . upTo (clamp n) x)
-  [x, rules, App (Sym d) is] | d == sDirectedInfinity, [Int_ 1] <- V.toList is -> withReplacements "ReplaceList" rules (fmap (apply sList) . every x)
+  [x, rules, Infinity] -> withReplacements "ReplaceList" rules (fmap (apply sList) . every x)
   [_, _, _] -> Nothing <$ message "ReplaceList" "innf" [Int_ 3, e]
   _ -> pure Nothing
   where

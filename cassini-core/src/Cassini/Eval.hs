@@ -61,7 +61,7 @@ import Cassini.Attributes
     isOrderless,
     sequenceHold,
   )
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, symbolOf, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol
   ( Symbol,
@@ -224,14 +224,15 @@ evalStep2Head h as = do
 -- for any other compound head.
 headAttributes :: (Kernel :> es) => Expr -> Eff es AttributeSet
 headAttributes = \case
-  Sym s -> (\si -> si.siAttributes) <$> lookupSymbol s
+  -- lookupSymbol, not lookupAttributes, as in the matcher's headAttributes.
+  Sym s -> (.siAttributes) <$> lookupSymbol s
   App (Sym f) as | f == sFunction, [_, _, attrs] <- V.toList as -> pure (functionAttributes attrs)
   _ -> pure mempty
   where
     functionAttributes = \case
-      Sym a -> attributeSet (maybeToList (attributeFromName a.symName))
-      App (Sym l) xs | l == sList -> attributeSet [a | Sym x <- V.toList xs, Just a <- [attributeFromName x.symName]]
-      _ -> mempty
+      Call l xs | l == sList -> attributeSet (mapMaybe attribute xs)
+      x -> attributeSet (maybeToList (attribute x))
+    attribute x = symbolOf x >>= attributeFromName . (.symName)
 
 -- | Step 4: which arguments are held, by 1-based position.
 evalStep4Hold :: Node -> V.Vector Bool
@@ -405,9 +406,8 @@ rung i name n e = case drop i (ladder e) of
 -- innermost head symbol of an application (@f@ for @f[x][y]@).
 tagSymbol :: Expr -> Maybe Symbol
 tagSymbol = \case
-  Sym s -> Just s
   App h _ -> tagSymbol h
-  _ -> Nothing
+  e -> symbolOf e
 
 -- | Apply one rule, if it matches. A user rule evaluates its own
 -- instantiated right-hand side, inside 'catchUnwind', and turns a caught
