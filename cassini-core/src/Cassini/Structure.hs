@@ -36,6 +36,10 @@ module Cassini.Structure
     Scoping (..),
     Slots (..),
     substituteFree,
+
+    -- * Pure functions
+    Parameters (..),
+    functionForm,
   )
 where
 
@@ -313,11 +317,10 @@ data Scope = Scope
 -- names.
 scope :: Symbol -> V.Vector Expr -> Maybe Scope
 scope h as
-  | h == sFunction = case V.toList as of
-      [_] -> Just (whole [] True)
-      Sym n : _ : _ | n == sNull -> Just (whole [] True)
-      ps : _ : _ -> (`whole` False) <$> params ps
-      _ -> Nothing
+  | h == sFunction =
+      functionForm (V.toList as) <&> \case
+        (SlotParameters, _) -> whole [] True
+        (NamedParameters xs, _) -> whole xs False
   | h == sWith || h == sModule,
     [App (Sym l) specs, body] <- V.toList as,
     l == sList =
@@ -348,7 +351,39 @@ scope h as
       Sym x -> Just x
       Call s [Sym x, _] | s == sSet || s == sSetDelayed -> Just x
       _ -> Nothing
-    params = \case
+
+-- | How a pure function takes its arguments: by slot, or by name.
+data Parameters
+  = -- | @#n@, @##n@ and @#0@
+    SlotParameters
+  | -- | named parameters, in order
+    NamedParameters ![Symbol]
+  deriving stock (Eq, Show)
+
+-- | Read @Function@'s arguments as its parameters and its body: the one
+-- reading of a pure function's form, which application, scoping and
+-- differentiation share. @Function[body]@ and @Function[Null, body, …]@ are
+-- slot form, whatever follows the body: @Function[Null, #1 + 1][5]@ is 6,
+-- not a function of a parameter named @Null@ (WL 15.0.1, through the
+-- Wolfram Cloud MCP). @Function[x, body, …]@ and
+-- @Function[{x, …}, body, …]@ are named. 'Nothing' for anything else.
+--
+-- >>> let x = mkSymbol (globalSymbol "x")
+-- >>> functionForm [mkSymbol sNull, x]
+-- Just (SlotParameters,x)
+-- >>> functionForm [apply sList [x], x]
+-- Just (NamedParameters [x],x)
+functionForm :: [Expr] -> Maybe (Parameters, Expr)
+-- INLINE: substituteFree reads every Function it meets, and inlined, the
+-- Maybe and the pair are never built.
+{-# INLINE functionForm #-}
+functionForm = \case
+  [body] -> Just (SlotParameters, body)
+  Sym n : body : _ | n == sNull -> Just (SlotParameters, body)
+  ps : body : _ -> (\xs -> (NamedParameters xs, body)) <$> names ps
+  [] -> Nothing
+  where
+    names = \case
       Sym x -> Just [x]
       Call l xs | l == sList -> traverse symbolOf xs
       _ -> Nothing

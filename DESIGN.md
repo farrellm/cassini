@@ -2198,7 +2198,11 @@ below that rests only on what an example returns is marked as such.
 substituting into the held body: named parameters for `Function[{x, …}, …]` and for the
 single-parameter `Function[x, …]`, and `#n`, `##n` and `#0` for slot form, which is also what
 `Function[Null, body, attrs]` uses ("represents a function in which the parameters in body are given
-using # etc.", `wolfram_ref_function.html`). In slot form, arguments beyond the highest slot are
+using # etc.", `wolfram_ref_function.html`). `Function[Null, body]` is slot form too, with or without
+the attributes: `Null` is never a parameter (WL 15.0.1; regression case 0075).
+`Cassini.Structure.functionForm` is the one reading of these forms, which application, scoping,
+the unfilled-slot check and `Derivative` share; while each had its own, application bound `Null` as a
+parameter and `Derivative` dropped it. In slot form, arguments beyond the highest slot are
 ignored, per the same page. Two
 points the evaluator must get right:
 
