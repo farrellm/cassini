@@ -4,6 +4,11 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Fix: `Function[Null, body]` is slot form, as `Function[Null, body, attrs]` is, so
+  `Function[Null, #1 + 1][5]` is 6, not a function of a parameter named `Null`. Its derivative keeps
+  the `Null` and the attributes (`Function[Null, #^2, HoldAll]'` is `Function[Null, 2 #1, HoldAll]`).
+  Application, scoping, the unfilled-slot check and `Derivative` now share one reading of
+  `Function`'s forms, `Cassini.Structure.functionForm`. Regression case 0075.
 * A clarity refactor, with no change in behaviour or allocation: `Cassini.Core.Expr` gains the
   `Call` pattern (a symbol head and its arguments as a list), `Infinity` and `symbolOf`, which
   replace the head-test idiom and its copies across the library; the kernel gains

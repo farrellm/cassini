@@ -21,11 +21,11 @@ module Cassini.Builtins.Calculus (definitions) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, sub)
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, symbolOf, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sDerivative, sFunction, sList, sNull, sPlus, sPower, sSlot, sTimes, symbol, systemSymbol)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
+import Cassini.Core.Symbol (Symbol, sDerivative, sFunction, sList, sPlus, sPower, sSlot, sTimes, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
 import Cassini.Rules (Origin (..), Rule (..), ValueKind (..), ruleSetToList, rulesOf)
-import Cassini.Structure (Binding (..), Scoping (Shielding), freeOf, substituteAll, substituteFree)
+import Cassini.Structure (Binding (..), Parameters (..), Scoping (Shielding), Slots (..), freeOf, functionForm, substituteAll, substituteFree)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -228,9 +228,12 @@ derivativeOrder = \case
 -- | @Derivative[ns][f]@, for a pure function @f@ or a symbol with user
 -- downvalues, is the pure function its definition differentiates to, as in
 -- WL, where @f[x_] := x Cos[x]@ makes @f'@ @Cos[#1] - #1 Sin[#1] &@
--- (@wolfram/Derivative/Scope/1@). A pure function with named parameters
--- keeps them: @Function[x, x^2]'@ is @Function[x, 2 x]@
--- (@wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1@). A number's
+-- (@wolfram/Derivative/Scope/1@). A pure function keeps its form: its
+-- named parameters, @Function[x, x^2]'@ being @Function[x, 2 x]@
+-- (@wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1@), and in slot
+-- form its @Null@ and attributes, @Function[Null, #^2, HoldAll]'@ being
+-- @Function[Null, 2 #1, HoldAll]@ (WL 15.0.1, through the Wolfram Cloud
+-- MCP). A number's
 -- derivative is @0 &@, and @List@, @Plus@, @Times@ and @Power@, whose
 -- derivatives are D's own rules, differentiate too: @List'@ is @{1} &@.
 -- Otherwise it
@@ -241,19 +244,23 @@ derivativeOrder = \case
 -- mentions @Derivative[ns][f]@ or @D@.
 derivativeOfDefinition :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 derivativeOfDefinition e = case e of
-  Derivative ns (Call fn (ps : body : attrs))
+  Derivative ns f@(Call fn fargs)
     | fn == sFunction,
       Just orders <- traverse order ns,
-      Just xs <- params ps,
-      length xs == length orders -> do
+      Just (params, body) <- functionForm fargs,
+      takes (length orders) params -> do
         -- Differentiate in fresh variables, not the parameters themselves,
         -- which may have global values that D's evaluation would read.
-        let vars = freshVars (length xs)
-            body' = substituteFree Shielding (Map.fromList (zip xs (map BOne vars))) Nothing body
-        result <- evaluate (apply sD (body' : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0]))
+        let vars = freshVars (length orders)
+            (inVars, back) = case params of
+              SlotParameters ->
+                (substituteFree Shielding Map.empty (Just (Slots (V.fromList vars) f)) body, zip vars [apply sSlot [Int_ k] | k <- [1 ..]])
+              NamedParameters xs ->
+                (substituteFree Shielding (Map.fromList (zip xs (map BOne vars))) Nothing body, zip vars (map Sym xs))
+        result <- evaluate (apply sD (inVars : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0]))
         pure $
           if noD result
-            then Just (apply sFunction (ps : substituteAll result (zip vars (map Sym xs)) : attrs))
+            then Just (apply sFunction (withBody (substituteAll result back) fargs))
             else Nothing
   Derivative ns (Num _)
     | Just _ <- traverse order ns ->
@@ -277,10 +284,15 @@ derivativeOfDefinition e = case e of
   _ -> pure Nothing
   where
     freshVars n = [Sym (symbol "Cassini`Private`" ("d" <> show k)) | k <- [1 .. n]]
-    params = \case
-      Sym x | x /= sNull -> Just [x]
-      Call l xs | l == sList -> traverse symbolOf xs
-      _ -> Nothing
+    -- Whether a function takes this many arguments to differentiate in:
+    -- in slot form any number, the unfilled slots staying as they are.
+    takes n = \case
+      SlotParameters -> True
+      NamedParameters xs -> length xs == n
+    -- Function's arguments with the body replaced, the rest kept.
+    withBody b = \case
+      p : _ : rest -> p : b : rest
+      _ -> [b]
     differentiable = \case
       App (Sym h) _ -> pure (h == sFunction)
       f | structural f -> pure True

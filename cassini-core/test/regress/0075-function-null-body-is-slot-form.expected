@@ -1,0 +1,9 @@
+Out[1]: 6
+Out[2]: List[5, Null]
+Out[3]: Function[x, 7]
+Out[4]: Slot[2]
+Message[4]: Function::slotn
+Out[5]: Function[Null, Times[2, Slot[1]]]
+Out[6]: Function[Null, Times[2, Slot[1]], HoldAll]
+Out[7]: Function[Null, 1]
+Out[8]: Function[Times[2, Slot[1]]]
