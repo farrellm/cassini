@@ -18,8 +18,8 @@ module Cassini.Builtins.Control (definitions) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, message, sNullE, sub)
-import Cassini.Core.Expr (Expr, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sFunction, sList, sNull, sSlot, sSlotSequence)
+import Cassini.Core.Expr (Expr, symbolOf, pattern App, pattern Call, pattern Int_, pattern Sym)
+import Cassini.Core.Symbol (sFunction, sList, sNull, sSlot, sSlotSequence)
 import Cassini.Eval.Kernel (Kernel, evaluate)
 import Cassini.Structure (Binding (..), Scoping (Shielding), Slots (..), substituteFree)
 import Data.List (unsnoc)
@@ -44,7 +44,7 @@ definitions =
 -- @Function::fpct@, and the application stays unevaluated.
 functionRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 functionRule e = case e of
-  App f@(App (Sym h) fargs) as | h == sFunction -> case V.toList fargs of
+  App f@(Call h fargs) as | h == sFunction -> case fargs of
     [body] -> slotForm f body as
     [Sym n, body, _] | n == sNull -> slotForm f body as
     ps : body : _
@@ -62,11 +62,7 @@ functionRule e = case e of
       pure (Just (substituteFree Shielding Map.empty (Just (Slots as f)) body))
     params = \case
       Sym x -> Just [x]
-      App (Sym l) xs | l == sList -> traverse symbolOf (V.toList xs)
-      _ -> Nothing
-    symbolOf :: Expr -> Maybe Symbol
-    symbolOf = \case
-      Sym x -> Just x
+      Call l xs | l == sList -> traverse symbolOf xs
       _ -> Nothing
 
 -- | The slots in a slot-form body that @k@ arguments cannot fill, each
@@ -77,10 +73,10 @@ unfilled :: Int -> Expr -> [Either Integer Integer]
 unfilled k = ordNub . go
   where
     go = \case
-      App (Sym h) xs
-        | h == sSlot, [Int_ n] <- V.toList xs, n > toInteger k -> [Left n]
-        | h == sSlotSequence, [Int_ n] <- V.toList xs, n > toInteger k + 1 -> [Right n]
-        | h == sFunction, slotForm (V.toList xs) -> []
+      Call h xs
+        | h == sSlot, [Int_ n] <- xs, n > toInteger k -> [Left n]
+        | h == sSlotSequence, [Int_ n] <- xs, n > toInteger k + 1 -> [Right n]
+        | h == sFunction, slotForm xs -> []
       App h xs -> go h <> concatMap go (V.toList xs)
       _ -> []
     slotForm = \case

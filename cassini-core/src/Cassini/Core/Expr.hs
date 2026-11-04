@@ -23,8 +23,10 @@ module Cassini.Core.Expr
     pattern Str,
     pattern Sym,
     pattern App,
+    pattern Call,
     pattern Int_,
     pattern Rat_,
+    pattern Infinity,
     mkNumber,
     mkString,
     mkSymbol,
@@ -33,11 +35,12 @@ module Cassini.Core.Expr
     exprHead,
     exprArgs,
     exprArity,
+    symbolOf,
   )
 where
 
 import Cassini.Core.Expr.Internal (Expr (exprShape), Shape (..), mkNode)
-import Cassini.Core.Symbol (Symbol, sInteger, sRational, sString, sSymbol)
+import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sInteger, sRational, sString, sSymbol)
 import Cassini.Number (Number (NInt, NRat))
 import Data.Vector qualified as V
 
@@ -66,6 +69,27 @@ pattern App h as <- (exprShape -> SApp h as)
     App h as = mkApp h as
 
 {-# COMPLETE Num, Str, Sym, App #-}
+
+-- | An application whose head is a symbol, its arguments as a list: the
+-- shape of most of the language's forms, matched as
+-- @Call c [p, test] | c == sCondition@. Use 'App' where the arguments are
+-- wanted as a vector.
+--
+-- Not on a per-node path of the evaluator or the matcher: a pattern is
+-- matched before its guard, so @Call c [p, test]@ converts the arguments of
+-- every symbol-headed node to a list before it tests the head. There, test
+-- the head first: @App (Sym c) as | c == sCondition, [p, test] <- V.toList as@.
+pattern Call :: Symbol -> [Expr] -> Expr
+pattern Call f xs <- App (Sym f) (V.toList -> xs)
+  where
+    Call f xs = apply f xs
+{-# INLINE Call #-}
+
+-- | @DirectedInfinity[1]@, which @Infinity@ evaluates to.
+pattern Infinity :: Expr
+pattern Infinity <- Call ((== sDirectedInfinity) -> True) [Int_ 1]
+  where
+    Infinity = apply sDirectedInfinity [Int_ 1]
 
 -- | An integer.
 pattern Int_ :: Integer -> Expr
@@ -118,3 +142,9 @@ exprArgs = \case
 -- | The number of arguments; 0 for an atom.
 exprArity :: Expr -> Int
 exprArity = V.length . exprArgs
+
+-- | The symbol, if the expression is one.
+symbolOf :: Expr -> Maybe Symbol
+symbolOf = \case
+  Sym s -> Just s
+  _ -> Nothing

@@ -26,7 +26,7 @@ where
 
 import Cassini.Builtins (resolveName, standardState)
 import Cassini.Builtins.Session (recordLine)
-import Cassini.Core.Expr (Expr, apply, pattern App, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, pattern Call, pattern Sym)
 import Cassini.Core.Symbol (sCompoundExpression, sNull)
 import Cassini.Eval (evaluateTop, runEvalIO)
 import Cassini.Eval.Kernel (EvalConfig (..), Kernel, KernelState (..), TraceEntry (..), Unwind (..), defaultConfig)
@@ -34,7 +34,6 @@ import Cassini.Eval.Message (messageName)
 import Cassini.Syntax.FullForm (fullForm, parseFullForm)
 import Data.List (unsnoc)
 import Data.Text qualified as T
-import Data.Vector qualified as V
 import Effectful (Eff, runEff, (:>))
 
 -- | Run a script against the standard builtins.
@@ -84,9 +83,9 @@ runScriptWith cfg st src = do
 -- (@wolfram/CompoundExpression/BasicExamples/3@).
 evaluateInput :: (Kernel :> es) => Integer -> Expr -> Eff es Expr
 evaluateInput k e = case e of
-  App (Sym c) as
+  Call c as
     | c == sCompoundExpression,
-      Just (before@(_ : _), Sym n) <- unsnoc (V.toList as),
+      Just (before@(_ : _), Sym n) <- unsnoc as,
       n == sNull -> do
         v <- evaluateTop (apply sCompoundExpression before)
         Sym sNull <$ recordLine k e v
