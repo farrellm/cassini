@@ -20,7 +20,7 @@ module Cassini.Syntax.Pretty
   )
 where
 
-import Cassini.Core.Expr (Expr, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
+import Cassini.Core.Expr (Expr, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
     isNamePart,
@@ -83,7 +83,7 @@ doc _ e = case e of
   Num (NRat r) -> (470, show (numerator r) <> "/" <> show (denominator r))
   Str t -> atom (quoteString t)
   Sym s -> atom (name s)
-  App (Sym h) as -> fromMaybe (call e) (special h (V.toList as))
+  Call h as -> fromMaybe (call e) (special h as)
   App _ _ | Just t <- derivativeForm e -> (670, t)
   App _ _ -> call e
 
@@ -153,7 +153,7 @@ plus = \case
       Nothing -> " + " <> at 310 t
     minus t = case t of
       Num n | negative n -> Just (at 310 (numberE (negateN n)))
-      App (Sym h) xs | h == sTimes -> case V.toList xs of
+      Call h xs | h == sTimes -> case xs of
         Int_ (-1) : rest@(r : _) | not (isNumber r) -> Just (product' rest)
         Num n : rest@(_ : _) | negative n -> Just (product' (numberE (negateN n) : rest))
         _ -> Nothing
@@ -190,7 +190,7 @@ times fs = case fs of
     -- The trailing reciprocals, as their denominators.
     splitDenominators xs =
       let (ds, ns) = span isReciprocal (reverse xs)
-       in (reverse ns, [d | App _ ys <- reverse ds, d : _ <- [V.toList ys]])
+       in (reverse ns, [d | Call _ (d : _) <- reverse ds])
     isReciprocal = \case
       App (Sym p) ys | p == sPower, [_, Int_ (-1)] <- V.toList ys -> True
       _ -> False
@@ -230,9 +230,8 @@ out = \case
 -- | @f'@ for @Derivative[1][f]@, @f''@ for @Derivative[2][f]@.
 derivativeForm :: Expr -> Maybe Text
 derivativeForm = \case
-  App (App (Sym d) ns) fs
+  App (Call d [Int_ n]) fs
     | d == sDerivative,
-      [Int_ n] <- V.toList ns,
       n >= 1,
       n <= 4,
       [f] <- V.toList fs ->
@@ -252,14 +251,14 @@ blank h as = do
 -- | The blank of a pattern @x_h@, when it is one.
 blankOf :: Expr -> Maybe Text
 blankOf = \case
-  App (Sym h) as -> blank h (V.toList as)
+  Call h as -> blank h as
   _ -> Nothing
 
 -- | @x_.@ and @_.@.
 optionalBlank :: Expr -> Maybe Text
 optionalBlank = \case
-  App (Sym p) xs | p == sPattern, [Sym x, App (Sym b) cs] <- V.toList xs, b == sBlank, Just t <- blank b (V.toList cs) -> Just (name x <> t <> ".")
-  App (Sym b) cs | b == sBlank, Just t <- blank b (V.toList cs) -> Just (t <> ".")
+  Call p [Sym x, Call b cs] | p == sPattern, b == sBlank, Just t <- blank b cs -> Just (name x <> t <> ".")
+  Call b cs | b == sBlank, Just t <- blank b cs -> Just (t <> ".")
   _ -> Nothing
 
 isNumber :: Expr -> Bool

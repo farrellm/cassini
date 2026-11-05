@@ -28,6 +28,7 @@ module Cassini.Structure
     substitute,
     substituteSeq,
     substituteAll,
+    rebuildChanged,
 
     -- * Scoping-aware substitution
     Binding (..),
@@ -35,10 +36,14 @@ module Cassini.Structure
     Scoping (..),
     Slots (..),
     substituteFree,
+
+    -- * Pure functions
+    Parameters (..),
+    functionForm,
   )
 where
 
-import Cassini.Core.Expr (Expr, apply, exprArity, exprHead, mkApp, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, exprArity, exprHead, mkApp, symbolOf, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Symbol
   ( Symbol,
     sFactorial,
@@ -165,13 +170,17 @@ substituteAll u0 rules = fromMaybe u0 (go u0)
     go u = case find ((== u) . fst) rules of
       Just (_, r) -> Just r
       Nothing -> case u of
-        App h as ->
-          let h' = go h
-              as' = V.map go as
-           in if isNothing h' && V.all isNothing as'
-                then Nothing
-                else Just (mkApp (fromMaybe h h') (V.zipWith fromMaybe as as'))
+        App h as -> rebuildChanged h as (go h) (V.map go as)
         _ -> Nothing
+
+-- | An application rebuilt from what became of its head and arguments,
+-- 'Nothing' for a part that did not change. 'Nothing' if none did, so that
+-- an unchanged subtree keeps its node.
+rebuildChanged :: Expr -> V.Vector Expr -> Maybe Expr -> V.Vector (Maybe Expr) -> Maybe Expr
+rebuildChanged h as h' as'
+  | isNothing h' && V.all isNothing as' = Nothing
+  | otherwise = Just (mkApp (fromMaybe h h') (V.zipWith fromMaybe as as'))
+{-# INLINE rebuildChanged #-}
 
 -- | What a symbol is replaced by: one expression, or a run of arguments,
 -- which is spliced where it lands in an argument list. A pattern variable's
@@ -308,11 +317,10 @@ data Scope = Scope
 -- names.
 scope :: Symbol -> V.Vector Expr -> Maybe Scope
 scope h as
-  | h == sFunction = case V.toList as of
-      [_] -> Just (whole [] True)
-      Sym n : _ : _ | n == sNull -> Just (whole [] True)
-      ps : _ : _ -> (`whole` False) <$> params ps
-      _ -> Nothing
+  | h == sFunction =
+      functionForm (V.toList as) <&> \case
+        (SlotParameters, _) -> whole [] True
+        (NamedParameters xs, _) -> whole xs False
   | h == sWith || h == sModule,
     [App (Sym l) specs, body] <- V.toList as,
     l == sList =
@@ -324,31 +332,55 @@ scope h as
   where
     e = mkApp (Sym h) as
     -- Every argument is inside.
-    whole xs sl = Scope e xs sl $ \_ fin ->
-      let as' = V.map fin as
-       in if V.all isNothing as' then Nothing else Just (mkApp (Sym h) (V.zipWith fromMaybe as as'))
+    whole xs sl = Scope e xs sl $ \_ fin -> rebuildChanged (Sym h) as Nothing (V.map fin as)
     -- A specification's name and the body are inside; its value is outside.
     local specs body fout fin =
-      let specs' = V.map (spec fout fin) specs
-          body' = fin body
-       in if V.all isNothing specs' && isNothing body'
-            then Nothing
-            else Just (mkApp (Sym h) (V.fromList [apply sList (V.toList (V.zipWith fromMaybe specs specs')), fromMaybe body body']))
+      rebuildChanged (Sym h) as Nothing (V.fromList [rebuildChanged (Sym sList) specs Nothing (V.map (spec fout fin) specs), fin body])
     spec fout fin = \case
       App (Sym s) xs
         | s == sSet || s == sSetDelayed,
           [x, v] <- V.toList xs ->
-            let x' = fin x
-                v' = fout v
-             in if isNothing x' && isNothing v' then Nothing else Just (apply s [fromMaybe x x', fromMaybe v v'])
+            rebuildChanged (Sym s) xs Nothing (V.fromList [fin x, fout v])
       x -> fin x
     specName = \case
       Sym x -> Just x
-      App (Sym s) xs | s == sSet || s == sSetDelayed, [Sym x, _] <- V.toList xs -> Just x
+      Call s [Sym x, _] | s == sSet || s == sSetDelayed -> Just x
       _ -> Nothing
-    params = \case
+
+-- | How a pure function takes its arguments: by slot, or by name.
+data Parameters
+  = -- | @#n@, @##n@ and @#0@
+    SlotParameters
+  | -- | named parameters, in order
+    NamedParameters ![Symbol]
+  deriving stock (Eq, Show)
+
+-- | Read @Function@'s arguments as its parameters and its body: the one
+-- reading of a pure function's form, which application, scoping and
+-- differentiation share. @Function[body]@ and @Function[Null, body, …]@ are
+-- slot form, whatever follows the body: @Function[Null, #1 + 1][5]@ is 6,
+-- not a function of a parameter named @Null@ (WL 15.0.1, through the
+-- Wolfram Cloud MCP). @Function[x, body, …]@ and
+-- @Function[{x, …}, body, …]@ are named. 'Nothing' for anything else.
+--
+-- >>> let x = mkSymbol (globalSymbol "x")
+-- >>> functionForm [mkSymbol sNull, x]
+-- Just (SlotParameters,x)
+-- >>> functionForm [apply sList [x], x]
+-- Just (NamedParameters [x],x)
+functionForm :: [Expr] -> Maybe (Parameters, Expr)
+-- INLINE: substituteFree reads every Function it meets, and inlined, the
+-- Maybe and the pair are never built.
+{-# INLINE functionForm #-}
+functionForm = \case
+  [body] -> Just (SlotParameters, body)
+  Sym n : body : _ | n == sNull -> Just (SlotParameters, body)
+  ps : body : _ -> (\xs -> (NamedParameters xs, body)) <$> names ps
+  [] -> Nothing
+  where
+    names = \case
       Sym x -> Just [x]
-      App (Sym l) xs | l == sList -> traverse (\case Sym x -> Just x; _ -> Nothing) (V.toList xs)
+      Call l xs | l == sList -> traverse symbolOf xs
       _ -> Nothing
 
 -- | The names of the patterns in a left-hand side, @x@ of @x_@ and @x:p@.

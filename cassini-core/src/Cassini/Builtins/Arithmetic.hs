@@ -17,7 +17,7 @@ module Cassini.Builtins.Arithmetic (definitions, fromSimplified) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, message, own)
-import Cassini.Core.Expr (Expr, apply, mkNumber, pattern Int_, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, mkNumber, pattern Infinity, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (sDirectedInfinity, sIndeterminate, sPlus, sPower, sTimes)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Number (fromRational')
@@ -37,7 +37,7 @@ definitions =
     define "Minus" numeric [down (rewrite1 (\a -> apply sTimes [Int_ (-1), a]))],
     define "Sqrt" numeric [down (rewrite1 (\a -> apply sPower [a, mkNumber (fromRational' (1 % 2))]))],
     -- The infinities are symbols that evaluate to their FullForm (§4.15).
-    define "Infinity" [Constant, Protected, ReadProtected] [own (const (pure (Just (apply sDirectedInfinity [Int_ 1]))))],
+    define "Infinity" [Constant, Protected, ReadProtected] [own (const (pure (Just Infinity)))],
     define "ComplexInfinity" [Constant, Protected, ReadProtected] [own (const (pure (Just complexInfinity)))],
     define "DirectedInfinity" [Listable, Protected, ReadProtected] [],
     define "Indeterminate" [Protected, ReadProtected] []

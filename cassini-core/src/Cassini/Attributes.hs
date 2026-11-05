@@ -25,6 +25,7 @@ module Cassini.Attributes
     isListable,
     isNumericFunction,
     isProtected,
+    isLocked,
     sequenceHold,
     holdAllComplete,
   )
@@ -135,6 +136,10 @@ isNumericFunction = member NumericFunction
 -- | @Protected@: assignments refuse the symbol.
 isProtected :: AttributeSet -> Bool
 isProtected = member Protected
+
+-- | @Locked@: attribute changes refuse the symbol.
+isLocked :: AttributeSet -> Bool
+isLocked = member Locked
 
 -- | Whether @Sequence@ arguments stay unspliced (step 5): @SequenceHold@ or
 -- @HoldAllComplete@.

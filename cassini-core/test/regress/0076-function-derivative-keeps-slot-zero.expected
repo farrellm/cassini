@@ -1,0 +1,5 @@
+Out[1]: Function[g[Slot[0]]]
+Out[2]: Function[Null, Times[2, Slot[1], g[Slot[0]]]]
+Out[3]: Function[x, g[Slot[0]]]
+Out[4]: Function[Hold[Derivative[1][Slot[0]]]]
+Out[5]: Function[Null, Hold[Derivative[1][Slot[0]]]]

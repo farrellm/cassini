@@ -54,7 +54,7 @@ module Cassini.Simplify.Automatic
   )
 where
 
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol (Symbol, sFactorial, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), add, compareNumber, divide, mul, neg, normalize, pow)
@@ -118,17 +118,17 @@ simplify u = case u of
 simplifyRNE :: Expr -> Maybe Number
 simplifyRNE = \case
   Num n -> Just n
-  App (Sym f) as
-    | f == sPlus -> foldl' add (NInt 0) <$> traverse simplifyRNE (V.toList as)
-    | f == sTimes -> foldl' mul (NInt 1) <$> traverse simplifyRNE (V.toList as)
-    | f == sPower, [x, Int_ n] <- V.toList as -> simplifyRNE x >>= (`pow` n)
+  Call f as
+    | f == sPlus -> foldl' add (NInt 0) <$> traverse simplifyRNE as
+    | f == sTimes -> foldl' mul (NInt 1) <$> traverse simplifyRNE as
+    | f == sPower, [x, Int_ n] <- as -> simplifyRNE x >>= (`pow` n)
     | f == sDivide,
-      [x, y] <- V.toList as -> do
+      [x, y] <- as -> do
         x' <- simplifyRNE x
         y' <- simplifyRNE y
         divide x' y'
-    | f == sSubtract, [x, y] <- V.toList as -> add <$> simplifyRNE x <*> (neg <$> simplifyRNE y)
-    | f == sMinus, [x] <- V.toList as -> neg <$> simplifyRNE x
+    | f == sSubtract, [x, y] <- as -> add <$> simplifyRNE x <*> (neg <$> simplifyRNE y)
+    | f == sMinus, [x] <- as -> neg <$> simplifyRNE x
   _ -> Nothing
 
 -- | Cohen's @Simplify_rational_number@. A 'Number' is already in standard

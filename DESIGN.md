@@ -651,8 +651,8 @@ data Shape
 module Cassini.Core.Expr
   ( Expr
   , pattern Num, pattern Str, pattern Sym, pattern App
-  , pattern Int_, pattern Rat_
-  , exprHead, exprArgs, exprArity
+  , pattern Call, pattern Int_, pattern Rat_, pattern Infinity
+  , exprHead, exprArgs, exprArity, symbolOf
   ) where
 
 pattern Num :: Number -> Expr
@@ -683,6 +683,19 @@ constructors, not at every call site, so §3.4 can change without a repository-w
 read on every evaluation step and arguments are indexed far less often, so `exprHead` stays a field
 access; `Cassini.Structure.part` restores the 0-index convention at the API boundary. On an atom,
 `exprHead` is WL's `Head`: the symbol `Integer`, `Rational`, `String` or `Symbol`.
+
+`Call f xs` is `App (Sym f) as` with the arguments as a list, for the language's fixed forms:
+`Call c [p, test] | c == sCondition` reads as the form it matches, where the `App` spelling needs a
+second guard to convert and destructure the vector. Code that wants the arguments as a vector, for
+lengths, slices or bulk maps, matches `App`. `Call` is not for the evaluator's or the matcher's
+per-node paths: Haskell matches a pattern before its guard, so `Call c [p, test]` lists the
+arguments of every symbol-headed node it is tried on, and a `Call h as` with several guards
+allocates the lazy list for each node. There the head is tested first, `App (Sym c) as | c ==
+sCondition, [p, test] <- V.toList as`, and the allocation gate (§8.6) holds the line. `Call` is
+`INLINE`: an out-of-line matcher allocates its continuation at every match.
+
+`Infinity` is `DirectedInfinity[1]`, the bound that level specifications, `Repeated` and
+`ReplaceList` all accept.
 
 `Int_` is bidirectional. `Rat_` matches only: building a fraction goes through
 `Cassini.Number.fromRational'`, which normalizes `4/2` to an integer. A bidirectional `Rat_` would
@@ -1806,7 +1819,9 @@ ReadProtected}`, `wolfram/HoldAll/PropertiesAndRelations/12`), so `Derivative[1]
 `f'[x_] := …` are ordinary user subvalues, keyed on `Derivative` (§4.2). Its two built-in
 subvalues add orders (`Derivative[1][Derivative[2][f]]` is `Derivative[3][f]`; all zeros is `f`)
 and differentiate a definition: a pure function (one with named parameters keeps them:
-`Function[x, x^2]'` is `Function[x, 2 x]`, `wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1`),
+`Function[x, x^2]'` is `Function[x, 2 x]`, `wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1`;
+in slot form `#0` stays `#0`, not the function it names, so `(g[#0] #^2 &)'` is `2 #1 g[#0] &`, as
+in WL 15.0.1),
 a number (`1'` is `0 &`), `List`, `Plus`, `Times` and `Power`, and a symbol with user downvalues,
 whose definition is applied to fresh variables and differentiated (`f[x_] := x Cos[x]` makes `f'`
 a pure function, `wolfram/Derivative/Scope/1`). The last applies only when the definition matches
@@ -2187,7 +2202,11 @@ below that rests only on what an example returns is marked as such.
 substituting into the held body: named parameters for `Function[{x, …}, …]` and for the
 single-parameter `Function[x, …]`, and `#n`, `##n` and `#0` for slot form, which is also what
 `Function[Null, body, attrs]` uses ("represents a function in which the parameters in body are given
-using # etc.", `wolfram_ref_function.html`). In slot form, arguments beyond the highest slot are
+using # etc.", `wolfram_ref_function.html`). `Function[Null, body]` is slot form too, with or without
+the attributes: `Null` is never a parameter (WL 15.0.1; regression case 0075).
+`Cassini.Structure.functionForm` is the one reading of these forms, which application, scoping,
+the unfilled-slot check and `Derivative` share; while each had its own, application bound `Null` as a
+parameter and `Derivative` dropped it. In slot form, arguments beyond the highest slot are
 ignored, per the same page. Two
 points the evaluator must get right:
 

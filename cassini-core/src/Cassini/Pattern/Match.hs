@@ -157,6 +157,8 @@ matchWith cfg = go
 -- none.
 headAttributes :: (Kernel :> es) => Expr -> Eff es AttributeSet
 headAttributes = \case
+  -- lookupSymbol, not lookupAttributes: the extra call costs 5% of the
+  -- matcher's allocation (bench Pattern.syntactic), inlined or not.
   Sym f -> (.siAttributes) <$> lookupSymbol f
   _ -> pure mempty
 

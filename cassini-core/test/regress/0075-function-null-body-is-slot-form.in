@@ -1,0 +1,9 @@
+(* Function[Null, body, ...] is slot form whatever follows the body, so Null is never a parameter, and its derivative keeps the Null and the attributes. Every output is WL 15.0.1's, evaluated through the Wolfram Cloud MCP. *)
+Function[Null, Plus[Slot[1], 1]][5]
+Function[Null, List[Slot[1], Null]][5]
+Function[Null, Function[x, Slot[1]]][7]
+Function[Null, Slot[2]][5]
+Derivative[1][Function[Null, Power[Slot[1], 2]]]
+Derivative[1][Function[Null, Power[Slot[1], 2], HoldAll]]
+Derivative[1][Function[Null, Plus[Slot[1], Slot[2]]]]
+Derivative[1][Function[Power[Slot[1], 2]]]
