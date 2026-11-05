@@ -14,7 +14,7 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   replace the head-test idiom and its copies across the library; the kernel gains
   `lookupAttributes`, and `Cassini.Attributes` `isLocked`. The assignment builtins dispatch on a
   `Timing` (`=` or `:=`), not on their names as strings. `Cassini.Structure.rebuildChanged` is the
-  one copy of "rebuild only what changed".
+  one copy of "rebuild only what changed", but for `substituteFree`'s, which splices runs.
 * Milestone 1c, calculus in the kernel (DESIGN.md §4.9, §4.10, §4.13, §10):
   * Pure functions (`Cassini.Builtins.Control`): `Function` in slot and named form applies as a
     built-in subvalue, with `Slot`, `SlotSequence`, `Function::slotn`, `Function::slots` and
