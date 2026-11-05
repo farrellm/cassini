@@ -90,6 +90,7 @@ pattern Infinity :: Expr
 pattern Infinity <- Call ((== sDirectedInfinity) -> True) [Int_ 1]
   where
     Infinity = apply sDirectedInfinity [Int_ 1]
+{-# INLINE Infinity #-}
 
 -- | An integer.
 pattern Int_ :: Integer -> Expr

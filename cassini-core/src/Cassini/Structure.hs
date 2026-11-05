@@ -335,11 +335,7 @@ scope h as
     whole xs sl = Scope e xs sl $ \_ fin -> rebuildChanged (Sym h) as Nothing (V.map fin as)
     -- A specification's name and the body are inside; its value is outside.
     local specs body fout fin =
-      let specs' = V.map (spec fout fin) specs
-          body' = fin body
-       in if V.all isNothing specs' && isNothing body'
-            then Nothing
-            else Just (mkApp (Sym h) (V.fromList [apply sList (V.toList (V.zipWith fromMaybe specs specs')), fromMaybe body body']))
+      rebuildChanged (Sym h) as Nothing (V.fromList [rebuildChanged (Sym sList) specs Nothing (V.map (spec fout fin) specs), fin body])
     spec fout fin = \case
       Call s [x, v]
         | s == sSet || s == sSetDelayed ->

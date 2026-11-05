@@ -129,8 +129,8 @@ write :: (Kernel :> es) => Text -> Expr -> RuleBody -> Eff es Bool
 write name lhs body = case target lhs of
   Nothing -> False <$ message name "setraw" [lhs]
   Just (Target s k) -> do
-    info <- lookupSymbol s
-    if isProtected info.siAttributes
+    protected <- isProtected <$> lookupAttributes s
+    if protected
       then do
         if k == OwnValue then message name "wrsym" [Sym s] else message name "write" [Sym s, lhs]
         pure False
@@ -140,8 +140,8 @@ write name lhs body = case target lhs of
 -- when it was written.
 writeUp :: (Kernel :> es) => Text -> Symbol -> Expr -> RuleBody -> Eff es Bool
 writeUp name s lhs body = do
-  info <- lookupSymbol s
-  if isProtected info.siAttributes
+  protected <- isProtected <$> lookupAttributes s
+  if protected
     then False <$ message name "write" [Sym s, lhs]
     else True <$ modifySymbol s (modifyRules UpValue (insertRule (mkRule User lhs body)))
 
@@ -299,8 +299,8 @@ attributes :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 attributes e = case args e of
   [x] | Just s0 <- symbolOrName x -> do
     s <- s0
-    info <- lookupSymbol s
-    pure (Just (apply sList [Sym (systemSymbol (attributeName a)) | a <- attributeList info.siAttributes]))
+    attrs <- lookupAttributes s
+    pure (Just (apply sList [Sym (systemSymbol (attributeName a)) | a <- attributeList attrs]))
   _ -> pure Nothing
   where
     symbolOrName = \case
@@ -311,11 +311,16 @@ attributes e = case args e of
 -- | @Attributes[s] = {…}@: replace the symbol's attributes. A @Locked@
 -- symbol refuses with @Attributes::locked@, as @SetAttributes@ does.
 replaceAttributes :: (Kernel :> es) => Symbol -> [Attribute] -> Eff es ()
-replaceAttributes s attrs = do
+replaceAttributes s attrs = unlessLocked s (const (Attributes.attributeSet attrs))
+
+-- | Change a symbol's attributes, unless it is @Locked@, which refuses with
+-- @Attributes::locked@.
+unlessLocked :: (Kernel :> es) => Symbol -> (Attributes.AttributeSet -> Attributes.AttributeSet) -> Eff es ()
+unlessLocked s g = do
   locked <- isLocked <$> lookupAttributes s
   if locked
     then message "Attributes" "locked" [Sym s]
-    else modifySymbol s (\si -> si {siAttributes = Attributes.attributeSet attrs})
+    else modifySymbol s (\si -> si {siAttributes = g si.siAttributes})
 
 -- | @SetAttributes@ and @ClearAttributes@: one symbol or a list, and one
 -- attribute or a list. A @Locked@ symbol refuses with @Attributes::locked@.
@@ -325,11 +330,7 @@ changeAttributes f e = case args e of
   [ss, as] ->
     case (symbolList ss, traverse attributeOf (listOf as)) of
       (Just syms, Just attrs) -> do
-        for_ syms $ \s -> do
-          locked <- isLocked <$> lookupAttributes s
-          if locked
-            then message "Attributes" "locked" [Sym s]
-            else modifySymbol s (\si -> si {siAttributes = foldr f si.siAttributes attrs})
+        for_ syms $ \s -> unlessLocked s (\a -> foldr f a attrs)
         pure (Just sNullE)
       _ -> pure Nothing
   _ -> pure Nothing

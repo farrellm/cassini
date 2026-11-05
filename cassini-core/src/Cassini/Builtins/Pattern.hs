@@ -17,8 +17,8 @@
 module Cassini.Builtins.Pattern (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Bound (..), Definition, args, define, down, inLevel, levelParts, levelSpec, message, rebuildM, sFalseE, sTrueE, sub)
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Sym)
+import Cassini.Builtins.Define (Bound (..), Definition, args, define, down, inLevel, isList, levelParts, levelSpec, message, rebuildM, sFalseE, sTrueE, sub)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Call, pattern Infinity, pattern Int_)
 import Cassini.Core.Symbol (sList, sRule, sRuleDelayed)
 import Cassini.Eval (firstJustM)
 import Cassini.Eval.Kernel (Kernel)
@@ -78,12 +78,6 @@ withReplacements name rules f = case readReplacements rules of
   Nothing -> Nothing <$ message name "reps" [listed]
   where
     listed = if isList rules then rules else apply sList [rules]
-
--- | Whether the expression is a list.
-isList :: Expr -> Bool
-isList = \case
-  App (Sym l) _ -> l == sList
-  _ -> False
 
 -- | The first rule that applies to the whole expression, by its first match.
 applyFirst :: (Kernel :> es) => [Replacement] -> Expr -> Eff es (Maybe Expr)

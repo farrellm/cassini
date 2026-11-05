@@ -20,7 +20,7 @@
 module Cassini.Builtins.Calculus (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Definition, args, define, down, sub)
+import Cassini.Builtins.Define (Definition, args, define, down, isList, sub)
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sDerivative, sFunction, sList, sPlus, sPower, sSlot, sTimes, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
@@ -106,10 +106,6 @@ repeated e = case args e of
     [x, Int_ n] | n > 0 -> Just (apply sD [dOf f x, apply sList [x, Int_ (n - 1)]])
     _ -> Nothing
   _ -> Nothing
-  where
-    isList = \case
-      App (Sym l) _ -> l == sList
-      _ -> False
 
 -- | @D[{f, g, …}, x]@ is @{D[f, x], D[g, x], …}@.
 overList :: Expr -> Maybe Expr
@@ -254,10 +250,10 @@ derivativeOfDefinition e = case e of
         let vars = freshVars (length orders)
             (inVars, back) = case params of
               SlotParameters ->
-                (substituteFree Shielding Map.empty (Just (Slots (V.fromList vars) f)) body, zip vars [apply sSlot [Int_ k] | k <- [1 ..]])
+                (substituteFree Shielding Map.empty (Just (Slots (V.fromList vars) f)) body, toSlots vars)
               NamedParameters xs ->
                 (substituteFree Shielding (Map.fromList (zip xs (map BOne vars))) Nothing body, zip vars (map Sym xs))
-        result <- evaluate (apply sD (inVars : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0]))
+        result <- evaluate (dIn inVars vars orders)
         pure $
           if noD result
             then Just (apply sFunction (withBody (substituteAll result back) fargs))
@@ -276,14 +272,18 @@ derivativeOfDefinition e = case e of
             if value == applied && not (structural f)
               then pure Nothing
               else do
-                result <- evaluate (apply sD (value : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0]))
+                result <- evaluate (dIn value vars orders)
                 pure $
                   if not (freeOf result e) || not (noD result)
                     then Nothing
-                    else Just (apply sFunction [substituteAll result [(v, apply sSlot [Int_ k]) | (v, k) <- zip vars [1 ..]]])
+                    else Just (apply sFunction [substituteAll result (toSlots vars)])
   _ -> pure Nothing
   where
     freshVars n = [Sym (symbol "Cassini`Private`" ("d" <> show k)) | k <- [1 .. n]]
+    -- D of x in each variable to its order, skipping the zeros.
+    dIn x vars orders = apply sD (x : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0])
+    -- Each fresh variable back to its slot, #1 for the first.
+    toSlots vars = zip vars [apply sSlot [Int_ k] | k <- [1 ..]]
     -- Whether a function takes this many arguments to differentiate in:
     -- in slot form any number, the unfilled slots staying as they are.
     takes n = \case

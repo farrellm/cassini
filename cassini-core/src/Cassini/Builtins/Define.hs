@@ -16,6 +16,7 @@ module Cassini.Builtins.Define
     own,
     sub,
     args,
+    isList,
     message,
     sym,
     sNullE,
@@ -114,6 +115,12 @@ partSpec = \case
 
 sAll :: Symbol
 sAll = systemSymbol "All"
+
+-- | Whether the expression is a list.
+isList :: Expr -> Bool
+isList = \case
+  App (Sym l) _ -> l == sList
+  _ -> False
 
 -- | One bound of a level specification.
 data Bound = Level !Integer | Infinite
