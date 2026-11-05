@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -40,6 +41,7 @@ module Cassini.Eval.Kernel
     -- * State and configuration
     KernelState (..),
     emptyState,
+    symbolEntry,
     TraceEntry (..),
     EvalConfig (..),
     defaultConfig,
@@ -65,6 +67,7 @@ import Effectful.Error.Static (Error, runErrorNoCallStack, throwError_, tryError
 import Effectful.Reader.Static (Reader, ask, asks, local, runReader)
 import Effectful.State.Static.Local (State, evalState, get, modify, put, runState)
 import Effectful.TH (makeEffect)
+import Optics.Core (Lens', at, lens, view, (%), (%~))
 
 -- | The kernel's operations.
 data Kernel :: Effect where
@@ -144,10 +147,18 @@ data KernelState = KernelState
     ksMessages :: !(Seq Message),
     ksTrace :: !(Seq TraceEntry)
   }
+  deriving stock (Generic)
 
 -- | No symbols, no builtins.
 emptyState :: KernelState
 emptyState = KernelState Map.empty IntMap.empty mempty mempty
+
+-- | A symbol's entry: 'emptyInfo' for an unknown symbol, and a write always
+-- stores, so a symbol once written stays in the table even if its entry
+-- returns to empty. INLINE, for the reason 'Cassini.Rules.rulesAt' gives.
+symbolEntry :: Symbol -> Lens' KernelState SymbolInfo
+symbolEntry s = #ksSymbols % at s % lens (fromMaybe emptyInfo) (const Just)
+{-# INLINE symbolEntry #-}
 
 -- | The knobs fixed during evaluation.
 data EvalConfig = EvalConfig
@@ -201,7 +212,7 @@ handler :: Sequence -> Store (HandlerEs base) -> EffectHandler Kernel (HandlerEs
 handler (Sequence sq) st env = \case
   LookupSymbol s -> symbolInfo st s
   ModifySymbol s f ->
-    st.store $ \k -> k {ksSymbols = Map.alter (Just . f . fromMaybe emptyInfo) s k.ksSymbols}
+    st.store (symbolEntry s %~ f)
   EmitMessage s t as -> message s t as
   Evaluate e -> do
     interrupted <- st.poll
@@ -232,7 +243,7 @@ handler (Sequence sq) st env = \case
   LookupBuiltin (BuiltinId i) -> IntMap.lookup i . (.ksBuiltins) <$> st.load
   TraceStep name e -> do
     Env cfg d <- ask @Env
-    when cfg.trace $ st.store $ \k -> k {ksTrace = k.ksTrace |> TraceEntry d name e}
+    when cfg.trace $ st.store (#ksTrace %~ (|> TraceEntry d name e))
   KernelConfig -> asks @Env (.envConfig)
   where
     settled = \case
@@ -241,7 +252,7 @@ handler (Sequence sq) st env = \case
       Sym s -> null . ruleSetToList . rulesOf OwnValue <$> symbolInfo st s
       App (Sym h) _ -> pure (h == sHold)
       App _ _ -> pure False
-    message s t as = st.store $ \k -> k {ksMessages = k.ksMessages |> Message s t as}
+    message s t as = st.store (#ksMessages %~ (|> Message s t as))
 
 -- | A symbol's entry in the stored state; 'emptyInfo' for an unknown one.
 --
@@ -249,7 +260,7 @@ handler (Sequence sq) st env = \case
 -- calls through an unknown 'Store' on every 'LookupSymbol', and the
 -- end-to-end benchmark runs 7% slower, with no change in allocation.
 symbolInfo :: Store es -> Symbol -> Eff es SymbolInfo
-symbolInfo st s = fromMaybe emptyInfo . Map.lookup s . (.ksSymbols) <$> st.load
+symbolInfo st s = view (symbolEntry s) <$> st.load
 {-# INLINE symbolInfo #-}
 
 -- | Discharge the handler's own effects: depth from 0, a fresh fuel budget,

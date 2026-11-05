@@ -89,6 +89,7 @@ library
     , hashable ^>=1.5.1
     , logict ^>=0.8.2.0
     , megaparsec ^>=9.8.1
+    , optics-core ^>=0.4.1
     , recursion-schemes ^>=5.2.3
     , text ^>=2.1.4
     , unordered-containers ^>=0.2.21
