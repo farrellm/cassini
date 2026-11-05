@@ -4,6 +4,12 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* `optics-core`, with `OverloadedLabels`, for changes through a path into the kernel state (DESIGN.md
+  §2.3), with no change in behaviour or allocation. `Cassini.Eval.Kernel.symbolEntry` is a symbol's
+  entry as a lens, reading an unknown symbol as `emptyInfo`, and `Cassini.Rules.rulesAt` is one
+  table. `rulesOf` and `modifyRules` are now `view` and `over` of `rulesAt`, so the four-way case is
+  written once. A root `.ormolu` gives ormolu `&`'s fixity and `Optics.Core`'s re-exports (§2.5).
+
 * Fix: `Function[Null, body]` is slot form, as `Function[Null, body, attrs]` is, so
   `Function[Null, #1 + 1][5]` is 6, not a function of a parameter named `Null`. Its derivative keeps
   the `Null` and the attributes (`Function[Null, #^2, HoldAll]'` is `Function[Null, 2 #1, HoldAll]`).

@@ -329,6 +329,20 @@ Consequences:
   One more uses an unsafe primitive: `Cassini.Core.Expr.Internal`, whose `Eq` tests pointer
   equality first (§3.4). `grep -rlE 'System.IO.Unsafe|reallyUnsafe' src src-intern`, run in
   `cassini-core/`, listing exactly those four files is a complete audit of the tree's unsafety.
+- **Record dot reads; an optic changes a value through a path.** `r.field` is the house default
+  for reading. A change that is a function of the old value, or that goes through more than one
+  level or a map entry, is an `optics-core` optic with `OverloadedLabels`:
+  `st & symbolEntry s % rulesAt k %~ insertRule r`, not a nested record update that names each
+  level twice and spells out the map's missing-key case. A record update stays where it *sets*
+  fields, one or several (`k {ksMessages = mempty, ksTrace = mempty}`), which an optic would only
+  lengthen. Labels come from `deriving stock (Generic)`. optics-core resolves a label only where the
+  field's selector is in scope, so a type exported without its fields stays abstract: outside
+  `Cassini.Rules`, `#ownValues` does not type-check. An optic on a hot path is `INLINE`. Out of
+  line, `rulesOf` and the kernel's symbol lookup built the optic as a closure on every call, and
+  the end-to-end benchmark allocated 13% more (§8). `optics-core` and not `lens` (§11.1): optic
+  kinds are distinct types, so a type error names the kind (a getter where a lens was wanted)
+  instead of a failed `Functor` constraint. It also has no Template Haskell and none of `lens`'s
+  dependency closure.
 
 ### 2.4 Compiler, warnings and extensions
 
@@ -378,7 +392,8 @@ fails when any package's two stanzas differ from `cassini-core`'s, and CI runs i
 
 Per module, as needed: `PatternSynonyms` and `ViewPatterns` (§3.3), `TypeFamilies` (every `type
 instance` — `Base Expr` in §3.6, `DispatchOf Kernel` in §4.3 — and the algebra tower), `DerivingVia`
-(§4.1). `DataKinds`, `GADTs`, `LambdaCase` and `DerivingStrategies` are already in GHC2024, and
+(§4.1), `OverloadedLabels` (where a module uses optics labels, §2.3; it fails the first-tier test,
+since a few modules do and most never will). `DataKinds`, `GADTs`, `LambdaCase` and `DerivingStrategies` are already in GHC2024, and
 neither they nor the two project-wide extensions are ever declared: `-Wall` does not warn on a
 redundant pragma, so one is invisible noise claiming a need the module does not have. (Checked by
 compiling one-line modules against bare `-XGHC2024`.)
@@ -388,8 +403,27 @@ compiling one-line modules against bare `-XGHC2024`.)
 `ormolu` and `hlint` (with a committed `.hlint.yaml`), both run in CI in check mode.
 
 **`ormolu` because it has no style configuration.** There is nothing to write, revisit or argue
-about in review, which is the whole value being bought. The `.ormolu` file it reads carries operator
-*fixities*, not style, and is needed only once a module declares custom operators.
+about in review, which is the whole value being bought.
+
+**The root `.ormolu` carries fixities and re-exports, not style.** ormolu knows the operator
+fixities of the Hackage packages a `.cabal` file depends on, but two facts here escape it, and
+without them it breaks `st & #a % #b %~ f` at every operator:
+
+```
+infixl 1 &
+module Optics.Core exports Optics.Optic
+module Optics.Core exports Optics.Operators
+```
+
+`&` reaches every module through the mixin-renamed `Prelude` (§2.3). ormolu takes that for
+`base`'s, which has no `&`, so it falls back to the default `infixl 9`. `Optics.Core` re-exports
+its operators from the modules ormolu has fixities for, and ormolu does not follow re-exports. The
+optics operators get re-export lines rather than fixity overrides, because an override applies in
+every module. `%` is also `Data.Ratio`'s (`infixl 7`), and three modules import that one. **Never
+write `module Prelude exports …`**: it replaces ormolu's whole idea of `Prelude`, and `==`, `elem`
+and `++` lose their fixities. ormolu finds the file by walking up from each source file, so one
+copy at the root serves all three packages. A module that declares an operator of its own adds its
+fixity here. (All verified with ormolu 0.8.0.2.)
 
 **Ormolu must see the cabal file; never pass `--no-cabal`.** It reads `default-extensions` from the
 `.cabal` file, resolving `common` stanza imports. With `--no-cabal` it parses `r.rName` without
@@ -4078,14 +4112,16 @@ document requires it.
 | `text`, `vector`, `containers`, `unordered-containers`, `hashable`, `deepseq` | representation; `NFData` for benchmarks | L0–L2 |
 | `logict` | matcher nondeterminism, confined to one module (§4.5.2) | L2 |
 | `recursion-schemes` | traversal that rebuilds through smart constructors (§3.6) | L1 |
+| `optics-core` | changes through a path into the kernel state and a symbol's tables, with `Generic`-derived labels (§2.3) | L3+ |
 | `megaparsec` | surface syntax (§4.10) | L5 |
 | `haskeline`, `unix` | the interactive loop's line editing and history, and its SIGINT handler (§4.10); in `cassini-repl` only (D7) | L5 |
 | `poly`, `semirings` | polynomial substrate and coefficient classes (§5.3) | A |
 | `tasty`, `tasty-hunit`, `tasty-quickcheck`, `tasty-golden`, `tasty-bench` | §7, §8 | test |
 
 Deliberately *not* dependencies: `enummapset`, whose `EnumMap` held the four rule tables until a
-record replaced it (§4.2); `lens` (the structure operators are a dozen functions, not an optics
-library); `uniplate` (§3.6); `sbv` (D10); `symengine` (FFI to a fast external core would settle the
+record replaced it (§4.2); `lens`, for which `optics-core` stands in (§2.3). The structure
+operators stay a dozen functions over `Expr`, not optics: their contract is WL's, with WL's
+messages; `uniplate` (§3.6); `sbv` (D10); `symengine` (FFI to a fast external core would settle the
 two-layer question by outsourcing it, and this project is the exercise of not doing that);
 `vector-sized`/`singletons` for type-level arity (D13), which is also why `poly`'s `sparse` flag is
 off (§5.3).

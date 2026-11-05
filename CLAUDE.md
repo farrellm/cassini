@@ -31,6 +31,7 @@ What spans packages stays at the root:
 | [`notes/`](./notes/) | The reading-and-building guide and its bibliography. Has its own `CLAUDE.md` with strict editing rules. |
 | [`references/`](./references/) | The document corpus the notes cite, indexed, with per-file defect annotations; its totals are in `references/CLAUDE.md`. Gitignored; see rule 6. |
 | `cabal.project` | Lists the three packages. GHC2024, `base ^>=4.21.2.0`. |
+| `.ormolu` | ormolu's fixities and re-exports for all three packages (§2.5). Not style config. |
 | `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker; the Haddock coverage floor; the common-stanza check. |
 | `.github/workflows/ci.yml` | CI, §2.8 steps 1–8. |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate, one copy for the project; each package's `LICENSE` is a symlink to the root's. The changelog is written as changes land, not at release. |
@@ -87,11 +88,18 @@ What spans packages stays at the root:
      own. Change all three together; `scripts/check-common-stanzas.sh` fails CI if they differ.
    - **Record dot syntax is preferred**: `s.symName`, not `symName s`. Prefix selector application
      wants a reason (composition, passing the selector as a function, a section).
+   - **`optics-core` with `OverloadedLabels` for a change through a path** (§2.3):
+     `st & symbolEntry s % rulesAt k %~ f`, not a nested record update. Plain field *sets* stay
+     record updates. Labels need `deriving stock (Generic)` and the field's selector in scope, which
+     keeps abstract types abstract. An optic on a hot path gets `INLINE`; out of line, one cost 13%
+     end-to-end allocation.
    - `ormolu` and `hlint`, both checked in CI. Ormolu has no style config, and that is the point.
      It reads `default-extensions` from the nearest `.cabal` file, so **never pass `--no-cabal`**:
-     without it ormolu rewrites `r.field` to `r . field`. hlint does not read the cabal file at all,
-     so `.hlint.yaml` passes those extensions itself. Without them hlint suggests `f x . field` for
-     `(f x).field` (§2.5).
+     without it ormolu rewrites `r.field` to `r . field`. The root `.ormolu` tells it `&`'s fixity
+     and `Optics.Core`'s re-exports; without that it breaks optic chains at every operator. Never add
+     `module Prelude exports …` to it, which erases the fixities of `==`, `elem` and `++`. hlint
+     does not read the cabal file at all, so `.hlint.yaml` passes those extensions itself. Without
+     them hlint suggests `f x . field` for `(f x).field` (§2.5).
    - **Module layering is a lint rule, not a convention** (§2.6). Imports go down the layer stack;
      `.hlint.yaml` fails a violation, and `lint/check-layering.sh` checks the rules themselves. The
      rules are by module name, so they span packages: L5 is `Cassini.Script` in cassini-core and
