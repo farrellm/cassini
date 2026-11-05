@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 -- | Registry assembly: one 'KernelState' with every builtin installed
@@ -31,11 +32,11 @@ import Cassini.Builtins.Session qualified as Session
 import Cassini.Builtins.Structural qualified as Structural
 import Cassini.Core.Expr (apply, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, globalSymbol, parseName, sBlankNullSequence, sSequence, symName, systemSymbol)
-import Cassini.Eval.Kernel (KernelState (..), emptyState)
-import Cassini.Rules (BuiltinId (..), Origin (..), RuleBody (..), SymbolInfo (..), ValueKind (..), emptyInfo, insertRule, mkRule, modifyRules)
+import Cassini.Eval.Kernel (KernelState (..), emptyState, symbolEntry)
+import Cassini.Rules (BuiltinId (..), Origin (..), RuleBody (..), SymbolInfo (..), ValueKind (..), insertRule, mkRule, rulesAt)
 import Data.HashSet qualified as HashSet
 import Data.IntMap.Strict qualified as IntMap
-import Data.Map.Strict qualified as Map
+import Optics.Core ((%), (%~))
 
 -- | Every builtin, installed into an empty state. Each session, script and
 -- corpus case starts from this.
@@ -128,9 +129,7 @@ install :: [Definition] -> KernelState -> KernelState
 install defs s0 = foldl' installOne s0 defs
   where
     installOne st d =
-      let st' = st {ksSymbols = Map.alter (Just . addAttributes d . fromMaybe emptyInfo) d.defSymbol st.ksSymbols}
-       in foldl' (installRule d) st' d.defRules
-    addAttributes d si = si {siAttributes = si.siAttributes <> attributeSet d.defAttributes}
+      foldl' (installRule d) (st & symbolEntry d.defSymbol % #siAttributes %~ (<> attributeSet d.defAttributes)) d.defRules
     installRule d st r =
       let i = IntMap.size st.ksBuiltins
           lhs = case r.nrKind of
@@ -138,9 +137,8 @@ install defs s0 = foldl' installOne s0 defs
             _ -> apply d.defSymbol [apply sBlankNullSequence []]
           rule = mkRule Builtin lhs (Native (BuiltinId i))
        in st
-            { ksBuiltins = IntMap.insert i r.nrFn st.ksBuiltins,
-              ksSymbols = Map.adjust (modifyRules r.nrKind (insertRule rule)) d.defSymbol st.ksSymbols
-            }
+            & #ksBuiltins %~ IntMap.insert i r.nrFn
+            & symbolEntry d.defSymbol % rulesAt r.nrKind %~ insertRule rule
 
 -- | The names of the @System`@ symbols the registry defines: what the
 -- FullForm reader resolves to @System`@, and what the corpus scope rule
