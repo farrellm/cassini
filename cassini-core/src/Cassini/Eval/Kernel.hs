@@ -244,13 +244,19 @@ handler (Sequence sq) st env = \case
     message s t as = st.store $ \k -> k {ksMessages = k.ksMessages |> Message s t as}
 
 -- | A symbol's entry in the stored state; 'emptyInfo' for an unknown one.
+--
+-- This, 'runHandlerEs' and 'ioStore' are INLINE: out of line, the handler
+-- calls through an unknown 'Store' on every 'LookupSymbol', and the
+-- end-to-end benchmark runs 7% slower, with no change in allocation.
 symbolInfo :: Store es -> Symbol -> Eff es SymbolInfo
 symbolInfo st s = fromMaybe emptyInfo . Map.lookup s . (.ksSymbols) <$> st.load
+{-# INLINE symbolInfo #-}
 
 -- | Discharge the handler's own effects: depth from 0, a fresh fuel budget,
 -- and the unwind channel, which every interpreter returns.
 runHandlerEs :: EvalConfig -> Eff (HandlerEs base) a -> Eff base (Either Unwind a)
 runHandlerEs cfg = runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0)
+{-# INLINE runHandlerEs #-}
 
 -- | The pure interpreter: introduces and discharges 'Reader', 'State' and
 -- 'Error', and returns the final state beside the result. State changes made
@@ -300,3 +306,4 @@ runKernelInterruptible sq cfg ref flag =
 -- | The state in the caller's 'IORef', with the given interrupt poll.
 ioStore :: (IOE :> es) => IORef KernelState -> Eff es Bool -> Store es
 ioStore ref poll = Store {load = readIORef ref, store = modifyIORef' ref, poll}
+{-# INLINE ioStore #-}
