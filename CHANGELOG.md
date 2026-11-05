@@ -9,6 +9,11 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   the `Null` and the attributes (`Function[Null, #^2, HoldAll]'` is `Function[Null, 2 #1, HoldAll]`).
   Application, scoping, the unfilled-slot check and `Derivative` now share one reading of
   `Function`'s forms, `Cassini.Structure.functionForm`. Regression case 0075.
+* Fix: a slot-form function's derivative keeps `#0` as `#0`, as WL does, so `(g[#0] #^2 &)'` is
+  `2 #1 g[#0] &`, not `g` of the whole function, and a result that mentions the derivative itself
+  (`(Hold[#0'] # &)'`) no longer differentiates into a copy of the function. A pure function's
+  derivative is also refused, as a definition's is, if it would still mention itself.
+  Regression case 0076.
 * A clarity refactor, with no change in behaviour or allocation: `Cassini.Core.Expr` gains the
   `Call` pattern (a symbol head and its arguments as a list), `Infinity` and `symbolOf`, which
   replace the head-test idiom and its copies across the library; the kernel gains
