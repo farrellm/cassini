@@ -124,3 +124,15 @@ patterns 17 Mathics3
 # Mathics3: refuses the string escape \' ; WL 15.0.1, evaluated through the
 # Wolfram Cloud MCP, keeps the two characters as written (DESIGN.md §4.10).
 0074-string-escapes-are-wl-not-haskell 3 Mathics3
+
+# Mathics3: Function[Null, body] with no third argument binds Null as a
+# parameter, so its slots go unfilled (no Function::slotn either) and its
+# derivative drops the Null and the attributes. WL 15.0.1, through the Wolfram
+# Cloud MCP, reads it as slot form: Function[Null, #1 + 1][5] is 6.
+0075-function-null-body-is-slot-form 1 Mathics3
+0075-function-null-body-is-slot-form 2 Mathics3
+0075-function-null-body-is-slot-form 3 Mathics3
+0075-function-null-body-is-slot-form 4 Mathics3
+0075-function-null-body-is-slot-form 5 Mathics3
+0075-function-null-body-is-slot-form 6 Mathics3
+0075-function-null-body-is-slot-form 7 Mathics3

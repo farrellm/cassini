@@ -18,10 +18,10 @@ module Cassini.Builtins.Control (definitions) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, message, sNullE, sub)
-import Cassini.Core.Expr (Expr, pattern App, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sFunction, sList, sNull, sSlot, sSlotSequence)
+import Cassini.Core.Expr (Expr, pattern App, pattern Call, pattern Int_, pattern Sym)
+import Cassini.Core.Symbol (sFunction, sSlot, sSlotSequence)
 import Cassini.Eval.Kernel (Kernel, evaluate)
-import Cassini.Structure (Binding (..), Scoping (Shielding), Slots (..), substituteFree)
+import Cassini.Structure (Binding (..), Parameters (..), Scoping (Shielding), Slots (..), functionForm, substituteFree)
 import Data.List (unsnoc)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
@@ -44,15 +44,13 @@ definitions =
 -- @Function::fpct@, and the application stays unevaluated.
 functionRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 functionRule e = case e of
-  App f@(App (Sym h) fargs) as | h == sFunction -> case V.toList fargs of
-    [body] -> slotForm f body as
-    [Sym n, body, _] | n == sNull -> slotForm f body as
-    ps : body : _
-      | Just xs <- params ps ->
-          if length xs > V.length as
-            then Nothing <$ message "Function" "fpct" [ps, e]
-            else pure (Just (substituteFree Shielding (Map.fromList (zip xs (map BOne (V.toList as)))) Nothing body))
-    _ -> pure Nothing
+  App f@(Call h fargs@(ps : _)) as
+    | h == sFunction,
+      Just (params, body) <- functionForm fargs -> case params of
+        SlotParameters -> slotForm f body as
+        NamedParameters xs
+          | length xs > V.length as -> Nothing <$ message "Function" "fpct" [ps, e]
+          | otherwise -> pure (Just (substituteFree Shielding (Map.fromList (zip xs (map BOne (V.toList as)))) Nothing body))
   _ -> pure Nothing
   where
     slotForm f body as = do
@@ -60,14 +58,6 @@ functionRule e = case e of
         Left n -> message "Function" "slotn" [Int_ n, e]
         Right n -> message "Function" "slots" [Int_ n, e]
       pure (Just (substituteFree Shielding Map.empty (Just (Slots as f)) body))
-    params = \case
-      Sym x -> Just [x]
-      App (Sym l) xs | l == sList -> traverse symbolOf (V.toList xs)
-      _ -> Nothing
-    symbolOf :: Expr -> Maybe Symbol
-    symbolOf = \case
-      Sym x -> Just x
-      _ -> Nothing
 
 -- | The slots in a slot-form body that @k@ arguments cannot fill, each
 -- once, outside any slot-form @Function@ inside it, whose slots are its own:
@@ -76,17 +66,15 @@ functionRule e = case e of
 unfilled :: Int -> Expr -> [Either Integer Integer]
 unfilled k = ordNub . go
   where
+    -- Each guard tests the head before it lists the arguments: this runs on
+    -- every node of the body, at every application (DESIGN.md §3.3, @Call@).
     go = \case
       App (Sym h) xs
         | h == sSlot, [Int_ n] <- V.toList xs, n > toInteger k -> [Left n]
         | h == sSlotSequence, [Int_ n] <- V.toList xs, n > toInteger k + 1 -> [Right n]
-        | h == sFunction, slotForm (V.toList xs) -> []
+        | h == sFunction, Just (SlotParameters, _) <- functionForm (V.toList xs) -> []
       App h xs -> go h <> concatMap go (V.toList xs)
       _ -> []
-    slotForm = \case
-      [_] -> True
-      Sym n : _ : _ -> n == sNull
-      _ -> False
 
 -- | @CompoundExpression[e1, …, en]@ evaluates each @ei@ in turn and gives
 -- the last. The last is returned unevaluated, for the fixed point to

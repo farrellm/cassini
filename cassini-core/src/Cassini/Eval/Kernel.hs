@@ -24,6 +24,7 @@ module Cassini.Eval.Kernel
 
     -- * Operations
     lookupSymbol,
+    lookupAttributes,
     modifySymbol,
     emitMessage,
     evaluate,
@@ -50,17 +51,18 @@ module Cassini.Eval.Kernel
   )
 where
 
+import Cassini.Attributes (AttributeSet)
 import Cassini.Core.Expr (Expr, apply, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sHold, systemSymbol)
 import Cassini.Eval.Message (Message (..), MessageTag)
-import Cassini.Rules (BuiltinId (..), SymbolInfo, ValueKind (OwnValue), emptyInfo, ruleSetToList, rulesOf)
+import Cassini.Rules (BuiltinId (..), SymbolInfo (..), ValueKind (OwnValue), emptyInfo, ruleSetToList, rulesOf)
 import Data.IntMap.Strict qualified as IntMap
 import Data.Map.Strict qualified as Map
 import Data.Sequence ((|>))
 import Effectful (Eff, Effect, IOE, (:>))
 import Effectful.Dispatch.Dynamic (EffectHandler, localSeqUnlift, reinterpret)
 import Effectful.Error.Static (Error, runErrorNoCallStack, throwError_, tryError)
-import Effectful.Reader.Static (Reader, ask, local, runReader)
+import Effectful.Reader.Static (Reader, ask, asks, local, runReader)
 import Effectful.State.Static.Local (State, evalState, get, modify, put, runState)
 import Effectful.TH (makeEffect)
 
@@ -166,6 +168,11 @@ defaultConfig = EvalConfig {recursionLimit = 1024, iterationLimit = 4096, trace 
 -- comment.
 makeEffect ''Kernel
 
+-- | A symbol's attributes; none for an unknown symbol.
+lookupAttributes :: (Kernel :> es) => Symbol -> Eff es AttributeSet
+lookupAttributes s = (.siAttributes) <$> lookupSymbol s
+{-# INLINE lookupAttributes #-}
+
 -- The interpreters.
 
 -- | The handler's own environment: the configuration, and the evaluation
@@ -192,7 +199,7 @@ data Store es = Store
 
 handler :: Sequence -> Store (HandlerEs base) -> EffectHandler Kernel (HandlerEs base)
 handler (Sequence sq) st env = \case
-  LookupSymbol s -> fromMaybe emptyInfo . Map.lookup s . (.ksSymbols) <$> st.load
+  LookupSymbol s -> symbolInfo st s
   ModifySymbol s f ->
     st.store $ \k -> k {ksSymbols = Map.alter (Just . f . fromMaybe emptyInfo) s k.ksSymbols}
   EmitMessage s t as -> message s t as
@@ -212,7 +219,7 @@ handler (Sequence sq) st env = \case
             message (systemSymbol "$RecursionLimit") "reclim" [Int_ (toInteger cfg.recursionLimit)]
             pure (apply sHold [e])
       else local (\en -> en {envDepth = d + 1}) (localSeqUnlift env $ \unlift -> unlift (sq e))
-  Iterations -> (\(Fuel n) -> n) <$> get @Fuel
+  Iterations -> coerce <$> get @Fuel
   SpendIteration -> modify @Fuel (\(Fuel n) -> Fuel (n - 1))
   WithFuel n m -> do
     old <- get @Fuel
@@ -226,15 +233,30 @@ handler (Sequence sq) st env = \case
   TraceStep name e -> do
     Env cfg d <- ask @Env
     when cfg.trace $ st.store $ \k -> k {ksTrace = k.ksTrace |> TraceEntry d name e}
-  KernelConfig -> (\en -> en.envConfig) <$> ask @Env
+  KernelConfig -> asks @Env (.envConfig)
   where
     settled = \case
       Num _ -> pure True
       Str _ -> pure True
-      Sym s -> null . ruleSetToList . rulesOf OwnValue . fromMaybe emptyInfo . Map.lookup s . (.ksSymbols) <$> st.load
+      Sym s -> null . ruleSetToList . rulesOf OwnValue <$> symbolInfo st s
       App (Sym h) _ -> pure (h == sHold)
       App _ _ -> pure False
     message s t as = st.store $ \k -> k {ksMessages = k.ksMessages |> Message s t as}
+
+-- | A symbol's entry in the stored state; 'emptyInfo' for an unknown one.
+--
+-- This, 'runHandlerEs' and 'ioStore' are INLINE: out of line, the handler
+-- calls through an unknown 'Store' on every 'LookupSymbol', and the
+-- end-to-end benchmark runs 7% slower, with no change in allocation.
+symbolInfo :: Store es -> Symbol -> Eff es SymbolInfo
+symbolInfo st s = fromMaybe emptyInfo . Map.lookup s . (.ksSymbols) <$> st.load
+{-# INLINE symbolInfo #-}
+
+-- | Discharge the handler's own effects: depth from 0, a fresh fuel budget,
+-- and the unwind channel, which every interpreter returns.
+runHandlerEs :: EvalConfig -> Eff (HandlerEs base) a -> Eff base (Either Unwind a)
+runHandlerEs cfg = runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0)
+{-# INLINE runHandlerEs #-}
 
 -- | The pure interpreter: introduces and discharges 'Reader', 'State' and
 -- 'Error', and returns the final state beside the result. State changes made
@@ -247,7 +269,7 @@ runKernelPure ::
   Eff es (Either Unwind a, KernelState)
 runKernelPure sq cfg s0 =
   reinterpret
-    (runState s0 . runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0))
+    (runState s0 . runHandlerEs cfg)
     (handler sq Store {load = get, store = modify, poll = pure False})
 
 -- | The 'IO' interpreter: the state is the caller's 'IORef', so it returns
@@ -260,9 +282,7 @@ runKernelIO ::
   Eff (Kernel : es) a ->
   Eff es (Either Unwind a)
 runKernelIO sq cfg ref =
-  reinterpret
-    (runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0))
-    (handler sq Store {load = readIORef ref, store = modifyIORef' ref, poll = pure False})
+  reinterpret (runHandlerEs cfg) (handler sq (ioStore ref (pure False)))
 
 -- | 'runKernelIO' that polls an interrupt flag at every evaluation step. The
 -- REPL's handler for Ctrl-C only sets the flag, and the next 'Evaluate'
@@ -277,10 +297,13 @@ runKernelInterruptible ::
   Eff (Kernel : es) a ->
   Eff es (Either Unwind a)
 runKernelInterruptible sq cfg ref flag =
-  reinterpret
-    (runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0))
-    (handler sq Store {load = readIORef ref, store = modifyIORef' ref, poll = poll})
+  reinterpret (runHandlerEs cfg) (handler sq (ioStore ref poll))
   where
     -- A plain read at every step, and the atomic clear only when one is
     -- pending.
     poll = readIORef flag >>= \pending -> if pending then atomicModifyIORef' flag (False,) else pure False
+
+-- | The state in the caller's 'IORef', with the given interrupt poll.
+ioStore :: (IOE :> es) => IORef KernelState -> Eff es Bool -> Store es
+ioStore ref poll = Store {load = readIORef ref, store = modifyIORef' ref, poll}
+{-# INLINE ioStore #-}

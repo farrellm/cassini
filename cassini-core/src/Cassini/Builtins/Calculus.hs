@@ -20,12 +20,12 @@
 module Cassini.Builtins.Calculus (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Definition, args, define, down, sub)
-import Cassini.Core.Expr (Expr, apply, mkApp, pattern App, pattern Int_, pattern Num, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sDerivative, sFunction, sList, sNull, sPlus, sPower, sSlot, sTimes, symbol, systemSymbol)
+import Cassini.Builtins.Define (Definition, args, define, down, isList, sub)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
+import Cassini.Core.Symbol (Symbol, sDerivative, sFunction, sList, sPlus, sPower, sSlot, sTimes, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
 import Cassini.Rules (Origin (..), Rule (..), ValueKind (..), ruleSetToList, rulesOf)
-import Cassini.Structure (Binding (..), Scoping (Shielding), freeOf, substituteAll, substituteFree)
+import Cassini.Structure (Binding (..), Parameters (..), Scoping (Shielding), Slots (..), freeOf, functionForm, substituteAll, substituteFree)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -52,6 +52,12 @@ definitions =
 
 sD :: Symbol
 sD = systemSymbol "D"
+
+-- | @Derivative[ns][f]@, matched with its orders as a list. Build one with
+-- 'derivative'.
+pattern Derivative :: [Expr] -> Expr -> Expr
+pattern Derivative ns f <- App (Call ((== sDerivative) -> True) ns) (V.toList -> [f])
+{-# INLINE Derivative #-}
 
 -- | @D[f, x]@, the one form the rules after 'overList' differentiate.
 dOf :: Expr -> Expr -> Expr
@@ -89,10 +95,10 @@ severalVariables e = case args e of
 -- (@wolfram/D/Scope/BasicUses/10@).
 repeated :: Expr -> Maybe Expr
 repeated e = case args e of
-  [f, App (Sym l) spec] | l == sList -> case V.toList spec of
+  [f, Call l spec] | l == sList -> case spec of
     [vs] | isList vs -> Just $ case f of
-      App (Sym l') fs | l' == sList -> apply sList [apply sD [g, apply sList [vs]] | g <- V.toList fs]
-      _ -> apply sList [dOf f v | v <- argsOf vs]
+      Call l' fs | l' == sList -> apply sList [apply sD [g, apply sList [vs]] | g <- fs]
+      _ -> apply sList [dOf f v | v <- V.toList (exprArgs vs)]
     [vs, Int_ 0] | isList vs -> Just f
     [vs, Int_ n] | isList vs, n > 0 -> Just (apply sD [apply sD [f, apply sList [vs]], apply sList [vs, Int_ (n - 1)]])
     [x] -> Just (dOf f x)
@@ -100,21 +106,13 @@ repeated e = case args e of
     [x, Int_ n] | n > 0 -> Just (apply sD [dOf f x, apply sList [x, Int_ (n - 1)]])
     _ -> Nothing
   _ -> Nothing
-  where
-    argsOf =
-      V.toList . \case
-        App _ xs -> xs
-        _ -> V.empty
-    isList = \case
-      App (Sym l) _ -> l == sList
-      _ -> False
 
 -- | @D[{f, g, …}, x]@ is @{D[f, x], D[g, x], …}@.
 overList :: Expr -> Maybe Expr
 overList e = do
   (f, x) <- single e
   case f of
-    App (Sym l) fs | l == sList -> Just (apply sList [dOf g x | g <- V.toList fs])
+    Call l fs | l == sList -> Just (apply sList [dOf g x | g <- fs])
     _ -> Nothing
 
 -- | An expression free of the variable has derivative 0.
@@ -135,18 +133,17 @@ variable e = do
 sumRule :: Expr -> Maybe Expr
 sumRule e = do
   (f, x) <- single e
-  App (Sym p) us <- Just f
+  Call p us <- Just f
   guard (p == sPlus)
-  Just (apply sPlus [dOf u x | u <- V.toList us])
+  Just (apply sPlus [dOf u x | u <- us])
 
 -- | The product rule: one term per factor that depends on the variable,
 -- that factor differentiated and the others kept.
 productRule :: Expr -> Maybe Expr
 productRule e = do
   (f, x) <- single e
-  App (Sym t) us <- Just f
+  Call t factors <- Just f
   guard (t == sTimes)
-  let factors = V.toList us
   Just (apply sPlus [apply sTimes (before <> [dOf u x] <> after) | (before, u, after) <- splits factors, not (freeOf u x)])
 
 -- | The power rule, for an exponent free of the variable:
@@ -156,9 +153,9 @@ productRule e = do
 powerRule :: Expr -> Maybe Expr
 powerRule e = do
   (f, x) <- single e
-  App (Sym p) bv <- Just f
+  Call p us <- Just f
   guard (p == sPower)
-  [u, n] <- Just (V.toList bv)
+  [u, n] <- Just us
   guard (freeOf n x)
   Just (apply sTimes [n, apply sPower [u, apply sPlus [n, Int_ (-1)]], dOf u x])
 
@@ -192,10 +189,9 @@ chainRule e = do
 -- | The head of the derivative of @h@ in its @i@th of @n@ arguments.
 derivativeHead :: Expr -> Int -> Int -> Expr
 derivativeHead h n i = case h of
-  App (App (Sym d) ns) (V.toList -> [f])
-    | d == sDerivative,
-      V.length ns == n,
-      Just orders <- traverse order (V.toList ns) ->
+  Derivative ns f
+    | length ns == n,
+      Just orders <- traverse order ns ->
         derivative (zipWith (+) orders (unit i)) f
   _ -> derivative (unit i) h
   where
@@ -215,14 +211,12 @@ order = \case
 -- @Derivative[ms][Derivative[ns][f]]@ is @Derivative[ms + ns][f]@.
 derivativeOrder :: Expr -> Maybe Expr
 derivativeOrder = \case
-  App (App (Sym d) ms) (V.toList -> [f])
-    | d == sDerivative,
-      Just outer <- traverse order (V.toList ms) -> case f of
+  Derivative ms f
+    | Just outer <- traverse order ms -> case f of
         _ | all (== 0) outer -> Just f
-        App (App (Sym d') ns) (V.toList -> [g])
-          | d' == sDerivative,
-            V.length ns == V.length ms,
-            Just inner <- traverse order (V.toList ns) ->
+        Derivative ns g
+          | length ns == length ms,
+            Just inner <- traverse order ns ->
               Just (derivative (zipWith (+) outer inner) g)
         _ -> Nothing
   _ -> Nothing
@@ -230,9 +224,13 @@ derivativeOrder = \case
 -- | @Derivative[ns][f]@, for a pure function @f@ or a symbol with user
 -- downvalues, is the pure function its definition differentiates to, as in
 -- WL, where @f[x_] := x Cos[x]@ makes @f'@ @Cos[#1] - #1 Sin[#1] &@
--- (@wolfram/Derivative/Scope/1@). A pure function with named parameters
--- keeps them: @Function[x, x^2]'@ is @Function[x, 2 x]@
--- (@wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1@). A number's
+-- (@wolfram/Derivative/Scope/1@). A pure function keeps its form: its
+-- named parameters, @Function[x, x^2]'@ being @Function[x, 2 x]@
+-- (@wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1@), and in slot
+-- form its @Null@ and attributes, @Function[Null, #^2, HoldAll]'@ being
+-- @Function[Null, 2 #1, HoldAll]@ (WL 15.0.1, through the Wolfram Cloud
+-- MCP). Its @#0@ stays @#0@ rather than becoming the function itself, as in
+-- WL: @(g[#0] #^2 &)'@ is @2 #1 g[#0] &@. A number's
 -- derivative is @0 &@, and @List@, @Plus@, @Times@ and @Power@, whose
 -- derivatives are D's own rules, differentiate too: @List'@ is @{1} &@.
 -- Otherwise it
@@ -243,28 +241,29 @@ derivativeOrder = \case
 -- mentions @Derivative[ns][f]@ or @D@.
 derivativeOfDefinition :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 derivativeOfDefinition e = case e of
-  App (App (Sym d) ns) (V.toList -> [App (Sym fn) (V.toList -> ps : body : attrs)])
-    | d == sDerivative,
-      fn == sFunction,
-      Just orders <- traverse order (V.toList ns),
-      Just xs <- params ps,
-      length xs == length orders -> do
+  Derivative ns (Call fn fargs)
+    | fn == sFunction,
+      Just orders <- traverse order ns,
+      Just (params, body) <- functionForm fargs,
+      takes (length orders) params -> do
         -- Differentiate in fresh variables, not the parameters themselves,
         -- which may have global values that D's evaluation would read.
-        let vars = freshVars (length xs)
-            body' = substituteFree Shielding (Map.fromList (zip xs (map BOne vars))) Nothing body
-        result <- evaluate (apply sD (body' : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0]))
+        let vars = freshVars (length orders)
+            (inVars, back) = case params of
+              SlotParameters ->
+                (substituteFree Shielding Map.empty (Just (Slots (V.fromList vars) (apply sSlot [Int_ 0]))) body, toSlots vars)
+              NamedParameters xs ->
+                (substituteFree Shielding (Map.fromList (zip xs (map BOne vars))) Nothing body, zip vars (map Sym xs))
+        result <- evaluate (dIn inVars vars orders)
         pure $
-          if noD result
-            then Just (apply sFunction (ps : substituteAll result (zip vars (map Sym xs)) : attrs))
+          if freeOf result e && noD result
+            then Just (apply sFunction (withBody (substituteAll result back) fargs))
             else Nothing
-  App (App (Sym d) ns) (V.toList -> [Num _])
-    | d == sDerivative,
-      Just _ <- traverse order (V.toList ns) ->
+  Derivative ns (Num _)
+    | Just _ <- traverse order ns ->
         pure (Just (apply sFunction [Int_ 0]))
-  App (App (Sym d) ns) (V.toList -> [f])
-    | d == sDerivative,
-      Just orders <- traverse order (V.toList ns) ->
+  Derivative ns f
+    | Just orders <- traverse order ns ->
         differentiable f >>= \case
           False -> pure Nothing
           True -> do
@@ -274,18 +273,27 @@ derivativeOfDefinition e = case e of
             if value == applied && not (structural f)
               then pure Nothing
               else do
-                result <- evaluate (apply sD (value : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0]))
+                result <- evaluate (dIn value vars orders)
                 pure $
                   if not (freeOf result e) || not (noD result)
                     then Nothing
-                    else Just (apply sFunction [substituteAll result [(v, apply sSlot [Int_ k]) | (v, k) <- zip vars [1 ..]]])
+                    else Just (apply sFunction [substituteAll result (toSlots vars)])
   _ -> pure Nothing
   where
     freshVars n = [Sym (symbol "Cassini`Private`" ("d" <> show k)) | k <- [1 .. n]]
-    params = \case
-      Sym x | x /= sNull -> Just [x]
-      App (Sym l) xs | l == sList -> traverse (\case Sym x -> Just x; _ -> Nothing) (V.toList xs)
-      _ -> Nothing
+    -- D of x in each variable to its order, skipping the zeros.
+    dIn x vars orders = apply sD (x : [apply sList [v, Int_ k] | (v, k) <- zip vars orders, k > 0])
+    -- Each fresh variable back to its slot, #1 for the first.
+    toSlots vars = zip vars [apply sSlot [Int_ k] | k <- [1 ..]]
+    -- Whether a function takes this many arguments to differentiate in:
+    -- in slot form any number, the unfilled slots staying as they are.
+    takes n = \case
+      SlotParameters -> True
+      NamedParameters xs -> length xs == n
+    -- Function's arguments with the body replaced, the rest kept.
+    withBody b = \case
+      p : _ : rest -> p : b : rest
+      _ -> [b]
     differentiable = \case
       App (Sym h) _ -> pure (h == sFunction)
       f | structural f -> pure True
