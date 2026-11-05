@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 -- | Rules, the four rule tables and the ladder (DESIGN.md §4.2).
@@ -27,6 +28,7 @@ module Cassini.Rules
     Values,
     emptyInfo,
     hasRules,
+    rulesAt,
     rulesOf,
     modifyRules,
 
@@ -44,6 +46,7 @@ import Cassini.Pattern.Net qualified as Net
 import Data.HashMap.Strict qualified as HashMap
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
+import Optics.Core (Lens', over, view, (%))
 import Text.Show (Show (showsPrec))
 
 -- | A rule: a pattern, what it rewrites to, where it ranks, and which rung of
@@ -223,14 +226,14 @@ data Values = Values
     upValues :: !RuleSet,
     subValues :: !RuleSet
   }
-  deriving stock (Show)
+  deriving stock (Show, Generic)
 
 -- | What the kernel knows about one symbol.
 data SymbolInfo = SymbolInfo
   { siAttributes :: !AttributeSet,
     siValues :: !Values
   }
-  deriving stock (Show)
+  deriving stock (Show, Generic)
 
 -- | A symbol with no attributes and no rules.
 emptyInfo :: SymbolInfo
@@ -239,22 +242,28 @@ emptyInfo = SymbolInfo mempty (Values none none none none)
     none = emptyRuleSet
 
 -- | One table.
+--
+-- This, 'rulesOf' and 'modifyRules' are INLINE, as is
+-- 'Cassini.Eval.Kernel.symbolEntry': out of line, every lookup builds the
+-- optic as a closure, and the end-to-end benchmark allocates 13% more.
+rulesAt :: ValueKind -> Lens' SymbolInfo RuleSet
+rulesAt k =
+  #siValues % case k of
+    OwnValue -> #ownValues
+    DownValue -> #downValues
+    UpValue -> #upValues
+    SubValue -> #subValues
+{-# INLINE rulesAt #-}
+
+-- | One table, read.
 rulesOf :: ValueKind -> SymbolInfo -> RuleSet
-rulesOf k si = case k of
-  OwnValue -> si.siValues.ownValues
-  DownValue -> si.siValues.downValues
-  UpValue -> si.siValues.upValues
-  SubValue -> si.siValues.subValues
+rulesOf k = view (rulesAt k)
+{-# INLINE rulesOf #-}
 
 -- | Change one table.
 modifyRules :: ValueKind -> (RuleSet -> RuleSet) -> SymbolInfo -> SymbolInfo
-modifyRules k f si = si {siValues = set si.siValues}
-  where
-    set vs = case k of
-      OwnValue -> vs {ownValues = f vs.ownValues}
-      DownValue -> vs {downValues = f vs.downValues}
-      UpValue -> vs {upValues = f vs.upValues}
-      SubValue -> vs {subValues = f vs.subValues}
+modifyRules k = over (rulesAt k)
+{-# INLINE modifyRules #-}
 
 -- | Whether the symbol has any rule, in any table.
 hasRules :: SymbolInfo -> Bool

@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 -- | Assignment and attributes: @Set@, @SetDelayed@, @UpSet@,
@@ -25,6 +26,7 @@ import Cassini.Pattern (unholdPattern)
 import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), hasRules, insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
+import Optics.Core ((%~))
 
 -- | The assignment and attribute builtins, with WL's attributes.
 definitions :: [Definition]
@@ -320,7 +322,7 @@ unlessLocked s g = do
   locked <- isLocked <$> lookupAttributes s
   if locked
     then message "Attributes" "locked" [Sym s]
-    else modifySymbol s (\si -> si {siAttributes = g si.siAttributes})
+    else modifySymbol s (#siAttributes %~ g)
 
 -- | @SetAttributes@ and @ClearAttributes@: one symbol or a list, and one
 -- attribute or a list. A @Locked@ symbol refuses with @Attributes::locked@.
@@ -351,7 +353,7 @@ protection protect e =
           | isLocked attrs -> Nothing <$ message "Protect" "locked" [Sym s]
           | isProtected attrs == protect -> pure Nothing
           | otherwise -> do
-              modifySymbol s (\si -> si {siAttributes = (if protect then Attributes.insert else Attributes.delete) Protected si.siAttributes})
+              modifySymbol s (#siAttributes %~ (if protect then Attributes.insert else Attributes.delete) Protected)
               pure (Just (mkString s.symName))
       pure (Just (apply sList changed))
     Nothing -> do
