@@ -692,8 +692,10 @@ per-node paths: Haskell matches a pattern before its guard, so `Call c [p, test]
 arguments of every symbol-headed node it is tried on, and a `Call h as` with several guards
 allocates the lazy list for each node. There the head is tested first, `App (Sym c) as | c ==
 sCondition, [p, test] <- V.toList as`, and the allocation gate (§8.6) holds the line. `Call` is
-`INLINE`: an out-of-line matcher allocates its continuation at every match. `Infinity` is `DirectedInfinity[1]`, the bound that level specifications,
-`Repeated` and `ReplaceList` all accept.
+`INLINE`: an out-of-line matcher allocates its continuation at every match.
+
+`Infinity` is `DirectedInfinity[1]`, the bound that level specifications, `Repeated` and
+`ReplaceList` all accept.
 
 `Int_` is bidirectional. `Rat_` matches only: building a fraction goes through
 `Cassini.Number.fromRational'`, which normalizes `4/2` to an integer. A bidirectional `Rat_` would
@@ -1817,7 +1819,9 @@ ReadProtected}`, `wolfram/HoldAll/PropertiesAndRelations/12`), so `Derivative[1]
 `f'[x_] := …` are ordinary user subvalues, keyed on `Derivative` (§4.2). Its two built-in
 subvalues add orders (`Derivative[1][Derivative[2][f]]` is `Derivative[3][f]`; all zeros is `f`)
 and differentiate a definition: a pure function (one with named parameters keeps them:
-`Function[x, x^2]'` is `Function[x, 2 x]`, `wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1`),
+`Function[x, x^2]'` is `Function[x, 2 x]`, `wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1`;
+in slot form `#0` stays `#0`, not the function it names, so `(g[#0] #^2 &)'` is `2 #1 g[#0] &`, as
+in WL 15.0.1),
 a number (`1'` is `0 &`), `List`, `Plus`, `Times` and `Power`, and a symbol with user downvalues,
 whose definition is applied to fresh variables and differentiated (`f[x_] := x Cos[x]` makes `f'`
 a pure function, `wolfram/Derivative/Scope/1`). The last applies only when the definition matches

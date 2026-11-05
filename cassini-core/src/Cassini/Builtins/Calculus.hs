@@ -229,7 +229,8 @@ derivativeOrder = \case
 -- (@wolfram/Function/Scope/ReturnAPureFunctionAsAResult/1@), and in slot
 -- form its @Null@ and attributes, @Function[Null, #^2, HoldAll]'@ being
 -- @Function[Null, 2 #1, HoldAll]@ (WL 15.0.1, through the Wolfram Cloud
--- MCP). A number's
+-- MCP). Its @#0@ stays @#0@ rather than becoming the function itself, as in
+-- WL: @(g[#0] #^2 &)'@ is @2 #1 g[#0] &@. A number's
 -- derivative is @0 &@, and @List@, @Plus@, @Times@ and @Power@, whose
 -- derivatives are D's own rules, differentiate too: @List'@ is @{1} &@.
 -- Otherwise it
@@ -240,7 +241,7 @@ derivativeOrder = \case
 -- mentions @Derivative[ns][f]@ or @D@.
 derivativeOfDefinition :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 derivativeOfDefinition e = case e of
-  Derivative ns f@(Call fn fargs)
+  Derivative ns (Call fn fargs)
     | fn == sFunction,
       Just orders <- traverse order ns,
       Just (params, body) <- functionForm fargs,
@@ -250,12 +251,12 @@ derivativeOfDefinition e = case e of
         let vars = freshVars (length orders)
             (inVars, back) = case params of
               SlotParameters ->
-                (substituteFree Shielding Map.empty (Just (Slots (V.fromList vars) f)) body, toSlots vars)
+                (substituteFree Shielding Map.empty (Just (Slots (V.fromList vars) (apply sSlot [Int_ 0]))) body, toSlots vars)
               NamedParameters xs ->
                 (substituteFree Shielding (Map.fromList (zip xs (map BOne vars))) Nothing body, zip vars (map Sym xs))
         result <- evaluate (dIn inVars vars orders)
         pure $
-          if noD result
+          if freeOf result e && noD result
             then Just (apply sFunction (withBody (substituteAll result back) fargs))
             else Nothing
   Derivative ns (Num _)

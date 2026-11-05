@@ -1,0 +1,6 @@
+(* A slot-form function's derivative keeps #0 as #0, not the function it names, so the result never mentions its own derivative. WL 15.0.1 (Wolfram Cloud MCP) gives the same functions, but leaves each derivative unevaluated in the held body, Times[g[Slot[0]], 1] for the first; cassini evaluates it, as for 0075's Times[2, Slot[1]]. *)
+Derivative[1][Function[Times[g[Slot[0]], Slot[1]]]]
+Derivative[1][Function[Null, Times[g[Slot[0]], Power[Slot[1], 2]]]]
+Derivative[1][Function[x, Times[g[Slot[0]], x]]]
+Derivative[1][Function[Times[Hold[Derivative[1][Slot[0]]], Slot[1]]]]
+Derivative[1][Function[Null, Times[Hold[Derivative[1][Slot[0]]], Slot[1]]]]

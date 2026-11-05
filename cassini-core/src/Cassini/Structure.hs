@@ -337,11 +337,10 @@ scope h as
     local specs body fout fin =
       rebuildChanged (Sym h) as Nothing (V.fromList [rebuildChanged (Sym sList) specs Nothing (V.map (spec fout fin) specs), fin body])
     spec fout fin = \case
-      Call s [x, v]
-        | s == sSet || s == sSetDelayed ->
-            let x' = fin x
-                v' = fout v
-             in if isNothing x' && isNothing v' then Nothing else Just (apply s [fromMaybe x x', fromMaybe v v'])
+      App (Sym s) xs
+        | s == sSet || s == sSetDelayed,
+          [x, v] <- V.toList xs ->
+            rebuildChanged (Sym s) xs Nothing (V.fromList [fin x, fout v])
       x -> fin x
     specName = \case
       Sym x -> Just x

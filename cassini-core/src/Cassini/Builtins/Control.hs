@@ -18,7 +18,7 @@ module Cassini.Builtins.Control (definitions) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, message, sNullE, sub)
-import Cassini.Core.Expr (Expr, pattern App, pattern Call, pattern Int_)
+import Cassini.Core.Expr (Expr, pattern App, pattern Call, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (sFunction, sSlot, sSlotSequence)
 import Cassini.Eval.Kernel (Kernel, evaluate)
 import Cassini.Structure (Binding (..), Parameters (..), Scoping (Shielding), Slots (..), functionForm, substituteFree)
@@ -66,11 +66,13 @@ functionRule e = case e of
 unfilled :: Int -> Expr -> [Either Integer Integer]
 unfilled k = ordNub . go
   where
+    -- Each guard tests the head before it lists the arguments: this runs on
+    -- every node of the body, at every application (DESIGN.md §3.3, @Call@).
     go = \case
-      Call h xs
-        | h == sSlot, [Int_ n] <- xs, n > toInteger k -> [Left n]
-        | h == sSlotSequence, [Int_ n] <- xs, n > toInteger k + 1 -> [Right n]
-        | h == sFunction, Just (SlotParameters, _) <- functionForm xs -> []
+      App (Sym h) xs
+        | h == sSlot, [Int_ n] <- V.toList xs, n > toInteger k -> [Left n]
+        | h == sSlotSequence, [Int_ n] <- V.toList xs, n > toInteger k + 1 -> [Right n]
+        | h == sFunction, Just (SlotParameters, _) <- functionForm (V.toList xs) -> []
       App h xs -> go h <> concatMap go (V.toList xs)
       _ -> []
 
