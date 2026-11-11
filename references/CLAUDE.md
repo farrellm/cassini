@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **103 documents, ~439 MB**, plus 2 OCR sidecars.
+The local document corpus for the CAS-in-Haskell project. **104 documents, ~439 MB**, plus 2 OCR sidecars.
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -21,7 +21,7 @@ what was tried, and which files are present but unreadable (image-only scans, lo
 | `papers/foundations/` | Richardson's undecidability result; Swierstra and Bahr on composing data types, plus Wadler's blog verdict on the former |
 | `papers/pattern-matching/` | Krebber's thesis and the two MatchPy papers; Benanav on AC-matching complexity and Eker on the algorithm; both Bachmair AC-discrimination-net papers; the two SMP papers and three volumes of the 1981 SMP manual |
 | `papers/cas-architecture/` | SymPy, GiNaC, Fateman on Mathematica/MockMMA, the Rubi and Symbolica writeups (incl. Symbolica's licence and its home page in three states — current, 2023, 2025), a CAS-scoping thesis, the Expreduce and Symja READMEs, and Wikipedia's *Wolfram Language* article |
-| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly`, `dumb-cas`, `sbv`, `algebra` and `constructive-algebra` package pages |
+| `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly`, `dumb-cas`, `sbv`, `algebra`, `constructive-algebra` and `effectful` package pages |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation, plus the scoping, control-flow, pattern and infinity pages — the behavioral spec to implement against — and Wolfram's Terms of Use and Mathematica licence, which bound how the documentation may be used as a test corpus |
 | `papers/web-articles/` | Blog posts and course sites: opinion and build-logs, not specifications |
 
@@ -43,7 +43,8 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
   (`sbv_docs_data_sbv`), **2** on **2026-09-01**, in the eighth (`algebra_hackage`,
   `constructive_algebra_hackage`), **14** Wolfram documentation pages on **2026-09-25**
   (scoping, control flow, patterns, infinities), and **2** Wolfram legal pages on **2026-09-27**
-  (`wolfram_terms_of_use`, `wolfram_mathematica_license`). The summary gives the date per file. They have no
+  (`wolfram_terms_of_use`, `wolfram_mathematica_license`), and **1** on **2026-11-11**
+  (`effectful_hackage`). The summary gives the date per file. They have no
   CSS and no images, but the full text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
   `pandoc -t plain`, not by eye.
 - `.pamphlet` files are Axiom's literate LaTeX+SPAD sources; plain text, readable directly.

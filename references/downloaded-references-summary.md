@@ -7,7 +7,7 @@ file for *what to read and why*, and this one for *where the file is*.
 Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**103 documents (~439 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 57 HTML captures — plus 2 OCR sidecars.**
+**104 documents (~439 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 58 HTML captures — plus 2 OCR sidecars.**
 
 Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
@@ -19,7 +19,9 @@ second validation round (the eight README/package/licence captures that anchor v
 fourth (`springer_geddes_book_page`, `symbolica_home_2025_wayback`). **1** more followed on
 **2026-08-31** (`sbv_docs_data_sbv`), **2** on **2026-09-01** (`algebra_hackage`,
 `constructive_algebra_hackage`), and **14** Wolfram documentation pages on **2026-09-25** (§7: the
-scoping, control-flow, pattern and infinity pages `DESIGN.md` §4.13–§4.15 rest on). Two of them are
+scoping, control-flow, pattern and infinity pages `DESIGN.md` §4.13–§4.15 rest on). **2** Wolfram
+legal pages followed on **2026-09-27** and **1** package page on **2026-11-11** (`effectful_hackage`).
+Two of the captures are
 Wayback captures rather than live fetches, for reasons the rows give.
 
 ---
@@ -150,6 +152,7 @@ cited and were not fetched.
 | [`algebra_hackage.html`](./papers/haskell/algebra_hackage.html) | The `algebra` Hackage page — "Constructive abstract algebra". The source for what Kmett's hierarchy actually contains: an additive/multiplicative split, `Monoidal`/`Group`, `Rig`/`Rng`/`Ring`, `Module`, `Algebra`/`Coalgebra`, and the `Numeric.Domain.*` tower. **It has no `Magma` and prescribes `RebindableSyntax` nowhere** — both were asserted in the notes until the eighth round. Fetched 2026-09-01. | [`hackage.haskell.org/package/algebra`](https://hackage.haskell.org/package/algebra) | — | 31.1 KB |
 | [`constructive_algebra_hackage.html`](./papers/haskell/constructive_algebra_hackage.html) | The `constructive-algebra` Hackage page — the anchor for "Classical structures are implemented without Noetherian assumptions", and for the Bezout-instead-of-principal-ideal-domain design the notes describe. Fetched 2026-09-01. | [`hackage.haskell.org/package/constructive-algebra`](https://hackage.haskell.org/package/constructive-algebra) | — | 18.9 KB |
 | [`numhask_hackage.html`](./papers/haskell/numhask_hackage.html) | The `numhask` Hackage page — the anchor for §7's comparison against `numeric-prelude`, previously made with no source held. Confirms Tony Day as author, the `RebindableSyntax` usage snippet (so it is *not* what distinguishes the two), and the upload date **2026-07-10** against numeric-prelude's 2022-05-28. Fetched 2026-08-30. | [`hackage.haskell.org/package/numhask`](https://hackage.haskell.org/package/numhask) | — | 27.0 KB |
+| [`effectful_hackage.html`](./papers/haskell/effectful_hackage.html) | The `effectful` Hackage page (2.7.1.0), which carries the README — the anchor for `DESIGN.md` §4.5.2's account of its "Any downsides?" section: "The `Eff` monad doesn't support effect handlers that require the ability to suspend or capture the rest of the computation and resume it later (potentially multiple times)", which rules out "A `NonDet` effect handler that executes multiple `Alternative` branches and collects their results", with `conduit` and `list-t` named as what to use beside it. Added by a `DESIGN.md` review, which found the claim made with no page held. Fetched 2026-11-11. | [`hackage.haskell.org/package/effectful`](https://hackage.haskell.org/package/effectful) | — | 39.9 KB |
 
 ---
 
@@ -212,7 +215,7 @@ rather than archiving them here. Where such an entry cites an actual paper, that
 **But the waiver covers citing a system, not quoting its page.** Where the notes quote a README,
 package page or licence *verbatim*, the page is captured here so the quote has an anchor — that is
 what `expreduce_readme.html`, `symja_readme.html`, `symbolica_license.html`,
-`olah_hasksymb_readme.html`, `poly_hackage.html`, `dumb_cas_hackage.html`, `sbv_docs_data_sbv.html`, `algebra_hackage.html` and `constructive_algebra_hackage.html` are for. Two further
+`olah_hasksymb_readme.html`, `poly_hackage.html`, `dumb_cas_hackage.html`, `sbv_docs_data_sbv.html`, `algebra_hackage.html`, `constructive_algebra_hackage.html` and `effectful_hackage.html` are for. Two further
 captures close the same kind of gap outside §5/§7: `wadler2008_data_types_a_la_carte_blog.html` (a
 blog post, which the waiver never reached) and `wolfram_ref_ownvalues.html` (cited in §6 alongside
 its three siblings, but previously the only one not held). Adding a verbatim quote from a live page

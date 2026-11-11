@@ -4,6 +4,13 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* `DESIGN.md` corrected after a review against the corpus, the code and Wolfram 15.0.1, with no
+  change to the code. Its claims about WL that the kernel contradicted are fixed (special values at
+  denominator 8, the `Infinity^0` message tag, what `-1` and other numbers do to a sum, `Block`
+  localizing attributes, `--with-repl`'s cabal version), four divergences that were unrecorded or
+  filed as undocumented have rows (D30 widened to the iteration limit, D37–D39), and six gaps are
+  registered as deferred decisions (D40–D45). `effectful`'s package page is captured for §4.5.2.
+
 * `optics-core`, with `OverloadedLabels`, for changes through a path into the kernel state (DESIGN.md
   §2.3), with no change in behaviour or allocation. `Cassini.Eval.Kernel.symbolEntry` is a symbol's
   entry as a lens, reading an unknown symbol as `emptyInfo`, and `Cassini.Rules.rulesAt` is one

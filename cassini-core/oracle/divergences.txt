@@ -72,12 +72,12 @@ attributes 13 Mathics3
 0046-orderless-each-mapping-once 2 Mathics3
 0046-orderless-each-mapping-once 5 Mathics3
 patterns 17 Mathics3
-# §4.5.4: equal subjects give one mapping, as Krebber's algorithm enumerates
+# D38: equal subjects give one mapping, as Krebber's algorithm enumerates
 # them (krebber2017_ac_matching_thesis.pdf §3.3, §3.3.2). Mathics3 repeats
-# them, and finds no distribution at all for input 4; WL's answer for equal
-# subjects is not documented in the corpus or on Stack Exchange.
-0046-orderless-each-mapping-once 3 §4.5.4
-0046-orderless-each-mapping-once 4 §4.5.4
+# them, and finds no distribution at all for input 4. WL repeats them too
+# (WL 15.0.1, checked 2026-11-11; not in the corpus or on Stack Exchange).
+0046-orderless-each-mapping-once 3 D38
+0046-orderless-each-mapping-once 4 D38
 # Mathics3: Optional takes at most one argument, matches its default against
 # its pattern, and under Flat takes no run; WL does none of these
 # (wolfram/Optional/Scope/2, /3; wolfram/Plus/PropertiesAndRelations/7).
