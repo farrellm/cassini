@@ -4,6 +4,14 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* `DESIGN.md`: the deferred decisions were reviewed and nine have answers or a place in the
+  milestones, with no change to the code yet. Both limits will leave `TerminatedEvaluation[…]` as WL
+  does (D30), a rational subject is `Rational[n, d]` to every compound pattern (D37), and a π
+  multiple in a trigonometric argument is reduced as WL 15.0.1 reduces it (D39). `Print`, `Clear`
+  and `ClearAll`, `Apart`'s algorithm and the first list builtins are designed (D40, D41, D43,
+  D44). A new track, fidelity of the built kernel, carries D30 and D37 with the two allocation
+  changes that waited on a baseline regeneration (D31, D32) and the nightly job (D45).
+
 * `DESIGN.md` corrected after a review against the corpus, the code and Wolfram 15.0.1, with no
   change to the code. Its claims about WL that the kernel contradicted are fixed (special values at
   denominator 8, the `Infinity^0` message tag, what `-1` and other numbers do to a sum, `Block`
