@@ -557,7 +557,7 @@ returns, and any message text, cannot be checked against the corpus.
 
 **An eleventh round, 2026-09-27**, added the sources behind `DESIGN.md` §7.8–§7.9, the imported test
 corpora. Two Wolfram legal pages were captured and indexed, the Terms of Use and the Mathematica licence
-agreement (§6 above), taking the corpus to **103 documents / 57 HTML captures**; every phrase quoted
+agreement (§6 above), taking the corpus to **103 documents / 57 HTML captures** (104 / 58 since 2026-11-11, when a `DESIGN.md` review captured `effectful`'s package page; `references/CLAUDE.md` has the current total); every phrase quoted
 from them was checked against the captures. The Expreduce and Rubi test-suite additions in §5 are
 repositories, covered by the pointers-only waiver: their licences and file layouts were checked
 against the repositories at the commits named in the entries, and nothing from them is quoted.

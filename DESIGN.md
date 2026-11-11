@@ -4,8 +4,9 @@ A computer algebra system for Haskell: a Wolfram-Language-style term rewriting k
 numeric and polynomial substrate underneath it.
 
 This document is the architecture: what to build, in what order, with which boundaries, and how each
-piece is tested and measured. It is ahead of the code — `src/` is still `cabal init` output — so
-where the two disagree, this document is the intent and the code is behind.
+piece is tested and measured. It is ahead of the code — Stage 0 and milestones 1a–1c are built
+(§10), and nothing after them is — so where the two disagree, this document is the intent and the
+code is behind.
 
 ## 0. Scope and conventions
 
@@ -211,9 +212,9 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Define` | The `Definition` each builtin module exports (a symbol, its attributes, its native rules), and the helpers they share. |
 | `Cassini.Builtins.Arithmetic` | `Plus`, `Times`, `Power`, `Divide`, `Subtract`, `Minus`, `Sqrt` (which evaluates to `Power[x, 1/2]`, as in WL), and the infinities as symbols: `ComplexInfinity` evaluates to `DirectedInfinity[]` and `Infinity` to `DirectedInfinity[1]`, as WL's outputs show. Comparison is `Builtins.Logic`'s. |
 | `Cassini.Builtins.Structural` | `Head`, `Part`, `Length`, `Apply`, `Map`, `Level`, `FreeQ`. |
-| `Cassini.Builtins.List` | List construction and manipulation. |
+| `Cassini.Builtins.List` | List construction and manipulation. Its builtins are not yet chosen (D44); `Table` is §4.13's iterator. |
 | `Cassini.Builtins.Pattern` | `MatchQ`, `Cases`, `Replace`, `ReplaceAll`, `ReplaceRepeated`, `ReplaceList`. `RuleDelayed` has no rules, only attributes, so `Cassini.Builtins` defines it beside `Rule`; `ReplaceList` is here because it is the language's way to see every match (§4.5.2). |
-| `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `TagSet`, `Unset`, `Attributes`, `Protect`. |
+| `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `UpSet`, `UpSetDelayed`, `TagSet`, `TagSetDelayed`, `Unset`, `Attributes`, `SetAttributes`, `ClearAttributes`, `Protect`, `Unprotect`. `Clear` and its relatives are D41. |
 | `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
 | `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
 | `Cassini.Builtins.Control` | `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). 1c built `Function`, `Slot`, `SlotSequence` and `CompoundExpression`. |
@@ -555,10 +556,12 @@ so that no step reconfigures the build and the `intern` build is held to `-Werro
 command-line `-f intern` reaches `cassini-core` whichever target is named, because cabal applies it
 to every local package that declares the flag (checked in `plan.json`, cabal 3.16.1.0). The
 dependencies carry `^>=` bounds at the versions CI first resolved. Step 2 names
-its suite rather than `all`, which would pull the slow suite into every commit. A nightly job runs
-`cassini-oracle`, `cassini-slow`, `cassini-corpus` and the random-seed property run (§7.1, §7.3,
-§7.8). CI's `cassini-corpus` covers the vendored and fetched corpora only: the Wolfram documentation
-corpus is never on a CI runner (§7.9), so its ratchet is checked on a developer machine.
+its suite rather than `all`, which would pull the slow suite into every commit. A nightly job is to
+run `cassini-oracle`, `cassini-slow`, `cassini-corpus` and the random-seed property run (§7.1, §7.3,
+§7.8). **It does not exist yet**: `ci.yml` has no scheduled workflow, `cassini-slow` has no stanza,
+and the oracle and corpus suites run on a developer machine (D45). When it exists, its
+`cassini-corpus` covers the vendored and fetched corpora only: the Wolfram documentation
+corpus is never on a CI runner (§7.9), so its ratchet stays a developer-machine check.
 
 **One compiler, because the version bound says so.** `base ^>=4.21.2.0` admits only GHC 9.12, so a
 wider matrix would be jobs failing at dependency resolution, read as flaky and then ignored.
@@ -686,6 +689,7 @@ module Cassini.Core.Expr
   ( Expr
   , pattern Num, pattern Str, pattern Sym, pattern App
   , pattern Call, pattern Int_, pattern Rat_, pattern Infinity
+  , mkNumber, mkString, mkSymbol, mkApp, apply
   , exprHead, exprArgs, exprArity, symbolOf
   ) where
 
@@ -968,7 +972,8 @@ are the ones whose rewrite step evaluates (§4.3).
 
 `Cassini.Structure` implements Cohen's primitive expression operators — `Kind`, `Operand`,
 `Number_of_operands`, `Construct`, `Free_of`, `Substitute`, `Sequential_substitute`,
-`Concurrent_substitute` (`references/papers/textbooks/cohen2002_*.pdf` §3.3):
+`Concurrent_substitute` (`references/papers/textbooks/cohen2002_*.pdf` §3.2 for the first four,
+§3.3 for the rest):
 
 ```haskell
 -- | Cassini.Structure
@@ -1203,13 +1208,14 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   `Expand[(a+b+c+d)^10]` would exhaust the default 4096 on node count alone.
 - **Depth is counted by `Evaluate`'s handler**, around the sequence. At `$RecursionLimit` it emits
   `$RecursionLimit::reclim` and returns `Hold[e]` unevaluated, and evaluation continues outward: `x =
-  x + 1; x` yields a partial result with a `Hold` at the cut — the source's "computations limited by
-  `$RecursionLimit` … build up large intermediate structures" — rather than aborting.
+  x + 1; x` yields a partial result with a `Hold` at the cut, rather than aborting. The source:
+  "Computations limited by $IterationLimit do not normally build up large intermediate structures.
+  But those limited by $RecursionLimit often do."
   **WL 14.1 does not do this.** Its documentation corpus shows `x = x + 1` evaluating to
   `Plus[1, TerminatedEvaluation["RecursionLimit"]]`: the runaway evaluation is replaced whole, and
   there is no `Hold` at the cut (`wolfram/$RecursionLimit/BasicExamples/1`). The quotation above is
   from the older tutorial. The `Hold` cut stays, as D30, because WL's unwinding rule cannot be
-  read off three examples.
+  read off three examples. The iteration limit diverges the same way (§4.4).
   **The cut is idempotent.** At the limit, an expression that evaluates to itself comes back as it
   is: a raw atom, a symbol with no own value, or a `Hold[…]` the cut already built. Only anything
   else is wrapped, with the message. Without this, every fixed point near the limit re-evaluates its
@@ -1273,21 +1279,30 @@ Then the fixed point: every time the expression changes, start over.
 evalSequence :: (Kernel :> es) => Expr -> Eff es Expr
 evalSequence = fixpoint step
   where
-    -- Steps 0 and 1 are guards on the other twelve, not stages before them.
+    -- Steps 1 and 0 are guards on the other twelve, not stages before them.
+    -- A 'Round' is a result and whether it is already a fixed point (below).
     step e
-      | evalStep1Raw e = pure e
-      | Sym s <- e     = evalStep0Own s          -- OwnValues
-      | otherwise =
-              evalStep2Head e
-          >>= evalStep34ArgsHold
-          >>= evalStep5Seq   >>= evalStep6Uneval  >>= evalStep7Flat
-          >>= evalStep8List  >>= evalStep9Order   >>= evalStepIndet
-          >>= evalStep10UserUp
-          >>= evalStep11BuiltinUp >>= evalStep12UserDown >>= evalStep13BuiltinDown
-
-    -- Step 4 is a gate on step 3, not a stage after it.
-    evalStep34ArgsHold e = evalStep4Hold e >>= \held -> evalStep3Args held e
+      | evalStep1Raw e = pure (Round e True)
+      | Sym s <- e     = (`Round` False) <$> evalStep0Own s   -- OwnValues
+      | App h as <- e  = do
+          n <- evalStep2Head h as
+                 >>= evalStep34ArgsHold               -- step 4 gates step 3
+                 >>= evalStep5Seq >>= evalStep6Uneval >>= evalStep7Flat
+          evalStep8List n >>= \case
+            Left threaded -> pure (Round threaded False)
+            Right n' -> evalStep9Order n' >>= evalStepIndet >>= \case
+              Left indeterminate -> pure (Round indeterminate False)
+              Right n'' ->
+                -- the four rungs, in ladder order; the first that fires wins
+                firstJustM (\rung -> rung n'' (nodeExpr n''))
+                           [userUp, builtinUp, userDown, builtinDown]
+                  <&> fromMaybe (Round (restoreUneval n'') (not n''.nodeUnheld))
 ```
+
+The steps pass a `Node` (the head, its attributes, the arguments, and what steps 5 and 6 did to
+them), not an `Expr`, so that the expression is built once, for the rungs. When no rule fires, the
+last line restores what step 6 stripped and reports the round as a fixed point unless step 5 moved
+a held argument (both below). The code is the authority on the spelling; this is its shape.
 
 Each step is a named function with its own unit test and golden trace, and the easy mistakes below
 become structurally impossible once the steps are separate values in a fixed order.
@@ -1367,8 +1382,12 @@ which flattens to an already sorted list. Each entry carries its evaluation dept
 evaluations nest.
 
 **The fixed point is fuelled.** `fixpoint` opens its own `WithFuel` (§4.3), spends one iteration per
-round, and on exhaustion emits `$IterationLimit::itlim` and returns the expression in `Hold` — the
-language's behaviour. Non-termination is a user error, so it gets a message, not an exception.
+round, and on exhaustion emits `$IterationLimit::itlim` and returns the expression in `Hold`.
+Non-termination is a user error, so it gets a message, not an exception. **`Hold` is the older
+language's behaviour, not the current one's**: WL 15.0.1 puts `TerminatedEvaluation["IterationLimit"]`
+where the chain ran out (`f[n_] := f[n + 1]; f[1] + 1` gives
+`1 + TerminatedEvaluation["IterationLimit"]`, through the Wolfram Cloud MCP), as it does for the
+recursion limit. Both cuts are D30.
 
 **Re-evaluation cost.** Read literally, "start over" re-evaluates already-settled subterms on every
 round, walking whole subtrees. WL avoids this by marking expressions evaluated against a global
@@ -1466,7 +1485,10 @@ falls back too: one argument takes the subject, the last first, the rest their d
 matches `b_. x_.` with `b = 1` and `x_.^m_.` with `m = 1` (Mathics3's tests; WL documents only the
 one-required-argument case). A rational number is `Rational[p, q]` to a compound pattern whose head is
 literally `Rational`, so `Rational[n_, d_]` matches `22/7` (`wolfram/Rational/Scope/7`); to any other
-compound pattern it is an atom, so `_[_, _]` does not match it. And a `Verbatim[h]` head matches its
+compound pattern it is an atom, so `_[_, _]` does not match it. **That second half is not WL's**:
+WL 15.0.1 gives `True` for `MatchQ[22/7, _[_, _]]` and `{Rational, 22, 7}` for
+`Replace[22/7, h_[a_, b_] :> {h, a, b}]`, though `Length[22/7]` is 0 and `_[_]` does not match
+(through the Wolfram Cloud MCP). The atom reading stays, as D37. And a `Verbatim[h]` head matches its
 arguments in order without `h`'s `Flat` and `Orderless`, since `Verbatim` matches "with no
 substitutions for blanks or other transformations" (`wolfram_ref_verbatim.html`); Expreduce and
 Mathics3 agree. Regression cases 0066–0068.
@@ -1475,8 +1497,9 @@ Mathics3 agree. Regression cases 0066–0068.
 
 **No `effectful` handler can enumerate matches.** `Eff es` is `Env es -> IO a`, so a handler cannot
 suspend the rest of the computation and resume it more than once. `effectful`'s README says so
-("Any downsides?"), names a branch-collecting `NonDet` as the casualty, and points to libraries such
-as `conduit` and `list-t` used alongside `Eff`. `Effectful.NonDet` is accordingly `Maybe`-shaped
+(`references/papers/haskell/effectful_hackage.html`, "Any downsides?"), names a branch-collecting
+`NonDet` as the casualty, and points to libraries such as `conduit` and `list-t` used alongside
+`Eff`. `Effectful.NonDet` is accordingly `Maybe`-shaped
 (left-catch: `a :<|>: b` runs `b` only if `a` calls `Empty`), but `ReplaceList`, `//.`, `Cases` and
 Krebber's algorithm need *every* match.
 
@@ -1572,8 +1595,8 @@ Four matchers, one interface, added in order:
    distributing *n* arguments among *m* sequence variables, over `Vector` slices so a candidate
    distribution copies nothing.
 3. **`Cassini.Pattern.Commutative`** — `Orderless` heads (§4.5.4).
-4. **`Cassini.Pattern.Net`** — many-to-one discrimination net, built only if milestone 1b's
-   measured crossover says so (§4.5.5, §10).
+4. **`Cassini.Pattern.Net`** — candidate retrieval. 1b's measured crossover said to build an
+   index, and the `RuleIndex` is built; Krebber's many-to-one net is not (§4.5.5, §10).
 
 **Order, as built at 1b.** Matches are enumerated in WL's order, because `Replace` takes the first
 and `ReplaceList` shows them all. In an argument list, earlier patterns take shorter runs first,
@@ -1625,8 +1648,10 @@ matches.
 pattern, and a run is chosen by how many of each value it takes, so `h[a, a]` against `h[x_, y_]`
 is one match, not two. This is Krebber's algorithm (§3.3: brute force "will result in enumerating
 equivalent matches multiple times"; §3.3.2 enumerates distributions "without duplicate results"),
-and his examples are 1b's criterion. WL's answer for equal subjects is documented neither in the
-corpus nor on Stack Exchange, and Mathics3 repeats them, so the oracle lists it.
+and his examples are 1b's criterion. **WL repeats them**: with `h` `Orderless`,
+`ReplaceList[h[a, a], h[x_, y_] -> {x, y}]` is `{{a, a}, {a, a}}` in WL 15.0.1 (through the Wolfram
+Cloud MCP; neither the corpus nor Stack Exchange documents it), and Mathics3 repeats them too. One
+mapping stays, as D38, and the oracle lists it.
 
 Complexity: general AC matching is NP-complete, and linear AC matching (no repeated variable) is
 polynomial (`references/papers/pattern-matching/benanav1987_complexity_of_matching_problems.pdf`).
@@ -1637,9 +1662,10 @@ becomes the bottleneck.
 
 #### 4.5.5 The discrimination net, and when to build it
 
-Not now. `Cassini.Pattern.Net` exists from the start as an interface — a `RuleIndex` that
-`Cassini.Rules` consults for *candidate* rules, whose first implementation returns all of them — so
-that a net later is a new module rather than a refactor. It only retrieves candidates; the matcher
+The plan was "not now", and 1b's measurement overturned it (below). `Cassini.Pattern.Net` existed
+from the start as an interface — a `RuleIndex` that `Cassini.Rules` consults for *candidate* rules,
+whose first implementation returned all of them — so that an index later was a new module rather
+than a refactor. It only retrieves candidates; the matcher
 confirms them in `Cassini.Eval`. It must not import `Cassini.Pattern.Match`, or
 `Rules → Net → Match → Eval.Kernel → Rules` is a cycle.
 
@@ -1769,8 +1795,9 @@ and `1·x` are **not** ASAEs, while `(x·y)^(1/2)` and `(x^(1/2))^(1/2)` are.
   the constants of a merged list into one leading constant. Before §4.15's radicals this is rare,
   because only a product of radicals with one base reaches it.
 
-**And one divergence from WL, kept because it is Cohen's:** a number does not distribute over a
-sum (`2·(a + b)` stays). WL's normal form distributes, and the corpus shows it. D29.
+**And one divergence from WL, kept because it is Cohen's:** `-1` does not distribute over a
+sum (`-(c + d)` stays). WL distributes `-1`, and the corpus shows it; it leaves any other number
+alone, so `2·(a + b)` stays in both. D29.
 
 `base` and `exponent` are exported as `powerBase` and `powerExponent`, and `const` as
 `constPart`, because the prelude has an `exponent` and `const`.
@@ -1797,7 +1824,8 @@ data Message = Message { msgSymbol :: !Symbol, msgTag :: !MessageTag, msgArgs ::
 ```
 
 Messages accumulate in `KernelState` and are drained and formatted by the REPL (L5; formatting needs
-the pretty-printer). The two limits are not errors either: both return `Hold` with a message (§4.3).
+the pretty-printer). The two limits are not errors either: both return `Hold` with a message (§4.3;
+WL's `TerminatedEvaluation` is D30).
 `Error Unwind` (§4.13) is reserved for control transfer — `Throw`, `Break`, `Continue`, `Return` — and for
 what genuinely stops evaluation: `Abort[]` and interrupts.
 
@@ -1849,7 +1877,7 @@ be expressions (`D[f[x]^2, f[x]]`); a number as the variable leaves `D` unevalua
 message for it is not in the corpus.
 
 `Derivative` is **not `Protected`**, as in WL (`Attributes[Derivative]` is `{NHoldAll,
-ReadProtected}`, `wolfram/HoldAll/PropertiesAndRelations/12`), so `Derivative[1][f] = 3 #^2 &` and
+ReadProtected}` in 14.1, `wolfram/HoldAll/PropertiesAndRelations/12`, and `{NHoldAll}` in 15.0.1), so `Derivative[1][f] = 3 #^2 &` and
 `f'[x_] := …` are ordinary user subvalues, keyed on `Derivative` (§4.2). Its two built-in
 subvalues add orders (`Derivative[1][Derivative[2][f]]` is `Derivative[3][f]`; all zeros is `f`)
 and differentiate a definition: a pure function (one with named parameters keeps them:
@@ -1905,7 +1933,8 @@ itself: an integer literal over a positive integer literal is the rational numbe
 whose first factor is a positive number negates that number (`a - 2 b` is `Plus[a, Times[-2, b]]`,
 not WL's `Plus[a, Times[-1, 2, b]]`). Both differ from WL only where evaluation is held. Beyond the
 subset above it reads `=.`, `/:`, `..`, `...`, `x:p` and `p:v`, `'`, `!` both ways, `&&`, `||`,
-`<>`, `::`, `@@`, `@@@` (as `Apply[f, x, {1}]`, as Mathics3 reads it), `/@`, `//@`, `++`, `--` and
+`<>`, `::`, `@@`, `@@@` (as `Apply[f, x, {1}]`, as Mathics3 reads it; WL 15.0.1 reads
+`MapApply[f, x]`, which evaluates to the same thing and differs only where held), `/@`, `//@`, `++`, `--` and
 `+=` and its kin, and `%`, `%%` and `%n`. A string's escapes are WL's, in the infix syntax and in
 FullForm alike: `\"`, `\\`, `\b`, `\f`, `\n`, `\r`, `\t`, three octal digits (`\101`), `\.hh`,
 `\:hhhh` and `\|hhhhhh`, with `\'` kept as written and any other escape an error, as WL 15.0.1 reads
@@ -2016,10 +2045,11 @@ MuPAD disagreeing, so each rule names the column it reproduces, and those rows a
   denominators 1, 2, 3, 4 and 6 a table then gives the value. Outputs are ASAEs, one spelling per
   value: `Sin[π/3] → (1/2)·3^(1/2)`, `Sin[π/4] → 2^(-1/2)`, `Tan[π/6] → 3^(-1/2)`. Poles
   (`Tan[π/2]`, `Cot[0]`, `Sec[π/2]`, `Csc[0]`) are `Left Pole`. The hyperbolic heads have only
-  their values at 0, with `Coth[0]` and `Csch[0]` poles. WL also evaluates denominators 5, 8, 10
-  and 12 (`Sin[π/12]`, `Cos[π/5]`). They are not in the table, and §7.5 lists this as a
-  divergence, for two reasons. Some values are nested radicals (`Sin[π/8] = (2-2^(1/2))^(1/2)/2`,
-  `Sin[π/5]`), which §4.15 does not normalize at all. Others are flat but outside §4.15's
+  their values at 0, with `Coth[0]` and `Csch[0]` poles. WL also evaluates denominators 5, 10
+  and 12 (`Sin[π/12]`, `Cos[π/5]`), though not 8 or 16: `Sin[π/8]` stays as it is in WL 15.0.1
+  (through the Wolfram Cloud MCP). They are not in the table, and §7.5 lists this as a
+  divergence, for two reasons. Some values are nested radicals (`Sin[π/5] = (5/8 - 5^(1/2)/8)^(1/2)`),
+  which §4.15 does not normalize at all. Others are flat but outside §4.15's
   canonical class: `Sin[π/12] = (6^(1/2) - 2^(1/2))/4` has a radicand with two prime factors
   (D24), so the inverse tables could not rely on its spelling. `Cos[π/5] = (1 + 5^(1/2))/4` is
   flat and canonical, and could join the table; it is left out so that a denominator is in or
@@ -2034,8 +2064,11 @@ MuPAD disagreeing, so each rule names the column it reproduces, and those rows a
   `Cos[x + 2π] → Cos[x]`, `Tan[x + π] → Tan[x]`. Any other `r` is reduced modulo the head's
   period into a symmetric range: `(−1, 1)` for period 2π and `(−1/2, 1/2)` for period π
   (`Sin[x + 7π/3] → Sin[x + π/3]`). Each reduction is an identity, and the range is closed under
-  negation, so parity cannot push `r` back out. `Sin[x + 2π/3]` is left alone, as in the
+  negation, so parity cannot push `r` back out. `Sin[x + 2π/3]` is left alone, as in Fig. 7.9's
   Mathematica column; the MPL column's `Cos[x + π/6]` would be item 3 applied to sums, not adopted.
+  **That column is the 2002 system's.** WL 15.0.1 does apply item 3 to sums: `Sin[x + 2π/3]` is
+  `Cos[π/6 + x]` and `Sin[x + 7π/3]` is `Cos[π/6 - x]` (through the Wolfram Cloud MCP). Equal in
+  value, different in spelling; the rule here stays, as D39.
 - **No function transformations** (Cohen's item 5). `Sin[x]/Cos[x]` stays; it does not become
   `Tan[x]` as in WL. That transformation is the inverse of `Trig_substitute`, so with it in
   automatic simplification `Simplify` could never see a `Tan` as a quotient. Cohen's footnote 9,
@@ -2305,13 +2338,17 @@ per the source ("As soon as the loop test fails to be True, While and For termin
   (`wolfram_ref_with.html`).
 - **`Block[{x, …}, body]`** is dynamic ("values assigned to x, y, … are cleared. When the execution
   of the block is finished, the original values of these symbols are restored"; initial values are
-  evaluated before the clear): it saves each symbol's whole value record — its own, down, up and
-  sub values (§4.2's four kinds) — clears it or sets the own-value, evaluates the body, and **restores on every exit**, including `Throw`, `Break` and `Abort[]`.
+  evaluated before the clear): it saves each symbol's whole `SymbolInfo` — its attributes and its
+  own, down, up and sub values (§4.2's four kinds) — clears it or sets the own-value, evaluates the
+  body, and **restores on every exit**, including `Throw`, `Break` and `Abort[]`.
   Restoration uses the unwinding operations below; it is the one place state changes are undone.
   Clearing only own-values would be wrong: `Block[{f}, f[x_] := …; …]` must leave `f`'s old
   down-values in place afterwards, and the idiom `Block[{Print}, …]` works because the builtin's
-  definitions are cleared too. The page says "Block affects only the values of symbols, not their
-  names"; whether attributes are localized is not stated, and a regression case pins it.
+  definitions are cleared too (once there is a `Print`: D40). The page says "Block affects only the values of symbols, not their
+  names", and does not say whether attributes are localized. They are: in WL 15.0.1
+  `Block[{Plus}, Attributes[Plus]]` is `{}`, and an attribute set or cleared inside the block is
+  undone on exit (through the Wolfram Cloud MCP). So the attributes are saved, cleared and restored
+  with the values, and a regression case pins it.
 - **Iterators** (`Table`, `Do`, `Sum`, `Product`) localize the iteration variable as `Block` does —
   the source: "the first step … is to make the value of i local. Next, the limit imax … is
   evaluated. The expression f is maintained in an unevaluated form, but is repeatedly evaluated".
@@ -2353,10 +2390,11 @@ unevaluated Throw is returned"), or, for `Throw[value, tag, f]`, `f[value, tag]`
 or `Continue[]` likewise. **"Unevaluated" is wrapped in `Hold`**: the result is
 `Hold[Throw[value]]`, `Hold[Break[]]`, `Hold[Continue[]]`. A bare `Throw[value]` would be a trap
 here, because evaluating it again — `%`, or `r = …; r` — raises `UThrow` again, far from where it
-was thrown. `Hold` is what WL itself prints, from memory rather than the captures; a regression
-case pins it against an oracle. The conversion is in `Cassini.Eval`'s top-level entry, which wraps
+was thrown. `Hold` is what WL itself prints: `Throw[1]` at the top is `Hold[Throw[1]]` with
+`Throw::nocatch` in WL 15.0.1 (through the Wolfram Cloud MCP; the captures do not show it), and a
+regression case pins it. `Break[]` and `Continue[]` at the top were not checked. The conversion is in `Cassini.Eval`'s top-level entry, which wraps
 the input's evaluation in `CatchUnwind` and so has an `Expr` to build; the interpreter only
-reports what escaped. The message tags are not in the captures; `Throw::nocatch` is from memory.
+reports what escaped. The message tags are not in the captures; `Throw::nocatch` is WL 15.0.1's.
 `KernelState` changes made before an unwind persist: "no matter the order of effects, state updates
 made within the `catchError` block before the error happens always persist" (effectful-core
 2.6.1.0, `Effectful.Error.Static`; `Effectful.State.Static.Local` says the same of exceptions).
@@ -2395,15 +2433,17 @@ result. A user rule's application is a delimited computation only because §4.4 
 evaluate the right-hand side itself (steps 10 and 12); that is where the catch sits. A pure
 function is applied by a built-in rung and does not catch `Return`, so `f[x_] := (Return[1]&[];
 2)` gives `f[0]` as `1`, not `2`. Whether WL's `Function` catches `Return` is not on
-the page; a regression case pins it. What an uncaught `Return`
+the page; WL 15.0.1 gives `1` too (through the Wolfram Cloud MCP), and a regression case pins it.
+What an uncaught `Return`
 becomes at the top is not on the page. Here it is `Hold[Return[expr]]`, held for the same reason
 as an uncaught `Throw`: in this design evaluating `Return[expr]` unwinds, so a bare one would fire
-again when the result is reused. WL, from memory, prints `Return[expr]` unheld, because its
-`Return` is a value that constructs strip rather than an unwind; if the oracle confirms that, this
-is a divergence, recorded in §7.5 when the regression case runs. The top-level entry converts it
-like the other non-abort unwinds. The page's first "Possible Issues" example has no captured
-output, so what `If` alone does with a `Return` inside a compound body is taken from the prose,
-not checked; a regression case pins it once the evaluator exists.
+again when the result is reused. WL prints `Return[expr]` unheld (`Return[3]` at the top is
+`Return[3]` in WL 15.0.1, through the Wolfram Cloud MCP), because its `Return` is a value that
+constructs strip rather than an unwind. That is a divergence, and §7.5 lists it. The top-level
+entry converts it like the other non-abort unwinds. The page's first "Possible Issues" example has
+no captured output, so what `If` alone does with a `Return` inside a compound body is taken from
+the prose; WL 15.0.1 agrees with the reading here (`f[x_] := (If[True, Return[1]]; 2)` gives `f[0]`
+as `1`), and a regression case pins it.
 
 ### 4.14 Logic and comparison
 
@@ -2509,10 +2549,10 @@ wherever a row covers it:
 | `DirectedInfinity[…]^n`, integer `n > 0` | the product row, `n` times |
 | `DirectedInfinity[1]^r`, `ComplexInfinity^r`, non-integer rational `r > 0` | `Infinity`; `ComplexInfinity`. `DirectedInfinity[-1]^r` is left unevaluated: its direction `(−1)^r` is not `±1` (D20) |
 | `DirectedInfinity[…]^r`, rational `r < 0`; in particular `1/DirectedInfinity[…]` | `0` |
-| `DirectedInfinity[…]^0` | `Indeterminate`, `Power::indet`. Without this row, Cohen's SINTPOW-2 would give `1` |
-| `c^Infinity`, rational `c`: `c > 1`; `c < −1`; `|c| < 1`; `c = ±1` | `Infinity`; `ComplexInfinity`; `0`; `Indeterminate` |
+| `DirectedInfinity[…]^0` | `Indeterminate`, `Infinity::indet`. Without this row, Cohen's SINTPOW-2 would give `1` |
+| `c^Infinity`, rational `c`: `c > 1`; `c < −1`; `|c| < 1`; `c = ±1` | `Infinity`; `ComplexInfinity`; `0`; `Indeterminate`, `Infinity::indet` |
 | `c^(−Infinity)` | as `(1/c)^Infinity`; `0^(−Infinity)` is `ComplexInfinity` |
-| `c^ComplexInfinity`, any rational `c`, `0` included | `Indeterminate`. Without the `0` case, `0^ComplexInfinity` would reach Cohen's SPOW-2, whose `Undefined` has no cause in §4.6 to map |
+| `c^ComplexInfinity`, any rational `c`, `0` included | `Indeterminate`, `Infinity::indet`. Without the `0` case, `0^ComplexInfinity` would reach Cohen's SPOW-2, whose `Undefined` has no cause in §4.6 to map |
 | `Infinity^Infinity`; `Infinity^(−Infinity)` | `ComplexInfinity`; `0`. Other infinite bases with infinite exponents are left unevaluated |
 | `Indeterminate` as an argument of any `NumericFunction` head | `Indeterminate` |
 
@@ -2524,9 +2564,13 @@ the pass sees `Infinity` and `DirectedInfinity[-1]` whatever else is in the sum.
 
 The table's rows follow the sources' prose ("If you try to find the difference between two infinite
 quantities, you get an indeterminate result"; "A message is produced whenever an operation first
-yields Indeterminate"). The product, power and exponent rows are the extended-real limits, from
-memory of WL rather than from the captures, whose outputs are images; so are the tags
-`Infinity::indet` and `Power::indet` on the `^0` row. Each such row is a regression case once there is an oracle (§7.5).
+yields Indeterminate"). The captures' outputs are images, so the product, power and exponent rows
+and every message tag were checked against WL 15.0.1, one input per row, through the Wolfram Cloud
+MCP. Every row agrees, and WL goes further on the one row that leaves forms unevaluated
+(`ComplexInfinity^Infinity` and `(-Infinity)^Infinity` are `ComplexInfinity` there). The run
+corrected the `^0` row's tag: `Infinity^0` and `ComplexInfinity^0` emit
+`Infinity::indet`, and `Power::indet` is `0^0`'s alone. Each row is a regression case when the
+track lands (§10).
 
 The last row is not the infinity pass's: it holds for every `NumericFunction` head
 (`wolfram_ref_indeterminate.html`: "If Indeterminate appears in the argument of any function with
@@ -2561,7 +2605,7 @@ Cohen's operators run, it applies three more rows, each giving `Indeterminate`:
 | :--- | :--- | :--- |
 | `Plus` | two infinity-bearing terms with the same term part (Cohen's `Term`, what his sum merge compares) whose coefficients have opposite signs, a `DirectedInfinity[-1]` factor counting as a sign, as in `u - u` and `2u - u` | `Indeterminate`, `Infinity::indet` |
 | `Times` | two factors with the same infinity-bearing base (Cohen's `Base`) whose exponents are rationals of opposite sign, as in `u·u^(-1)` | `Indeterminate`, `Infinity::indet` |
-| `Power` | an infinity-bearing base with exponent 0 | `Indeterminate`, `Power::indet` |
+| `Power` | an infinity-bearing base with exponent 0 | `Indeterminate`, `Infinity::indet`, as the `^0` row above |
 
 Like terms and like bases with coefficients or exponents of one sign merge as Cohen merges them:
 `u + u → 2u` and `u·u → u^2` hold for an infinite `u`. One case is left alone rather than decided: an
@@ -3016,6 +3060,7 @@ times and different reasons to fail:
 | `cassini-slow` | Gröbner, factorization, integration at size | nightly |
 
 A suite that takes minutes stops being run; the fast suite's job is to be run compulsively.
+"Nightly" is the plan: until D45's job exists, those three suites run when a developer runs them.
 
 ### 7.2 Unit tests
 
@@ -3102,7 +3147,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Simplify.Trig` | `simplifyTrig` preserves numeric value wherever the input is defined | a cancellation that is not an identity |
 | `Simplify.Numeric` | radical normalization preserves numeric value and is idempotent; two products of rationals and radicals whose radicands are primes below `B` or their powers with equal numeric value normalize identically; `integerRoot n b` is exact exactly on perfect powers; the infinity pass agrees with the extended-real table on every pair from a fixed set of finite and infinite values; for generated infinity-bearing `u`, `u - u`, `2u - u`, `u/u` and `u^0` evaluate to `Indeterminate`, and no evaluation turns an infinity-bearing input finite by cancellation | a sign or branch error in steps 1–3 of §4.15; a table cell wrong; Cohen's identity transformations cancelling an infinity D25 left unabsorbed |
 | `Number.Integer` | `m ≡ n·Quotient m n + Mod m n` with `Mod` taking the sign of `n`; `factorInteger` multiplies back and every factor passes `isProbablePrime`; `isProbablePrime` agrees with trial division below 10⁶ | floor-versus-truncate division; a composite witness set |
-| `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every localized symbol's own, down, up and sub values as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState`; after any caught `Throw`, `Break`, `Continue` or `Return`, the recursion depth and fuel budget equal their values before the catching construct, and after an `Abort[]` they equal their values before the top-level input; an uncaught `Throw`, `Break`, `Continue` or `Return` comes back `Hold`-wrapped, and evaluating that result raises nothing | variable capture; a `Block` that leaks on unwind; session-dependent names; depth or fuel leaking through an unwind or an abort; an uncaught `Throw` that fires again when its result is reused (§4.13) |
+| `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every localized symbol's attributes and its own, down, up and sub values as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState`; after any caught `Throw`, `Break`, `Continue` or `Return`, the recursion depth and fuel budget equal their values before the catching construct, and after an `Abort[]` they equal their values before the top-level input; an uncaught `Throw`, `Break`, `Continue` or `Return` comes back `Hold`-wrapped, and evaluating that result raises nothing | variable capture; a `Block` that leaks on unwind; session-dependent names; depth or fuel leaking through an unwind or an abort; an uncaught `Throw` that fires again when its result is reused (§4.13) |
 | `Logic` | `Equal a b` is `True` only when `isZero (a − b)` is `Just True`, and `False` only when it is `Just False` and `a − b` has no free symbol; `x == y` for distinct free `x`, `y` stays unevaluated; `And`/`Or` never evaluate an argument after the deciding one | a comparison that turns "don't know", or "not identically zero", into `False` (§4.14) |
 | `Pattern` | soundness: every `σ` from `matchAll p s` satisfies `applySubst σ p ≡ s` modulo attributes | the whole matcher, in one line |
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
@@ -3130,9 +3175,9 @@ Where a row says `≡` between results of different algorithms, it means `isZero
 an antidifference, and the S-test for a Gröbner basis each check an expensive algorithm with a cheap
 one, so those tests can be generated rather than hand-written.
 
-**Determinism.** CI passes a fixed `--quickcheck-replay` seed and prints it on failure. A nightly job
-runs a random seed at a much larger count; a failure there becomes a regression case (§7.4) with the
-seed recorded.
+**Determinism.** CI passes a fixed `--quickcheck-replay` seed and prints it on failure. The nightly
+job (§2.8, D45) is to run a random seed at a much larger count; a failure there becomes a regression
+case (§7.4) with the seed recorded.
 
 ### 7.4 Regression tests
 
@@ -3202,10 +3247,12 @@ trusted implementation from inside a property, where the property cannot be stat
 suite that cries wolf gets turned off.
 
 Three structural divergences from WL are deliberate, and a reader of a Mathics3 transcript will meet
-them first: `Sin[x]/Cos[x]` is not rewritten to `Tan[x]` (D16); a constant trigonometric argument
-is reduced to `[0, π/2]` (§4.11); and `x + Infinity` stays a sum instead of absorbing `x` (§4.15,
-D25). The second is a divergence per Cohen's Fig. 7.9, whose Mathematica column is circa 2002;
-what current WL and Mathics3 do is not in the corpus, and the first oracle run settles it. The
+them first: `Sin[x]/Cos[x]` is not rewritten to `Tan[x]` (D16); a rational multiple of π inside a
+sum is not moved to the first quadrant, so `Sin[x + 2π/3]` stays where WL gives `Cos[π/6 + x]`
+(§4.11, D39); and `x + Infinity` stays a sum instead of absorbing `x` (§4.15, D25). Reducing a
+*constant* argument to `[0, π/2]` is not one of them: Cohen's Fig. 7.9 shows the 2002 Mathematica
+leaving `Sin[15π/16]` alone, but WL 15.0.1 gives `Sin[π/16]`, as §4.11 does. What Mathics3 does with
+either is for the first oracle run. The
 third is not absorbed by semantic comparison, since `isZero` cannot prove `x + Infinity` equal to
 `Infinity`; the oracle harness whitelists it. None of the three is a bug. The third would be one
 without §4.15's guards, which stop Cohen's cancellations from turning the unabsorbed term into a
@@ -3213,11 +3260,13 @@ finite answer; an oracle case where WL says `Indeterminate` and this system says
 bug, not a whitelisted divergence.
 
 Smaller divergences follow from the same sections. `Sin[π/12]` and the other special values at
-denominators 5, 8, 10 and 12 stay unevaluated (§4.11). `2^(1/2)·3^(1/2)` does not become
+denominators 5, 10 and 12 stay unevaluated (§4.11). `2^(1/2)·3^(1/2)` does not become
 `6^(1/2)`, and `(1/2)·6^(1/2)` stays as it is (§4.15, D24). And comparisons that WL decides
 numerically, such as `Sqrt[2] == 1` and `Pi > 3`, stay unevaluated (§4.14, D9, D15). `isZero`
 cannot equate either side of any of these, so semantic comparison does not absorb them, and the
-harness whitelists all three kinds.
+harness whitelists all three kinds. Two more are structural and listed per case: an uncaught
+`Return[expr]` comes back as `Hold[Return[expr]]` where WL prints it unheld (§4.13), and a limit
+cuts with `Hold` where WL puts `TerminatedEvaluation[…]` (D30).
 
 **The externals arrive with the milestones they check** (§10): Mathics3 with 1a, SymPy with 2a,
 Singular with 3d.
@@ -3237,9 +3286,10 @@ test-only builtin are skipped. Each input gets one verdict:
 
 `oracle/divergences.txt` lists known disagreements by case and input. Its reason is a D-number, or
 `Mathics3` where Mathics3 departs from WL. Such an entry cites the corpus case documenting WL's
-answer, or says the answer is from memory. Only an unlisted disagreement fails the suite. At 1a,
-over 127 inputs, 107 agree, 15 are listed and 5 are inconclusive, all from Mathics3's own failures.
-Eleven of the 15 are Mathics3 departing from WL's documented behaviour (`Protect`'s result,
+answer, or says the answer is from memory. Only an unlisted disagreement fails the suite. When the
+harness first ran, over 127 inputs, 107 agreed, 15 were listed and 5 were inconclusive, all from
+Mathics3's own failures; §10 has the counts at each milestone's completion.
+Eleven of those 15 were Mathics3 departing from WL's documented behaviour (`Protect`'s result,
 `Evaluate` inside `Hold`, `Power[x, y, z]`, `argx`). That is why the corpus is the higher authority
 for 1a's builtins.
 
@@ -3259,7 +3309,7 @@ interprets sources through the GHC API, and nothing hands an executable cabal's 
 renaming, without which `Prelude` does not resolve to `Cassini.Prelude`. Of the two ways of
 borrowing cabal's own flags, `cabal repl --with-compiler=doctest` fails: cabal then builds the
 `cassini-prelude` dependency with doctest as its compiler (*unrecognized option
-`--make'*). `cabal repl --with-repl=doctest lib:cassini-core`, which cabal 3.14 added for this purpose,
+`--make'*). `cabal repl --with-repl=doctest lib:cassini-core`, which cabal 3.16 added for this purpose,
 swaps the program only for the repl session and works. Answered on the first build, with doctest
 0.25.0.
 
@@ -3480,8 +3530,8 @@ corpus/wolfram-docs` is Python, and uses Mathics3 where a kernel would parse and
 
 A `.in` file holds one FullForm input per line. A `.expected` file holds, for each input, a line
 `Out[k]: <FullForm>`, or `Out[k]: -` for an input with no output, or `Out[k]: ?<reason>` for an
-unusable output, followed by one `Message[k]: symbol::tag` line per message. §7.4 fixes the golden
-format when `runScript` lands; if the two differ, the adapter translates this one.
+unusable output, followed by one `Message[k]: symbol::tag` line per message. §7.4's golden format
+is this one, adopted when `runScript` landed.
 
 **The expected outputs are the published outputs, not re-evaluations.** Nothing runs an example's
 inputs; the only evaluation is the arithmetic normalization of step 6.
@@ -3925,7 +3975,7 @@ built-in function; the `Function` in it is why **pure-function application gates
   (§7.8), and every in-scope case from either, over 1a–1c's builtins, is triaged as in 1a. The
   Wolfram pages of `D`, `Derivative` and `Function` are triaged too.
 
-**Done 2026-10-11**, pending its PR's CI run. `D[f[x] g[x], x]` gives both product-rule terms, and
+**Done 2026-10-11** (PR #15). `D[f[x] g[x], x]` gives both product-rule terms, and
 after `Derivative[1][f] = 3 #^2 &`, `D[f[x^2], x]` is `6 x^5`: regression cases 0055–0056 and the
 `Calculus` group's unit tests. The `Syntax` row runs in full, `parse (pretty e) ≡ Right e` over
 `genExpr` and over a generator of every operator form; the `Calculus` row compares `D` with central
@@ -3985,7 +4035,8 @@ Waits for 1c. **Done when** Cohen's Examples 7.15–7.18 simplify to 0 and Fig. 
 Waits for 1c. **Done when** its §7.3 rows pass and the regression corpus pins the behaviours §4.13
 takes from prose alone (a `Return` inside `If` in a compound body; an uncaught `Return` at the top;
 the uncaught-`Throw` message and its `Hold` wrapper; whether `Block` localizes attributes; whether a
-pure function catches `Return`) and §4.15's infinity rows taken from memory.
+pure function catches `Return`) and §4.15's infinity rows. Each was checked against WL 15.0.1 on
+2026-11-11, and §4.13 and §4.15 now say what it answered; the regression cases pin those answers.
 
 `Equal` is done here over §4.8's rational-only `isZero`, and gets stronger at 2a with no change to
 `Cassini.Builtins.Logic`: `(x + 1)^2 == x^2 + 2 x + 1` stays unevaluated until then, which is
@@ -4165,14 +4216,23 @@ answer, not a deletion.
 | D26 | Imported corpora are vendored only when permissively licensed and small enough to commit; any other corpus is fetched at a pinned commit, and the repository holds only its case IDs (§7.8) | a corpus's licence changing; or the test suites being shipped in a package, where fetched corpora must stay optional |
 | D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and 85,555 outputs are usable; most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway. **Fired again 2026-10-09 (1a triage, after the attribute names became `System`` symbols):** the normalizer evaluated arithmetic held by an attribute the example set on its own symbol, so `SetAttributes[h, HoldFirst]; h[1+1, 2+2, 3+3]` was expected as `h[2, 4, 6]`. Fixed in the extractor (§7.9 step 6) and re-run over the same 14.1 notebooks, under Mathics3 10.0.1 and CPython 3.14: 38,160 examples ok and 85,558 usable outputs (from 38,157 and 85,555). Of the 29 changed files, 13 are that fix (the `Hold*`, `NHold*`, `SetAttributes`, `MapApply`, `ComapApply`, `Complex` and `Rational` pages), and 16 are run-to-run variation: three outputs that timed out before, memory addresses or a version string in eleven garbage outputs, and two `Plus` terms ordered differently by the new Python |
 | D28 | `structural` (O-T) recurs through `compareCanonical`, so each level re-runs `cohen` over a child its parent's `cohen` has just walked (§3.5). Two distinct terms that Cohen's rules call equal, differing d levels down, cost O(n·d), not O(n). Only unsimplified terms reach O-T. The likely fix keeps the relation: O-T has already checked equal kind and arity, and for those every kind's rule compares all child pairs, so a parent's `EQ` means every child pair is Cohen-equal and O-T can recur into `structural` directly. That needs the invariant stated in `Cassini.Core.Order` and a property checking the two versions agree | `compareCanonical` prominent in a §8.4 profile, or deep unsimplified terms in matching or `Orderless` sorting |
-| D29 | A rational number does not distribute over a sum. `2·(a + b)` and `-(c + d)` stay as products, as Cohen's ASAE has them (ASAE-4 admits a sum among the factors). WL distributes: `a + b - (c + d)` evaluates to `a + b - c - d`. Distributing would put an expansion rule into automatic simplification, which §4.6 keeps to exactly Cohen's operators. Expansion is `Expand`'s job (§4.12) | `Expand` arriving with the elementary-functions track, when the two normal forms can be compared on real workloads; or this entry's corpus and oracle divergences becoming the dominant kind |
-| D30 | The recursion limit cuts in place, as `Hold[e]`, and evaluation continues outward (§4.3). WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input. The in-place cut also emits `$RecursionLimit::reclim` twice for one runaway evaluation: `r[n_] := r[n + 1]; Length[{r[1]}]` gives `1` with the message once where step 3 cuts the argument and again where the rule's right-hand side is cut. WL emits it once. How many messages there are follows from which evaluation is replaced, so it is fixed with the unwinding rule, not before it (found 2026-10-09 in the PR #12 review) | an oracle or corpus case that pins down which enclosing evaluation WL replaces; or `Block` (§4.13), whose own example ends in `TerminatedEvaluation`, needing the same unwinding |
+| D29 | `-1` does not distribute over a sum. `-(c + d)` stays a product, as Cohen's ASAE has it (ASAE-4 admits a sum among the factors). WL distributes `-1`: `-(c + d)` evaluates to `-c - d`, and `a + b - (c + d)` to `a + b - c - d`. **Narrowed 2026-11-11:** this row said any rational number; WL 15.0.1 leaves `2·(a + b)` and `2·(a + b) + c` as they are, so only `-1` diverges. Distributing would put an expansion rule into automatic simplification, which §4.6 keeps to exactly Cohen's operators. Expansion is `Expand`'s job (§4.12) | `Expand` arriving with the elementary-functions track, when the two normal forms can be compared on real workloads; or this entry's corpus and oracle divergences becoming the dominant kind |
+| D30 | Both limits cut in place, as `Hold[e]`, and evaluation continues outward (§4.3, §4.4). **Widened 2026-11-11 to the iteration limit:** WL 15.0.1 puts `TerminatedEvaluation["IterationLimit"]` where the chain ran out and carries on around it (`f[n_] := f[n + 1]; f[1] + 1` is `1 + TerminatedEvaluation["IterationLimit"]`), so there the cut is in the same place and only its spelling differs. For the recursion limit, WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input. The in-place cut also emits `$RecursionLimit::reclim` twice for one runaway evaluation: `r[n_] := r[n + 1]; Length[{r[1]}]` gives `1` with the message once where step 3 cuts the argument and again where the rule's right-hand side is cut. WL emits it once. How many messages there are follows from which evaluation is replaced, so it is fixed with the unwinding rule, not before it (found 2026-10-09 in the PR #12 review) | an oracle or corpus case that pins down which enclosing evaluation WL replaces; or `Block` (§4.13), whose own example ends in `TerminatedEvaluation`, needing the same unwinding |
 | D31 | With tracing off, steps 2–9 still call `traceStep` and build the expression it would record. The handler drops it, but the effect call and the expression are paid for, on every `Flat` and `Orderless` node among others. Equality tests that guard some of these calls are not the cost: `Eq Expr` answers from the pointer, intern id or hash. Measured 2026-10-09 (GHC 9.12.4, hash interning, one developer machine): reading the flag once a round in `fixpoint` and carrying it on `Node` saves 0.7% of the end-to-end workload's allocation and 0.8–2.2% on the fixed-point benchmarks, with time inside the noise. A no-op `traceStep` bounds the saving at 1.5% and 3.6–6.4%. Gating the traces where rules fire saved nothing more. Not taken, for a change that small, because it means regenerating both allocation baselines | the evaluation sequence prominent in a §8.4 profile, or a benchmark baseline regenerated for another reason, when the change can ride along |
 | D32 | Steps 10–13 recompute, rung by rung, what the node already has (§4.2). Both upvalue rungs (10 and 11) collect the arguments' tag symbols and look each one up, and both downvalue rungs (12 and 13) look up the head symbol that step 2 already looked up for its attributes. For k tagged arguments that is about 2k+2 extra effect calls and symbol-table lookups per node per round, on the hottest path. Collecting the tags once per round and carrying the head's `SymbolInfo` on `Node` would remove them. Not measured. Not taken in the PR #12 review (2026-10-09), for D31's reason: it changes allocation, so it means regenerating both baselines | as D31's, and taken with it |
 | D33 | Exact arithmetic has no size limit: `Power[3, 1220703125]` and `Factorial[10^10]` are computed in full, however long that takes and however much memory it needs. WL stops at a limit with `Overflow[]` and `General::ovfl`, but the corpus documents that only for machine reals (`wolfram/Power/PossibleIssues/7`, `2^(2^100.0)`), not where the limit lies for exact integers, so none is set. The test generators stay inside the limit instead (§7.3). **Trigger fired 2026-10-11 (1c), answered: still no limit.** In the interactive loop a mistyped exponent costs the input, not the session: a second Ctrl-C is thrown at the computation and the loop carries on (§4.10). The cost is that GHC delivers it only between foreign calls, so one GMP multiplication runs to its end: `2^(3^19)` stopped about a second after the second Ctrl-C, and `2^(3^21)`'s last multiplications take longer than that | a corpus or oracle case that pins down WL's limit on exact integers; or a user's input whose single multiplication outlasts their patience |
 | D34 | String patterns are absent (§4.10's deferred list), so `Protect["x*"]` and `Unprotect["x*"]` name the symbol `x*` rather than every symbol matching. Matching names would also need a `Kernel` operation listing the symbols the kernel has seen, which WL's `Names` is (six Wolfram corpus cases, found 2026-10-11 in 1c's triage) | `Names`, `StringMatchQ` or another string-pattern builtin arriving |
 | D35 | `D`'s results are in the form its rule table builds, simplified, which is not always WL's: for `D[g[x]^3/4, {x, 2}]` WL keeps `1/4` outside a sum (`wolfram/D/Scope/FunctionsDefinedByDerivatives/3`). Equal in value, different in structure, and the corpus compares structure. WL's rule for where a constant factor stays cannot be read off one example (§4.9) | 2a's zero test, when corpus cases of `D` can be compared semantically; or such entries becoming `D`'s dominant divergence |
 | D36 | The infix syntax is §4.10's Stage 1 subset: named characters (`\[Alpha]`), character escapes in names (`\.78`, `\:0078`), a string's box escapes (`\<`, `\>`, `\!`, `\&`), `Span`, `Dot`, associations and string patterns are parse errors (three Mathics3 cases, 2026-10-11) | a corpus's in-scope cases needing one, or a builtin whose usual spelling is one (`Dot` with matrices, `Span` with `Part`) |
+| D37 | A rational number is an atom to every compound pattern but one whose head is literally `Rational` (§4.5.1). WL 15.0.1 matches it as `Rational[n, d]` against any two-argument compound pattern: `MatchQ[22/7, _[_, _]]` is `True`, although `Length[22/7]` is 0 and `_[_]` does not match. Following WL would make a number's parts visible to every `f_[x_, y_]` rule, and `Complex` would need the same answer (D20). Found 2026-11-11 in the design review | a corpus or oracle case that needs the generic match; or D20 adding `Complex`, when both are decided together |
+| D38 | Equal subjects under an `Orderless` head are one mapping, as Krebber's algorithm enumerates them (§4.5.4). WL 15.0.1 repeats them: `ReplaceList[h[a, a], h[x_, y_] -> {x, y}]` with `h` `Orderless` is `{{a, a}, {a, a}}`. Only `ReplaceList`'s length and `Cases`-style counts can see the difference; `Replace` and the rule tables take the first match either way. Found 2026-11-11 in the design review; until then the divergence was filed as undocumented | a corpus case whose expected value counts the repeats; or a user's rule with side effects in its condition observing how often it runs |
+| D39 | A rational multiple of π inside a sum is reduced by periodicity only: `Sin[x + 2π/3]` stays, and `Sin[x + 7π/3]` is `Sin[x + π/3]` (§4.11). That is Cohen's Fig. 7.9 Mathematica column, from 2002. WL 15.0.1 moves the multiple to the first quadrant as it does for a constant argument: `Cos[π/6 + x]` and `Cos[π/6 - x]`. Equal in value, and `Simplify_trig` on the difference should give 0, so `isZero`'s layer 3′ should equate them; a unit test with the track confirms it. Found 2026-11-11 in the design review | the elementary-functions track's corpus triage, if these entries are its dominant divergence; adopting WL's rule means restating §4.11's termination measure |
+| D40 | No output channel. `Print` belongs to no module, and the `Kernel` effect has no operation for output, so the pure interpreter has nowhere to put it. The likely shape follows messages: an operation that appends to a queue in `KernelState`, drained by the front end (§4.7) | the control-flow track (§4.13), whose loops are of little use without `Print`; or the first corpus case in scope that needs it |
+| D41 | `Clear`, `ClearAll` and `Remove` are absent; `Unset` and `ClearAttributes` are the only ways to take a definition back. `Remove` would also need the symbol table to forget a name, which §3.2's append-only table cannot | the control-flow track, or a corpus's in-scope cases needing one |
+| D42 | Messages can be emitted by builtins and read by the front end, and that is all: `Message`, `Quiet`, `Off`/`On`, `Check` and user-defined message text (`f::tag = "…"`) are absent | a corpus's in-scope cases needing one; or a builtin written in the language, which needs `Message` |
+| D43 | `Apart` is scheduled with 2b (§10) and has no algorithm section. Partial fractions over ℚ follow from §5.5's factorization and §5.4's extended Euclid, and §6.2's Hermite reduction does part of the same work; which of them `Apart` is built on is not decided | milestone 2b starting |
+| D44 | `Cassini.Builtins.List` has a charter and no list of builtins (§2.2). `Table` is specified with the iterators (§4.13); `Range`, `Join`, `Append`, `First`, `Rest`, `Take`, `Sort`, `Select` and the rest are not | the control-flow track, which lands `Table`; or corpus scope showing which list builtins the in-scope cases need most |
+| D45 | The nightly CI job of §2.8 is not built: no scheduled workflow, no `cassini-slow` stanza, and the oracle and corpus suites run only on a developer machine. A runner would need Mathics3 for the oracle and `corpus/fetch.sh` for the fetched corpora | `cassini-slow` gaining its first test (2b), or a regression that a nightly oracle or corpus run would have caught |
 
 ### 11.3 Provenance
 
