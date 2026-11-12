@@ -142,8 +142,50 @@ The 24,495 exact cases left after the last row need a symbol from an area not in
 one that matched no area.
 
 Graphics and curated data, the two largest areas, are outside what a term-rewriting kernel takes
-on. A system with everything down to the strings row would have about 15,600 of the corpus's exact
-cases in scope.
+on.
+
+## What would pay, for a CAS
+
+A reading of the figures above, not a decision; nothing here is scheduled. It takes the eight areas
+a computer algebra system would take on and sets, for each, what it brings alone against what it
+brings in the order of the last table.
+
+| Area | Alone, on top of the design | In turn | What it is |
+| :--- | ---: | ---: | :--- |
+| Core language not yet designed | 970 | 970 | Builtins of kinds the kernel already has: `Span`, `Sow`/`Reap`, `Increment`, `Union`, `Tally`, `MemberQ`, `Count`, `SortBy`, `DeleteCases`, `AppendTo` |
+| Complex numbers (D20) | 190 | 204 | A number representation, then `Re`, `Im`, `Arg`, `Conjugate` |
+| Number theory and combinatorics | 636 | 733 | Integer functions over the existing substrate: `Prime`, `IntegerDigits`, `EulerPhi`, `Divisors`, `Tuples`, `Subsets` |
+| Linear algebra and arrays | 1,044 | 1,267 | `Dot`, `Transpose`, `Det`, `Inverse`, `IdentityMatrix`; `MatrixForm` is in 778 cases and is output only |
+| Special functions (D21) | 2,367 | 2,770 | Many families, each with its own special values and identities |
+| Assumptions, stronger simplification, solving | 1,376 | 4,226 | `FullSimplify`, `Assumptions`, `Reduce`, `Root`, `Refine` |
+| Calculus beyond the design | 1,078 | 1,912 | `DSolve`, `RSolve`, the integral transforms |
+| Strings and text | 822 | 968 | String functions and string patterns (D34) |
+
+*Alone* is the area's sole-blocker count from the area table, so it allows the option names too.
+
+- **The core-language builtins are the cheapest cases in the corpus.** They need no new
+  mathematics and no new representation, and they bring 970 cases, more than the elementary
+  track (336) or Stages 2 and 3 together (470) add to scope.
+- **Special functions bring the most alone**, 2,367, but are the widest area: the cases spread
+  over dozens of families, and `Gamma`, the most frequent, is the sole blocker of 29.
+- **Assumptions and stronger simplification depend most on the rest.** Alone they bring 1,376;
+  after complex numbers, linear algebra and special functions they bring 4,226, the largest step
+  in the table. `FullSimplify` is in 1,766 cases and the only thing missing in 64, because the
+  documentation uses it to tidy answers about something else.
+- **Complex numbers are an enabler, not a source of cases.** `I` is in 2,774 cases, yet the whole
+  area brings about 200, because a case with `I` usually also wants a special function or
+  `FullSimplify`. Its worth is in the two rows after it.
+- **Inexact numbers pay little by themselves** (D9): 142 cases today, and 362 with everything
+  through Stage 3 built.
+- **Together the first seven areas take scope from 2,511 to 14,649**, about a fifth of the corpus's
+  usable exact cases, and strings to 15,617. The rest is graphics, curated data, and areas with a
+  library's worth of their own content (statistics, graphs, geometry).
+
+Two cautions on reading this as a plan. Scope is not passing: a case in scope still has to print
+WL's form of the answer, and the areas that bring the most scope here (`FullSimplify`, special
+functions, `DSolve`) are the ones where matching that form is hardest. And the corpus is
+documentation examples, so it measures what Wolfram chose to illustrate, not what users of a CAS
+ask for.
 
 ## Symbols assumed per stage
 
