@@ -218,6 +218,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
 | `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
 | `Cassini.Builtins.Control` | `Print` (§4.7), `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). 1c built `Function`, `Slot`, `SlotSequence` and `CompoundExpression`. |
+| `Cassini.Builtins.Message` | `Message`, `MessageName`, `Quiet`, `Check`, `Off`, `On`, and `General` as the symbol that holds shared message text (§4.7, D42). With the control-flow track. |
 | `Cassini.Builtins.Session` | `In`, `Out` and `$Line`, and `recordLine`, which the front ends call after each input (§4.10). |
 | `Cassini.Builtins.Logic` | `Equal` and the orderings, `SameQ`, `TrueQ`, `And`/`Or`/`Not` (§4.14). |
 | `Cassini.Builtins.Integer` | `Abs`, `Sign`, `Floor`, `Ceiling`, `Round`, `Mod`, `Quotient`, `GCD`, `LCM`, `Binomial`, `Factorial`, `Max`, `Min`, `PrimeQ`, `FactorInteger`, `Numerator`, `Denominator` (§4.15). |
@@ -1145,6 +1146,8 @@ data Kernel :: Effect where
   -- designed, not yet built:
   EvaluatePart   :: Expr -> Kernel m Expr     -- ^ steps 2-3's evaluate; catches a limit (below)
   EmitOutput     :: [Expr] -> Kernel m ()     -- ^ Print's arguments, queued (§4.7)
+  Quietly        :: MessageFilter -> m a -> Kernel m a       -- ^ Quiet (§4.7)
+  Checking       :: m a -> Kernel m (a, [(Symbol, MessageTag)])  -- ^ Check: what was generated
 
 makeEffect ''Kernel   -- evaluate :: (HasCallStack, Kernel :> es) => Expr -> Eff es Expr, …
 ```
@@ -1861,6 +1864,51 @@ each entry: the loop prints a `Print`'s arguments run together, in the infix syn
 their own, and script mode writes `Print[k]: <FullForm of the argument list>` after the input's
 `Message[k]:` lines, so the existing goldens do not change (§7.4). `Print` is `Protected` and
 nothing else, as in WL. The corpus counts `Print` cells and does not compare them (§7.9).
+
+**Message control** (D42, answered) is `Cassini.Builtins.Message`, with the control-flow track. Each
+rule below is WL 15.0.1's answer to a probe run through the Wolfram Cloud MCP on 2026-11-11, and
+each probe is a regression case.
+
+- **Text.** `f::tag` is `MessageName[f, "tag"]` (`HoldFirst`), and `f::tag = "text"` stores the text
+  with `f`, in a fifth field of `SymbolInfo` beside the four value kinds. `Set`, `SetDelayed` and
+  `Unset` dispatch on a `MessageName` left-hand side, and ignore `Protected`: `Sin::foo = "hi"` is
+  allowed. `f::tag` evaluates to its text if it has one and stays as it is otherwise. `Clear`
+  leaves message text, `ClearAll` removes it, and `Block` does not localize it
+  (`Block[{f}, f::a]` is still the text), so §4.13's `Block` saves attributes and values only.
+- **`Message[f::tag, e₁, …]`** (`HoldFirst`) emits `f::tag` with the evaluated `eᵢ` and returns
+  `Null`. The text is `f`'s own, else `General::tag`'s, else the kernel's template for the tag
+  (§4.10), else the message is still emitted, with "-- Message text not found --". `Message`
+  resolves the text when it emits and the `Message` record carries it, so formatting, which stays
+  L5's, reads no state. An argument that is not a message name stays unevaluated with
+  `Message::name`.
+- **`Off[f::tag]` and `On[f::tag]`** (`HoldAll`) change a set of switched-off messages in
+  `KernelState`, which lasts for the session. A switched-off message is not emitted at all.
+- **`Quiet[expr]`** (`HoldAll`) evaluates `expr` and shows none of its messages;
+  `Quiet[expr, {f::tag, …}]` hides only those named. The result is unchanged.
+- **`Check[expr, failexpr]`** (`HoldAll`) is `expr`'s value if no message was generated in
+  evaluating it, and `failexpr`, evaluated, otherwise; `Check[expr, failexpr, {f::tag, …}]` looks
+  only for those named.
+- **How the two nest.** A message counts as generated for every `Check` around it, out to the
+  nearest `Quiet` that covers it, and no further: `Check[Quiet[1/0], err]` is `ComplexInfinity`,
+  `Quiet[Check[1/0, err]]` is `err`, and `Check[Check[1/0, inner], outer]` is `outer`. A message
+  that is switched off triggers no `Check`.
+- **`General::stop`.** The third time one message is generated in an input, `General::stop` follows
+  it, and that message is not shown again for the rest of the input, though a `Check` still sees
+  it. The count ignores `Quiet`. `Off[General::stop]` turns this off. It is here and not a display
+  nicety because the corpus's expected messages show it (42 cases).
+
+Two operations carry the scoping, because both must end however their body exits. `Quietly`
+and `Checking` push a frame in the handler's `Reader`, with `local`, as the recursion depth is
+kept (§4.13). `EmitMessage`'s handler then does, in order: drop the message if it is switched off;
+record it for each `Checking` frame, innermost outward, stopping at a `Quietly` frame that covers
+it; count it for `General::stop`, in a per-input table that the front ends reset with
+`recordLine`; and queue it unless a `Quietly` frame covered it or `General::stop` has. Messages
+the kernel itself emits go through the same handler, so `Quiet` and `Check` see `Part::partw` and
+a user's `f::bad` alike.
+
+Not here: `Quiet`'s three-argument form, `Off[]` and `On[]` without a name or with a symbol,
+message groups, `$MessageList` and `Messages`, and the language argument of `f::tag::lang`. Each
+stays unevaluated.
 `Error Unwind` (§4.13) is reserved for control transfer — `Throw`, `Break`, `Continue`, `Return` — and for
 what genuinely stops evaluation: `Abort[]` and interrupts.
 
@@ -2381,8 +2429,8 @@ per the source ("As soon as the loop test fails to be True, While and For termin
   (`wolfram_ref_with.html`).
 - **`Block[{x, …}, body]`** is dynamic ("values assigned to x, y, … are cleared. When the execution
   of the block is finished, the original values of these symbols are restored"; initial values are
-  evaluated before the clear): it saves each symbol's whole `SymbolInfo` — its attributes and its
-  own, down, up and sub values (§4.2's four kinds) — clears it or sets the own-value, evaluates the
+  evaluated before the clear): it saves each symbol's attributes and its
+  own, down, up and sub values (§4.2's four kinds), but not its message text (§4.7) — clears them or sets the own-value, evaluates the
   body, and **restores on every exit**, including `Throw`, `Break` and `Abort[]`.
   Restoration uses the unwinding operations below; it is the one place state changes are undone.
   Clearing only own-values would be wrong: `Block[{f}, f[x_] := …; …]` must leave `f`'s old
@@ -2403,7 +2451,7 @@ per the source ("As soon as the loop test fails to be True, While and For termin
   cannot loop forever.
 
 **Taking definitions back.** `Clear[s₁, …]` removes each symbol's own, down, up and sub values and
-leaves its attributes; `ClearAll[s₁, …]` removes the attributes too. Both have `HoldAll`, return
+leaves its attributes and message text; `ClearAll[s₁, …]` removes those too. Both have `HoldAll`, return
 `Null`, and skip a symbol they may not touch with a message while clearing the rest:
 `Clear::wrsym` or `ClearAll::wrsym` for a `Protected` symbol, `ClearAll::locked` for a `Locked`
 one, and `Clear::ssym` for an argument that is not a symbol. These are WL 15.0.1's answers
@@ -3213,6 +3261,7 @@ procedure — which is exactly why the library's zero test has no such layer (§
 | `Simplify.Numeric` | radical normalization preserves numeric value and is idempotent; two products of rationals and radicals whose radicands are primes below `B` or their powers with equal numeric value normalize identically; `integerRoot n b` is exact exactly on perfect powers; the infinity pass agrees with the extended-real table on every pair from a fixed set of finite and infinite values; for generated infinity-bearing `u`, `u - u`, `2u - u`, `u/u` and `u^0` evaluate to `Indeterminate`, and no evaluation turns an infinity-bearing input finite by cancellation | a sign or branch error in steps 1–3 of §4.15; a table cell wrong; Cohen's identity transformations cancelling an infinity D25 left unabsorbed |
 | `Number.Integer` | `m ≡ n·Quotient m n + Mod m n` with `Mod` taking the sign of `n`; `factorInteger` multiplies back and every factor passes `isProbablePrime`; `isProbablePrime` agrees with trial division below 10⁶ | floor-versus-truncate division; a composite witness set |
 | `Control` | `Function[x, b][a]` evaluates as `b` with `a` substituted, capture-free on generated nested scopes; `Block` leaves every localized symbol's attributes and its own, down, up and sub values as it found them on normal exit, `Throw`, `Break` and `Abort[]`; `Module`'s fresh names depend only on the initial `KernelState`; after any caught `Throw`, `Break`, `Continue` or `Return`, the recursion depth and fuel budget equal their values before the catching construct, and after an `Abort[]` they equal their values before the top-level input; an uncaught `Throw`, `Break`, `Continue` or `Return` comes back `Hold`-wrapped, and evaluating that result raises nothing | variable capture; a `Block` that leaks on unwind; session-dependent names; depth or fuel leaking through an unwind or an abort; an uncaught `Throw` that fires again when its result is reused (§4.13) |
+| `Message` | `Quiet[e]` evaluates to what `e` does; `Check[e, f]` is `f` exactly when `e` generates a message that is neither switched off nor inside a covering `Quiet`; after `Quiet` or `Check` exits by a value, a `Throw` or an `Abort[]`, a message emitted next is shown, and seen by an enclosing `Check`, as it was before | a quiet or check frame leaking through an unwind; a `Check` that reads the queue instead of what was generated (§4.7) |
 | `Logic` | `Equal a b` is `True` only when `isZero (a − b)` is `Just True`, and `False` only when it is `Just False` and `a − b` has no free symbol; `x == y` for distinct free `x`, `y` stays unevaluated; `And`/`Or` never evaluate an argument after the deciding one | a comparison that turns "don't know", or "not identically zero", into `False` (§4.14) |
 | `Pattern` | soundness: every `σ` from `matchAll p s` satisfies `applySubst σ p ≡ s` modulo attributes | the whole matcher, in one line |
 | `Pattern` | completeness: `genPattern` output always matches its subject | phases 1–2 over-pruning |
@@ -4131,11 +4180,13 @@ pure function catches `Return`) and §4.15's infinity rows. Each was checked aga
 `Cassini.Builtins.Logic`: `(x + 1)^2 == x^2 + 2 x + 1` stays unevaluated until then, which is
 §4.14's contract working, not a gap in it.
 
-- Also here, each answered on 2026-11-11: `Print` and the output queue (§4.7, D40); `Clear` and
+- Also here, each answered on 2026-11-11: message control, with `General::stop` (§4.7, D42), whose
+  §7.3 row is the `Message` one, and whose third-repeat rule means re-reading every golden and
+  corpus entry with a message repeated in one input; `Print` and the output queue (§4.7, D40); `Clear` and
   `ClearAll` (§4.13, D41); and `Cassini.Builtins.List`'s first builtins (§2.2, D44), which ride
   with `Table`. The list builtins were chosen by measurement over the Wolfram corpus's 65,608
   usable exact cases, of which 882 are in scope now. This track's control, logic and integer
-  builtins alone bring that to 1,357, and the list builtins to 1,655 (computed from `index.tsv`
+  builtins alone bring that to 1,357, the list builtins to 1,676 and the message builtins to 1,699 (computed from `index.tsv`
   and the registry's names on 2026-11-11; in scope is not passing). The count is recorded again
   when the track lands.
 - Corpus: every corpus's in-scope cases for `Builtins.Control`, `.Logic`, `.Integer` and `.List`, triaged.
@@ -4326,9 +4377,9 @@ answer, not a deletion.
 | D39 | **Answered 2026-11-11: follow WL, in the elementary-functions track (§10).** A π multiple, alone or in a sum, is reduced to at most π/4 in magnitude, with the cofunction (§4.11). Nothing was built on the earlier rule, the new one is read off WL 15.0.1's answers, and it makes `Sin[x + 2π/3]` and `Cos[x + π/6]` one spelling, which the earlier rule did not. The row as it stood: A rational multiple of π inside a sum is reduced by periodicity only: `Sin[x + 2π/3]` stays, and `Sin[x + 7π/3]` is `Sin[x + π/3]` (§4.11). That is Cohen's Fig. 7.9 Mathematica column, from 2002. WL 15.0.1 moves the multiple to the first quadrant as it does for a constant argument: `Cos[π/6 + x]` and `Cos[π/6 - x]`. Equal in value, and `Simplify_trig` on the difference should give 0, so `isZero`'s layer 3′ should equate them; a unit test with the track confirms it. Found 2026-11-11 in the design review | a corpus case in the track's triage that the rule as read does not reproduce |
 | D40 | **Answered 2026-11-11, for the control-flow track (§10):** `Print` queues its evaluated arguments through a `Kernel` operation, `EmitOutput`, on the queue the messages use, and the front ends format them (§4.7). The row as it stood: No output channel. `Print` belongs to no module, and the `Kernel` effect has no operation for output, so the pure interpreter has nowhere to put it. The likely shape follows messages: an operation that appends to a queue in `KernelState`, drained by the front end (§4.7) | a second kind of output (`Echo`, `Write`, streams) that the one queue does not fit |
 | D41 | **Answered in part 2026-11-11, for the control-flow track (§10):** `Clear` and `ClearAll`, with WL 15.0.1's messages (§4.13). `Remove` and the string-pattern forms stay deferred. The row as it stood: `Clear`, `ClearAll` and `Remove` are absent; `Unset` and `ClearAttributes` are the only ways to take a definition back. `Remove` would also need the symbol table to forget a name, which §3.2's append-only table cannot | for `Remove`, a need to forget a name, which means revisiting §3.2's append-only table; for the string forms, D34 |
-| D42 | Messages can be emitted by builtins and read by the front end, and that is all: `Message`, `Quiet`, `Off`/`On`, `Check` and user-defined message text (`f::tag = "…"`) are absent | a corpus's in-scope cases needing one; or a builtin written in the language, which needs `Message` |
+| D42 | **Answered 2026-11-11, for the control-flow track (§10):** `Message`, `MessageName` and user message text, `Quiet`, `Check`, `Off`/`On` and `General::stop`, each as WL 15.0.1 answered a probe (§4.7). Scoping is two `Kernel` operations, `Quietly` and `Checking`. Left out, and unevaluated: `Quiet`'s third argument, `Off[]`/`On[]` without a message name, message groups, `$MessageList`, `Messages` and message languages. The row as it stood: Messages can be emitted by builtins and read by the front end, and that is all: `Message`, `Quiet`, `Off`/`On`, `Check` and user-defined message text (`f::tag = "…"`) are absent | a corpus's in-scope cases needing one of the forms left out |
 | D43 | **Answered 2026-11-11, for 2b (§10):** polynomial part by division, the denominator factored over ℚ, then `cohen2003_*.pdf` §4.4's partial-fraction procedures over the coprime factors (§5.5). The row as it stood: `Apart` is scheduled with 2b (§10) and has no algorithm section. Partial fractions over ℚ follow from §5.5's factorization and §5.4's extended Euclid, and §6.2's Hermite reduction does part of the same work; which of them `Apart` is built on is not decided | `Apart` needing parameters in its coefficients, which needs a coefficient field of rational functions |
-| D44 | **Answered 2026-11-11, for the control-flow track (§10):** the first builtins are chosen by measured corpus scope and listed in §2.2. Over the Wolfram corpus, with the track's control, logic and integer builtins counted first (882 cases in scope become 1,357), each list builtin was ranked by the cases it then adds: `Flatten` 27, `Array`, `ReplacePart` and `Range` 23 each, `Partition` 22, `MapAt` 17, `Extract` and `Thread` 15, `MapThread` 14, `Take`, `Position` and `MapIndexed` 12, `Drop`, `Riffle`, `Join` and `Select` 11, `Sort` 10, and the basics (`First`, `Last`, `Rest`, `Most`, `Append`, `Prepend`, `Reverse`) 4–9 each; together they reach 1,655. Next in line, and not in the first set: `Subsets`, `Inner`, `Outer`, `Delete`, `Insert`. The row as it stood: `Cassini.Builtins.List` has a charter and no list of builtins (§2.2). `Table` is specified with the iterators (§4.13); `Range`, `Join`, `Append`, `First`, `Rest`, `Take`, `Sort`, `Select` and the rest are not | the track's triage showing a list builtin outside the first set blocking more cases than one inside it |
+| D44 | **Answered 2026-11-11, for the control-flow track (§10):** the first builtins are chosen by measured corpus scope and listed in §2.2. Over the Wolfram corpus, with the track's control, logic and integer builtins counted first (882 cases in scope become 1,357), each list builtin was ranked by the cases it then adds: `Flatten` 27, `Array`, `ReplacePart` and `Range` 23 each, `Partition` 22, `MapAt` 17, `Extract` and `Thread` 15, `MapThread` 14, `Take`, `Position` and `MapIndexed` 12, `Drop`, `Riffle`, `Join` and `Select` 11, `Sort` 10, and the basics (`First`, `Last`, `Rest`, `Most`, `Append`, `Prepend`, `Reverse`) 4–9 each; together they reach 1,676. Next in line, and not in the first set: `Subsets`, `Inner`, `Outer`, `Delete`, `Insert`. The row as it stood: `Cassini.Builtins.List` has a charter and no list of builtins (§2.2). `Table` is specified with the iterators (§4.13); `Range`, `Join`, `Append`, `First`, `Rest`, `Take`, `Sort`, `Select` and the rest are not | the track's triage showing a list builtin outside the first set blocking more cases than one inside it |
 | D45 | **Scheduled 2026-11-11:** built in the fidelity track (§10): a scheduled workflow for the random-seed run, `cassini-corpus` and `cassini-oracle`, with Mathics3 at 10.0.1; `cassini-slow` joins at 2b. The row as it stood: The nightly CI job of §2.8 is not built: no scheduled workflow, no `cassini-slow` stanza, and the oracle and corpus suites run only on a developer machine. A runner would need Mathics3 for the oracle and `corpus/fetch.sh` for the fetched corpora | the scheduled run proving too slow or too flaky to leave on, which makes it a decision again |
 
 ### 11.3 Provenance
