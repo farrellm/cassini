@@ -34,6 +34,7 @@ What spans packages stays at the root:
 | `.ormolu` | ormolu's fixities and re-exports for all three packages (§2.5). Not style config. |
 | `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker; the Haddock coverage floor; the common-stanza check. |
 | `.github/workflows/ci.yml` | CI, §2.8 steps 1–8. |
+| `.github/renovate.json` | Renovate, for the workflow's actions only (§2.8, D46). |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate, one copy for the project; each package's `LICENSE` is a symlink to the root's. The changelog is written as changes land, not at release. |
 
 ## Rules

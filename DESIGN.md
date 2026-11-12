@@ -569,6 +569,14 @@ wider matrix would be jobs failing at dependency resolution, read as flaky and t
 Widening the bound and the matrix is one deliberate change: every `Cassini.Prelude` subtraction must
 hold across both `relude` builds, and each compiler needs its own benchmark baseline (§8.6). D12.
 
+**Renovate moves the actions and nothing else** (`.github/renovate.json`, D46). The workflow's
+actions are pinned to digests and grouped into one PR a week. Minor, patch and digest updates merge
+once CI passes; a major waits for review. Everything else is a decision, not an update: the
+toolchain versions in the workflow's `env` move with the bound above (D12), and an ormolu or hlint
+bump changes what passes. Hackage dependencies already resolve to the newest version their `^>=`
+bounds admit, since nothing freezes the plan, so only the breaking majors are left to propose, and
+those are weighed against the dependency budget (§11.1).
+
 ### 2.9 Versioning
 
 PVP. `CHANGELOG.md` is written as changes land, not at release. Until `1.0`, `Expr`'s representation
@@ -4381,6 +4389,7 @@ answer, not a deletion.
 | D43 | **Answered 2026-11-11, for 2b (§10):** polynomial part by division, the denominator factored over ℚ, then `cohen2003_*.pdf` §4.4's partial-fraction procedures over the coprime factors (§5.5). The row as it stood: `Apart` is scheduled with 2b (§10) and has no algorithm section. Partial fractions over ℚ follow from §5.5's factorization and §5.4's extended Euclid, and §6.2's Hermite reduction does part of the same work; which of them `Apart` is built on is not decided | `Apart` needing parameters in its coefficients, which needs a coefficient field of rational functions |
 | D44 | **Answered 2026-11-11, for the control-flow track (§10):** the first builtins are chosen by measured corpus scope and listed in §2.2. Over the Wolfram corpus, with the track's control, logic and integer builtins counted first (882 cases in scope become 1,357), each list builtin was ranked by the cases it then adds: `Flatten` 27, `Array`, `ReplacePart` and `Range` 23 each, `Partition` 22, `MapAt` 17, `Extract` and `Thread` 15, `MapThread` 14, `Take`, `Position` and `MapIndexed` 12, `Drop`, `Riffle`, `Join` and `Select` 11, `Sort` 10, and the basics (`First`, `Last`, `Rest`, `Most`, `Append`, `Prepend`, `Reverse`) 4–9 each; together they reach 1,676. Next in line, and not in the first set: `Subsets`, `Inner`, `Outer`, `Delete`, `Insert`. The row as it stood: `Cassini.Builtins.List` has a charter and no list of builtins (§2.2). `Table` is specified with the iterators (§4.13); `Range`, `Join`, `Append`, `First`, `Rest`, `Take`, `Sort`, `Select` and the rest are not | the track's triage showing a list builtin outside the first set blocking more cases than one inside it |
 | D45 | **Scheduled 2026-11-11:** built in the fidelity track (§10): a scheduled workflow for the random-seed run, `cassini-corpus` and `cassini-oracle`, with Mathics3 at 10.0.1; `cassini-slow` joins at 2b. The row as it stood: The nightly CI job of §2.8 is not built: no scheduled workflow, no `cassini-slow` stanza, and the oracle and corpus suites run only on a developer machine. A runner would need Mathics3 for the oracle and `corpus/fetch.sh` for the fetched corpora | the scheduled run proving too slow or too flaky to leave on, which makes it a decision again |
+| D46 | Renovate updates the CI's GitHub Actions only (digest-pinned, grouped, minor/patch/digest automerged); toolchain versions and Hackage bounds move by hand (§2.8) | a Hackage major or toolchain release going unnoticed long enough to matter, which would make a dashboard-only Hackage manager worth its noise |
 
 ### 11.3 Provenance
 
