@@ -4,12 +4,13 @@ Local document corpus for the Computer Algebra System in Haskell project. Every 
 a source cited in [`cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md); read that
 file for *what to read and why*, and this one for *where the file is*.
 
-Files live under [`papers/`](./papers/), grouped into eight topical directories. Each directory has
+Files live under [`papers/`](./papers/), grouped into eight topical directories, and in
+[`bronstein-volume-2/`](./bronstein-volume-2/) beside it (§9). Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**104 documents (~439 MB) — 40 PDFs, 6 Axiom literate `.pamphlet` sources, 58 HTML captures — plus 2 OCR sidecars.**
+**136 documents (~637 MB) — 70 PDFs, 7 Axiom literate `.pamphlet` sources, 59 HTML captures — plus 7 text sidecars.**
 
-Two PDFs are image-only and carry a generated `.txt` sidecar beside them (`bachmair1993_…`, `eker1995_…`) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
+Six PDFs are image-only and a seventh has an unusable text layer; each carries a generated `.txt` sidecar beside it (`bachmair1993_…`, `eker1995_…`, and in `bronstein-volume-2/` `trager1984_…`, `vanhoeij1994_…`, `bronstein1998_lazy_hermite_reduction`, `weil1948_…` (French, `-l fra`) and `bliss1933_…`, the last taken from the source DjVu's text layer rather than by OCR) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
 summarised in [`CLAUDE.md`](./CLAUDE.md); they render without CSS but retain the full text. The
 original **22** were fetched **2026-08-29** and **16** on **2026-08-30** — ten in the
@@ -20,7 +21,7 @@ fourth (`springer_geddes_book_page`, `symbolica_home_2025_wayback`). **1** more 
 **2026-08-31** (`sbv_docs_data_sbv`), **2** on **2026-09-01** (`algebra_hackage`,
 `constructive_algebra_hackage`), and **14** Wolfram documentation pages on **2026-09-25** (§7: the
 scoping, control-flow, pattern and infinity pages `DESIGN.md` §4.13–§4.15 rest on). **2** Wolfram
-legal pages followed on **2026-09-27** and **1** package page on **2026-11-11** (`effectful_hackage`).
+legal pages followed on **2026-09-27**, **1** package page on **2026-11-11** (`effectful_hackage`), and **1** wiki page on **2026-11-12** (`fricas_wiki_…`, in `bronstein-volume-2/`; a Wayback snapshot, supplied rather than fetched here).
 Two of the captures are
 Wayback captures rather than live fetches, for reasons the rows give.
 
@@ -52,8 +53,9 @@ PDFs of the numbered volumes were found; these are the upstream `.pamphlet` sour
 (LaTeX + SPAD, plain text, readable directly) from `github.com/daly/axiom/books`.
 
 **This is a deliberate subset, not a partial fetch.** Axiom runs to roughly fifteen numbered volumes;
-the six held are the ones the notes actually cite — Vol. 1 for the user-level tutorial and Vol. 10.x
-for the algebra hierarchy. Vol. 0 is covered by `jenks_sutor1992_axiom.pdf` and the FriCAS
+the seven held are the ones the notes actually cite — Vol. 1 for the user-level tutorial, Vol. 10.x
+for the algebra hierarchy, and the bibliography volume (added 2026-11-11), without which the citation
+keys in Vol. 10.1's *Integration* chapter cannot be resolved. Vol. 0 is covered by `jenks_sutor1992_axiom.pdf` and the FriCAS
 regeneration above. The remaining volumes (compiler internals, interpreter, build system) are not
 cited and were not fetched.
 
@@ -65,6 +67,7 @@ cited and were not fetched.
 | [`axiom_bookvol10-3_domains.pamphlet`](./papers/textbooks/axiom_bookvol10-3_domains.pamphlet) | Vol. 10.3 — Axiom Algebra: Domains | 7.38 MB |
 | [`axiom_bookvol10-4_packages.pamphlet`](./papers/textbooks/axiom_bookvol10-4_packages.pamphlet) | Vol. 10.4 — Axiom Algebra: Packages | 9.46 MB |
 | [`axiom_bookvol10-5_numerics.pamphlet`](./papers/textbooks/axiom_bookvol10-5_numerics.pamphlet) | Vol. 10.5 — Axiom Algebra: Numerics | 30.29 MB |
+| [`axiom_bookvolbib.pamphlet`](./papers/textbooks/axiom_bookvolbib.pamphlet) | Volume Bibliography: Axiom Literature Citations — BibTeX entries, many with abstracts. Fetched 2026-11-11 from `raw.githubusercontent.com/daly/axiom/master/books/bookvolbib.pamphlet`. | 3.15 MB |
 
 ---
 
@@ -201,6 +204,55 @@ cited and were not fetched.
 
 ---
 
+## 9. `bronstein-volume-2/` — integration of algebraic functions (bibliography §1)
+
+Outside `papers/`: a directory organised around one question — what Bronstein's unpublished second
+volume would have covered — rather than one kind of source.
+[`what-volume-2-would-have-covered.md`](./bronstein-volume-2/what-volume-2-would-have-covered.md)
+is the guide to it. **Unlike §1–§8, not every row here is cited in the bibliography**: the twenty
+added on 2026-11-12 (the last twenty rows) are cited by other held documents or were leads in the
+guide, and only Abramov's
+obituary among them has a bibliography entry. The first eleven were added **2026-11-11**: six fetched by `curl`, Davenport's monograph from the project owner's own copy, and four — the first four rows — supplied by the project owner the same day from a browser, `curl` having been refused for two and not pursued for two.
+
+| File | Document & Authors | Source / Identifier | Pages | Size |
+| :--- | :--- | :--- | :--- | :--- |
+| [`trager1984_integration_of_algebraic_functions.pdf`](./bronstein-volume-2/trager1984_integration_of_algebraic_functions.pdf) | ***Integration of Algebraic Functions***<br>*Barry Marshall Trager (PhD thesis, MIT, September 1984)*<br>**Image-only scan; OCR sidecar `.txt` beside it.** | MIT DSpace, handle [`1721.1/15391`](https://dspace.mit.edu/handle/1721.1/15391) — supplied; open access | 83 | 5.46 MB |
+| [`davenport1981_on_the_integration_of_algebraic_functions.pdf`](./bronstein-volume-2/davenport1981_on_the_integration_of_algebraic_functions.pdf) | ***On the Integration of Algebraic Functions***<br>*James Harold Davenport (Lecture Notes in Computer Science 102, Springer, 1981)* | Springer / DOI: [`10.1007/3-540-10290-6`](https://doi.org/10.1007/3-540-10290-6) — the project owner's copy, scanned | 199 | 2.66 MB |
+| [`bronstein1990_integration_of_elementary_functions.pdf`](./bronstein-volume-2/bronstein1990_integration_of_elementary_functions.pdf) | **"On the Integration of Elementary Functions"**<br>*Manuel Bronstein (J. Symbolic Computation 9(2):117–173, 1990)*<br>Publisher-OCR text layer, noisy. | Elsevier / DOI: [`10.1016/S0747-7171(08)80027-2`](https://doi.org/10.1016/S0747-7171(08)80027-2) — supplied | 57 | 2.45 MB |
+| [`bronstein1998_lazy_hermite_reduction.pdf`](./bronstein-volume-2/bronstein1998_lazy_hermite_reduction.pdf) | ***The Lazy Hermite Reduction***<br>*Manuel Bronstein (INRIA Rapport de recherche RR-3562, November 1998)*<br>**Body text layer is garbage; OCR sidecar `.txt` beside it.** 13 pp. of report plus HAL's cover sheet and front matter. | HAL: [`inria-00073121`](https://inria.hal.science/inria-00073121) — supplied; open access | 17 | 268.4 KB |
+| [`risch1970_solution_of_integration_in_finite_terms.pdf`](./bronstein-volume-2/risch1970_solution_of_integration_in_finite_terms.pdf) | **"The Solution of the Problem of Integration in Finite Terms"**<br>*Robert H. Risch (Bulletin of the AMS 76:605–608, 1970)* | AMS, `S0002-9904-1970-12454-5` — supplied | 4 | 453.3 KB |
+| [`bronstein1998_symbolic_integration_tutorial.pdf`](./bronstein-volume-2/bronstein1998_symbolic_integration_tutorial.pdf) | ***Symbolic Integration Tutorial***<br>*Manuel Bronstein (ISSAC'98; revised for a Rutgers workshop, November 2000)*<br>**A later revision, not the 1998 handout** — PDF created January 2005, and it cites the 2004 second edition of the book. | `math.kobe-u.ac.jp/HOME/taka/2007/knx/bronstein-tutorial-issac98.pdf` — a course page, not the author's; his INRIA page (`www-sop.inria.fr/cafe/Manuel.Bronstein/publications/issac98.pdf`) was not tried | 35 | 253.7 KB |
+| [`kauers2008_algebraic_integration_logarithmic_part.pdf`](./bronstein-volume-2/kauers2008_algebraic_integration_logarithmic_part.pdf) | **"Integration of Algebraic Functions: A Simple Heuristic for Finding the Logarithmic Part"**<br>*Manuel Kauers (ISSAC 2008, pp. 133–140)* | Author's copy, `www3.risc.jku.at/publications/download/risc_3427/Ka01.pdf` | 8 | 172.3 KB |
+| [`chen_kauers_koutschan2016_reduction_telescoping_algebraic.pdf`](./bronstein-volume-2/chen_kauers_koutschan2016_reduction_telescoping_algebraic.pdf) | **"Reduction-Based Creative Telescoping for Algebraic Functions"**<br>*Shaoshi Chen, Manuel Kauers, Christoph Koutschan (2016)* | arXiv: [`1602.00424`](https://arxiv.org/abs/1602.00424) (v1) | 8 | 181.4 KB |
+| [`chen_du_kauers2021_lazy_hermite_reduction.pdf`](./bronstein-volume-2/chen_du_kauers2021_lazy_hermite_reduction.pdf) | **"Lazy Hermite Reduction and Creative Telescoping for Algebraic Functions"**<br>*Shaoshi Chen, Lixin Du, Manuel Kauers (2021)* | arXiv: [`2102.06538`](https://arxiv.org/abs/2102.06538) (v2) | 20 | 241.3 KB |
+| [`blake2020_pseudo_elliptic_integrals.pdf`](./bronstein-volume-2/blake2020_pseudo_elliptic_integrals.pdf) | **"A Simple Method for Computing Some Pseudo-Elliptic Integrals in Terms of Elementary Functions"**<br>*Sam Blake (2020)* — marked "DRAFT version" | arXiv: [`2004.04910`](https://arxiv.org/abs/2004.04910) (v3) | 12 | 151.5 KB |
+| [`abramov_bronstein_petkovsek2020_pi_sigma_difference_equations.pdf`](./bronstein-volume-2/abramov_bronstein_petkovsek2020_pi_sigma_difference_equations.pdf) | **"On Rational and Hypergeometric Solutions of Linear Ordinary Difference Equations in ΠΣ\*-field extensions"**<br>*Sergei A. Abramov, Manuel Bronstein, Marko Petkovšek, Carsten Schneider (2020)*<br>Held for the date of Bronstein's death, which its author footnote gives. | arXiv: [`2005.04944`](https://arxiv.org/abs/2005.04944) (v2) | 59 | 662.7 KB |
+
+| [`bronstein1991_risch_differential_equation_algebraic_curve.pdf`](./bronstein-volume-2/bronstein1991_risch_differential_equation_algebraic_curve.pdf) | **"The Risch Differential Equation on an Algebraic Curve"**<br>*Manuel Bronstein (ISSAC'91, pp. 241–246)*<br>Two-column text layer, interleaved. | ACM — supplied 2026-11-12 | 6 | 461.5 KB |
+| [`bertrand1995_hyperelliptic_integral_jacobian.pdf`](./bronstein-volume-2/bertrand1995_hyperelliptic_integral_jacobian.pdf) | **"Computing a Hyperelliptic Integral using Arithmetic in the Jacobian of the Curve"**<br>*Laurent Bertrand (AAECC 6:275–298, 1995)* | Springer — supplied 2026-11-12 | 24 | 1.02 MB |
+| [`vanhoeij1994_integral_basis_algebraic_function_field.pdf`](./bronstein-volume-2/vanhoeij1994_integral_basis_algebraic_function_field.pdf) | **"An Algorithm for Computing an Integral Basis in an Algebraic Function Field"**<br>*Mark van Hoeij (J. Symbolic Computation 18:353–363, 1994)*<br>**Image-only scan; OCR sidecar `.txt` beside it.** | Academic Press / Elsevier — supplied 2026-11-12 | 11 | 310.1 KB |
+| [`trager1979_integration_of_simple_radical_extensions.pdf`](./bronstein-volume-2/trager1979_integration_of_simple_radical_extensions.pdf) | **"Integration of Simple Radical Extensions"**<br>*Barry M. Trager (EUROSAM'79, LNCS 72, pp. 408–414)*<br>Noisy OCR text layer. | Springer LNCS — supplied 2026-11-12 | 7 | 281.2 KB |
+| [`davenport1979_algorithms_integration_algebraic_functions.pdf`](./bronstein-volume-2/davenport1979_algorithms_integration_algebraic_functions.pdf) | **"Algorithms for the Integration of Algebraic Functions"**<br>*J. H. Davenport (EUROSAM'79, LNCS 72, pp. 415–425)* | Springer LNCS — supplied 2026-11-12 | 11 | 291.6 KB |
+| [`hardy1916_integration_of_functions_of_a_single_variable.pdf`](./bronstein-volume-2/hardy1916_integration_of_functions_of_a_single_variable.pdf) | ***The Integration of Functions of a Single Variable***<br>*G. H. Hardy (Cambridge Tracts No. 2; 2nd ed. 1916)*<br>**The held file is the 1966 reprint of the second edition.** | Internet Archive scan of Cornell University Library's copy (`archive.org/details/cu31924001539570`, per its first page) — supplied 2026-11-12; public domain | 84 | 2.88 MB |
+| [`abramov2006_in_memory_of_manuel_bronstein.pdf`](./bronstein-volume-2/abramov2006_in_memory_of_manuel_bronstein.pdf) | **"In Memory of Manuel Bronstein"**<br>*S. A. Abramov (Programming and Computer Software 32(1):56–58, 2006)* | Pleiades / Springer, DOI: [`10.1134/S0361768806010063`](https://doi.org/10.1134/S0361768806010063) — supplied 2026-11-12 | 3 | 117.0 KB |
+
+| [`davenport1984_integration_algorithmique_courbe_algebrique.pdf`](./bronstein-volume-2/davenport1984_integration_algorithmique_courbe_algebrique.pdf) | **"Intégration algorithmique des fonctions élémentairement transcendantes sur une courbe algébrique"**<br>*J. H. Davenport (Annales de l'Institut Fourier 34(2):271–276, 1984)* | NUMDAM: [`AIF_1984__34_2_271_0`](http://www.numdam.org/item?id=AIF_1984__34_2_271_0) — supplied 2026-11-12; open access | 7 | 432.5 KB |
+| [`chevalley1951_algebraic_functions_of_one_variable.pdf`](./bronstein-volume-2/chevalley1951_algebraic_functions_of_one_variable.pdf) | ***Introduction to the Theory of Algebraic Functions of One Variable***<br>*Claude Chevalley (Mathematical Surveys VI, AMS, 1951)* | An Internet Archive scan — supplied 2026-11-12 | 197 | 21.52 MB |
+| [`bliss1933_algebraic_functions.pdf`](./bronstein-volume-2/bliss1933_algebraic_functions.pdf) | ***Algebraic Functions***<br>*Gilbert Ames Bliss (AMS Colloquium Publications XVI, 1933; 1947 lithoprint)*<br>**Converted from DjVu; image-only, text sidecar `.txt` beside it.** | Supplied 2026-11-12 as `.djvu` (3.19 MB) | 229 | 16.39 MB |
+| [`stichtenoth2009_algebraic_function_fields_and_codes.pdf`](./bronstein-volume-2/stichtenoth2009_algebraic_function_fields_and_codes.pdf) | ***Algebraic Function Fields and Codes*** (2nd ed.)<br>*Henning Stichtenoth (Graduate Texts in Mathematics 254, Springer, 2009)*<br>**Not the 1993 first edition that Axiom vol. 10.1 cites.** | Springer, ISBN 978-3-540-76877-7 — supplied 2026-11-12 | 363 | 5.04 MB |
+
+| [`fricas_wiki_risch_implementation_status_2022_wayback.html`](./bronstein-volume-2/fricas_wiki_risch_implementation_status_2022_wayback.html) | **FriCAS wiki, *RischImplementationStatus*** — what FriCAS's Risch implementation does and does not cover; page last edited 2022/06/28 | `fricas-wiki.math.uni.wroc.pl/RischImplementationStatus`, Wayback snapshot of 2022-12-07 as reported by the supplier — supplied 2026-11-12 | — | 22.7 KB |
+| [`miller2012_integration_logarithmic_part.pdf`](./bronstein-volume-2/miller2012_integration_logarithmic_part.pdf) | ***On the Integration of Elementary Functions: Computing the Logarithmic Part***<br>*Brian L. Miller (PhD dissertation, Texas Tech University, May 2012)* | Texas Tech repository, handle `2346/45299`, as reported — supplied 2026-11-12 | 49 | 409.2 KB |
+| [`combot2021_elementary_integration_superelliptic.pdf`](./bronstein-volume-2/combot2021_elementary_integration_superelliptic.pdf) | **"Elementary Integration of Superelliptic Integrals"**<br>*Thierry Combot (ISSAC '21)* | ACM / DOI: [`10.1145/3452143.3465540`](https://doi.org/10.1145/3452143.3465540) — supplied 2026-11-12 | 8 | 958.3 KB |
+| [`hess2002_computing_riemann_roch_spaces.pdf`](./bronstein-volume-2/hess2002_computing_riemann_roch_spaces.pdf) | **"Computing Riemann–Roch Spaces in Algebraic Function Fields and Related Topics"**<br>*F. Hess (J. Symbolic Computation 33:425–445, 2002)* | Elsevier / DOI: [`10.1006/jsco.2001.0513`](https://doi.org/10.1006/jsco.2001.0513) — supplied 2026-11-12 | 21 | 388.9 KB |
+| [`masser_zannier2020_torsion_points_pell_integration.pdf`](./bronstein-volume-2/masser_zannier2020_torsion_points_pell_integration.pdf) | **"Torsion points, Pell's equation, and integration in elementary terms"**<br>*David Masser, Umberto Zannier (Acta Mathematica 225:227–312, 2020)* | International Press / DOI: [`10.4310/ACTA.2020.v225.n2.a2`](https://doi.org/10.4310/ACTA.2020.v225.n2.a2); publisher's open-access PDF, as reported — supplied 2026-11-12 | 87 | 903.3 KB |
+| [`fulton2008_algebraic_curves.pdf`](./bronstein-volume-2/fulton2008_algebraic_curves.pdf) | ***Algebraic Curves: An Introduction to Algebraic Geometry***<br>*William Fulton (author's free edition, January 28, 2008)* | The author's web edition — supplied 2026-11-12 | 129 | 690.1 KB |
+| [`chen_vanhoeij_kauers2016_telescoping_fuchsian_dfinite.pdf`](./bronstein-volume-2/chen_vanhoeij_kauers2016_telescoping_fuchsian_dfinite.pdf) | **"Reduction-Based Creative Telescoping for Fuchsian D-finite Functions"**<br>*Shaoshi Chen, Mark van Hoeij, Manuel Kauers, Christoph Koutschan (2016)* | arXiv: [`1611.07421`](https://arxiv.org/abs/1611.07421) (v1) — supplied 2026-11-12 | 20 | 220.8 KB |
+| [`weil1948_sur_les_courbes_algebriques_retranscription.pdf`](./bronstein-volume-2/weil1948_sur_les_courbes_algebriques_retranscription.pdf) | ***Sur les courbes algébriques et les variétés qui s'en déduisent***<br>*André Weil (1948)*<br>**A 2022 LaTeX retranscription by Denise Vella-Chemla, not the Hermann printing; pagination differs.** | Source not stated — supplied 2026-11-12 | 74 | 572.7 KB |
+| [`weil1948_varietes_abeliennes_et_courbes_algebriques.pdf`](./bronstein-volume-2/weil1948_varietes_abeliennes_et_courbes_algebriques.pdf) | ***Variétés abéliennes et courbes algébriques***<br>*André Weil (Actualités scientifiques et industrielles 1064, 1948; a 1951 photographic reprint)*<br>**Not the 1971 Hermann volume the tutorial cites. Image-only; French OCR sidecar `.txt` beside it.** | Supplied 2026-11-12 | 163 | 129.33 MB |
+
+---
+
 ## Coverage against the bibliography
 
 **Fully covered locally:** §1 (textbooks), §2 (term rewriting), §3 (foundational papers), §4
@@ -231,7 +283,9 @@ say. If the notes assert something *about a document*, that document belongs her
 
 Nine sources were once listed here. Six were subsequently supplied and are now held (Klop's survey,
 then Karr ×2, Benanav, Eker, Bachmair '93 and the Springer Jenks & Sutor — see the corrections log
-below). The three that remain are not paywalled but genuinely gone or nonexistent.
+below). Three of those remain, not paywalled but genuinely gone or nonexistent. Four more were
+added on 2026-11-11 with the bibliography's algebraic-integration block, and **all four were supplied
+the same day** (Trager's thesis, Bronstein's RR-3562 and 1990 paper, Davenport's monograph — §9).
 
 | Source | Bibliography § | Why |
 | :--- | :--- | :--- |
@@ -341,6 +395,11 @@ as "archived as PDFs on Wolfram's content servers". They are not: Wolfram's serv
 *manual* (now held, three volumes above), while Cole & Wolfram's SYMSAC '81 paper and Greif's
 EUROCAL '85 paper are ACM and Springer, behind paywalls, and appear nowhere on
 `stephenwolfram.com/publications`. The bibliography's "Availability at a Glance" section marks which of these titles are
-in print and purchasable — Cohen Vols. 1–2, von zur Gathen & Gerhard, Baader & Nipkow, Bronstein,
+in print and purchasable — Stichtenoth, Davenport's LNCS 102 (the held file is the owner's copy), Cohen Vols. 1–2, von zur Gathen & Gerhard, Baader & Nipkow, Bronstein,
 Terese, and Jenks & Sutor. *A=B*, the arXiv papers, the Axiom material, the PeerJ SymPy paper, and
-every HTML capture are freely and legally available from their publishers or authors.
+every HTML capture are freely and legally available from their publishers or authors. In
+`bronstein-volume-2/` the four arXiv papers and Kauers's author copy are the same; **Bronstein's
+tutorial came from a third party's course page**, the author's own page not having been tried. Of the
+four supplied files there, Trager's thesis and the INRIA report are open access (MIT DSpace, HAL);
+Bronstein's 1990 paper is Elsevier's and Risch's 1970 note the AMS's, and how freely each is offered
+was not checked.

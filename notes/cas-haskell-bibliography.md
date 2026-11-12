@@ -19,7 +19,45 @@ Full reference list for the reading & building guide. Entries are grouped by rol
 > The most complete single volume covering the whole implementer's pipeline: normal forms, polynomial/rational/power-series arithmetic, homomorphisms and CRT, Newton iteration and Hensel construction, polynomial GCD, factorization, solving systems of equations, Gröbner bases, integration of rational functions, and the Risch algorithm, “presented in a Pascal-like computer language”. Springer's page is also the source of the often-repeated line that this is “the first comprehensive textbook to be published on the topic of computational symbolic mathematics” — a publisher's claim, not the authors'; the book itself makes no such claim anywhere. *Essential — the one algorithms reference to own if you buy only one.* **Corpus caveat:** the held scan's table-of-contents pages are OCR noise (“In od ion”, “Algo i hm”) while the body text is sound — grep the body for chapter titles, not the TOC.
 
 **Bronstein, Manuel.** *Symbolic Integration I: Transcendental Functions.* 2nd ed. Algorithms and Computation in Mathematics vol. 1. Springer, 2005.
-> The standard integration reference: Hermite reduction, Rothstein–Trager, Lazard–Rioboo–Trager, and the Risch algorithm proper. 2nd ed. adds a chapter on parallel/Risch–Norman integration. Ready-to-implement pseudocode. **Volume II (algebraic functions) was never completed — Bronstein died before finishing it**, so the algebraic case remains scattered across research papers. *Essential at Stage 3.*
+> The standard integration reference: Hermite reduction, Rothstein–Trager, Lazard–Rioboo–Trager, and the Risch algorithm proper. 2nd ed. adds a chapter on parallel/Risch–Norman integration. Ready-to-implement pseudocode. **A second volume on algebraic functions was planned and left uncompleted.** The first-edition preface promises it "in the near future"; the second-edition preface (June 2004) does not mention it; Bronstein died on 6 June 2005; and his collaborator Abramov's obituary (held) says "The second volume remained uncompleted". How far it got, nothing held says. The algebraic case is not in an implementer's textbook, but it is not only in papers either: the preface points to nine references, one of them Davenport's 1981 monograph, and Bronstein's own *Symbolic Integration Tutorial* (held) outlines the whole algorithm. `references/bronstein-volume-2/what-volume-2-would-have-covered.md` resolves the nine and lists what is held. *Essential at Stage 3.*
+
+**The algebraic case — what Bronstein's Volume II would have covered.** Twelve sources, all held; the directory holds nineteen more, cited by these or following them (its `CLAUDE.md` lists them). `references/bronstein-volume-2/what-volume-2-would-have-covered.md` is the guide: it resolves the nine references the book's preface gives, reconstructs the likely contents, and tags every claim by whether it was checked against a held document. `DESIGN.md` §6.2 puts the algebraic case out of scope; these entries record what that decision is about.
+
+**Bronstein, Manuel.** "Symbolic Integration Tutorial." ISSAC'98, Rostock, August 1998; revised for the Differential Algebra Workshop, Rutgers, November 2000. 35 pp. Free.
+> **The nearest thing to a Volume II outline in Bronstein's own words.** §2 covers algebraic functions — Hermite reduction over an integral basis, his own lazy Hermite reduction, simple radical extensions, Liouville's theorem, the integral part, the logarithmic part and the points-of-finite-order problem — and §3.8–§3.9 the algebraic logarithmic and exponential cases. Statements and worked examples; proofs are deferred to its references. **Corpus caveats:** the held copy is a later revision (PDF created January 2005; it cites the book's 2004 second edition) fetched from a third party's course page, not the author's. The same text is the *Integration* chapter of Axiom Vol. 10.1 (held, as LaTeX), where two transcription errors change the meaning — quote the PDF. *Read first if the algebraic case is ever attempted.*
+
+**Trager, Barry M.** *Integration of Algebraic Functions.* PhD thesis, Department of Electrical Engineering and Computer Science, MIT, September 1984. 83 leaves. Open access (MIT DSpace). (Bronstein's reference list gives the title as *On the integration of algebraic functions*; the thesis's own title page has no "On the".)
+> **The core algorithm.** Its abstract claims "a practical decision procedure for the indefinite integration of algebraic functions in terms of elementary functions", "rational" in that "no algebraic extensions are made which are not necessary to express the answer", with "a novel algorithm" for whether a multiple of a divisor is principal, by "reduction modulo p". Chapters: integral bases; absolute irreducibility; the rational part of the integral; log terms and divisors; principal divisors and points of finite order; an appendix on simple radical extensions. Geddes §12.8 is by its own description a summary of it. **Corpus caveat:** the held copy is an image-only scan — `pdftotext` returns nothing; grep the OCR sidecar beside it and read formulas from the page.
+
+**Bronstein, Manuel.** "On the Integration of Elementary Functions." *Journal of Symbolic Computation* 9(2):117–173, 1990.
+> **The mixed algebraic–transcendental case.** Abstract: "We extend a recent algorithm of Trager to a decision procedure for the indefinite integration of elementary functions." A first-page footnote calls it a revised version of his dissertation (Mathematics, U.C. Berkeley, May 1987). Its conclusions are the best statement of the position Volume II would have started from: it "clearly requires the prior implementation of the algorithms of Trager (1984)", Puiseux expansions remain "the major obstacle to an efficient implementation of a complete algorithm", and "an entirely rational algorithm" is named as open. **Corpus caveat:** the text layer is publisher OCR — names and formulas are garbled and some runs are letter-spaced, so greps under-count.
+
+**Bronstein, Manuel.** "The Lazy Hermite Reduction." Rapport de recherche n° 3562, INRIA, November 1998. 13 pp. Open access (HAL `inria-00073121`).
+> Hermite reduction for algebraic functions "without a priori computation of either a primitive element or integral basis" (abstract), stated over a monomial extension of a differential field, so it serves the mixed case as well as the pure one. The tutorial states its three theorems; the proofs are here. **Corpus caveat:** in the held HAL file the cover sheet extracts and the body's text layer is garbage — grep the OCR sidecar beside it.
+
+**Risch, Robert H.** "The Solution of the Problem of Integration in Finite Terms." *Bulletin of the American Mathematical Society* 76:605–608, 1970.
+> The four-page announcement of the complete result, algebraic case included. The source for the observation that integration "reduces to the problem of bounding torsion on the Jacobian variety of an algebraic curve", and for bounding it from two good reductions. A sketch without proofs: "A complete account is planned for a future publication."
+
+**Davenport, James H.** *On the Integration of Algebraic Functions.* Lecture Notes in Computer Science 102. Springer, 1981. ISBN 3-540-10290-6.
+> A monograph, which is why "scattered across research papers" was the wrong description of the algebraic case. The Puiseux-expansion route: ch. 2 representation and places, ch. 3 Coates' algorithm ("finds a function with poles and zeros as specified"), ch. 4 Risch's theorem, which "reduces the problem of integrating algebraic functions to the torsion divisor problem", and chs. 5–8 on that problem. By its own account "the program deals only with square roots". Bronstein 1990 says it "relies on Puiseux expansions (and complete splitting of the denominator)", which is what Trager's thesis avoids. Read it for the torsion-divisor chapters and the worked examples, not as the algorithm to implement. **Corpus caveat:** a scan with an OCR text layer; some runs are letter-spaced and the contents page extracts out of order.
+
+**Chen, Shaoshi, Lixin Du, and Manuel Kauers.** "Lazy Hermite Reduction and Creative Telescoping for Algebraic Functions." arXiv:2102.06538, 2021. Free.
+> The lazy Hermite reduction a generation on, sharpened with a polynomial reduction. The held copy is arXiv v2.
+
+**Chen, Shaoshi, Manuel Kauers, and Christoph Koutschan.** "Reduction-Based Creative Telescoping for Algebraic Functions." arXiv:1602.00424, 2016. Free.
+> Trager's Hermite reduction plus a polynomial reduction, restated compactly; its purpose is telescoping, not integration in finite terms. The held copy is arXiv v1.
+
+**Kauers, Manuel.** "Integration of Algebraic Functions: A Simple Heuristic for Finding the Logarithmic Part." ISSAC 2008, pp. 133–140. Author's copy free from RISC.
+> A Gröbner-basis heuristic for the hard half of the algorithm; by its own abstract it "does not have the feature of finding a closed form of an integral whenever there is one". Its introduction states the practical position: "all of today's computer algebra systems only contain a partial implementation of the complete algorithm."
+
+**Blake, Sam.** "A Simple Method for Computing Some Pseudo-Elliptic Integrals in Terms of Elementary Functions." arXiv:2004.04910, 2020. Free.
+> A substitution heuristic in "less than 200 lines of Mathematica code". **Author-reported:** in his randomised tests it solved 73.4% of the integrals solved by the best implementation of the full algorithm. Not a decision procedure. The held copy is arXiv v3, marked "DRAFT version".
+
+**Abramov, S. A.** "In Memory of Manuel Bronstein." *Programming and Computer Software* 32(1):56–58, 2006. Translated from *Programmirovanie*.
+> The obituary, by a collaborator, received by the journal three months after Bronstein's death. The source for the fate of Volume II — "he intended to write a monograph in two volumes devoted to all aspects of symbolic integration. … The second volume remained uncompleted" — and for the date and cause of death (6 June 2005, a heart attack, aged forty-one).
+
+**Abramov, Sergei A., Manuel Bronstein, Marko Petkovšek, and Carsten Schneider.** "On Rational and Hypergeometric Solutions of Linear Ordinary Difference Equations in ΠΣ\*-field extensions." arXiv:2005.04944, 2020. Free.
+> Cited for one fact — the author footnote "Passed away on June 6, 2005", which agrees with the obituary above — and not for its mathematics.
 
 **Petkovšek, Marko, Herbert S. Wilf, and Doron Zeilberger.** *A=B.* A K Peters, 1996. Foreword by Donald E. Knuth.
 > Algorithmic hypergeometric summation: Gosper's algorithm, Zeilberger's creative telescoping, the WZ method, Petkovšek's `Hyper`. Knuth's foreword is signed *Stanford University, 20 May 1995*. **Freely and legally available as a PDF** — the authors released it; mirrored on Wilf's UPenn page and Zeilberger's at Rutgers. Does *not* cover Karr's algorithm. *Essential for summation; free.*
@@ -143,7 +181,7 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 > The other long-lived Lisp CAS. Same lesson as Maxima, different design choices.
 
 **Axiom / FriCAS.** Lisp core + SPAD algebra language. Sources: `github.com/daly/axiom/books` (`axiom-developer.org` no longer resolves), `fricas.github.io`
-> Distributed as a **literate program in ~15 numbered volumes**, freely available as `.pamphlet` LaTeX+SPAD sources — no prebuilt volume PDFs survive: Vol. 0 (Jenks & Sutor), Vol. 10.x covering algebra implementation, theory, categories, domains, and packages. FriCAS maintains a modern regeneration of Vol. 0 as *The FriCAS System for Computer Mathematics*. The volumes explain the *why* of a rigorous typed algebra hierarchy. *Essential background for the typed-vs-untyped decision.*
+> Distributed as a **literate program in ~15 numbered volumes** (plus a bibliography volume, held, which resolves the others' citation keys), freely available as `.pamphlet` LaTeX+SPAD sources — no prebuilt volume PDFs survive: Vol. 0 (Jenks & Sutor), Vol. 10.x covering algebra implementation, theory, categories, domains, and packages. FriCAS maintains a modern regeneration of Vol. 0 as *The FriCAS System for Computer Mathematics*. The volumes explain the *why* of a rigorous typed algebra hierarchy. *Essential background for the typed-vs-untyped decision.*
 
 **Symbolica.** Rust, with Python/C++ bindings. `symbolica.io`
 > Modern, source-available, high-performance CAS — in its own words "a high-performance computer algebra library for Python and Rust" for manipulating "large expressions" at speed. (**"Built for large expressions" is not Symbolica's wording** and never was: not on the home page now, and not in the 2023 snapshot, which said "a blazing fast symbolic manipulation toolkit". Earlier drafts of these notes quoted it; both captures are now held so the point stays checkable.) Its pattern matcher, in Symbolica's words, "supports commutative and associative matching, and has wildcards (variables ending in underscores) that can match to any subexpression" — that sentence is from the *Symbolica 2.2* integration writeup; the separate *pattern matching* post demonstrates the same capability as `is_symmetric=True` on a symbol, without using the word "commutative". Per Symbolica's own writeup it provides "the only complete port of the latest Rubi 4.17 integration system outside the Wolfram Language, preserving its 7,000+ ordered rules and passing the complete 72,944-problem Rubi corpus" (MIT-licensed `symbolica-integrate` crate), processing that corpus "in 18 minutes of wall time, on a Ryzen 9 5900X parallelized over 8 cores" (57 ms median per problem). **These are vendor-reported figures.** *Lesson: rule-based integration as a pragmatic complement to Risch, and how to make AC matching fast.*
@@ -309,7 +347,8 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 - Ishii, arXiv:1807.01456
 - Krebber MatchPy papers, arXiv:1710.06915 / 1710.00077 / 1705.00907
 - Zhu et al. on hash consing, arXiv:2509.20534
-- Axiom literate `.pamphlet` volumes (`github.com/daly/axiom/books`)
+- Axiom literate `.pamphlet` volumes (`github.com/daly/axiom/books`), including the bibliography volume
+- For the algebraic case of integration (§1): Trager's MIT thesis (DSpace) and Bronstein's INRIA report RR-3562 (HAL), both open access but refusing automated download — use a browser; Bronstein's *Symbolic Integration Tutorial*; Chen, Kauers & Koutschan, arXiv:1602.00424; Chen, Du & Kauers, arXiv:2102.06538; Blake, arXiv:2004.04910; Kauers's ISSAC 2008 paper (author's copy, RISC); and Abramov et al., arXiv:2005.04944
 - SymPy architecture paper (PeerJ CS, open access)
 - Wolfram's historical essays, and the **1981 SMP manual** (Summary / Primer / Reference Manual, `content.wolfram.com`)
 - Klop, "Term Rewriting Systems: From Church-Rosser to Knuth-Bendix and Beyond" — the ICALP'90 survey, free from CWI (`ir.cwi.nl/pub/2667`)
@@ -328,6 +367,10 @@ Ordered roughly by relevance to a Wolfram-style Haskell build.
 **Paywalled journal/conference papers — held here, but not freely re-obtainable.** Re-obtaining any
 of these needs institutional access. Where a free substitute exists it is named:
 
+- Bronstein, "On the Integration of Elementary Functions" (*JSC* 9(2), 1990) — Elsevier — and Risch,
+  "The Solution of the Problem of Integration in Finite Terms" (*Bull. AMS* 76, 1970) — AMS. Both were
+  supplied; whether either is free to read was not checked. Likewise Abramov's obituary of Bronstein
+  (*Programming and Computer Software* 32(1), 2006).
 - Karr, "Summation in Finite Terms" (*JACM* 28(2), 1981) and "Theory of Summation in Finite Terms"
   (*JSC* 1(3), 1985) — ACM and Elsevier. *Substitute: Schneider's Sigma paper, free, above.*
 - Benanav, Kapur & Narendran, "Complexity of Matching Problems" (*JSC* 3(1), 1987) — Elsevier.
@@ -349,6 +392,7 @@ of these needs institutional access. Where a free substitute exists it is named:
 - von zur Gathen & Gerhard (Cambridge)
 - Baader & Nipkow (Cambridge)
 - Bronstein (Springer)
+- Davenport, LNCS 102 (Springer)
 - Terese (Cambridge)
 - Jenks & Sutor (Springer; but see free Axiom volumes)
 
@@ -564,7 +608,7 @@ against the repositories at the commits named in the entries, and nothing from t
 
 Everything previously flagged here as unverified — Terese, Klop, the `numeric-prelude` pages, the Bachmair AC-discrimination-net papers, Bahr & Hvitved, and the DiVA thesis — has since been confirmed, and several of those checks changed the entry.
 
-**Readability, not availability, is now the live risk.** Four held documents cannot simply be grepped, and one of them fails silently:
+**Readability, not availability, is now the live risk.** Eleven held documents cannot simply be grepped, and several of them fail silently:
 
 | File | Problem | Mitigation |
 | :--- | :--- | :--- |
@@ -575,8 +619,16 @@ Everything previously flagged here as unverified — Terese, Klop, the `numeric-
 | Karr (1985) | Has a text layer, but the OCR **drops every `h`** | None — search around it |
 | Klop (1992) | Has a text layer, but it **drops `fi`/`ffi` ligatures** — "uni cation", "speci cations" | None — search `uni cation`, or either side of the ligature |
 | Geddes et al. (1992) | Body text is sound; the **table-of-contents pages are OCR noise** ("In od ion", "Algo i hm") | Grep the body for chapter titles, not the TOC |
+| Trager's thesis (1984) | Image-only, 83 leaves | `.txt` OCR sidecar beside it; read formulas from the page |
+| Bronstein, RR-3562 (1998) | Has a text layer, but past HAL's cover sheet it is **symbol garbage** | `.txt` OCR sidecar beside it |
+| Bronstein (*JSC*, 1990) | Publisher OCR: garbled names and formulas, some letter-spaced runs | None — despace, and expect under-counts |
+| Davenport (LNCS 102, 1981) | Sound body; some letter-spaced runs, and the contents page extracts out of order | Grep the body for chapter titles |
 
 Three traps worth carrying into any future audit. **Eker passes a naive text-layer check** — it reports text on every page, but the only text is an Oxford watermark, 860 characters across 19 pages; check the *variety* of extracted text, not its presence. **Karr 1985 and Klop 1992 fail silently** — `grep theorem` on the first and `grep unification` on the second both return nothing and look like honest misses. And a **failed** grep is never by itself evidence of absence: treat it as a question about the file before treating it as an answer about the text. The four Wolfram `ref/` value pages (`OwnValues`, `DownValues`, `UpValues`, `SubValues`) likewise preserved little beyond their one-line definitions — roughly 13 KB of text each, almost all navigation chrome — and `ref/Attributes` in particular does not contain the attribute list. Use *Transformation Rules and Definitions* for the rule-storage model and *Evaluation of Expressions* for the attribute table.
+
+**A twelfth round, 2026-11-11**, corrected the Bronstein entry in §1. It had said Volume II "was never completed — Bronstein died before finishing it" and that the algebraic case "remains scattered across research papers". The book supports *planned* (first-edition preface, Caviness's foreword, §5.2) and nothing supports *begun*; and one of the nine references the preface gives is a monograph. The date of death, previously unsourced, now rests on a held paper. The nine references were resolved against the book's reference list, and eleven entries were added to §1. Six documents were fetched; four more — Trager's thesis, Bronstein's 1990 paper and RR-3562, and Risch's 1970 announcement — were not obtained by an automated fetch (two refused, two not pursued), were supplied the same day, and were opened before their annotations were written: the thesis's title page, abstract and contents, the paper's abstract, introduction and conclusions, the report's abstract and first section, and the whole of Risch's note. **Those annotations describe what was read, not the full argument of each.** Davenport's monograph came last, from the owner's own copy; its outline, introduction and the statement about square roots were read. The corpus went to **116 documents** with eleven PDFs in the new `references/bronstein-volume-2/` and the Axiom bibliography volume (`references/CLAUDE.md` has the current total).
+
+**The twelfth round was itself corrected the next day, 2026-11-12**, when Abramov's obituary of Bronstein was supplied. It says "The second volume remained uncompleted". The correction above had replaced "was never completed" with "was planned and never appeared", and added that nothing held showed any of it was drafted — true of the corpus on the 11th, and too cautious about the facts: the notes' original wording was close to the obituary's, which no one had read. The entry now says *left uncompleted* and cites the obituary. What stays corrected is the rest: "died before finishing it" as a statement that he was writing it at his death, which the obituary does not say, and "scattered across research papers". Nineteen further documents — works the §1 block's sources cite, and later work on the same problem — were added to `references/bronstein-volume-2/` the same day, taking the corpus to **136 documents**; they have no entries here because nothing in these notes cites them.
 
 See [`../references/missing-documents.md`](../references/missing-documents.md) for the three sources still not held, the routes tried, and the command that regenerates the OCR sidecars.
 
