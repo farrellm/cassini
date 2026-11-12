@@ -106,16 +106,36 @@ A **`DESIGN.md` review** (2026-11-11) found §4.5.2 describing what `effectful`'
 README, is now `papers/haskell/effectful_hackage.html`. Corpus now **104 documents / 58 HTML
 captures**.
 
+**A review of the Bronstein entry** (2026-11-11) added eleven citations for the algebraic case of
+integration and a directory for them, `bronstein-volume-2/`. Six documents were fetched, with the
+Axiom bibliography volume to resolve citation keys. Four more were not got by `curl` — MIT DSpace answered
+429, HAL served a bot challenge, the Elsevier DOI was not pursued past its linking hub, and the AMS
+note was never tried — and **were supplied by the project owner the same day**: Trager's thesis, Bronstein's RR-3562 and 1990 paper, and Risch's 1970
+announcement. Davenport's monograph, the last, came from the owner's own copy. Corpus now **116
+documents / 51 PDFs / 7 pamphlets / 58 HTML captures / 4 OCR sidecars**.
+
+**Seven more for `bronstein-volume-2/`** were supplied on 2026-11-12: works that held documents cite
+and the bibliography does not, so none had ever been a gap in this file's sense. One of them,
+Abramov's obituary of Bronstein, corrected the correction of 2026-11-11 — see the bibliography's
+Verification Notes. Four further files supplied with them were not the documents they were named
+for (an error page, a block notice, and two truncated downloads); **good copies of all four followed
+the same day** — Davenport's 1984 paper, Chevalley, Bliss and Stichtenoth. Eight more came after those — Miller's thesis, the
+FriCAS implementation-status page, Hess, Combot, Masser & Zannier, Fulton, a second Chen et al.
+paper, and Weil's 1948 book (which is not the 1971 volume cited). Corpus now **135 documents /
+69 PDFs / 7 pamphlets / 59 HTML captures / 7 text sidecars** (the seventh, for Weil, once French
+tesseract data was installed). Weil's companion volume, *Sur les courbes algébriques*, followed as
+a 2022 retranscription and resolved the tutorial's citation for the torsion bound: **136 documents /
+70 PDFs**.
+
 **The pattern, stated plainly.** Every one of these was an assertion *about a package's API* that
 quoted nothing, so no quotation sweep could see it, and each read as an ordinary one-line library
 summary. Three have now been wrong: `sbv` (which classes it overloads), the `numhask` comparison
 (what distinguishes it), and `algebra` (what its hierarchy contains). The rule that catches them is
 not a grep — it is asking, entry by entry, *which document settles this*, and then fetching it.
 
-That leaves three gaps, none of which is a paywall — the material is gone from the web or was never
-written. **None of them costs anything**, because each is fully superseded by something held here.
-
-| Source | § | Status | Superseded by |
+That leaves three gaps of the old kind, none of which is a paywall — the material is gone from the
+web or was never written. **None of them costs anything**, because each is fully superseded by
+something held here. | Source | § | Status | Superseded by |
 | :--- | :--- | :--- | :--- |
 | riptutorial, *Wolfram Language — Evaluation Order* | §6 | Site content gone; no Wayback snapshot | `wolfram_ref_evaluation.html` + `wolfram_ref_evaluation_of_expressions.html` |
 | Axiom numbered volumes as PDFs | §5 | `axiom-developer.org` does not resolve (curl: `000`); no prebuilt PDFs found | The `.pamphlet` literate sources (held, and greppable — arguably better) |
@@ -147,6 +167,14 @@ Files that are held and correctly indexed, but that a grep-based workflow cannot
 | :--- | :--- | :--- |
 | `term-rewriting/terese2003_term_rewriting_systems.pdf` | 908 pp, 181 MB | **Image-only, no mitigation.** Open in a viewer. Optional/advanced material, so tolerable. |
 | `term-rewriting/abramsky1992_handbook_of_logic_in_computer_science_vol2.pdf` | 582 pp, 71 MB | **Image-only.** Solved for the chapter that mattered: Klop's *Term Rewriting Systems* (pp. 1–116) is held separately with a full text layer at 700 KB. Keep the Handbook only for its other chapters. |
+| `../bronstein-volume-2/trager1984_integration_of_algebraic_functions.pdf` | 83 pp | Image-only, **OCR sidecar `.txt` alongside**. Prose greps; formulas need the page images. |
+| `../bronstein-volume-2/bronstein1998_lazy_hermite_reduction.pdf` | 17 pp | **Has a text layer that is garbage** after HAL's cover sheet, so a text-layer check passes it. **OCR sidecar `.txt` alongside.** |
+| `../bronstein-volume-2/bronstein1990_integration_of_elementary_functions.pdf` | 57 pp | Publisher OCR: garbled names and formulas, scattered letter-spacing. Greps under-count; no sidecar. |
+| `../bronstein-volume-2/vanhoeij1994_integral_basis_algebraic_function_field.pdf` | 11 pp | Image-only, **OCR sidecar `.txt` alongside**. |
+| `../bronstein-volume-2/bronstein1991_risch_differential_equation_algebraic_curve.pdf` | 6 pp | Two columns extracted interleaved, ~1.5 words per line: words grep, phrases never do. `pdftotext -layout` and read. |
+| `../bronstein-volume-2/trager1979_integration_of_simple_radical_extensions.pdf` | 7 pp | Noisy OCR, letter-spaced throughout. Greps unreliable; no sidecar. |
+| `../bronstein-volume-2/bliss1933_algebraic_functions.pdf` | 229 pp | Image-only (converted from DjVu). **Text sidecar `.txt` alongside**, from the DjVu's own text layer. To regenerate, `djvutxt` the source DjVu; the tesseract recipe below also works. |
+| `../bronstein-volume-2/weil1948_varietes_abeliennes_et_courbes_algebriques.pdf` | 163 pp, 132 MB | Image-only, **OCR sidecar `.txt` alongside**. In French: regenerate with the recipe below at `-r 150` and `-l fra` (needs tesseract's French data; the scan is 1000 px wide, so 300 dpi only upscales). |
 | `pattern-matching/bachmair1993_ac_discrimination_nets.pdf` | 14 pp | Image-only, **OCR sidecar `.txt` alongside** (40 KB, good quality). |
 | `pattern-matching/eker1995_associative_commutative_matching.pdf` | 19 pp | Image-only apart from an Oxford download watermark, **OCR sidecar `.txt` alongside** (77 KB, good quality). |
 | `term-rewriting/klop1992_term_rewriting_systems.pdf` | 112 pp | Has a text layer, but it **drops `fi`/`ffi` ligatures**: "uni cation", "speci cations", "classi cation". Search `uni cation`, or either side of the ligature. |

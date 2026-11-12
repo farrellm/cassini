@@ -3082,9 +3082,10 @@ primitive case calls ch. 7's limited integration problem, and the hypertangent c
 coupled differential system. So the reading is ch. 3 and 5–8. Large and structured; this is where
 the schedule ends.
 
-**The algebraic case is out of scope, not a backlog item.** There is no textbook treatment of it
-(`notes/cas-haskell.md` §"Caveats"), so it is research rather than implementation, and must not
-appear on a roadmap as a matter of effort.
+**The algebraic case is out of scope, not a backlog item.** No implementer's textbook covers it
+(`notes/cas-haskell.md` §"Caveats"; `references/bronstein-volume-2/` holds what there is), so it
+is a specialist project of its own rather than a milestone, and must not appear on a roadmap as a
+matter of effort.
 
 ### 6.3 Summation
 

@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **104 documents, ~439 MB**, plus 2 OCR sidecars.
+The local document corpus for the CAS-in-Haskell project. **136 documents, ~637 MB**, plus 7 text sidecars (6 OCR, 1 from a DjVu text layer).
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -24,6 +24,7 @@ what was tried, and which files are present but unreadable (image-only scans, lo
 | `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly`, `dumb-cas`, `sbv`, `algebra`, `constructive-algebra` and `effectful` package pages |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation, plus the scoping, control-flow, pattern and infinity pages — the behavioral spec to implement against — and Wolfram's Terms of Use and Mathematica licence, which bound how the documentation may be used as a test corpus |
 | `papers/web-articles/` | Blog posts and course sites: opinion and build-logs, not specifications |
+| `bronstein-volume-2/` | Integration of algebraic functions — what Bronstein's unpublished second volume would have covered: Trager's thesis, Davenport's monograph, Bronstein's tutorial, 1990 paper and lazy-Hermite report, Risch's 1970 announcement, the papers those rest on (Bertrand, van Hoeij, the EUROSAM'79 pair, the ISSAC'91 paper, Davenport 1984, Hardy), the function-field background (Chevalley, Bliss, Stichtenoth, Fulton, both of Weil's 1948 volumes), later work (Kauers, Chen et al., Blake, Miller, Hess, Combot, Masser & Zannier), the FriCAS implementation-status page, Abramov's obituary, and a guide to all of it. Five of its PDFs need their text sidecars. Beside `papers/`, not in it |
 
 Each directory has its own `CLAUDE.md` with a per-file annotation saying what to read it *for*.
 
@@ -43,8 +44,9 @@ Each directory has its own `CLAUDE.md` with a per-file annotation saying what to
   (`sbv_docs_data_sbv`), **2** on **2026-09-01**, in the eighth (`algebra_hackage`,
   `constructive_algebra_hackage`), **14** Wolfram documentation pages on **2026-09-25**
   (scoping, control flow, patterns, infinities), and **2** Wolfram legal pages on **2026-09-27**
-  (`wolfram_terms_of_use`, `wolfram_mathematica_license`), and **1** on **2026-11-11**
-  (`effectful_hackage`). The summary gives the date per file. They have no
+  (`wolfram_terms_of_use`, `wolfram_mathematica_license`), **1** on **2026-11-11**
+  (`effectful_hackage`), and **1** supplied on **2026-11-12** (`fricas_wiki_…`, in
+  `bronstein-volume-2/`). The summary gives the date per file. They have no
   CSS and no images, but the full text is present — read them with `sed -e 's/<[^>]*>/ /g'` or
   `pandoc -t plain`, not by eye.
 - `.pamphlet` files are Axiom's literate LaTeX+SPAD sources; plain text, readable directly.
