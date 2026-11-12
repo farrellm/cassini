@@ -4,6 +4,10 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Renovate keeps the CI's GitHub Actions current (`.github/renovate.json`, DESIGN.md §2.8, D46):
+  digest-pinned, one grouped PR a week, minor, patch and digest updates merged once CI passes.
+  Toolchain versions and Hackage bounds stay manual.
+
 * `cassini-core/corpus/scope-analysis.md` records what the out-of-scope cases of the Wolfram
   documentation corpus are missing, by feature area, as measured on 2026-11-11: 882 of 111,806
   cases are in scope, and the whole design through Stage 3 reaches about 2,500.
