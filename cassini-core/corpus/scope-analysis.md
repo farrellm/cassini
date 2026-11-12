@@ -15,7 +15,8 @@ specifies through Stage 3 brings in about 2,500.
 - **Scope rule.** §7.8's: a case is in scope when its status is `ok` or `partial`, it holds no
   inexact number (D9), and every `System` symbol it mentions is in `Cassini.Builtins.systemNames`.
   The analysis reads `corpus/wolfram-docs/index.tsv` (columns `status`, `inexact`, `symbols`) and
-  the 95 names the registry held at commit `e3a40eed9`, dumped through `cabal repl`. It reproduces
+  the 95 names the registry held at commit `e3a40eed9`, dumped through `cabal repl`
+  (`corpus/tools/scope_report.py`). It reproduces
   the corpus runner's 882 exactly.
 - **In scope is not passing.** A case is in scope when every symbol has *a* definition. Whether
   cassini's answer matches is the ratchet's question (`corpus/passing/wolfram.txt`).
@@ -26,8 +27,9 @@ specifies through Stage 3 brings in about 2,500.
   pattern; they touch 18,983 cases and are the sole blocker of 3,199.
 - **The stages are a reading of `DESIGN.md` §10**, listed under [Symbols assumed per
   stage](#symbols-assumed-per-stage). A stage that ships a different set moves its figure.
-- **The scripts were one-off and are not in the repository.** To redo the measurement, apply the
-  scope rule above to `index.tsv`; the area table needs the patterns rewritten.
+- **`corpus/tools/scope_report.py` produces every figure here.** Its header says how to dump the
+  registry's names and run it; its `STAGES` and `AREAS` tables are the stage sets and the area
+  patterns.
 - **Wolfram corpus only.** The Expreduce corpus (400 of 2,193 in scope) and the Mathics3 corpus
   (103 of 1,727) were not broken down.
 

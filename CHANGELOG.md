@@ -7,6 +7,7 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 * `cassini-core/corpus/scope-analysis.md` records what the out-of-scope cases of the Wolfram
   documentation corpus are missing, by feature area, as measured on 2026-11-11: 882 of 111,806
   cases are in scope, and the whole design through Stage 3 reaches about 2,500.
+  `corpus/tools/scope_report.py` produces its figures from the corpus index and the registry's names.
 
 * `DESIGN.md`: the deferred decisions were reviewed and nine have answers or a place in the
   milestones, with no change to the code yet. Both limits will leave `TerminatedEvaluation[…]` as WL
