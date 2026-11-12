@@ -13,7 +13,7 @@ relative paths (`test/regress`, `corpus/wolfram-docs`, `oracle/cases`) resolve f
 | `test-support/` | `Test.Script`, the script-format comparison that `cassini-corpus` and `cassini-oracle` share. |
 | `bench/` | `cassini-bench`, its committed baselines `bench/baseline/` and the allocation gate `bench/check-allocation.py` (§8). |
 | `oracle/` | `cassini-oracle`: differential testing against Mathics3 (§7.5), with its cases, its Python side and its whitelist. |
-| `corpus/` | Imported test corpora (§7.8–§7.9): the `cassini-corpus` suite, its ratchets `passing/<source>.txt`, its manifest `divergences.txt`, the vendored Expreduce corpus `vendor/expreduce/`, `fetch.sh` for the fetched ones, and the extractors in `tools/`. `fetched/` and `wolfram-docs/` are gitignored. |
+| `corpus/` | Imported test corpora (§7.8–§7.9): the `cassini-corpus` suite, its ratchets `passing/<source>.txt`, its manifest `divergences.txt`, the vendored Expreduce corpus `vendor/expreduce/`, `fetch.sh` for the fetched ones, the extractors in `tools/`, and `scope-analysis.md`, a dated measurement of what the out-of-scope Wolfram cases are missing, with `tools/scope_report.py`, which produces it. `fetched/` and `wolfram-docs/` are gitignored. |
 
 ## Rules
 

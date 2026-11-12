@@ -4,6 +4,28 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* `cassini-core/corpus/scope-analysis.md` records what the out-of-scope cases of the Wolfram
+  documentation corpus are missing, by feature area, as measured on 2026-11-11: 882 of 111,806
+  cases are in scope, and the whole design through Stage 3 reaches about 2,500.
+  `corpus/tools/scope_report.py` produces its figures from the corpus index and the registry's names.
+
+* `DESIGN.md`: the deferred decisions were reviewed and nine have answers or a place in the
+  milestones, with no change to the code yet. Both limits will leave `TerminatedEvaluation[…]` as WL
+  does (D30), a rational subject is `Rational[n, d]` to every compound pattern (D37), and a π
+  multiple in a trigonometric argument is reduced as WL 15.0.1 reduces it (D39). `Print`, `Clear`
+  and `ClearAll`, `Apart`'s algorithm and the first list builtins are designed (D40, D41, D43,
+  D44). A new track, fidelity of the built kernel, carries D30 and D37 with the two allocation
+  changes that waited on a baseline regeneration (D31, D32) and the nightly job (D45).
+  Message control joins the control-flow track (D42): `Message` and user message text, `Quiet`,
+  `Check`, `Off`/`On` and `General::stop`, each as WL 15.0.1 answers.
+
+* `DESIGN.md` corrected after a review against the corpus, the code and Wolfram 15.0.1, with no
+  change to the code. Its claims about WL that the kernel contradicted are fixed (special values at
+  denominator 8, the `Infinity^0` message tag, what `-1` and other numbers do to a sum, `Block`
+  localizing attributes, `--with-repl`'s cabal version), four divergences that were unrecorded or
+  filed as undocumented have rows (D30 widened to the iteration limit, D37–D39), and six gaps are
+  registered as deferred decisions (D40–D45). `effectful`'s package page is captured for §4.5.2.
+
 * `optics-core`, with `OverloadedLabels`, for changes through a path into the kernel state (DESIGN.md
   §2.3), with no change in behaviour or allocation. `Cassini.Eval.Kernel.symbolEntry` is a symbol's
   entry as a lens, reading an unknown symbol as `emptyInfo`, and `Cassini.Rules.rulesAt` is one

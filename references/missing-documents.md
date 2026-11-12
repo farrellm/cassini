@@ -99,7 +99,12 @@ the table below.
 An **eleventh round** (2026-09-27) captured two Wolfram legal pages that `DESIGN.md` §7.9 rests on:
 the Terms of Use, which forbid scraping and bulk downloading Wolfram's websites, and the Mathematica
 licence agreement, which governs the local documentation notebooks the design extracts from instead.
-Corpus now **103 documents / 57 HTML captures**.
+Corpus then **103 documents / 57 HTML captures**.
+
+A **`DESIGN.md` review** (2026-11-11) found §4.5.2 describing what `effectful`'s README says under
+"Any downsides?" with no capture held, which rule 2 covers. The Hackage page, which carries the
+README, is now `papers/haskell/effectful_hackage.html`. Corpus now **104 documents / 58 HTML
+captures**.
 
 **The pattern, stated plainly.** Every one of these was an assertion *about a package's API* that
 quoted nothing, so no quotation sweep could see it, and each read as an ordinary one-line library
