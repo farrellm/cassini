@@ -336,8 +336,8 @@ the conference. It is now held (§4.1).
 | File | What it gives you |
 | :--- | :--- |
 | `bronstein1998_symbolic_integration_tutorial.pdf` | **Start here.** Bronstein's *Symbolic Integration Tutorial*, 35 pp. Sections 2 and 3.8–3.9 are the closest thing to a Volume II outline that exists in his own words. Statements and worked examples; proofs are deferred to the references. |
-| `trager1984_integration_of_algebraic_functions.pdf` | **The algorithm.** Trager's MIT thesis, 83 leaves; chapter list in §2. **Image-only scan** — grep the `.txt` OCR sidecar beside it, and read formulas from the typeset reprint in the next row. |
-| `raab_singer2022_integration_in_finite_terms_fundamental_sources.pdf` | Raab & Singer (eds.), Springer 2022. **Risch's 1968 report**, revised (printed pp. 203–220), with Raab's commentary; and **Trager's thesis typeset**, formulas as text, with a new commentary by Trager on what has happened since. Only the Risch chapter's first two pages, the contents and the commentaries' openings were read. PDF pages are not printed pages. |
+| `trager1984_integration_of_algebraic_functions.pdf` | **The algorithm.** Trager's MIT thesis, 83 leaves; chapter list in §2. **Image-only scan** — grep the `.txt` OCR sidecar beside it, and read formulas from the typeset version in the next row, which is not a faithful reprint. |
+| `raab_singer2022_integration_in_finite_terms_fundamental_sources.pdf` | Raab & Singer (eds.), Springer 2022. **Risch's 1968 report**, revised (printed pp. 203–220), with Raab's commentary; and **Trager's thesis typeset**, formulas as text, with a new commentary by Trager on what has happened since. The typeset thesis is a silently revised text — no abstract, seven added references and so different citation numbers, one paragraph of ch. 6 rewritten — and does not replace the scan (`CLAUDE.md` has the comparison). Only the Risch chapter's first two pages, the contents and the commentaries' openings were read. PDF pages are not printed pages. |
 | `davenport1981_on_the_integration_of_algebraic_functions.pdf` | Davenport's monograph, LNCS 102, 199 pp. The Puiseux-expansion route that Trager's "rational" algorithm superseded, but the longest treatment held of the torsion-divisor problem (chs. 5–8), and the only one with timings and worked REDUCE examples. Scanned; the OCR text layer is good, with some letter-spaced runs and a garbled contents page. |
 | `bronstein1990_integration_of_elementary_functions.pdf` | **The mixed case.** *JSC* 9(2):117–173, 57 pp. Extends Trager to towers with logarithms and exponentials; its conclusions list what remained open. The text layer is publisher OCR with errors in names and formulas. |
 | `bronstein1998_lazy_hermite_reduction.pdf` | INRIA RR-3562, November 1998: 13 pages by its own cover, 17 in the HAL file with HAL's cover sheet and the front matter. The proofs the tutorial omits. **The embedded text layer is unreadable** past the cover sheet — grep the `.txt` OCR sidecar. |
@@ -490,7 +490,7 @@ algebraic case is out of scope.
 
 1. The tutorial, §2, with Geddes §12.8 alongside for a second telling of the same algorithm.
 2. Trager's thesis, chs. 2 and 4–6; ch. 3 (absolute irreducibility) when it is needed. Read it in
-   the typeset reprint, and Trager's commentary after it.
+   the typeset version, checking the scan where the two might differ, and Trager's commentary after it.
 3. Bronstein's RR-3562 for the lazy Hermite reduction, then Chen, Du & Kauers.
 4. Bronstein 1990 only once the pure algebraic case works — its own conclusion is that it "clearly
    requires the prior implementation of the algorithms of Trager (1984)".

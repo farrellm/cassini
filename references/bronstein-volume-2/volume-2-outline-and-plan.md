@@ -223,8 +223,11 @@ Roughly one chapter per working session for the **A** chapters; chs. 10, 14 and 
 **Risks.**
 
 - *Formulas in the primary sources are images.* The 1990 paper's text layer is noise, and RR-3562's
-  is unusable. Trager's thesis is no longer in this list: the typeset reprint in Raab & Singer has
-  its formulas as text, though it is a re-typesetting not compared against the MIT scan. Reading
+  is unusable. Trager's thesis is no longer in this list: the typeset version in Raab & Singer has
+  its formulas as text. It is a revised text, not a reprint (`CLAUDE.md` in this directory): its
+  prose was compared with the scan and differs in a few places, its citation numbers all differ,
+  and its formulas were compared on one page only. The book cites Trager by section, quotes the
+  scan, and checks any formula it depends on against the scan's page image. Reading
   the rest is slow and transcription errors are likely; hence the rule that results are re-derived
   or machine-checked, not copied.
 - *Risch's reports are held only as the 2022 revision* of the 1968 one, with parts of the 1969 one.
