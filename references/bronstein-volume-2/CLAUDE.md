@@ -8,6 +8,8 @@ read: what is known about Volume II, a reconstruction of its contents, and every
 material, held or not. This file is only the per-file inventory.
 [`missing-resources.md`](./missing-resources.md) details what is cited and not held: what each is
 for, what its absence costs, where to look, and which to get first.
+[`volume-2-outline-and-plan.md`](./volume-2-outline-and-plan.md) is the chapter outline and writing
+plan for a typeset reconstruction of Volume II; nothing of the book exists yet.
 
 This directory sits beside `papers/`, not inside it, because it is organised around one question
 rather than one kind of source. See [`../CLAUDE.md`](../CLAUDE.md) for the corpus rules and

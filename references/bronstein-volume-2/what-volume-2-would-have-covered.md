@@ -5,9 +5,9 @@ case and promises a second volume on algebraic functions. That volume never appe
 collects what can be established about it, a reconstruction of its likely contents, and every source
 we know of that carries the material it would have carried.
 
-Written 2026-11-11, and revised the same day when four of the missing sources were supplied —
-Trager's thesis, Bronstein's lazy-Hermite report, his 1990 paper, Risch's 1970 announcement and
-Davenport's monograph — and opened. Revised again on 2026-11-12 with seven more, one of which,
+Written 2026-11-11, and revised the same day when five of the missing sources were supplied —
+Trager's thesis, Bronstein's lazy-Hermite report, his 1990 paper and Risch's 1970 announcement by
+browser download, and Davenport's monograph from the project owner's copy — and opened. Revised again on 2026-11-12 with seven more, one of which,
 Abramov's obituary, changed §1, and then with four more (Davenport 1984, Chevalley, Bliss,
 Stichtenoth), and then eight more (Miller, the FriCAS status page, Hess, Combot, Masser & Zannier,
 Fulton, Chen et al. 2016b, Weil 1948). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
@@ -196,12 +196,14 @@ integer multiple of each `δⱼ` is **principal**, and the generator is the argu
 
 Deciding whether *any* multiple of a divisor is principal is the **points-of-finite-order problem**,
 and it is what separates this from the rational case, where every degree-zero divisor is principal.
-The tutorial's method: reduce the curve modulo a "good" prime, where a multiple `M ≤ (1 + √(p^q))^{2g}`
-is guaranteed principal (it cites Weil), find `M` by trial, and conclude for characteristic 0. The
+The tutorial's method: reduce the curve modulo a "good" prime `p`, to one over the finite field
+with `p^q` elements, where a multiple `M ≤ (1 + √(p^q))^{2g}` (`g` the genus) is guaranteed
+principal (it cites Weil), find `M` by trial, and conclude for characteristic 0. The
 source of that bound is **[held]**, in `weil1948_sur_les_courbes_algebriques_retranscription.pdf`,
-part II §IV: the zeta function's numerator is `∏(1 − αᵢu)` over `2g` roots with `αᵢᾱᵢ = q`. The
-bound itself, `(1 + √q)^{2g}`, is that product at `u = 1` with every `|αᵢ| = √q` — a step Weil does
-not write out in the passage read, so **our inference**.
+part II §IV: the zeta function's numerator is `∏(1 − αᵢu)` over `2g` roots with `αᵢᾱᵢ = q`, where
+Weil's `q` is the number of elements of the field — the tutorial's `p^q`, not its exponent `q`. The
+bound itself, `(1 + √q)^{2g}` in Weil's notation, is that product at `u = 1` with every
+`|αᵢ| = √q` — a step Weil does not write out in the passage read, so **our inference**.
 Geddes §12.8 **[held]** describes the same step as reducing "modulo two different primes" and calls
 it "a significant achievement". The two-prime form is already in Risch's 1970 announcement **[held]**
 (`risch1970_solution_of_integration_in_finite_terms.pdf`): "we will have a bound for the torsion if
@@ -484,10 +486,10 @@ algebraic case is out of scope.
 1. The tutorial, §2, with Geddes §12.8 alongside for a second telling of the same algorithm.
 2. Trager's thesis, chs. 2 and 4–6; ch. 3 (absolute irreducibility) when it is needed.
 3. Bronstein's RR-3562 for the lazy Hermite reduction, then Chen, Du & Kauers.
-3a. Bronstein 1990 only once the pure algebraic case works — its own conclusion is that it "clearly
+4. Bronstein 1990 only once the pure algebraic case works — its own conclusion is that it "clearly
    requires the prior implementation of the algorithms of Trager (1984)".
-4. The Axiom sources of §4.3, read as a worked answer: `RADFF` and `INTHERAL` first.
-5. Kauers 2008 and Blake 2020, for what a heuristic gets without the divisor machinery.
+5. The Axiom sources of §4.3, read as a worked answer: `RADFF` and `INTHERAL` first.
+6. Kauers 2008 and Blake 2020, for what a heuristic gets without the divisor machinery.
 
 The dependency chain an implementation would need, read off the tutorial's preconditions: integral
 bases in a function field; Puiseux expansions; absolute factorisation; fractional-ideal arithmetic
