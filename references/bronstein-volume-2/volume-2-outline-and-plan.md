@@ -82,8 +82,8 @@ van Hoeij 1994; tutorial §2, §2.4; Axiom `FFINTBAS`, `WFFINTBS`. **A.**
 
 **4. The constant field and absolute irreducibility.** Exact constant fields and regular
 extensions; why the integration algorithm needs `F` absolutely irreducible; absolute factorisation;
-binomial polynomials `yⁿ − a`. *Sources:* Trager ch. 3. **B** — Trager's chapter is the only held
-account and its formulas must be read from page images.
+binomial polynomials `yⁿ − a`. *Sources:* Trager ch. 3; Kaltofen 1985; Chèze & Lecerf 2007 †. **B** —
+Trager's chapter is the account the integrator uses; the later papers are pointers to better methods.
 
 **5. Divisors and their arithmetic.** Divisors as pairs of fractional ideals (finite and infinite
 parts); sum, multiple, and reduction; computing `L(D)`; testing principality and producing the
@@ -127,13 +127,15 @@ method, and the Masser–Zannier result as a boundary marker. Elliptic curves. *
 
 **11. Genus zero.** Recognising genus 0; rational parametrisation; Euler's substitutions as the
 conic case; reduction to Volume I ch. 2. Chebyshev's theorem on `∫xᵖ(a + bxʳ)^q dx`. *Sources:*
-Axiom `INTG0` (read as the specification); Hardy; Fulton for parametrisation. **B** — no held paper
-is devoted to this; the Axiom source and the classical texts carry it.
+van Hoeij 1997 for parametrisation through `L(D)` and an integral basis; Chebyshev 1853; Axiom
+`INTG0`; Hardy. **B** — van Hoeij's paper fits the book's machinery; a book-length treatment
+(Sendra, Winkler & Pérez-Díaz) is not held.
 
 **12. Radical extensions.** `yⁿ = a`: the closed-form integral basis, already normal at infinity;
 the diagonal Hermite system. Trager's 1979 generalised Risch algorithm for unnested radicals.
 Hyperelliptic integrals by Jacobian arithmetic. Superelliptic integrals †. Pseudo-elliptic
-integrals and what heuristics recover †. *Sources:* tutorial §2.2; Trager §2.5 and Appendix A;
+integrals and what heuristics recover †, including Blake's 2026 preprints on the Risch–Norman
+method over a radical extension †. *Sources:* tutorial §2.2; Trager §2.5 and Appendix A;
 Trager 1979; Bertrand 1995; Combot 2021; Blake 2020; Axiom `RADFF`. **A.**
 
 ### Part III — Mixed algebraic–transcendental functions
@@ -165,7 +167,8 @@ Bronstein 1990 Part 3; Bronstein 1991; Volume I ch. 6. **B**, with the nonlinear
 problem over a curve; deciding whether a new logarithm or exponential is algebraic over the tower
 (the Risch and Rothstein–Caviness structure theorems, Volume I ch. 9, which already allow algebraic
 elements). *Sources:* Volume I chs. 7, 9; Bronstein 1990; the FriCAS status page for what has never
-been implemented. **C** — the thinnest chapter; expected to be short and largely a statement of
+been implemented; Raab's thesis for the parametric problems over transcendental towers, which is
+as far as it goes. **C** — no source for these problems over a curve has been found; the thinnest chapter; expected to be short and largely a statement of
 what is and is not known.
 
 **17. Implementations and open problems.** The architecture of Bronstein's Axiom integrator as a

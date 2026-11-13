@@ -11,7 +11,8 @@ browser download, and Davenport's monograph from the project owner's copy — an
 Abramov's obituary, changed §1, and then with four more (Davenport 1984, Chevalley, Bliss,
 Stichtenoth), and then eight more (Miller, the FriCAS status page, Hess, Combot, Masser & Zannier,
 Fulton, Chen et al. 2016b, Weil 1948). Revised on 2026-11-13 with Raab & Singer's 2022 volume, which
-carries Risch's 1968 report in revised form and Trager's thesis typeset. The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
+carries Risch's 1968 report in revised form and Trager's thesis typeset; and the same day with twelve
+sources fetched for the gaps a book would have ([`recommended-sources.md`](./recommended-sources.md)). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
 
 ## How far to trust each statement here
 
@@ -366,6 +367,17 @@ the conference. It is now held (§4.1).
 | `chen_kauers_koutschan2016_reduction_telescoping_algebraic.pdf` | Chen, Kauers & Koutschan, arXiv:1602.00424v1, 8 pp. Trager's Hermite reduction plus a polynomial reduction, used for creative telescoping. A modern, compact restatement of the reduction half of the algorithm. |
 | `chen_du_kauers2021_lazy_hermite_reduction.pdf` | Chen, Du & Kauers, arXiv:2102.06538v2, 20 pp. Sharpens Bronstein's lazy Hermite reduction. The lazy reduction a generation on, combined with a polynomial reduction; read it after Bronstein's own report. |
 | `blake2020_pseudo_elliptic_integrals.pdf` | Blake, arXiv:2004.04910v3, 12 pp. A substitution-based heuristic for pseudo-elliptic integrals, "less than 200 lines of Mathematica code"; author-reported to solve 73.4% of the integrals solved by the best implementation of the full algorithm in randomised tests. Not a decision procedure. |
+| `schultz2016_tragers_algorithm_revisited.pdf` | Schultz, unpublished, 32 pp. Trager's algorithm re-derived with its unstated assumptions removed and a partial Mathematica implementation. Read beside the thesis. Abstract only read. |
+| `risch1969_problem_of_integration_in_finite_terms.pdf` | *Trans. AMS* 139:167–189, 23 pp. The transcendental case as published; Volume I's [75]. The revised 1968 report assumes its definitions. |
+| `vanhoeij1997_rational_parametrizations_canonical_divisor.pdf` | van Hoeij, *JSC* 1997, in the author's preprint, 19 pp. Parametrising a genus-0 curve through `L(D)` and an integral basis. **The source for genus zero**, which §2 omits. Text layer unusable; OCR sidecar. |
+| `vanhoeij1994_computing_parametrizations_rational_curves.pdf` | van Hoeij, ISSAC '94, 8 pp. The predecessor of the row above. OCR sidecar. |
+| `chebyshev1853_integration_des_differentielles_irrationnelles.pdf` | *J. Math. Pures Appl.* 18:87–111, in French. Cited for the theorem on binomial differentials; not yet read for it. |
+| `cantor1987_computing_in_jacobian_hyperelliptic_curve.pdf` | *Math. Comp.* 48:95–101, 7 pp. The Jacobian arithmetic Bertrand's method uses. |
+| `duval1989_rational_puiseux_expansions.pdf` | *Compositio Math.* 70:119–154. Puiseux expansions with fewer algebraic numbers. |
+| `kaltofen1985_fast_parallel_absolute_irreducibility_testing.pdf` | *JSC* 1:57–67, author's copy. Absolute irreducibility testing. |
+| `cheze_lecerf2007_lifting_recombination_absolute_factorization.pdf` | *J. Complexity* 23:380–420, authors' version. Absolute factorisation, the modern algorithm. |
+| `raab2012_definite_integration_in_differential_fields.pdf` | Raab's thesis, Linz 2012, 139 pp. Parametric elementary integration over transcendental towers. Not about algebraic curves. |
+| `blake2026_parallel_integration_simple_radical_extensions_1.pdf`, `…_2.pdf` | Blake, arXiv 2026, 17 and 48 pp. The Risch–Norman method justified over a simple radical extension, then with the radical anywhere in a mixed tower. The newest work held on §2.8's subject; preprints. |
 | `abramov_bronstein_petkovsek2020_pi_sigma_difference_equations.pdf` | Held for one fact: the date of Bronstein's death. Its subject (difference equations in ΠΣ*-fields) is not integration. |
 
 ### 4.2 Held elsewhere in the corpus
@@ -441,18 +453,15 @@ Each of these is **[cited]**: the citation is verified, the content is not.
 | :--- | :--- | :--- |
 | A. Weil. *Courbes algébriques et variétés abéliennes.* Hermann, Paris, 1971. | Tutorial ref. [22] | The bound behind the finite-order test. **Resolved in substance, not in edition:** the two 1948 volumes held (§4.1) carry the mathematics — the bound's source is in *Sur les courbes algébriques*, part II §IV. That the 1971 book reprints those two volumes is **[memory]**, supported by its title joining theirs, and unchecked. |
 | J.H. Davenport. *Intégration formelle.* Rapport de Recherche RR375, IMAG, Grenoble, 1983. | Book ref. [32] | — |
-| R. Risch. The problem of integration in finite terms. *Transactions of the AMS* 139:167–189, 1969. | Book ref. [75] | The published transcendental case; the tutorial cites it for the strong Liouville theorem |
 
 ### 4.5 From memory, unverified
 
 **[memory]**, all of it. These are the leads worth chasing; none has been checked against a document
 in this session, and any detail — a year, a venue, a claim about content — may be wrong.
 
-- **Raab**, *Definite Integration in Differential Fields* (PhD thesis, RISC Linz, 2012): the most
-  recent thesis-length survey of the Risch machinery, with remarks on the algebraic case. The only
-  lead from this list's first version still not held; the others are in §4.1. Raab's commentary on
-  Risch's paper in the 2022 volume (§4.1) is **[held]** and surveys later developments at shorter
-  length.
+- Raab's thesis, once the first item here, is **[held]** (§4.1) — and the recollection was wrong in
+  part: it is about transcendental towers and has no "remarks on the algebraic case" that a search
+  for algebraic extensions could find.
 - **Implementations other than FriCAS** (for FriCAS see §4.3, which is **[held]**). Maple implements
   Trager's algorithm for algebraic integrands — van Hoeij's abstract **[held]** confirms that
   Trager's integral-basis method is the one "used by Maple 5.2 and AXIOM", which is less than the

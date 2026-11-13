@@ -1,6 +1,6 @@
 # references/
 
-The local document corpus for the CAS-in-Haskell project. **137 documents, ~648 MB**, plus 7 text sidecars (6 OCR, 1 from a DjVu text layer).
+The local document corpus for the CAS-in-Haskell project. **149 documents, ~657 MB**, plus 9 text sidecars (8 OCR, 1 from a DjVu text layer).
 
 Read [`../notes/cas-haskell-bibliography.md`](../notes/cas-haskell-bibliography.md) and
 [`../notes/cas-haskell.md`](../notes/cas-haskell.md) for *what to read and why* — the annotated
@@ -24,7 +24,7 @@ what was tried, and which files are present but unreadable (image-only scans, lo
 | `papers/haskell/` | Ishii's typed CAS, Zhu on hash consing, numeric-prelude and numhask, Penner and Milewski on `Fix`/`Free`, Olah's HaskSymb (post *and* README), the `poly`, `dumb-cas`, `sbv`, `algebra`, `constructive-algebra` and `effectful` package pages |
 | `papers/wolfram-language/` | The Wolfram evaluation/attributes/values documentation, plus the scoping, control-flow, pattern and infinity pages — the behavioral spec to implement against — and Wolfram's Terms of Use and Mathematica licence, which bound how the documentation may be used as a test corpus |
 | `papers/web-articles/` | Blog posts and course sites: opinion and build-logs, not specifications |
-| `bronstein-volume-2/` | Integration of algebraic functions — what Bronstein's unpublished second volume would have covered: Trager's thesis, Davenport's monograph, Bronstein's tutorial, 1990 paper and lazy-Hermite report, Risch's 1970 announcement, Raab & Singer's 2022 volume (Risch's 1968 report revised, Trager's thesis typeset), the papers those rest on (Bertrand, van Hoeij, the EUROSAM'79 pair, the ISSAC'91 paper, Davenport 1984, Hardy), the function-field background (Chevalley, Bliss, Stichtenoth, Fulton, both of Weil's 1948 volumes), later work (Kauers, Chen et al., Blake, Miller, Hess, Combot, Masser & Zannier), the FriCAS implementation-status page, Abramov's obituary, and a guide to all of it. Five of its PDFs need their text sidecars. Beside `papers/`, not in it |
+| `bronstein-volume-2/` | Integration of algebraic functions — what Bronstein's unpublished second volume would have covered: Trager's thesis, Davenport's monograph, Bronstein's tutorial, 1990 paper and lazy-Hermite report, Risch's 1970 announcement, Raab & Singer's 2022 volume (Risch's 1968 report revised, Trager's thesis typeset), the papers those rest on (Bertrand, van Hoeij, the EUROSAM'79 pair, the ISSAC'91 paper, Davenport 1984, Hardy), the function-field background (Chevalley, Bliss, Stichtenoth, Fulton, both of Weil's 1948 volumes), later work (Kauers, Chen et al., Blake ×3, Miller, Hess, Combot, Masser & Zannier, Schultz, Raab's thesis), sources for the gaps a book on the subject would have (Risch 1969, van Hoeij on parametrisation ×2, Chebyshev 1853, Cantor, Duval, Kaltofen, Chèze & Lecerf), the FriCAS implementation-status page, Abramov's obituary, and a guide to all of it. Seven of its PDFs need their text sidecars. Beside `papers/`, not in it |
 
 Each directory has its own `CLAUDE.md` with a per-file annotation saying what to read it *for*.
 

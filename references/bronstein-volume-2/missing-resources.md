@@ -93,21 +93,16 @@ All **[cited]**. The "cited by" column is where the citation was read.
 | :--- | :--- | :--- | :--- |
 | J.H. Davenport. *Intégration formelle.* Rapport de Recherche RR375, IMAG, Grenoble, 1983. | Book ref. [32] | Unknown beyond the title. | An institutional report. Reported search: not in HAL; no scan found. |
 | A. Weil. *Courbes algébriques et variétés abéliennes.* Hermann, Paris, 1971. | Tutorial ref. [22] | The bound behind the finite-order test. | **The 1971 printing is still not held, but its content now is, as far as the citation needs it.** Both 1948 volumes are held: *Variétés abéliennes et courbes algébriques* as a scan, and *Sur les courbes algébriques et les variétés qui s'en déduisent* as a 2022 retranscription, whose part II §IV has the Riemann hypothesis the bound follows from. That the 1971 book is those two reprinted together is **[memory]** and unchecked. Low priority: only a page reference into the 1971 edition is missing. |
-| D.G. Cantor's technique "for computing in the Jacobian of a hyperelliptic curve". | Bertrand 1995, abstract (the full citation is in its reference list, not yet read) | What Bertrand's efficient hyperelliptic method is built on. | Not looked for. |
 | Ford and Zassenhaus, 1978, on computing the ring of integers of an algebraic number field. | van Hoeij 1994, abstract, as "[Ford,1978]"; Trager's thesis credits "Ford [20]" for the same algorithm | The number-field algorithm Trager adapted for integral bases. | Not looked for. |
 
 ---
 
 ## 4. From memory only
 
-One item, **[memory]**: Raab's thesis *Definite Integration in Differential Fields* (RISC Linz,
-2012). Reported search: the old RISC download path (`risc.jku.at/publications/download/risc_4597/`)
-now returns 404 and was never archived; JKU's `epub.jku.at` put up a bot wall. **A different path
-works:** Raab's commentary in the 2022 volume prints
-`www.risc.jku.at/publications/download/risc_4583/PhD_CGR.pdf`, which answered 200 with a 1.2 MB PDF
-on 2026-11-13. Not downloaded; see [`recommended-sources.md`](./recommended-sources.md).
+Nothing. Raab's thesis, the last item, was fetched on 2026-11-13 from the path his own commentary
+prints (`risc_4583`); the reported search had tried a different one (`risc_4597`), which is dead.
 
-The other five leads this section once held — Fulton, Hess, Masser & Zannier, Combot, and the
+The five other leads this section once held — Fulton, Hess, Masser & Zannier, Combot, and the
 second Chen et al. paper — are held.
 
 ---
@@ -118,10 +113,12 @@ second Chen et al. paper — are held.
 ISSAC'91 paper and Abramov's obituary, the second by Chevalley and Davenport's 1984 paper, and the
 third by Miller's thesis and the FriCAS status page; all six are now held.
 
-1. **Cantor's paper**, if the hyperelliptic case is ever built on Bertrand's method.
-2. **Raab's thesis**, as a modern survey.
-3. **Weil 1971**, only to cite the bound by the edition the tutorial names; the mathematics is held
+1. **Weil 1971**, only to cite the bound by the edition the tutorial names; the mathematics is held
    in the 1948 volumes.
+
+Cantor's paper and Raab's thesis, once first and second here, are held.
+[`recommended-sources.md`](./recommended-sources.md) ranks what a book on the subject still lacks,
+which is a different question from what held documents cite.
 
 Nothing on this list blocks anything. With Trager, Bronstein 1990 and 1991, the lazy-Hermite report
 and the FriCAS status page all held, the algorithmic record is complete enough to work from.
