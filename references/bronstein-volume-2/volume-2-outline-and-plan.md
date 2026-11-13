@@ -6,7 +6,9 @@ mixed algebraic–transcendental functions. This file is the outline of that boo
 writing it. [`what-volume-2-would-have-covered.md`](./what-volume-2-would-have-covered.md) is the
 evidence it rests on, cited below as *WV2*.
 
-Written 2026-11-13. Nothing of the book exists yet.
+Written 2026-11-13, and revised the same day when Raab & Singer's 2022 volume was supplied: it
+holds Risch's 1968 report in revised form and Trager's thesis typeset, which changes the sources of
+chs. 14–15 and removes the worst of the reading risk in §5. Nothing of the book exists yet.
 
 ## 1. What this book is, and is not
 
@@ -148,14 +150,15 @@ and a family of Risch differential equations over `k(t)`. The general case throu
 infinity (and at `t = 0`). Davenport's 1984 case — transcendentals over one curve — as an
 instructive special case. *Sources:* Bronstein 1990 Part 2; tutorial §3.8–§3.9; Davenport 1984;
 Axiom `INTAF`, `INTPAF`. **B** — the tutorial says twice that "the details are quite technical";
-the 1990 paper has them, in a text layer whose formulas are noise.
+the 1990 paper has them, in a text layer whose formulas are noise. Risch's own treatment, by
+Puiseux expansions, is in Raab & Singer pp. 203–220.
 
 **15. The Risch differential equation on a curve.** `y′ + fy = g` over `E`. Risch's method through
 local expansions. Bronstein's rational algorithm: bounding the denominator, then the degree. Its
 limits: in the mixed case it finds the denominator only. The cancellation case over a nonlinear
-monomial, which Volume I §6.6 leaves open. *Sources:* Bronstein 1990 Part 3; Bronstein 1991; Volume
-I ch. 6. **C** — Risch's 1968 and 1969 reports are not held; this chapter is as complete as
-Bronstein 1990 and 1991 make it.
+monomial, which Volume I §6.6 leaves open. *Sources:* Risch 1968 as revised in Raab & Singer;
+Bronstein 1990 Part 3; Bronstein 1991; Volume I ch. 6. **B**, with the nonlinear cancellation case
+**C** because it is open. Risch's 1969 report is held only in the parts the revision absorbed.
 
 **16. Parametric problems and structure theorems.** The algebraic counterparts of Volume I chs.
 7–9: the parametric Risch equation, limited integration and the parametric logarithmic derivative
@@ -199,8 +202,8 @@ appendices 30 — roughly 380 pages. The estimate is soft for Part III.
   available to the session does this. Non-elementarity claims cannot be checked this way and are
   cited or proved.
 - **Every theorem has a standing** (Appendix D). A proof read from OCR is re-derived or read from
-  the page image, never transcribed from the text layer: Trager's sidecar, the 1990 paper and
-  RR-3562 all have unusable formulas (`CLAUDE.md` in this directory).
+  the page image or a born-digital copy, never transcribed from an OCR layer: Trager's sidecar, the
+  1990 paper and RR-3562 all have unusable formulas (`CLAUDE.md` in this directory).
 - **Exercises** at the end of each chapter, as in Volume I. Lowest priority; added last.
 
 ## 5. Plan
@@ -212,18 +215,22 @@ appendices 30 — roughly 380 pages. The estimate is soft for Part III.
 | 2 | **The core of Part II:** chs. 6, 8, 9, in that order, then ch. 12 for the simple radical case, which makes chs. 7–9 concrete. | A readable account of Trager's algorithm less the torsion test. | The running examples go through end to end. |
 | 3 | **Part I, back-filled.** Chs. 1–5 written to supply exactly what chs. 6–9 and 12 used, no more. Writing them first would produce a textbook on function fields that the later chapters do not need. | Part I. | Every forward reference from Part II resolves. |
 | 4 | Chs. 10 and 11. Ch. 10 needs a close reading of Trager ch. 6 and Davenport chs. 5–8 from page images. | Part II complete. | — |
-| 5 | **Part III**, chs. 13–16 in order. Begins with a full read of Bronstein 1990 from page images, with a notation concordance (Appendix C) made as it is read. | Part III. | Each **C** chapter states its limits explicitly. |
+| 5 | **Part III**, chs. 13–16 in order. Begins with a full read of Risch's revised report and of Bronstein 1990 from page images, with a notation concordance (Appendix C) made as it is read. | Part III. | Each **C** chapter states its limits explicitly. |
 | 6 | Ch. 17, appendices, preface, index, exercises. A pass for notation consistency and a rebuild-and-recheck of every worked example. | The book. | — |
 
 Roughly one chapter per working session for the **A** chapters; chs. 10, 14 and 15 will take more.
 
 **Risks.**
 
-- *Formulas in the primary sources are images.* Trager's thesis has no text layer and the 1990
-  paper's is noise. Reading is slow and transcription errors are likely; hence the rule that
-  results are re-derived or machine-checked, not copied.
-- *Risch's 1968 and 1969 reports are not held.* Part III rests on Bronstein 1990, which presents
-  "Risch's solution of the associated equation problem" itself. Ch. 15 is graded **C** for this.
+- *Formulas in the primary sources are images.* The 1990 paper's text layer is noise, and RR-3562's
+  is unusable. Trager's thesis is no longer in this list: the typeset reprint in Raab & Singer has
+  its formulas as text, though it is a re-typesetting not compared against the MIT scan. Reading
+  the rest is slow and transcription errors are likely; hence the rule that results are re-derived
+  or machine-checked, not copied.
+- *Risch's reports are held only as the 2022 revision* of the 1968 one, with parts of the 1969 one.
+  Only its first two pages have been read so far; how much of ch. 15 it carries is not yet known.
+  Bronstein 1990, which presents "Risch's solution of the associated equation problem" itself,
+  remains the main source for Part III.
 - *Chs. 15–16 may turn out to be mostly negative results.* That is an accurate picture of the
   subject, and the book says so rather than padding.
 - *Scope creep in Part I.* Controlled by phase 3's rule.

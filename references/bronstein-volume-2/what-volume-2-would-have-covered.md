@@ -10,7 +10,8 @@ Trager's thesis, Bronstein's lazy-Hermite report, his 1990 paper and Risch's 197
 browser download, and Davenport's monograph from the project owner's copy — and opened. Revised again on 2026-11-12 with seven more, one of which,
 Abramov's obituary, changed §1, and then with four more (Davenport 1984, Chevalley, Bliss,
 Stichtenoth), and then eight more (Miller, the FriCAS status page, Hess, Combot, Masser & Zannier,
-Fulton, Chen et al. 2016b, Weil 1948). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
+Fulton, Chen et al. 2016b, Weil 1948). Revised on 2026-11-13 with Raab & Singer's 2022 volume, which
+carries Risch's 1968 report in revised form and Trager's thesis typeset. The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
 
 ## How far to trust each statement here
 
@@ -235,7 +236,7 @@ the simple radical case the problem decouples into a rational integration proble
 Risch differential equations over `K(t)`. In general the polynomial part is replaced by Puiseux
 expansions at infinity (and at `t = 0` in the exponential case), and the tutorial says twice that
 "the details are quite technical" and defers to Bronstein's 1990 paper and Risch's 1968 and 1969
-reports. Solving the Risch differential equation when the base field is itself an algebraic curve is
+reports (the first now **[held]** in a revised form that includes parts of the second; §3, [73]). Solving the Risch differential equation when the base field is itself an algebraic curve is
 the subject of the preface's reference [14] **[held]**
 (`bronstein1991_risch_differential_equation_algebraic_curve.pdf`). Its introduction states the
 position in 1991: the published algorithms for algebraic `f` and `g` "require computing with the
@@ -311,14 +312,15 @@ Resolved **[held]** against the reference list of `bronstein2005_symbolic_integr
 | 11 | M. Bronstein. On the integration of elementary functions. *J. Symbolic Computation* 9(2):117–173, February 1990. | The mixed algebraic–transcendental case. Its abstract: "We extend a recent algorithm of Trager to a decision procedure for the indefinite integration of elementary functions." A revision of his 1987 Berkeley dissertation | **Yes** |
 | 14 | M. Bronstein. The Risch differential equation on an algebraic curve. In *Proceedings of ISSAC'91*, pp. 241–246. ACM Press, 1991. | "a new rational algorithm for solving Risch differential equations over algebraic curves" (abstract) — the third obstacle the 1990 paper names. In the mixed case it "finds the denominator of any solution" only | **Yes** |
 | 29 | J.H. Davenport. *On the integration of algebraic functions.* Lecture Notes in Computer Science 102. Springer, Heidelberg, 1981. | **A monograph, not a paper**: Puiseux expansions, Coates' algorithm for a function with prescribed zeros and poles, Risch's theorem, and four chapters on the torsion-divisor problem. Implemented for square roots only | **Yes** |
-| 73 | R. Risch. On the integration of elementary functions which are built up using algebraic operations. Research Report SP-2801/002/00, System Development Corporation, Santa Monica, 1968. | Risch's algebraic case; an unpublished report | No |
-| 74 | R. Risch. Further results on elementary functions. Research Report RC-2402, IBM Research, Yorktown Heights, 1969. | Continuation of [73]; an unpublished report | No |
+| 73 | R. Risch. On the integration of elementary functions which are built up using algebraic operations. Research Report SP-2801/002/00, System Development Corporation, Santa Monica, 1968. | Risch's algebraic case. Unpublished until 2022, when a revision appeared in Raab & Singer's volume: "a revised version of [Ris68], including parts of [Ris69a]", assembled by Singer. Its abstract: "an algorithm to decide if a function built up from the rational functions using logarithms, exponentials and arbitrary algebraic operations can be integrated in terms of functions built up in a similar manner". By Puiseux expansions | **Yes, as revised** — not the 1968 report itself |
+| 74 | R. Risch. Further results on elementary functions. Research Report RC-2402, IBM Research, Yorktown Heights, 1969. | Continuation of [73]; an unpublished report | **In part**: the revision of [73] includes "parts of" it; which parts is not said in the passage read |
 | 76 | R. Risch. The solution of problem of integration in finite terms. *Bulletin of the AMS* 76:605–608, 1970. | The four-page announcement of the complete result, algebraic case included; no proofs | **Yes** |
 | 91 | B.M. Trager. *On the integration of algebraic functions.* PhD thesis, MIT, Computer Science, 1984. | **The core algorithm.** Integral bases, Hermite reduction, normality at infinity, the logarithmic part, absolute factorisation — everything in tutorial §2 that is not Bronstein's own. The thesis's own title page reads *Integration of Algebraic Functions*, without "On the", and is dated September 1984 | **Yes** |
 
 Of Risch's reports the book's own introduction says they were "unfortunately not all of them
 published". That is the real sense in which the algebraic case was hard to get at in 1997: two of
-the nine are corporate research reports and two are theses.
+the nine are corporate research reports and two are theses. One of each — Risch's 1968 report and
+Trager's thesis — was first published in 2022, in the volume held as `raab_singer2022_…` (§4.1).
 
 A neighbouring entry the preface does not list but which belongs with these: [90], B.M. Trager,
 "Integration of simple radical extensions", *Proceedings of EUROSAM'79*, LNCS 72, pp. 408–414. The
@@ -334,7 +336,8 @@ the conference. It is now held (§4.1).
 | File | What it gives you |
 | :--- | :--- |
 | `bronstein1998_symbolic_integration_tutorial.pdf` | **Start here.** Bronstein's *Symbolic Integration Tutorial*, 35 pp. Sections 2 and 3.8–3.9 are the closest thing to a Volume II outline that exists in his own words. Statements and worked examples; proofs are deferred to the references. |
-| `trager1984_integration_of_algebraic_functions.pdf` | **The algorithm.** Trager's MIT thesis, 83 leaves; chapter list in §2. **Image-only scan** — grep the `.txt` OCR sidecar beside it, and read formulas from the page images. |
+| `trager1984_integration_of_algebraic_functions.pdf` | **The algorithm.** Trager's MIT thesis, 83 leaves; chapter list in §2. **Image-only scan** — grep the `.txt` OCR sidecar beside it, and read formulas from the typeset reprint in the next row. |
+| `raab_singer2022_integration_in_finite_terms_fundamental_sources.pdf` | Raab & Singer (eds.), Springer 2022. **Risch's 1968 report**, revised (printed pp. 203–220), with Raab's commentary; and **Trager's thesis typeset**, formulas as text, with a new commentary by Trager on what has happened since. Only the Risch chapter's first two pages, the contents and the commentaries' openings were read. PDF pages are not printed pages. |
 | `davenport1981_on_the_integration_of_algebraic_functions.pdf` | Davenport's monograph, LNCS 102, 199 pp. The Puiseux-expansion route that Trager's "rational" algorithm superseded, but the longest treatment held of the torsion-divisor problem (chs. 5–8), and the only one with timings and worked REDUCE examples. Scanned; the OCR text layer is good, with some letter-spaced runs and a garbled contents page. |
 | `bronstein1990_integration_of_elementary_functions.pdf` | **The mixed case.** *JSC* 9(2):117–173, 57 pp. Extends Trager to towers with logarithms and exponentials; its conclusions list what remained open. The text layer is publisher OCR with errors in names and formulas. |
 | `bronstein1998_lazy_hermite_reduction.pdf` | INRIA RR-3562, November 1998: 13 pages by its own cover, 17 in the HAL file with HAL's cover sheet and the front matter. The proofs the tutorial omits. **The embedded text layer is unreadable** past the cover sheet — grep the `.txt` OCR sidecar. |
@@ -447,7 +450,9 @@ in this session, and any detail — a year, a venue, a claim about content — m
 
 - **Raab**, *Definite Integration in Differential Fields* (PhD thesis, RISC Linz, 2012): the most
   recent thesis-length survey of the Risch machinery, with remarks on the algebraic case. The only
-  lead from this list's first version still not held; the others are in §4.1.
+  lead from this list's first version still not held; the others are in §4.1. Raab's commentary on
+  Risch's paper in the 2022 volume (§4.1) is **[held]** and surveys later developments at shorter
+  length.
 - **Implementations other than FriCAS** (for FriCAS see §4.3, which is **[held]**). Maple implements
   Trager's algorithm for algebraic integrands — van Hoeij's abstract **[held]** confirms that
   Trager's integral-basis method is the one "used by Maple 5.2 and AXIOM", which is less than the
@@ -471,7 +476,7 @@ remains:
 | Source | Route tried | Result |
 | :--- | :--- | :--- |
 | Bertrand's thesis [8] | Not attempted | His paper [9], held, covers the subject. |
-| Risch's 1968 and 1969 reports [73], [74] | Not attempted | Corporate research reports; the book's introduction says of Risch's reports "unfortunately not all of them published". |
+| Risch's 1969 report [74], and [73] as originally issued | Not attempted | [73] is held in the revised form published in 2022, which includes parts of [74]. The originals are corporate research reports. |
 
 None of these blocks anything. [`missing-resources.md`](./missing-resources.md) has the full list
 of what is cited and not held.
@@ -484,7 +489,8 @@ of what is cited and not held.
 algebraic case is out of scope.
 
 1. The tutorial, §2, with Geddes §12.8 alongside for a second telling of the same algorithm.
-2. Trager's thesis, chs. 2 and 4–6; ch. 3 (absolute irreducibility) when it is needed.
+2. Trager's thesis, chs. 2 and 4–6; ch. 3 (absolute irreducibility) when it is needed. Read it in
+   the typeset reprint, and Trager's commentary after it.
 3. Bronstein's RR-3562 for the lazy Hermite reduction, then Chen, Du & Kauers.
 4. Bronstein 1990 only once the pure algebraic case works — its own conclusion is that it "clearly
    requires the prior implementation of the algorithms of Trager (1984)".

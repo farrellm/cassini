@@ -42,7 +42,7 @@ last section of this file says to check first.
 ## 2. Remaining from Bronstein's nine
 
 The first-edition preface of *Symbolic Integration I* sends the reader to nine references for the
-algebraic case. Six are now held. These three are not. Citations are as the book's reference list
+algebraic case. Six are now held, and a seventh, [73], in a revised form (2026-11-13). Of these three, only [8] is wholly missing. Citations are as the book's reference list
 prints them **[cited]**.
 
 ### [8] Bertrand, *Calcul Symbolique des Intégrales Hyperelliptiques*
@@ -59,6 +59,10 @@ L. Bertrand. Thèse de doctorat, Université de Limoges, Mathématiques, 1995.
 R. Risch. Research Report SP-2801/002/00, System Development Corporation, Santa Monica, CA, USA,
 1968.
 
+- **Held since 2026-11-13, in revised form**, as a chapter of Raab & Singer (eds.), *Integration in
+  Finite Terms: Fundamental Sources*, Springer 2022 (`raab_singer2022_…`, printed pp. 203–220): "a
+  revised version of [Ris68], including parts of [Ris69a]". The report as issued in 1968 is still
+  not held, and what follows is about that.
 - **For:** Risch's original treatment of the algebraic case. The tutorial defers to it, with
   Bronstein 1990, for the general algebraic logarithmic and exponential cases.
 - **Cost of its absence: low in practice.** Bronstein 1990, held, reworks it — its Part 3 "contains
@@ -74,7 +78,8 @@ R. Risch. Research Report SP-2801/002/00, System Development Corporation, Santa 
 R. Risch. Research Report RC-2402, IBM Research, Yorktown Heights, NY, USA, 1969.
 
 - **For:** the continuation of [73].
-- **Cost of its absence:** as [73].
+- **Cost of its absence:** as [73]; less since 2026-11-13, the held revision of [73] including
+  "parts of" this report. Which parts was not established.
 - **Where:** an IBM research report, never published. Reported search: as for [73], nothing found.
   IBM Research's archive, if it answers requests, or a technical-reports collection.
 
@@ -118,7 +123,7 @@ third by Miller's thesis and the FriCAS status page; all six are now held.
 Nothing on this list blocks anything. With Trager, Bronstein 1990 and 1991, the lazy-Hermite report
 and the FriCAS status page all held, the algorithmic record is complete enough to work from.
 
-Not worth chasing unless the history itself is the goal: Risch's two reports ([73], [74]) and
+Not worth chasing unless the history itself is the goal: Risch's two reports as issued ([73], [74]) and
 Bertrand's thesis ([8]). Each is hard to obtain and each is covered, for an implementer's purposes,
 by something held.
 

@@ -8,7 +8,7 @@ Files live under [`papers/`](./papers/), grouped into eight topical directories,
 [`bronstein-volume-2/`](./bronstein-volume-2/) beside it (§9). Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**136 documents (~637 MB) — 70 PDFs, 7 Axiom literate `.pamphlet` sources, 59 HTML captures — plus 7 text sidecars.**
+**137 documents (~648 MB) — 71 PDFs, 7 Axiom literate `.pamphlet` sources, 59 HTML captures — plus 7 text sidecars.**
 
 Six PDFs are image-only and a seventh has an unusable text layer; each carries a generated `.txt` sidecar beside it (`bachmair1993_…`, `eker1995_…`, and in `bronstein-volume-2/` `trager1984_…`, `vanhoeij1994_…`, `bronstein1998_lazy_hermite_reduction`, `weil1948_…` (French, `-l fra`) and `bliss1933_…`, the last taken from the source DjVu's text layer rather than by OCR) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
@@ -210,7 +210,7 @@ Outside `papers/`: a directory organised around one question — what Bronstein'
 volume would have covered — rather than one kind of source.
 [`what-volume-2-would-have-covered.md`](./bronstein-volume-2/what-volume-2-would-have-covered.md)
 is the guide to it. **Unlike §1–§8, not every row here is cited in the bibliography**: the twenty
-added on 2026-11-12 (the last twenty rows) are cited by other held documents or were leads in the
+added on 2026-11-12 (the twenty rows before the last) and the one added on 2026-11-13 are cited by other held documents or were leads in the
 guide, and only Abramov's
 obituary among them has a bibliography entry. The first eleven were added **2026-11-11**: six fetched by `curl`, Davenport's monograph from the project owner's own copy, and four — the first four rows — supplied by the project owner the same day from a browser, `curl` having been refused for two and not pursued for two.
 
@@ -250,6 +250,7 @@ obituary among them has a bibliography entry. The first eleven were added **2026
 | [`chen_vanhoeij_kauers2016_telescoping_fuchsian_dfinite.pdf`](./bronstein-volume-2/chen_vanhoeij_kauers2016_telescoping_fuchsian_dfinite.pdf) | **"Reduction-Based Creative Telescoping for Fuchsian D-finite Functions"**<br>*Shaoshi Chen, Mark van Hoeij, Manuel Kauers, Christoph Koutschan (2016)* | arXiv: [`1611.07421`](https://arxiv.org/abs/1611.07421) (v1) — supplied 2026-11-12 | 20 | 220.8 KB |
 | [`weil1948_sur_les_courbes_algebriques_retranscription.pdf`](./bronstein-volume-2/weil1948_sur_les_courbes_algebriques_retranscription.pdf) | ***Sur les courbes algébriques et les variétés qui s'en déduisent***<br>*André Weil (1948)*<br>**A 2022 LaTeX retranscription by Denise Vella-Chemla, not the Hermann printing; pagination differs.** | Source not stated — supplied 2026-11-12 | 74 | 572.7 KB |
 | [`weil1948_varietes_abeliennes_et_courbes_algebriques.pdf`](./bronstein-volume-2/weil1948_varietes_abeliennes_et_courbes_algebriques.pdf) | ***Variétés abéliennes et courbes algébriques***<br>*André Weil (Actualités scientifiques et industrielles 1064, 1948; a 1951 photographic reprint)*<br>**Not the 1971 Hermann volume the tutorial cites. Image-only; French OCR sidecar `.txt` beside it.** | Supplied 2026-11-12 | 163 | 129.33 MB |
+| [`raab_singer2022_integration_in_finite_terms_fundamental_sources.pdf`](./bronstein-volume-2/raab_singer2022_integration_in_finite_terms_fundamental_sources.pdf) | ***Integration in Finite Terms: Fundamental Sources***<br>*Clemens G. Raab, Michael F. Singer, eds. (Texts & Monographs in Symbolic Computation, Springer, 2022)*<br>Holds Risch's 1968 report in revised form and Trager's thesis typeset. **Blank pages dropped: PDF page ≠ printed page.** | Springer / DOI: [`10.1007/978-3-030-98767-1`](https://doi.org/10.1007/978-3-030-98767-1) — supplied 2026-11-13 from the project owner's copy | 303 | 10.65 MB |
 
 ---
 
