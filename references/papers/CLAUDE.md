@@ -11,6 +11,7 @@ Eight topical directories. See [`../CLAUDE.md`](../CLAUDE.md) for conventions an
 | Where do OwnValues, DownValues, UpValues, and SubValues attach, and how do I model the rule tables? | `wolfram-language/` |
 | How do I make automatic simplification produce a canonical form? | `textbooks/` (**Cohen Vol. 2 ch. 3** — the algorithm is in Vol. 2, not Vol. 1) |
 | How do I implement polynomial GCD, factorization, Hensel lifting, Gröbner bases, integration? | `textbooks/` (Geddes, then von zur Gathen & Gerhard, then Bronstein) |
+| How would I integrate *algebraic* functions — what Bronstein's Volume II would have held? | `../bronstein-volume-2/` (outside this directory; start with `what-volume-2-would-have-covered.md`) |
 | Is this rewrite system confluent / terminating? What is critical-pair completion? | `term-rewriting/` (Baader & Nipkow) |
 | How do I match modulo associativity and commutativity, with sequence variables, fast? | `pattern-matching/` (Krebber's thesis) |
 | Why can't `Simplify` be complete? | `foundations/` (Richardson 1968) |

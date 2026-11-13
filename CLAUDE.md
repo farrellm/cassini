@@ -122,8 +122,8 @@ What spans packages stays at the root:
      milestone 1a, an allocation regression fails CI.
 
 6. **The corpus is gitignored.** `references/**/*.{pdf,html,pamphlet}` are not in git, and neither
-   are the `*.txt` OCR sidecars for the two image-only PDFs, which are the only way to `grep` those
-   two; regenerate them after a fetch (`references/missing-documents.md`, "Regenerating the
+   are the `*.txt` OCR sidecars for the PDFs with no usable text layer, which are the only way to
+   `grep` them; regenerate them after a fetch (`references/missing-documents.md`, "Regenerating the
    sidecars"). A fresh clone gets the `.md` indexes and none of the documents. That is expected,
    not a broken checkout.
    `references/downloaded-references-summary.md`'s Source column is how to re-fetch it, and
