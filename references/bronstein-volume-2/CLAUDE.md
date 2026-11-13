@@ -8,6 +8,8 @@ read: what is known about Volume II, a reconstruction of its contents, and every
 material, held or not. This file is only the per-file inventory.
 [`missing-resources.md`](./missing-resources.md) details what is cited and not held: what each is
 for, what its absence costs, where to look, and which to get first.
+[`recommended-sources.md`](./recommended-sources.md) is what to obtain for the book's remaining
+gaps, chapter by chapter, with the route to each.
 [`volume-2-outline-and-plan.md`](./volume-2-outline-and-plan.md) is the chapter outline and writing
 plan for a typeset reconstruction of Volume II; nothing of the book exists yet.
 

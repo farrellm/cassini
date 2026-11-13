@@ -102,7 +102,10 @@ All **[cited]**. The "cited by" column is where the citation was read.
 
 One item, **[memory]**: Raab's thesis *Definite Integration in Differential Fields* (RISC Linz,
 2012). Reported search: the old RISC download path (`risc.jku.at/publications/download/risc_4597/`)
-now returns 404 and was never archived; JKU's `epub.jku.at` put up a bot wall.
+now returns 404 and was never archived; JKU's `epub.jku.at` put up a bot wall. **A different path
+works:** Raab's commentary in the 2022 volume prints
+`www.risc.jku.at/publications/download/risc_4583/PhD_CGR.pdf`, which answered 200 with a 1.2 MB PDF
+on 2026-11-13. Not downloaded; see [`recommended-sources.md`](./recommended-sources.md).
 
 The other five leads this section once held — Fulton, Hess, Masser & Zannier, Combot, and the
 second Chen et al. paper — are held.
