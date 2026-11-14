@@ -40,8 +40,8 @@ $p \mid Dp$ \VolI{Definition~3.4.2}; a normal polynomial is squarefree, and
 factors of normal polynomials are normal \VolI{Theorem~3.4.1}.
 
 We write $\OO$ for the integral closure of $k[t]$ in $E$
-(Chapter~\ref{ch:preliminaries}). It is a ring, and a finitely generated
-$k[t]$-module of rank $n$. For a basis $w = (w_1, \dots, w_n)$ of $E$ over
+(Section~\ref{sec:prelim-integral}). It is a ring, and a free $k[t]$-module
+of rank $n$ (Theorem~\ref{thm:closure-fg}). For a basis $w = (w_1, \dots, w_n)$ of $E$ over
 $k(t)$ we write
 \[
   \OO_w = k[t]\,w_1 + \dots + k[t]\,w_n
@@ -49,7 +49,7 @@ $k(t)$ we write
 for the $k[t]$-module it generates. We only ever use bases made of integral
 elements, so that $\OO_w \subseteq \OO$; any basis can be made such by
 multiplying each element by a suitable polynomial
-(Chapter~\ref{ch:preliminaries}). The basis $w$ is an \emph{integral basis} if
+(Proposition~\ref{prop:integral-basics}). The basis $w$ is an \emph{integral basis} if
 $\OO_w = \OO$ (Chapter~\ref{ch:integral-bases}).
 
 \begin{definition}\label{def:numden}
@@ -116,7 +116,8 @@ exactly one wherever that order is not zero, and does not lower the order at a
 special one \VolI{Theorem~4.4.2}. Everything in this chapter rests on the
 analogue for $E$, in which ``one'' becomes the ramification index.
 
-We use the following from Chapter~\ref{ch:function-fields}. The field $E$ is
+We use the following from Chapter~\ref{ch:function-fields}
+(Theorems~\ref{thm:places} and~\ref{thm:puiseux}). The field $E$ is
 an algebraic function field of one variable over $k$. A \emph{finite place}
 of $E$ is a place $P$ with $\ord{P}(t) \ge 0$; it lies over a unique monic
 irreducible $p \in k[t]$, namely the one with $\ord{P}(p) > 0$, and
@@ -650,7 +651,8 @@ $n$ matrix
 \end{equation}
 each row $(r_1, \dots, r_n)$ standing for the element $\sum_j r_j w_j / f$.
 Since $k[t]$ is a Euclidean domain, row operations over $k[t]$ bring this
-matrix to Hermite normal form (Chapter~\ref{ch:preliminaries}), and since it
+matrix to triangular form (\seealg{RowReduce},
+Section~\ref{sec:prelim-hermite}), and since it
 has rank $n$, the result has $n$ nonzero rows followed by a zero row.
 
 \begin{algo}{ExtendBasis}{w, w_0}{adjoin an integral element to a basis}
@@ -677,14 +679,14 @@ $\OO_{\bar w} = \OO_w + k[t]\, w_0$. This module contains $\OO_w$, so $\bar w$
 spans $E$ over $k(t)$, and having $n$ elements it is a basis. It is contained
 in $\OO$, since $\OO$ is a $k[t]$-module containing $w_0$ and the $w_i$. For
 the second statement, $\OO$ is a finitely generated module over the Noetherian
-ring $k[t]$ (Chapter~\ref{ch:preliminaries}), so every ascending chain of
+ring $k[t]$ (Theorem~\ref{thm:closure-fg}), so every ascending chain of
 submodules of $\OO$ is stationary.
 \end{proof}
 
 The chain can be bounded. The discriminant of a basis in $\OO$ is a nonzero
 element of $k[t]$, and passing from $w$ to a basis $\bar w$ with $\OO_w
 \subsetneq \OO_{\bar w}$ divides it by the square of a polynomial of positive
-degree (Chapter~\ref{ch:preliminaries}). So there are at most
+degree (Corollary~\ref{cor:disc-drops}). So there are at most
 $\frac12 \deg(\disc(w))$ extensions, starting from $w$.
 
 \begin{example}\label{ex:fail-extend}
@@ -709,8 +711,9 @@ then combine to $(0, 0, 0, 1)$. The Hermite normal form has rows $(x, 0, 0,
 With respect to $\bar w$ the integrand $y^3/x^2 = \bar w_4 / x$ of
 Example~\ref{ex:fail} has the squarefree denominator $x$: the reduction is
 finished, with $g = 0$, by a change of basis alone. The discriminant has
-gone from $-x^4 F$ to $-x^2 F$. We have not shown that $\bar w$ is an
-integral basis, and the reduction did not need to know.
+gone from $-x^4 F$ to $-x^2 F$. The reduction did not need to know
+whether $\bar w$ is an integral basis. It is one
+(Example~\ref{ex:ib-quartic}).
 \end{example}
 
 \section{The lazy Hermite reduction}\label{sec:hermite-lazy}

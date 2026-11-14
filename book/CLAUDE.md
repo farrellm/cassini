@@ -8,18 +8,14 @@ is the outline, the conventions (§4) and the phased plan (§5); read it before 
 here. Its evidence is `what-volume-2-would-have-covered.md` beside it, and the sources, with their
 per-file defects, are indexed in that directory's `CLAUDE.md`.
 
-**State: phases 1 and 2 are drafted.** Chapters 6, 7, 8, 9 and 12 are written; the project owner
-waived the plan's reading gate on 2026-11-13 and has read none of them yet. Every other chapter and
-appendix is a heading and the words "not yet written". Next is phase 3: chapters 1–5, written to
-supply exactly what the five drafted chapters cite from them.
+**State: phases 1, 2 and 3 are drafted.** Chapters 1–9 and 12 are written; the project owner
+waived the plan's reading gate on 2026-11-13 and has read none of them yet. Chapters 10, 11 and
+13–17 and the appendices are a heading and the words "not yet written". Next is phase 4: chapters
+10 and 11.
 
-**What Part I owes.** The drafted chapters cite chapters 1–5 by chapter only, for: finite
-generation of the integral closure, Hermite normal form and the discriminant (ch. 1); places,
-ramification, Puiseux's theorem in the form of eq. (7.2), the facts (D1)–(D4) of §6.2 on
-differentials, Riemann–Roch and the genus (ch. 2); integral bases, the ring at infinity, bases
-normal at infinity (ch. 3); absolute irreducibility and binomial polynomials (ch. 4); divisors as
-ideals, the principality test, Mumford and Cantor (ch. 5). Phase 3 is done when each of these is a
-numbered result and the chapter references are replaced by it.
+**What chapter 10 owes.** `LogarithmicPart` (ch. 9) calls `PrincipalMultiple` (ch. 5) with a bound
+`B` that only chapter 10 can supply. Until then the integration algorithm is complete except for
+that one number.
 
 | Path | What it is |
 | :--- | :--- |

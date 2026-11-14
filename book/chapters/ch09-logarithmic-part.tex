@@ -106,8 +106,7 @@ where $\operatorname{pp}_Z$ is the primitive part with respect to $Z$.
 \end{theorem}
 
 \begin{proof}
-Let $x_0 \in \Kbar$ be a root of $d$. By Puiseux's theorem
-(Chapter~\ref{ch:function-fields}), the $n$ embeddings of $E$ over $K(x)$
+Let $x_0 \in \Kbar$ be a root of $d$. By Theorem~\ref{thm:puiseux-embeddings}, the $n$ embeddings of $E$ over $K(x)$
 into the field of Puiseux series in $x - x_0$ over $\Kbar$ fall into groups,
 one for each place $P$ over $x_0$, the group of $P$ consisting of $r_P$
 embeddings; and for $b \in E$ without a pole at $P$, each embedding in that
@@ -236,7 +235,7 @@ smaller field.
 \section{Representing the residue divisors}\label{sec:log-ideals}
 
 To test $n \delta_j$ for principality we need $\delta_j$ in a form that can be
-computed with. Chapter~\ref{ch:divisors} represents a divisor supported at
+computed with. Theorem~\ref{thm:divisor-ideal} represents a divisor supported at
 finite places by a fractional ideal of $\OO$, the divisor $\sum_P n_P P$
 corresponding to the ideal of those $b$ with $\ord{P}(b) \ge n_P$ at every
 finite $P$. The ideals for the residue divisors are built from the following
@@ -307,10 +306,10 @@ functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
 \State $m \gets$ a positive integer such that the residues are in $\frac1m (\Z q_1 + \dots + \Z q_k)$
 \For{$j \gets 1$ \textbf{to} $k$}
   \State $\delta_j \gets$ the residue divisor~\eqref{eq:delta}
-  \If{no positive multiple of $\delta_j$ is principal} \Comment{Chapter~\ref{ch:finite-order}}
-    \State \Return ``not elementary''
-  \EndIf
-  \State $(n_j, u_j) \gets$ the least $n_j > 0$ and a $u_j$ with $n_j \delta_j = (u_j)$ \Comment{Chapter~\ref{ch:divisors}}
+  \State $B \gets$ a bound for the order of $\delta_j$ \Comment{Chapter~\ref{ch:finite-order}}
+  \State $r \gets \alg{PrincipalMultiple}(I(\delta_j), B)$ \Comment{Section~\ref{sec:div-principal}}
+  \If{$r$ is ``none''} \Return ``not elementary'' \EndIf
+  \State $(n_j, u_j) \gets r$
 \EndFor
 \State $\omega \gets h - \frac1m \sum_j (q_j / n_j)\, Du_j / u_j$
 \If{$\omega \ne 0$} \Return ``not elementary'' \EndIf
@@ -319,10 +318,9 @@ functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
 
 When $R$ has no nonzero root, $k = 0$, the loop is empty and $\omega = h$: the
 algorithm returns the empty sum if $h = 0$ and ``not elementary'' otherwise.
-The correctness of the algorithm is Theorem~\ref{thm:log-part}. It is an
-algorithm only in so far as the two steps marked with later chapters are;
-until Chapter~\ref{ch:finite-order}, the first of them is a search that
-stops only when it succeeds.
+The correctness of the algorithm is Theorem~\ref{thm:log-part}. The search is \seealg{PrincipalMultiple}. The bound $B$ is the one
+ingredient still missing: until Chapter~\ref{ch:finite-order} supplies it,
+the search stops only when it succeeds.
 
 Together with Chapter~\ref{ch:algebraic-part} this gives the whole method.
 
@@ -387,8 +385,8 @@ whose differential has no pole at infinity.
 \item $E$ has genus $1$. A function with divisor $P - Q$ would have a single
   simple pole, and there is none on a curve of positive genus; so $\delta_1$
   is not principal. A function with divisor $2P - 2Q$ would lie in the space
-  of functions with at most a double pole at $Q$ and no other, which by the
-  Riemann--Roch theorem has dimension $2$ and so is spanned by $1$ and
+  of functions with at most a double pole at $Q$ and no other, which by
+  Corollary~\ref{cor:rr-consequences}(iii) has dimension $2$ and so is spanned by $1$ and
   $x/(y + 1)$, whose divisor is $P + \infty - 2Q$. No combination of these
   two vanishes twice at $P$; so $2\delta_1$ is not principal. But
   \[
@@ -397,7 +395,8 @@ whose differential has no pole at infinity.
   since $(y - 1)(y + 1) = -x^3$, the function $y - 1$ vanishes to order $3$
   at $P$ and nowhere else, $y + 1$ vanishes to order $3$ at $Q$ and nowhere
   else, and both have a triple pole at $\infty$. So $n_1 = 3$ and $u_1 = (y -
-  1)/(y + 1)$.
+  1)/(y + 1)$. Example~\ref{ex:principal-running} reaches the same three
+  conclusions by \seealg{PrincipalMultiple}, without inspection.
 \item $\omega = h - \frac13\, Du_1/u_1 = 0$.
 \end{enumerate}
 Therefore

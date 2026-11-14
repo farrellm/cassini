@@ -1,3 +1,189 @@
 \chapter[The Constant Field]{The Constant Field and Absolute Irreducibility}\label{ch:constant-field}
 
-\unwritten
+Part~II assumes that the polynomial $F$ defining $E = K(x)[y]/(F)$ is
+\emph{absolutely irreducible}: irreducible not only over $K(x)$ but over
+$\Kbar(x)$. The assumption is used every time the constant field is enlarged,
+which the logarithmic part forces whenever a residue is not in $K$: over the
+larger field $L$ we want $L(x)[y]/(F)$ still to be a field. It is also needed
+for the reduction modulo primes of Chapter~\ref{ch:finite-order}. This chapter
+shows that the assumption is the same as saying that $K$ is the whole
+constant field of $E$, and how to arrange it. It follows Chapter~3
+of~\cite{trager1984}.
+
+\section{The exact constant field}\label{sec:const-exact}
+
+Let $K$ be a field of characteristic $0$ and $E$ a finite extension of
+$K(x)$. The \emph{exact constant field} of $E$ is
+\[
+  K_0 = \{ c \in E : c \text{ is algebraic over } K \} ,
+\]
+the algebraic closure of $K$ in $E$. It is a field, and it is the field of
+constants of the derivation $D$ of $E$ extending $d/dx$
+\VolI{Lemma~3.3.2}. An example shows that it can be larger than $K$: in
+$\Q(x)[y]/(y^4 - 2x^2)$ the element $y^2/x$ is a square root of $2$. Over
+$\Q(\sqrt2)$ the polynomial $y^4 - 2x^2$ factors as $(y^2 - \sqrt2\, x)(y^2 +
+\sqrt2\, x)$, and the field is $\Q(\sqrt2)(x)[y]/(y^2 - \sqrt2\, x)$, of degree
+$2$ and not $4$ over its rational functions.
+
+\begin{lemma}\label{lem:const-degree}\standing{cited}{\cite[Lemmas~3.1.10 and~3.6.2]{stichtenoth2009}}
+Let $L \supseteq K$ be fields with $K$ algebraically closed in $L$, and
+$\alpha$ algebraic over $K$. Then $[L(\alpha) : L] = [K(\alpha) : K]$. In
+particular $[M(x) : K(x)] = [M : K]$ for a finite extension $M$ of $K$.
+\end{lemma}
+
+The reason is that a factor over $L$ of the minimal polynomial of $\alpha$
+over $K$ has coefficients that are algebraic over $K$, hence in $K$.
+
+\begin{theorem}\label{thm:absolute-irreducibility}\standing{proved}{}
+Let $F \in K[x][y]$ be irreducible over $K(x)$, and $E = K(x)[y]/(F)$. Then
+$F$ is absolutely irreducible if and only if $K$ is algebraically closed in
+$E$.
+\end{theorem}
+
+\begin{proof}
+$F$ is absolutely irreducible if and only if it is irreducible over $M(x)$
+for every finite extension $M$ of $K$. Fix such an $M$, and let $E M$ be a
+compositum of $E$ and $M$, generated over $M(x)$ by a root of an irreducible
+factor of $F$. Counting degrees in two ways,
+\[
+  [E M : M(x)]\, [M(x) : K(x)] = [E M : E]\, [E : K(x)] ,
+\]
+and $[M(x) : K(x)] = [M : K]$ by Lemma~\ref{lem:const-degree}. So $F$ is
+irreducible over $M(x)$, which means $[EM : M(x)] = [E : K(x)]$, if and only
+if $[EM : E] = [M : K]$.
+
+If $K$ is algebraically closed in $E$, write $M = K(\alpha)$;
+Lemma~\ref{lem:const-degree} with $L = E$ gives $[EM : E] = [M : K]$.
+Conversely, if $F$ is absolutely irreducible, take $M = K_0$; then $EM = E$,
+so $[M : K] = 1$.
+\end{proof}
+
+This is Theorem~3.4 of~\cite{trager1984}, with his proof.
+
+\begin{corollary}\label{cor:exact-field}\standing{proved}{}
+Let $F$ be irreducible over $K(x)$, $E = K(x)[y]/(F)$, and $K_0$ the exact
+constant field of $E$. Then:
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item the minimal polynomial $F_0$ of $y$ over $K_0(x)$ is absolutely
+  irreducible, $E = K_0(x)[y]/(F_0)$, and $F_0$ is a factor of $F$ over
+  $K_0(x)$;
+\item $[K_0 : K]$ divides both $\deg_y(F)$ and $\deg_x(F)$; in particular $F$
+  is absolutely irreducible if these two degrees are coprime.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+(i) $K_0$ is algebraically closed in $E = K_0(x)(y)$, so
+Theorem~\ref{thm:absolute-irreducibility} applies over $K_0$. (ii) By the
+degree count above with $M = K_0$, $[E : K(x)] = [K_0 : K]\, [E : K_0(x)]$,
+and the same holds with the roles of $x$ and $y$ exchanged.
+\end{proof}
+
+So the assumption of Part~II is arranged by replacing $K$ by $K_0$ and $F$ by
+$F_0$. The integrand is unchanged; only the field over which we say it is
+defined has grown, and the degree of the curve has dropped by the factor $[K_0
+: K]$, which makes every later step cheaper.
+
+\section{Finding the absolutely irreducible factor}\label{sec:const-algorithm}
+
+The difficulty is that $K_0$ is not known in advance, and one cannot factor
+over $\Kbar$, which is not finitely generated. Trager's
+observation~\cite[\S3.2]{trager1984} is that a field containing $K_0$ can be
+read off a specialisation. Take $F$ monic in $y$, and $x_0 \in K$ such that
+$F(x_0, y)$ is squarefree. Every element of $K_0$ is integral over $K[x]$,
+and $x \mapsto x_0$ maps the integral closure of $K[x]$ in $E$ onto a ring
+that has, for each irreducible factor $F_1$ of $F(x_0, y)$ over $K$, a
+homomorphism onto the field $K[w]/(F_1(w))$. A homomorphism of fields is
+injective, so $K_0$ embeds in each $K[w]/(F_1)$, and $F$ factors over
+$K[w]/(F_1)$ at least as far as it does over $K_0$.
+
+\begin{algo}{AbsoluteFactor}{F}{an absolutely irreducible factor}
+\Spec{Given $F \in K[x][y]$, monic in $y$ and irreducible over $K(x)$, return
+a finite extension $M$ of $K$ and a factor of $F$ over $M(x)$ that is
+absolutely irreducible.}
+\If{$\gcd(\deg_x(F), \deg_y(F)) = 1$} \Return $(K, F)$ \EndIf
+\State $x_0 \gets$ an element of $K$ such that $F(x_0, y)$ is squarefree
+\State $F_1 \gets$ an irreducible factor of $F(x_0, y)$ over $K$ of least degree
+\If{$\deg(F_1) = 1$} \Return $(K, F)$ \EndIf
+\State $M \gets K[w]/(F_1(w))$
+\State \Return $M$ and an irreducible factor of $F$ over $M(x)$ of least degree
+\end{algo}
+
+This is the algorithm of~\cite[\S3.2]{trager1984}; its correctness is argued
+there, and we have not reproduced the argument beyond the paragraph above.
+The exact constant field is then generated over $K$ by the coefficients of
+the factor returned. The last step needs factorisation of polynomials over an
+algebraic number field, for which Trager refers to his own earlier algorithm.
+
+Trager adds a test that often makes the algorithm unnecessary. If $w$ is an
+integral basis of $E$ normal at infinity, the elements of $E$ with no poles
+at all are spanned over $K$ by the $w_i$ that have no pole at infinity
+(Lemma~\ref{lem:termwise}), and these elements are exactly $K_0$. So $F$ is
+absolutely irreducible if and only if exactly one $w_i$ is integral at
+infinity. Since the integration algorithm computes such a basis anyway, the
+test is free. In the example above, $(1, y, y^2/x, y^3/x)$ is an integral
+basis of $\Q(x)[y]/(y^4 - 2x^2)$, and two of its elements, $1$ and $y^2/x$,
+have no poles.
+
+Later algorithms for absolute factorisation are faster and are not needed
+for what follows. Kaltofen~\cite{kaltofen1985} gave a test for absolute
+irreducibility; Duval~\cite{duval1991} factors by counting the components of
+the curve through geometric invariants; and Ch\`eze and
+Lecerf~\cite{cheze2007} give a probabilistic algorithm\later\ whose cost is
+less than quadratic in the dense size of the polynomial. We have read only
+the abstracts and introductions of these three.
+
+\section{Binomial polynomials}\label{sec:const-binomial}
+
+For $F = y^n - g(x)$ the question has a closed answer.
+
+\begin{theorem}\label{thm:binomial}\standing{proved}{}
+Let $g \in K[x]$ be nonconstant, with squarefree factorisation $g = c
+\prod_i g_i^{e_i}$, $c \in K^*$, the $g_i$ monic, squarefree, pairwise coprime
+and nonconstant. Let $n \ge 2$ and $\delta = \gcd(n, e_1, e_2, \dots)$. Then
+$y^n - g$ is absolutely irreducible if and only if $\delta = 1$. In general,
+\[
+  y^{n/\delta} - c^{1/\delta} \prod_i g_i^{e_i/\delta}
+\]
+is an absolutely irreducible factor of $y^n - g$ over $K(c^{1/\delta})(x)$.
+\end{theorem}
+
+\begin{proof}
+We use the criterion quoted in~\cite[Theorem~3.6]{trager1984}: for a field
+$k$ and $a \in k^*$, the polynomial $X^n - a$ is irreducible over $k$ provided
+that $a$ is not a $p$-th power in $k$ for any prime $p$ dividing $n$, and, if
+$4$ divides $n$, that $a \notin -4 k^4$. Apply it with $k = \Kbar(x)$ and $a
+= g$. Since $\Kbar$ is algebraically closed and $\Kbar[x]$ is a unique
+factorisation domain, $g$ is a $p$-th power in $\Kbar(x)$ exactly when $p$
+divides every $e_i$; and $-4$ is a fourth power in $\Kbar$, so $g \in -4
+k^4$ exactly when $4$ divides every $e_i$. If $\delta = 1$, no prime dividing
+$n$ divides every $e_i$, and both conditions hold. If $\delta > 1$, then $g =
+h^\delta$ with $h = c^{1/\delta} \prod_i g_i^{e_i/\delta}$, and $y^{n/\delta}
+- h$ divides $y^n - h^\delta$; it is absolutely irreducible by the first
+part, because $\gcd(n/\delta, e_1/\delta, \dots) = 1$.
+\end{proof}
+
+This is the algorithm of~\cite[\S3.3]{trager1984}. For the normal form $z^n
+= H$ of~\eqref{eq:radical-normal}, the exponents are those $j$ with $p_j \ne
+1$. For a square root $y^2 = p$ with $p$ squarefree and nonconstant, $\delta
+= 1$: the curves $y^2 = 1 - x^3$ and $y^2 = x^8 + 1$ are absolutely
+irreducible. When the radicand is constant, $y^n = c$, the extension is an
+extension of the constant field and not a curve at all.
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Show that $y^4 - 2 (x^2 + 1)^2$ is irreducible over $\Q(x)$, and find the
+exact constant field of the field it defines and an absolutely irreducible
+factor.
+\end{exercise}
+
+\begin{exercise}
+Let $F = y^2 - x^2 - 1$ and $F = y^2 - 2x^2$ over $\Q$. Run
+\seealg{AbsoluteFactor} on each, with $x_0 = 1$.
+\end{exercise}
+
+\begin{exercise}
+Prove Lemma~\ref{lem:const-degree}.
+\end{exercise}

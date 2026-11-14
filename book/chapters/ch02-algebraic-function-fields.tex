@@ -1,3 +1,293 @@
 \chapter{Algebraic Function Fields}\label{ch:function-fields}
 
-\unwritten
+The integration algorithm is about the poles of functions and differentials
+on an algebraic curve: where they are, of what order, and with what residue.
+This chapter fixes the language for that. It states, with references to
+proofs, the results on places, expansions, differentials and divisors that
+the later chapters use, and proves the few that are particular to this book.
+The reference throughout is Stichtenoth~\cite{stichtenoth2009}, whose
+Chapters~1, 3 and~4 contain everything stated here without proof;
+Chevalley~\cite{chevalley1951} is the source Bronstein himself
+cites~\cite{bronstein1990}, and Fulton~\cite{fulton2008} and
+Bliss~\cite{bliss1933} give the geometric and the classical pictures.
+
+As in Chapter~\ref{ch:preliminaries}, $k$ is a field of characteristic $0$,
+$t$ is transcendental over $k$, and $E$ is a finite extension of $k(t)$ of
+degree $n$. Such an $E$ is an \emph{algebraic function field of one variable
+over $k$}.
+
+\section{Places and orders}\label{sec:ff-places}
+
+A \emph{place} $P$ of $E$ over $k$ is the maximal ideal of a discrete
+valuation ring $\OO_P$ of $E$ that contains $k$. It has an \emph{order
+function} $\ord{P} : E^* \to \Z$, surjective, with $\ord{P}(fg) = \ord{P}(f) +
+\ord{P}(g)$ and $\ord{P}(f + g) \ge \min(\ord{P}(f), \ord{P}(g))$, such that
+$\OO_P = \{ f : \ord{P}(f) \ge 0 \}$; a \emph{uniformising parameter} at $P$
+is a $\pi$ with $\ord{P}(\pi) = 1$. The field $\OO_P / P$ is a finite
+extension of $k$, whose degree is the \emph{degree} of $P$, and for $f \in
+\OO_P$ the class of $f$ in it is the \emph{value} $f(P)$. We say that $f$ has
+a \emph{zero} at $P$ if $\ord{P}(f) > 0$ and a \emph{pole} if $\ord{P}(f) <
+0$~\cite[\S1.1]{stichtenoth2009}.
+
+The places of $k(t)$ are known: one for each monic irreducible $p \in k[t]$,
+with order function the $\ord{p}$ of \VolI{Chapter~4}, and one more, the
+\emph{place at infinity}, with $\ord{\infty}(a) = -\deg(a)$
+\cite[Theorem~1.2.2]{stichtenoth2009}. Every place $P$ of $E$ restricts to
+one of these. If it restricts to the place of $p$ we say that $P$ is
+\emph{finite} and \emph{lies over} $p$; then $\ord{P}(a) = r_P\, \ord{p}(a)$
+for $a \in k(t)$, where $r_P = \ord{P}(p) \ge 1$ is the \emph{ramification
+index} of $P$. If it restricts to the place at infinity, $P$ is
+\emph{infinite}, and $\ord{P}(a) = -r_P \deg(a)$ with $r_P = -\ord{P}(t)$.
+The place $P$ is \emph{ramified} if $r_P > 1$.
+
+\begin{theorem}\label{thm:places}\standing{cited}{\cite[Theorems~3.1.11, 3.2.6 and~3.3.7, Corollaries~3.3.5 and~3.5.5]{stichtenoth2009}}
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item Over each place of $k(t)$ there are finitely many places $P_1, \dots,
+  P_s$ of $E$, at least one, and $\sum_i r_{P_i} f_i = n$, where $f_i$ is the
+  degree of $P_i$ divided by the degree of the place below.
+\item $\OO = \{ f \in E : \ord{P}(f) \ge 0 \text{ for every finite place } P
+  \}$.
+\item The elements of $E$ with no pole at any infinite place form a ring
+  $\OO_\infty$, which is the integral closure in $E$ of $k(t)_\infty = \{ a :
+  \deg(a) \le 0 \} \cup \{0\}$ and a free $k(t)_\infty$-module of rank $n$.
+\item Only finitely many places of $E$ are ramified. If $y$ is an integral
+  primitive element with minimal polynomial $F$, and $p \in k[t]$ is
+  irreducible and does not divide the discriminant of $F$, then no place over
+  $p$ is ramified.
+\end{enumerate}
+\end{theorem}
+
+In~(iv), if $p = t - x_0$ with $x_0 \in k$, the hypothesis says that $F(x_0,
+y)$ has $n$ distinct roots; this is the form used in
+Lemma~\ref{lem:change-variable}.
+
+\section{Extension of the constant field}\label{sec:ff-constants}
+
+Suppose that $k$ is algebraically closed in $E$; Chapter~\ref{ch:constant-field}
+shows how to arrange this. Then for an algebraic extension $L$ of $k$ the
+ring $E_L = E \otimes_k L$ is a field, the compositum of $E$ and $L$, of
+degree $n$ over $L(t)$; if $E = k(t)[y]/(F)$ then $E_L = L(t)[y]/(F)$.
+
+\begin{theorem}\label{thm:constant-extension}\standing{cited}{\cite[Proposition~3.6.1, Theorem~3.6.3]{stichtenoth2009}}
+Let $k$ be algebraically closed in $E$ and $L$ an algebraic extension of $k$.
+Then $L$ is algebraically closed in $E_L$; every place of $E$ has at least
+one place of $E_L$ above it, and none of those is ramified over it, so that
+$\ord{P'}(f) = \ord{P}(f)$ for $f \in E$ and $P'$ over $P$; and $E_L$ has the
+same genus as $E$.
+\end{theorem}
+
+Over $\kbar$ every place has degree $1$, values are elements of $\kbar$, and
+Theorem~\ref{thm:places}(i) reads $\sum_i r_{P_i} = n$. In Part~II, ``place''
+always means a place of $E_{\Kbar}$, and we use the theorem to pass freely
+between $E$ and $E_{\Kbar}$: an element of $E$ has a pole at a place of $E$
+exactly when it has one at the places of $E_{\Kbar}$ above it.
+
+\section{Puiseux expansions}\label{sec:ff-puiseux}
+
+At a place of degree $1$ every element of $E$ has a Laurent expansion in a
+uniformising parameter. Precisely~\cite[Theorem~4.2.6]{stichtenoth2009}: if
+$P$ has degree $1$ and $\pi$ is a uniformising parameter, there is a unique
+embedding of fields $E \to k((\pi))$ that is the identity on $k$, sends $\pi$
+to $\pi$, and carries $\ord{P}$ to the order of a Laurent series. The image
+of $E$ is dense, in the sense that every Laurent series agrees with the image
+of some element of $E$ to any prescribed order. We need a version in which
+the parameter is tied to $t$.
+
+\begin{theorem}[Puiseux]\label{thm:puiseux}\standing{proved}{}
+Let $P$ be a finite place of $E$ over the monic irreducible $p \in k[t]$, with
+ramification index $r$, and let $\alpha \in \kbar$ be a root of $p$. Then
+there is an embedding of fields
+\[
+  \sigma : E \longrightarrow \kbar((\pi)), \qquad \sigma(t) = \alpha + \pi^r,
+  \qquad \sigma|_k = \mathrm{id},
+\]
+into the field of formal Laurent series in an indeterminate $\pi$, such that
+$\ord{P}(f)$ is the order in $\pi$ of $\sigma(f)$ for every $f \in E^*$. If
+$P$ is an infinite place with ramification index $r$, the same holds with
+$\sigma(t) = \pi^{-r}$.
+\end{theorem}
+
+\begin{proof}
+Let $k_0$ be the algebraic closure of $k$ in $E$; it is a finite extension of
+$k$, and $E$ is a function field over $k_0$ in which $k_0$ is algebraically
+closed. Choose an embedding of $k_0$ in $\kbar$, let $E' = E_{\kbar}$ be the
+resulting field, and let $P'$ be a place of $E'$ over $P$. By
+Theorem~\ref{thm:constant-extension}, $\ord{P'}$ extends $\ord{P}$. The place
+$P'$ has degree $1$, so for a uniformising parameter $\pi'$ we have an
+embedding $E' \to \kbar((\pi'))$ carrying $\ord{P'}$ to the order in $\pi'$.
+
+Suppose $P$ is finite. Then $\ord{P'}(p) = r$, and $p = \prod_\beta (t -
+\beta)$ over the roots $\beta$ of $p$, which are distinct. The factors take
+distinct values at $P'$, so exactly one of them vanishes there, and it has
+order $r$; the roots of $p$ being conjugate over $k$, we may change the
+embedding of $k_0$ and the choice of $P'$ so that it is $t - \alpha$. Then $t
+- \alpha = c\, \pi'^{\,r} (1 + \dots)$ with $c \in \kbar^*$. Since $\kbar$ is
+algebraically closed of characteristic $0$, the series $c\,(1 + \dots)$ has an
+$r$-th root $\epsilon \in \kbar[[\pi']]$ with nonzero constant term, and $\pi
+= \epsilon\, \pi'$ is a uniformising parameter with $\pi^r = t - \alpha$.
+Rewriting series in $\pi'$ as series in $\pi$ does not change orders. The
+infinite case is the same with $1/t$ in place of $t - \alpha$.
+\end{proof}
+
+For $k = \C$ this is the classical theorem that the branches of an algebraic
+function at a point fall into cycles, each expanded in powers of $(x -
+a)^{1/r}$~\cite[\S13]{bliss1933}. The next statement is the classical count
+of those branches.
+
+\begin{theorem}\label{thm:puiseux-embeddings}\standing{proved}{}
+Let $k$ be algebraically closed, $x_0 \in k$, and let $P_1, \dots, P_s$ be the
+places of $E$ over $t - x_0$, with ramification indices $r_1, \dots, r_s$ and
+embeddings $\sigma_i : E \to k((\pi_i))$ as in Theorem~\ref{thm:puiseux},
+$\pi_i^{r_i} = t - x_0$. Let $\Omega$ be the field of Puiseux series in $t -
+x_0$ over $k$, the union of the fields $k(((t - x_0)^{1/N}))$, in which each
+$k((\pi_i))$ is embedded by $\pi_i \mapsto (t - x_0)^{1/r_i}$. Then the $n$
+embeddings of $E$ in $\Omega$ over $k(t)$ are the
+\[
+  \sigma_{i, \zeta} : f \longmapsto \sigma_i(f)(\zeta \pi_i),
+  \qquad 1 \le i \le s, \quad \zeta^{r_i} = 1 .
+\]
+If $b \in E$ has no pole at $P_i$, each $\sigma_{i,\zeta}(b)$ is a series
+without negative exponents and with constant term $b(P_i)$. Consequently, if
+$b$ has no pole at any $P_i$, its characteristic polynomial has coefficients
+without pole at $x_0$, and
+\[
+  N_{E(Z)/k(t)(Z)}(Z - b)\, \big|_{t = x_0} = \prod_{i=1}^s \bigl( Z - b(P_i) \bigr)^{r_i} .
+\]
+\end{theorem}
+
+\begin{proof}
+Each $\sigma_{i,\zeta}$ is an embedding over $k(t)$, because $\zeta^{r_i} = 1$
+leaves $\pi_i^{r_i}$ fixed. Embeddings with different $i$ are different,
+because they induce different valuations on $E$. Embeddings with the same
+$i$ and different $\zeta$ are different: the substitution $\pi_i \mapsto
+\zeta \pi_i$ is continuous on $k((\pi_i))$, so if it fixed the image of $E$
+it would fix its closure, which is all of $k((\pi_i))$, and that forces
+$\zeta = 1$. This gives $\sum_i r_i$ embeddings, and $\sum_i r_i = n$ by
+Theorem~\ref{thm:places}(i); a separable extension of degree $n$ has exactly
+$n$ embeddings over the base in a given algebraically closed field, and
+$\Omega$ is algebraically closed, or simply contains the $n$ we have found.
+The remaining statements follow because the characteristic polynomial of $b$
+is the product of $Z - \sigma(b)$ over the $n$ embeddings.
+\end{proof}
+
+\section{Differentials}\label{sec:ff-differentials}
+
+In this section $k$ is algebraically closed. A \emph{differential} of $E$ is
+an expression $f\,dt$ with $f \in E$; for $u \in E$ we put $du = (Du)\,dt$,
+where $D$ is the derivation of $E$ extending $d/dt$, so that every
+differential can also be written $g\,du$ for any $u \notin k$
+\cite[\S4.3]{stichtenoth2009}. At a place $P$ with uniformising parameter
+$\pi$, write $f\,dt = (f\, dt/d\pi)\,d\pi$, where $dt/d\pi$ is the derivative
+of the Laurent series of $t$. The \emph{order} of $f\,dt$ at $P$ is the order
+of the series $f\,dt/d\pi$, and the \emph{residue} is its coefficient of
+$\pi^{-1}$. Neither depends on the choice of
+$\pi$~\cite[Theorem~4.3.2 and Remark~4.3.7]{stichtenoth2009}. With $\pi$ as
+in Theorem~\ref{thm:puiseux}, $dt/d\pi$ is $r \pi^{r-1}$ at a finite place
+and $-r \pi^{-r-1}$ at an infinite one, which gives~\eqref{eq:order-dx}.
+
+The four facts used throughout Part~II are these.
+\begin{enumerate}[label=\textup{(D\arabic*)}]
+\item If $\ord{P}(u) \ne 0$ then $\ord{P}(du) = \ord{P}(u) - 1$; if
+  $\ord{P}(u) \ge 0$ then $\ord{P}(du) \ge 0$; and $\residue_P(du) = 0$.
+\item For $u \ne 0$, $\ord{P}(du/u) \ge -1$ and $\residue_P(du/u) =
+  \ord{P}(u)$.
+\item An element of $E$ without poles is in $k$; every $u \in E^*$ has
+  finitely many zeros and poles; and its divisor is $0$ only if $u \in k$.
+\item A differential has finitely many poles, and the sum of its residues is
+  zero.
+\end{enumerate}
+
+\begin{theorem}\label{thm:differentials}\standing{proved}{}
+\textup{(D1)}--\textup{(D4)} hold.
+\end{theorem}
+
+\begin{proof}
+(D1) and (D2): let $u = \sum_{i \ge j} c_i \pi^i$ with $c_j \ne 0$. Then
+$du/d\pi = \sum_{i \ge j} i\, c_i \pi^{i-1}$ has no term in $\pi^{-1}$, has
+order $j - 1$ if $j \ne 0$, and is a power series if $j \ge 0$. And $u = \pi^j
+u_0$ with $u_0$ a unit of $k[[\pi]]$, so $du/u = j\, d\pi/\pi + du_0/u_0$,
+where the last term has no pole. (D3) is
+\cite[Corollaries~1.1.20 and~1.3.4]{stichtenoth2009}: an element that is
+not algebraic over $k$ has a pole, and $k$ is algebraically closed. (D4) is
+the residue theorem~\cite[Corollary~4.3.3]{stichtenoth2009}.
+\end{proof}
+
+\section{Divisors and the Riemann--Roch theorem}\label{sec:ff-rr}
+
+Again $k$ is algebraically closed. A \emph{divisor} of $E$ is a formal sum $A
+= \sum_P n_P P$ over the places, with integer coefficients almost all zero;
+its \emph{degree} is $\sum_P n_P$, and $A \ge B$ means that every coefficient
+of $A - B$ is nonnegative. The divisor of $u \in E^*$ is $(u) = \sum_P
+\ord{P}(u) P$, and such divisors are called \emph{principal}. For a divisor
+$A$,
+\[
+  \LL(A) = \{ u \in E^* : (u) + A \ge 0 \} \cup \{0\}
+\]
+is the space of functions whose poles are no worse than $A$ allows; it is a
+vector space over $k$ of finite dimension $\ell(A)$.
+
+\begin{theorem}\label{thm:riemann-roch}\standing{cited}{\cite[Theorems~1.4.11, 1.5.15 and~1.5.17, Corollaries~1.4.12 and~1.5.16, Remark~4.3.7]{stichtenoth2009}}
+There is an integer $g \ge 0$, the \emph{genus} of $E$, such that:
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item Every principal divisor has degree $0$; more precisely, a nonconstant
+  $u$ has exactly $[E : k(u)]$ zeros and as many poles, counted with
+  multiplicity.
+\item \textup{(Riemann--Roch)} $\ell(A) = \deg(A) + 1 - g + \ell(W - A)$ for
+  every divisor $A$, where $W$ is the divisor of any nonzero differential,
+  and $\deg(W) = 2g - 2$.
+\item If $\deg(A) \ge 2g - 1$ then $\ell(A) = \deg(A) + 1 - g$.
+\item A divisor $A$ of degree $0$ is principal if and only if $\ell(A) = 1$,
+  and otherwise $\ell(A) = 0$.
+\item The differentials of the first kind, together with $0$, form a vector
+  space over $k$ of dimension $g$.
+\end{enumerate}
+\end{theorem}
+
+\begin{corollary}\label{cor:rr-consequences}\standing{proved}{}
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item If $g = 0$, every divisor of degree $0$ is principal, and there are no
+  differentials of the first kind.
+\item If $g \ge 1$, no function has a single simple pole and no other pole;
+  equivalently, $P - Q$ is not principal for places $P \ne Q$.
+\item If $g = 1$, then $\ell(A) = \deg(A)$ for every divisor of positive
+  degree.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+(i) and~(iii) are Theorem~\ref{thm:riemann-roch}(iii), (iv) and~(v). (ii) A
+function $u$ with a single simple pole has $[E : k(u)] = 1$ by
+Theorem~\ref{thm:riemann-roch}(i), so $E = k(u)$ is a rational function
+field, whose genus is $0$.
+\end{proof}
+
+The genus of the curves that serve as examples is as follows
+\cite[Propositions~6.1.3 and~6.2.3]{stichtenoth2009}: for $y^2 = p(x)$ with
+$p$ squarefree of degree $m$, the genus is $1$ if $m = 3$, and it is
+$(m - 1)/2$ or $(m - 2)/2$, whichever is an integer, if $m > 4$. So $y^2 = 1 -
+x^3$ has genus $1$ and $y^2 = x^8 + 1$ has genus $3$. In general the genus is
+computed from an integral basis (Chapter~\ref{ch:integral-bases}), and that
+computation gives genus $1$ for $m = 4$ and genus $0$ for $m \le 2$.
+
+When $k$ is not algebraically closed, we apply all of this to $E_{\kbar}$.
+By Theorem~\ref{thm:constant-extension} the genus is the same.
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Find the places of $\C(x)[y]/(y^2 - x^3)$ over $x = 0$ and at infinity, with
+their ramification indices, and a uniformising parameter at each.
+\end{exercise}
+
+\begin{exercise}
+Let $y^2 = 1 - x^3$. Use Theorem~\ref{thm:puiseux-embeddings} to compute the
+characteristic polynomial of $y/x$ at $x_0 = 1$, and compare with the direct
+computation.
+\end{exercise}
+
+\begin{exercise}
+Deduce from Theorem~\ref{thm:riemann-roch}(ii) that the divisor of a
+differential of the first kind has degree $2g - 2$, and verify this for
+$dx/y$ on $y^2 = 1 - x^3$ and on $y^2 = x^5 + 1$.
+\end{exercise}

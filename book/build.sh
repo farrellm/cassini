@@ -31,11 +31,19 @@ run_tex() {
   fi
 }
 
-run_tex
 # bibtex resolves the \@input lines of the .aux relative to its working directory.
-if grep -q '\\citation' "$out"/*.aux "$out"/*/*.aux; then
-  (cd "$out" && BIBINPUTS=..: BSTINPUTS=..: bibtex -terse "$job")
-fi
+run_bibtex() {
+  if grep -q '\\citation' "$out"/*.aux "$out"/*/*.aux; then
+    (cd "$out" && BIBINPUTS=..: BSTINPUTS=..: bibtex -terse "$job")
+  fi
+}
+
+run_tex
+run_bibtex
+# A citation inside a \standing mark first appears when Appendix D prints it,
+# one pass late, so bibtex has to see the .aux of the second pass as well.
+run_tex
+run_bibtex
 if [[ -s "$out/$job.idx" ]]; then
   makeindex -q -o "$out/$job.ind" "$out/$job.idx"
 fi

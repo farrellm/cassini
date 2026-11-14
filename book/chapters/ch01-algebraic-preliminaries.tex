@@ -1,3 +1,217 @@
 \chapter{Algebraic Preliminaries}\label{ch:preliminaries}
 
-\unwritten
+This chapter collects the commutative algebra that the integration algorithm
+uses: integral elements, the discriminant of a basis, the fact that the
+integral closure is a finitely generated module, and row reduction of matrices
+over a polynomial ring. It is the counterpart of \VolI{Chapter~1}, and like the
+rest of Part~I it contains only what Parts~II and~III call on.
+
+Throughout, $k$ is a field of characteristic $0$, $t$ is transcendental over
+$k$, and $E$ is a finite algebraic extension of $k(t)$ of degree $n$. When $k$
+is a field of constants $K$ and $t = x$, this is the setting of Part~II; the
+general case is needed in Chapter~\ref{ch:hermite} and Part~III. We write
+$\operatorname{Tr}$ and $N$ for the trace and norm from $E$ to $k(t)$.
+
+\section{Integral elements}\label{sec:prelim-integral}
+
+An element $\alpha \in E$ is \emph{integral over $k[t]$} if $p(\alpha) = 0$ for
+some monic $p \in k[t][Z]$. The set of such elements is the \emph{integral
+closure} of $k[t]$ in $E$, written $\OO$.
+
+\begin{proposition}\label{prop:integral-basics}\standing{cited}{\cite[Proposition~3.3.1, Theorem~3.3.4(a)]{stichtenoth2009}}
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item $\OO$ is a subring of $E$ containing $k[t]$, and $\OO \cap k(t) = k[t]$.
+\item $\alpha \in E$ is integral over $k[t]$ if and only if its minimal
+  polynomial over $k(t)$ has coefficients in $k[t]$. Consequently, if $\alpha
+  \in \OO$ then $\operatorname{Tr}(\alpha)$ and $N(\alpha)$ are in $k[t]$.
+\item For every $\alpha \in E$ there is a nonzero $a \in k[t]$ with $a \alpha
+  \in \OO$. Consequently $E$ has bases over $k(t)$ consisting of integral
+  elements.
+\end{enumerate}
+\end{proposition}
+
+Part~(iii) is constructive. If $\sum_{i=0}^m a_i \alpha^i = 0$ with $a_i \in
+k[t]$ and $a_m \ne 0$, then multiplying by $a_m^{m-1}$ shows that $a_m \alpha$
+is a root of the monic polynomial $Z^m + \sum_{i<m} a_i a_m^{m-1-i} Z^i$. In
+particular $E = k(t)(y)$ for some $y \in \OO$, by the primitive element
+theorem, and then $E = k(t)[y]/(F)$ with $F \in k[t][y]$ monic and irreducible
+of degree $n$, and $(1, y, \dots, y^{n-1})$ is a basis of integral elements.
+We call such a $y$ an \emph{integral primitive element}.
+
+For a basis $w = (w_1, \dots, w_n)$ of $E$ over $k(t)$ we write $\OO_w = k[t]
+w_1 + \dots + k[t] w_n$, as in Chapter~\ref{ch:hermite}.
+
+\section{The discriminant}\label{sec:prelim-disc}
+
+\begin{definition}\label{def:disc}
+The \emph{discriminant} of a basis $w$ of $E$ over $k(t)$ is
+\[
+  \disc(w) = \det\bigl( \operatorname{Tr}(w_i w_j) \bigr)_{1 \le i, j \le n}
+  \in k(t) .
+\]
+\end{definition}
+
+\begin{lemma}\label{lem:disc}\standing{proved}{}
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item $\disc(w) \ne 0$.
+\item If $w$ and $v$ are bases and $w_i = \sum_j A_{ij} v_j$ with $A_{ij} \in
+  k(t)$, then $\disc(w) = \det(A)^2 \disc(v)$.
+\item If $w_i \in \OO$ for each $i$, then $\disc(w) \in k[t]$.
+\item If $y$ is an integral primitive element with minimal polynomial $F$,
+  then $\disc(1, y, \dots, y^{n-1})$ is the discriminant of $F$ with respect
+  to $y$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(ii) The matrix of traces of $w$ is $A\, T\, A^{\mathsf T}$, where $T$ is the
+matrix of traces of $v$. (iii) follows from
+Proposition~\ref{prop:integral-basics}(i) and~(ii). (iv) Let $y_1, \dots, y_n$
+be the roots of $F$ in an algebraic closure. The matrix of traces of the
+powers of $y$ is $V^{\mathsf T} V$ with $V = (y_j^{i-1})$ the Vandermonde
+matrix, whose determinant squared is $\prod_{i<j} (y_i - y_j)^2$. (i) By~(ii)
+it is enough to treat one basis, and for the basis of~(iv) the discriminant
+is not zero because $F$, being irreducible in characteristic $0$, has
+distinct roots.
+\end{proof}
+
+\section{The integral closure is finitely generated}\label{sec:prelim-fg}
+
+\begin{theorem}\label{thm:closure-fg}\standing{proved}{}
+Let $w$ be a basis of $E$ over $k(t)$ with $w_i \in \OO$ for each $i$. Then
+\[
+  \OO_w \subseteq \OO \subseteq \frac{1}{\disc(w)}\, \OO_w .
+\]
+Consequently $\OO$ is a free $k[t]$-module of rank $n$; every ascending chain
+of $k[t]$-submodules of $\OO$ is stationary; and $E$ has an integral basis,
+that is, a basis $w$ with $\OO_w = \OO$.
+\end{theorem}
+
+\begin{proof}
+Let $\alpha = \sum_i c_i w_i \in \OO$ with $c_i \in k(t)$. For each $j$,
+$\alpha w_j \in \OO$, so
+\[
+  \sum_i c_i \operatorname{Tr}(w_i w_j) = \operatorname{Tr}(\alpha w_j) \in k[t] .
+\]
+This is a linear system for the $c_i$ whose matrix has entries in $k[t]$ and
+determinant $\disc(w) \ne 0$; by Cramer's rule $\disc(w)\, c_i \in k[t]$.
+
+So $\OO$ is a submodule of a free module of rank $n$ over the principal ideal
+domain $k[t]$, hence free of rank at most $n$, and of rank exactly $n$ because
+it contains $\OO_w$. A finitely generated module over a Noetherian ring is
+Noetherian, which gives the statement about chains; and a basis of the free
+module $\OO$ is an integral basis.
+\end{proof}
+
+\begin{corollary}\label{cor:disc-drops}\standing{proved}{}
+Let $w$ and $\bar w$ be bases of $E$ over $k(t)$ with $\OO_w \subsetneq
+\OO_{\bar w} \subseteq \OO$. Then $\disc(w) = p^2 \disc(\bar w)$ for some $p
+\in k[t]$ of positive degree. In particular, a basis $w$ of integral elements
+whose discriminant is squarefree is an integral basis, and from any basis $w$
+of integral elements at most $\frac12 \deg(\disc(w))$ successive strict
+enlargements are possible.
+\end{corollary}
+
+\begin{proof}
+Write $w_i = \sum_j A_{ij} \bar w_j$. The $A_{ij}$ are in $k[t]$ because $\OO_w
+\subseteq \OO_{\bar w}$, and $p = \det(A)$ is not a unit of $k[t]$ because the
+inclusion is strict: otherwise $A^{-1}$ would have entries in $k[t]$. Apply
+Lemma~\ref{lem:disc}(ii) and~(iii).
+\end{proof}
+
+The proof of Theorem~\ref{thm:closure-fg} shows existence and gives no
+method. Chapter~\ref{ch:integral-bases} computes an integral basis, and
+Chapter~\ref{ch:hermite} shows how far one can go without one.
+
+\section{Row reduction over \texorpdfstring{$k[t]$}{k[t]}}\label{sec:prelim-hermite}
+
+Submodules of $k[t]^n$ are handled through matrices whose rows generate
+them. Two matrices with the same number of columns have the same row module
+if one is obtained from the other by a sequence of \emph{elementary row
+operations} over $k[t]$: exchanging two rows, multiplying a row by a nonzero
+element of $k$, and adding a multiple of one row by an element of $k[t]$ to
+another.
+
+\begin{algo}{RowReduce}{M}{Hermitian row reduction}
+\Spec{Given a matrix $M$ over $k[t]$ with $r$ rows and $n \le r$ columns, of
+rank $n$, return a matrix with the same row module whose first $n$ rows are
+upper triangular with nonzero diagonal and whose last $r - n$ rows are zero.}
+\For{$j \gets 1$ \textbf{to} $n$}
+  \Repeat
+    \State $l \gets$ an index in $j, \dots, r$ with $M_{lj} \ne 0$ and $\deg(M_{lj})$ least
+    \State exchange rows $j$ and $l$
+    \For{$i \gets j + 1$ \textbf{to} $r$}
+      \State $q \gets$ the quotient of $M_{ij}$ by $M_{jj}$
+      \State row $i \gets$ row $i$ $-$ $q \cdot$ row $j$
+    \EndFor
+  \Until{$M_{ij} = 0$ for $j < i \le r$}
+\EndFor
+\State \Return $M$
+\end{algo}
+
+This is the procedure of~\cite[\S2.1.1]{trager1984}. Each pass of the inner
+loop replaces the entries below the pivot by remainders of smaller degree, so
+the least degree in column $j$ strictly decreases until those entries vanish;
+since the rank is $n$, column $j$ has a nonzero entry in rows $j, \dots, r$
+at each stage. The result is called a \emph{Hermite normal form} of $M$ once
+the entries above each pivot are also reduced modulo the pivot and the pivots
+are made monic; we shall not need that uniqueness.
+
+\begin{example}
+For the matrix of Example~\ref{ex:fail-extend},
+\[
+  \begin{pmatrix}
+    x & 0 & 0 & 0 \\ 0 & x & 0 & 0 \\ 0 & 0 & x & 0 \\ 0 & 0 & 0 & x \\
+    0 & 0 & -2x & x + 1
+  \end{pmatrix}
+  \longrightarrow
+  \begin{pmatrix}
+    x & 0 & 0 & 0 \\ 0 & x & 0 & 0 \\ 0 & 0 & x & 0 \\ 0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+  \end{pmatrix} .
+\]
+Columns $1$ and $2$ need nothing. In column $3$ the pivot is $x$ and row $5$
+becomes $(0, 0, 0, x + 1)$. In column $4$ the entries are $x$ and $x + 1$:
+subtracting row $4$ from row $5$ leaves $1$, which becomes the pivot and
+clears the other.
+\end{example}
+
+Two uses recur. To find a basis of a module given by more than $n$
+generators in $\OO_w$, reduce the matrix of their coordinates and keep the
+nonzero rows; this is \seealg{ExtendBasis}. And to find all $u \in k(t)^n$
+with $M u \in k[t]^r$ for a given $r \times n$ matrix $M$ of rank $n$, reduce
+$M$ to $\binom{\tilde M}{0}$ with $\tilde M$ square: the solutions are the
+combinations with coefficients in $k[t]$ of the columns of $\tilde M^{-1}$.
+
+\section{Norms and resultants}\label{sec:prelim-resultants}
+
+Resultants are defined in \VolI{\S1.4}. We use one fact. Let $y$ be an
+integral primitive element with minimal polynomial $F$, monic of degree $n$,
+and let $b = G(y)/c$ with $G \in k[t][y]$ and $c \in k[t] \setminus \{0\}$.
+Then for an indeterminate $Z$,
+\begin{equation}\label{eq:norm-resultant}
+  \resultant_y\bigl( F,\; Z c - G \bigr) = c^n\, N_{E(Z)/k(t)(Z)}(Z - b) ,
+\end{equation}
+because the resultant of the monic polynomial $F$ with another polynomial is
+the product of the values of that polynomial at the roots of $F$, and the
+norm is the product over the conjugates. The right side, divided by $c^n$, is
+the \emph{characteristic polynomial} of $b$; its coefficients are in $k(t)$,
+and in $k[t]$ if $b \in \OO$.
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Compute the discriminant of the basis $(1, y)$ of $k(x)[y]/(y^2 - p)$, and
+deduce that $(1, y)$ is an integral basis when $p$ is squarefree.
+\end{exercise}
+
+\begin{exercise}
+Let $y^2 = x^3$. Show that $\OO_{(1, y)} \subsetneq \OO$, find an integral
+basis, and verify Corollary~\ref{cor:disc-drops} for the two bases.
+\end{exercise}
+
+\begin{exercise}
+Show that the row module of a matrix over $k[t]$ is unchanged by elementary
+row operations, and that \seealg{RowReduce} terminates.
+\end{exercise}
