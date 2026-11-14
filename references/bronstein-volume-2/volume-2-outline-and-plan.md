@@ -11,8 +11,8 @@ holds Risch's 1968 report in revised form and Trager's thesis typeset, which cha
 chs. 14–15 and removes the worst of the reading risk in §5. Phase 0 was done the same day: the
 skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. Phase 1, chapter 7, was drafted
 the same day. The project owner then waived the reading gate, and phase 2 (chs. 6, 8, 9, 12) was
-drafted on 2026-11-14, and phase 3 (chs. 1–5) after it the same day. None of the ten chapters has
-been read by the owner.
+drafted on 2026-11-14, and phases 3 (chs. 1–5) and 4 (chs. 10–11) after it the same day. None of
+the twelve chapters has been read by the owner.
 
 ## 1. What this book is, and is not
 
@@ -242,7 +242,7 @@ The chapters cite proofs where the estimate assumed they would be reproduced.
 | 1 | **Prototype: ch. 7, the Hermite reduction.** Self-contained, best-sourced (tutorial, Trager §4.2, RR-3562), and it uses every element of the format — theorem with proof, pseudocode, a failing example, a worked example. | One finished chapter, about 20 pages. | The owner has read it and the conventions of §4 are confirmed or changed. Nothing else is written before this. **Drafted 2026-11-13, 17 pages; not yet read.** |
 | 2 | **The core of Part II:** chs. 6, 8, 9, in that order, then ch. 12 for the simple radical case, which makes chs. 7–9 concrete. | A readable account of Trager's algorithm less the torsion test. | The running examples go through end to end, in this sense: ch. 9 finds a principal multiple of a divisor by trying multiples in turn, which settles `∫ dx/(x√(1 − x³))`, and `∫ x dx/√(1 − x³)` is settled without any divisor. What phase 2 cannot do is stop the search when no multiple is principal; that bound is ch. 10. **Drafted 2026-11-14: both running examples go through, and a third (`∫ dx/√(1 − x³)`) is settled in ch. 6.** |
 | 3 | **Part I, back-filled.** Chs. 1–5 written to supply exactly what chs. 6–9 and 12 used, no more. Writing them first would produce a textbook on function fields that the later chapters do not need. | Part I. | Every forward reference from Part II resolves. **Drafted 2026-11-14, 26 pages against the 110 estimated: the rule held. Chs. 6–9 and 12 now cite numbered results of chs. 1–5.** |
-| 4 | Chs. 10 and 11. Ch. 10 needs a close reading of Trager ch. 6 and Davenport chs. 5–8 from page images. | Part II complete. | — |
+| 4 | Chs. 10 and 11. Ch. 10 needs a close reading of Trager ch. 6 and Davenport chs. 5–8 from page images. | Part II complete. | — **Drafted 2026-11-14. Ch. 10 cites the good-reduction theorems and does not prove them; its parameter case is a summary.** |
 | 5 | **Part III**, chs. 13–16 in order. Begins with a full read of Risch's revised report and of Bronstein 1990 from page images, with a notation concordance (Appendix C) made as it is read. | Part III. | Each **C** chapter states its limits explicitly. |
 | 6 | Ch. 17, appendices, preface, index, exercises. A pass for notation consistency and a rebuild-and-recheck of every worked example. | The book. | — |
 

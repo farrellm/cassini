@@ -1,3 +1,253 @@
 \chapter{Genus Zero}\label{ch:genus-zero}
 
-\unwritten
+When the curve has genus $0$, none of the difficulties of
+Chapters~\ref{ch:algebraic-part} to~\ref{ch:finite-order} arise. The function
+field is, after at most a quadratic extension of the constants, a field of
+rational functions $K(u)$ in a single parameter $u$; an algebraic integrand
+becomes a rational function of $u$; and Volume~I integrates it. Every such
+integral is elementary. This is the case that most integrands with a square
+root of a quadratic fall into, and the classical substitutions for them are
+instances of it.
+
+The chapter shows how to recognise genus $0$, how to compute a parameter
+with the tools of Chapters~\ref{ch:integral-bases} and~\ref{ch:divisors},
+and how the general algorithm degenerates. The setting is that of Part~II.
+
+\section{Riemann--Roch spaces}\label{sec:g0-rr}
+
+The principality test of Theorem~\ref{thm:principal} computes more than it
+was asked for.
+
+\begin{proposition}\label{prop:rr-space}\standing{proved}{}
+Let $A$ be a finite divisor defined over $K$, and let $b = (b_1, \dots,
+b_n)$ be a $K[x]$-basis of the fractional ideal $I(-A)$ that is normal at
+infinity, with $\tau_i$ as in~\eqref{eq:tau}. Then the elements of $E$ in
+$\LL(A)$ are
+\[
+  \Bigl\{ \sum_{i=1}^n p_i b_i : p_i \in K[x],\ p_i = 0 \text{ or } \deg(p_i) \le -\tau_i \Bigr\} ,
+\]
+a vector space over $K$ of dimension $\sum_{\tau_i \le 0} (1 - \tau_i)$, with
+basis the $x^j b_i$ for $0 \le j \le -\tau_i$.
+\end{proposition}
+
+\begin{proof}
+An element $u \in E$ is in $\LL(A)$ when $\ord{P}(u) \ge -n_P$ at the finite
+places, that is, $u \in I(-A)$, and $u$ has no pole at infinity, $A$ having no
+infinite place in its support. Write $u = \sum_i p_i b_i$ with $p_i \in K[x]$
+and apply Lemma~\ref{lem:termwise}.
+\end{proof}
+
+For a divisor with support at infinity one first multiplies by a power of
+$x$; the general case is Hess's~\cite{hess2002}. With $A = 0$ the proposition
+recovers the constants, and with $\deg(A) = 0$ it is
+Theorem~\ref{thm:principal}.
+
+\section{Recognising genus zero and finding a parameter}\label{sec:g0-parameter}
+
+By Corollary~\ref{cor:genus-tau}, if $w$ is an integral basis normal at
+infinity then
+\[
+  g = 0 \iff \tau_1 + \dots + \tau_n = n - 1 .
+\]
+For $y^2 = p(x)$ with $p$ squarefree this is $\lceil \deg(p)/2 \rceil = 1$:
+the conics.
+
+\begin{theorem}\label{thm:g0-parameter}\standing{proved}{}
+Let $E$ have genus $0$, and suppose that $E$ has a place $P$ of degree $1$.
+Then $\ell(P) = 2$, and for any $u \in \LL(P) \setminus K$ we have $E =
+K(u)$.
+\end{theorem}
+
+\begin{proof}
+By Theorem~\ref{thm:riemann-roch}(iii), $\ell(P) = \deg(P) + 1 - g = 2$, the
+dimension being the same over $K$ as over $\Kbar$
+\cite[Theorem~3.6.3(d)]{stichtenoth2009}. A nonconstant $u \in \LL(P)$ has
+exactly one pole, a simple one at $P$, so $[E : K(u)] = 1$ by
+Theorem~\ref{thm:riemann-roch}(i). This is
+\cite[Proposition~1.6.3]{stichtenoth2009}.
+\end{proof}
+
+A finite place of degree $1$ is a point $(x_0, y_0)$ of the curve with
+coordinates in $K$ at which there is a single place; it is given by the ideal
+$\OO (x - x_0) + \OO (y - y_0)$ when the point is nonsingular.
+Proposition~\ref{prop:rr-space} with $A = P$ then gives $u$.
+
+\begin{algo}{RationalParameter}{P}{a parameter on a curve of genus zero}
+\Spec{Given a finite place $P$ of degree $1$ of a function field $E$ of
+genus $0$, return $u$ with $E = K(u)$ and the rational functions $X, Y$ with
+$x = X(u)$, $y = Y(u)$.}
+\State $I \gets$ a $K[x]$-basis of the inverse of the ideal of $P$ \Comment{Section~\ref{sec:ib-criterion}}
+\State $(b, \tau) \gets \alg{NormalizeAtInfinity}(I, v)$ \Comment{$v$ a local integral basis at infinity}
+\State $u \gets$ an element of the space of Proposition~\ref{prop:rr-space} not in $K$
+\State $(X, Y) \gets$ the solution of $F(x, y) = 0$, $u = u(x, y)$ for $x$ and $y$ as rational functions of $u$
+\State \Return $(u, X, Y)$
+\end{algo}
+
+The last step is elimination: $x$ and $y$ are elements of $E = K(u)$, and
+each is the root of a polynomial of degree $1$ over $K(u)$ obtained from a
+resultant.
+
+\begin{example}\label{ex:g0-conic}
+Let $E = \Q(x)[y]/(y^2 - x^2 - 1)$. The integral basis $(1, y)$ has $\tau =
+(0, 1)$, so $g = 0 + 1 - 2 + 1 = 0$. Take $P = (0, 1)$, and let $P' = (0,
+-1)$. Since $(x) = P + P' - \infty_1 - \infty_2$, the inverse of the ideal of
+$P$ is $x^{-1}$ times the ideal of $P'$, which consists of the $a + b\,y$ with
+$a(0) = b(0)$ and has basis $(x, y + 1)$. So
+\[
+  b = \Bigl( 1,\; \frac{y + 1}{x} \Bigr),
+  \qquad M = \begin{pmatrix} 1 & 0 \\ 1/x & 1 \end{pmatrix}
+\]
+with respect to the local integral basis $v = (1, y/x)$ at infinity. Here
+$\kappa = (0, 0)$ and $N$ is the identity, so $b$ is normal at infinity with
+$\tau = (0, 0)$, and $\LL(P)$ has basis $1$ and
+\[
+  u = \frac{y + 1}{x} .
+\]
+Substituting $y = u x - 1$ in $y^2 = x^2 + 1$ gives $x\,(u^2 - 1) = 2u$, so
+\[
+  x = \frac{2u}{u^2 - 1}, \qquad y = \frac{u^2 + 1}{u^2 - 1} .
+\]
+Geometrically, $u$ is the slope of the line through $P'$ and the point $(x,
+y)$.
+\end{example}
+
+\paragraph{When no rational point is known.} A curve of genus $0$ over $K$
+need not have a point with coordinates in $K$: $x^2 + y^2 = -1$ over $\Q$
+has none. Van Hoeij~\cite{vanhoeij1997} avoids choosing a point. He takes
+for $A$ the negative of a canonical divisor, which is defined over $K$ and
+has degree $2$; then $\ell(A) = 3$, and a basis $(g_1, g_2, g_3)$ of $\LL(A)$,
+computed from an integral basis, maps the curve bijectively onto a conic. A
+conic has a point over an extension of $K$ of degree at most $2$, found by
+intersecting it with a line, and a point gives a parametrisation. When the
+degree of the curve is odd, or any divisor of odd degree defined over $K$ is
+known, he constructs a rational point on the conic, and the parametrisation
+needs no extension of $K$ at all. We have read the abstract and introduction
+of his paper and have not reproduced the algorithm. The book of Sendra,
+Winkler and P\'erez-D\'iaz~\cite{sendra2008} treats the same problem by
+adjoint curves; of it we have read only the table of contents.
+
+\section{Integration}\label{sec:g0-integration}
+
+\begin{theorem}\label{thm:g0-integration}\standing{proved}{}
+Let $E$ have genus $0$, and let $E_L = L(u)$ for an algebraic extension $L$
+of $K$ and a parameter $u$, with $x = X(u)$. Then for $f \in E$, written as a
+rational function $\phi(u)$ of $u$,
+\[
+  \int f\,dx = \int \phi(u)\, X'(u)\, du ,
+\]
+which is the integral of a rational function. In particular every $f \in E$
+has an elementary integral.
+\end{theorem}
+
+\begin{proof}
+$dx = X'(u)\,du$, and a rational function has an elementary integral
+\VolI{Chapter~2}.
+\end{proof}
+
+\begin{algo}{IntegrateGenusZero}{f}{integration on a curve of genus zero}
+\Spec{Given $f \in E$, where $E$ has genus $0$, return an elementary integral
+of $f$.}
+\State $(u, X, Y) \gets$ a parameter of $E$, over an extension of $K$ of degree at most $2$
+\State $\phi \gets f(X(u), Y(u)) \cdot X'(u)$
+\State $G \gets \alg{IntegrateRationalFunction}(\phi)$ \Comment{Volume~I, \S2.5}
+\State \Return $G$ with $u$ replaced by $u(x, y)$
+\end{algo}
+
+Seen from the general algorithm, genus $0$ is the case in which every
+residue divisor is principal with $n_j = 1$ and there are no differentials of
+the first kind, so that \seealg{LogarithmicPart} cannot fail
+(Section~\ref{sec:log-divisors}). The parametrisation does the same work
+without ideals, and it is what an implementation should use: Axiom's
+integrator, for one, has a separate package for curves of genus $0$.
+
+\begin{example}\label{ex:g0-sqrt2}
+We integrate again the function of Example~\ref{ex:log-sqrt2},
+\[
+  \int \frac{dx}{(x - 1)\sqrt{x^2 + 1}} .
+\]
+With the parameter of Example~\ref{ex:g0-conic},
+\[
+  x - 1 = -\frac{u^2 - 2u - 1}{u^2 - 1}, \qquad
+  \frac{dx}{y} = -\frac{2\,du}{u^2 - 1} ,
+\]
+so the integral is
+\[
+  \int \frac{2\,du}{u^2 - 2u - 1}
+  = \frac{1}{\sqrt2} \log \frac{u - 1 - \sqrt2}{u - 1 + \sqrt2},
+  \qquad u = \frac{\sqrt{x^2 + 1} + 1}{x} .
+\]
+The Rothstein--Trager resultant of $2/(u^2 - 2u - 1)$ is, up to a constant,
+$2Z^2 - 1$, the residue polynomial found in Example~\ref{ex:log-sqrt2}. The
+two answers differ by a constant.
+\end{example}
+
+\section{The classical substitutions}\label{sec:g0-euler}
+
+For $y^2 = a x^2 + b x + c$ the textbooks give three substitutions, named
+after Euler, that rationalise integrals of $R(x, y)$:
+\[
+  y = \pm\sqrt a\, x + u, \qquad
+  y = u\, x \pm \sqrt c, \qquad
+  y = u\,(x - x_1) ,
+\]
+the first when $a$ is a square, the second when $c$ is, and the third when
+$x_1$ is a root of the quadratic. Each is the parameter of
+Theorem~\ref{thm:g0-parameter} for a particular place $P$: in the first, $u =
+y \mp \sqrt a\, x$ has its only pole at one of the two places at infinity; in
+the second, $u = (y \mp \sqrt c)/x$ is the slope from the point $(0, \pm\sqrt
+c)$, as in Example~\ref{ex:g0-conic}; in the third, $u$ is the slope from
+the branch point $(x_1, 0)$. The three conditions are the conditions for
+those places to have degree $1$ over $K$. Over $\Kbar$ all three are always
+available; over $K$ at least one is available after an extension of degree
+at most $2$.
+
+The three integrable cases of the binomial differential
+(Theorem~\ref{thm:chebyshev}) are of the same kind. After $t = x^r$ the
+differential lives on the curve $w^N = a + b t$, or $w^N = t$, or $w^N = (a
++ b t)/t$, each of which is a line with coordinate $w$.
+
+\begin{example}\label{ex:g0-binomial}
+For $\int x^5 (1 + x^3)^{2/3}\,dx$ we have $(p + 1)/r = 2$. With $t = x^3$
+and $w = (1 + t)^{1/3}$, so that $t = w^3 - 1$ and $dt = 3w^2\,dw$,
+\[
+  \int x^5 (1 + x^3)^{2/3}\,dx = \frac13 \int t\, w^2\, dt
+  = \int (w^7 - w^4)\, dw
+  = \frac{(1 + x^3)^{8/3}}{8} - \frac{(1 + x^3)^{5/3}}{5} .
+\]
+\end{example}
+
+\begin{example}\label{ex:g0-pseudo}
+The integral of Example~\ref{ex:running-log} was found on an elliptic curve,
+but it is a binomial differential with $(p + 1)/r = 0$, and the substitution
+$t = x^3$, $w = \sqrt{1 - t}$ gives
+\[
+  \int \frac{dx}{x\sqrt{1 - x^3}} = \frac13 \int \frac{dt}{t\, w}
+  = \frac13 \int \frac{2\,dw}{w^2 - 1}
+  = \frac13 \log \frac{w - 1}{w + 1} ,
+\]
+the same answer. The differential on $y^2 = 1 - x^3$ is the pull-back of a
+differential on the conic $w^2 = 1 - t$ under $(x, y) \mapsto (x^3, y)$. This
+is the usual reason for an elliptic integral to be pseudo-elliptic, and it
+is what the heuristics of Section~\ref{sec:radical-later} look for. The
+algorithm of Chapters~\ref{ch:algebraic-part}
+to~\ref{ch:finite-order} finds the integral without finding the map.
+\end{example}
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Use \seealg{RationalParameter} with the place at $(1, 0)$ to parametrise $y^2
+= 1 - x^2$, and integrate $1/\sqrt{1 - x^2}$. Which Euler substitution is
+this?
+\end{exercise}
+
+\begin{exercise}
+Show that $y^3 = x^2 (x - 1)$ has genus $0$, using the result of the first
+exercise of Chapter~\ref{ch:radical}, and find a parameter.
+\end{exercise}
+
+\begin{exercise}
+Show that the curve $x^2 + y^2 = -1$ has genus $0$ and no place of degree $1$
+over $\Q$, and parametrise it over $\Q(i)$.
+\end{exercise}

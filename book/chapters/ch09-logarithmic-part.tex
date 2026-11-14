@@ -306,9 +306,8 @@ functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
 \State $m \gets$ a positive integer such that the residues are in $\frac1m (\Z q_1 + \dots + \Z q_k)$
 \For{$j \gets 1$ \textbf{to} $k$}
   \State $\delta_j \gets$ the residue divisor~\eqref{eq:delta}
-  \State $B \gets$ a bound for the order of $\delta_j$ \Comment{Chapter~\ref{ch:finite-order}}
-  \State $r \gets \alg{PrincipalMultiple}(I(\delta_j), B)$ \Comment{Section~\ref{sec:div-principal}}
-  \If{$r$ is ``none''} \Return ``not elementary'' \EndIf
+  \State $r \gets \alg{FiniteOrder}(\delta_j)$ \Comment{Section~\ref{sec:fo-two-primes}}
+  \If{$r$ is ``infinite''} \Return ``not elementary'' \EndIf
   \State $(n_j, u_j) \gets r$
 \EndFor
 \State $\omega \gets h - \frac1m \sum_j (q_j / n_j)\, Du_j / u_j$
@@ -318,9 +317,10 @@ functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
 
 When $R$ has no nonzero root, $k = 0$, the loop is empty and $\omega = h$: the
 algorithm returns the empty sum if $h = 0$ and ``not elementary'' otherwise.
-The correctness of the algorithm is Theorem~\ref{thm:log-part}. The search is \seealg{PrincipalMultiple}. The bound $B$ is the one
-ingredient still missing: until Chapter~\ref{ch:finite-order} supplies it,
-the search stops only when it succeeds.
+The correctness of the algorithm is Theorem~\ref{thm:log-part}. The one step that is not linear algebra is \seealg{FiniteOrder}, which
+decides whether a multiple of $\delta_j$ is principal; it is the subject of
+Chapter~\ref{ch:finite-order}, and as given there it assumes that $K$ is a
+number field.
 
 Together with Chapter~\ref{ch:algebraic-part} this gives the whole method.
 

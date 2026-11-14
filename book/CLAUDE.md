@@ -8,14 +8,11 @@ is the outline, the conventions (§4) and the phased plan (§5); read it before 
 here. Its evidence is `what-volume-2-would-have-covered.md` beside it, and the sources, with their
 per-file defects, are indexed in that directory's `CLAUDE.md`.
 
-**State: phases 1, 2 and 3 are drafted.** Chapters 1–9 and 12 are written; the project owner
-waived the plan's reading gate on 2026-11-13 and has read none of them yet. Chapters 10, 11 and
-13–17 and the appendices are a heading and the words "not yet written". Next is phase 4: chapters
-10 and 11.
-
-**What chapter 10 owes.** `LogarithmicPart` (ch. 9) calls `PrincipalMultiple` (ch. 5) with a bound
-`B` that only chapter 10 can supply. Until then the integration algorithm is complete except for
-that one number.
+**State: phases 1 to 4 are drafted; Parts I and II are complete in draft.** Chapters 1–12 are
+written; the project owner waived the plan's reading gate on 2026-11-13 and has read none of them
+yet. Chapters 13–17 and the appendices are a heading and the words "not yet written". Next is phase
+5: Part III, chapters 13–16, which begins with a full read of Risch's revised report and of
+Bronstein 1990 from page images.
 
 | Path | What it is |
 | :--- | :--- |
