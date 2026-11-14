@@ -78,18 +78,20 @@ prerequisite, kept to what later chapters use. *Sources:* Chevalley chs. I–II;
 tutorial's Example 1). Trager's algorithm: the radical of the discriminant, the idealizer, the
 iteration. van Hoeij's algorithm by Puiseux expansions. Local bases. Integrality at infinity and
 bases normal at infinity. Reading the genus off a normal integral basis. *Sources:* Trager §2.1–§2.4;
-van Hoeij 1994; tutorial §2, §2.4; Axiom `FFINTBAS`, `WFFINTBS`. **A.**
+van Hoeij 1994; tutorial §2, §2.4; Axiom `FFINTBAS`, `WFFINTBS`; Zassenhaus 1972 for the
+number-field original; de Jong 1998 and Gianni & Trager 1997 for the general criterion; Greuel et
+al. 2010 † and Böhm et al. 2013 † as pointers. **A.**
 
 **4. The constant field and absolute irreducibility.** Exact constant fields and regular
 extensions; why the integration algorithm needs `F` absolutely irreducible; absolute factorisation;
-binomial polynomials `yⁿ − a`. *Sources:* Trager ch. 3; Kaltofen 1985; Chèze & Lecerf 2007 †. **B** —
+binomial polynomials `yⁿ − a`. *Sources:* Trager ch. 3; Kaltofen 1985; Duval 1991; Chèze & Lecerf 2007 †. **B** —
 Trager's chapter is the account the integrator uses; the later papers are pointers to better methods.
 
 **5. Divisors and their arithmetic.** Divisors as pairs of fractional ideals (finite and infinite
 parts); sum, multiple, and reduction; computing `L(D)`; testing principality and producing the
 generator. Coates' algorithm as the Puiseux-series alternative. Hess's algorithm †. Hyperelliptic
 curves: Mumford representation and Cantor's arithmetic. *Sources:* Trager §5.3, §6.1, §6.3;
-Davenport ch. 3; Hess 2002; Bertrand 1995; Axiom `FDIV`, `HELLFDIV`, `RDIV`. **B.**
+Davenport ch. 3; Coates 1970; Volcheck 1994; Hess 2002; Bertrand 1995; Cantor 1987; Axiom `FDIV`, `HELLFDIV`, `RDIV`. **B.**
 
 ### Part II — Integration of algebraic functions
 
@@ -97,7 +99,8 @@ Davenport ch. 3; Hess 2002; Bertrand 1995; Axiom `FDIV`, `HELLFDIV`, `RDIV`. **B
 Hardy's conjecture that no method exists. Derivations on a function field (Volume I §3.2);
 differentials of the first, second and third kind. Liouville's theorem for algebraic functions, and
 its strong form. The shape of the answer: `∫f = v + Σ cᵢ log uᵢ`. Outline of the algorithm of chs.
-7–10. *Sources:* Hardy ch. V; Risch 1970; tutorial §2.3; Volume I §5.5; Trager §5.1. **A.**
+7–10. *Sources:* Hardy ch. V; Lützen 1990 ch. IX for the history; Risch 1970; tutorial §2.3;
+Volume I §5.5; Trager §5.1. **A.**
 
 **7. The Hermite reduction.** The canonical form `(A₁w₁ + … + Aₙwₙ)/D`. The reduction step as a
 linear system; Trager's theorem that over an integral basis it is uniquely solvable. Failure over a
@@ -121,15 +124,18 @@ Why it does not arise for rational functions. Good reduction; injectivity of tor
 reduction; the Hasse–Weil bound and the two-primes argument; Trager's computation of the exact
 order. Function fields over finite fields. Constants with transcendental parameters: Davenport's
 method, and the Masser–Zannier result as a boundary marker. Elliptic curves. *Sources:* Trager ch.
-6; Risch 1970; Davenport chs. 5–8; Weil 1948 part II §IV; Masser & Zannier 2020; Axiom `PFO`,
-`PFOQ`, `FORDER`. **B** — the good-reduction theorems are cited, not proved; the parameter case is
-**C**.
+6; Risch 1970; Davenport chs. 5–8; Weil 1948 part II §IV; Katz 1981, appendix, for injectivity of
+reduction on torsion; Serre & Tate 1968 and Shimura & Taniyama 1961 for good reduction; Zannier
+2014 and Masser & Zannier 2020 for the parameter case; Axiom `PFO`, `PFOQ`, `FORDER`. **B** — the
+good-reduction theorems are cited, not proved (Katz's two-page lemma may be short enough to
+include); the parameter case is **C**.
 
 **11. Genus zero.** Recognising genus 0; rational parametrisation; Euler's substitutions as the
 conic case; reduction to Volume I ch. 2. Chebyshev's theorem on `∫xᵖ(a + bxʳ)^q dx`. *Sources:*
 van Hoeij 1997 for parametrisation through `L(D)` and an integral basis; Chebyshev 1853; Axiom
-`INTG0`; Hardy. **B** — van Hoeij's paper fits the book's machinery; a book-length treatment
-(Sendra, Winkler & Pérez-Díaz) is not held.
+`INTG0`; Hardy; Sendra, Winkler & Pérez-Díaz 2008 chs. 3–5 for the adjoint-curve route and the
+field of parametrisation. **B** — van Hoeij's paper fits the book's machinery; the book-length
+treatment works by adjoints, so it is a cross-check and a source of examples, not the exposition.
 
 **12. Radical extensions.** `yⁿ = a`: the closed-form integral basis, already normal at infinity;
 the diagonal Hermite system. Trager's 1979 generalised Risch algorithm for unnested radicals.
@@ -144,7 +150,8 @@ Trager 1979; Bertrand 1995; Combot 2021; Blake 2020; Axiom `RADFF`. **A.**
 a differential field `k`. Places over normal and special polynomials; the order function on `E`;
 the lazy Hermite reduction in this setting (it is stated there from the start); Liouville's theorem
 and the residue criterion over a curve. The counterpart of Volume I chs. 3–4. *Sources:* Bronstein
-1990 Part 1; RR-3562; Volume I chs. 3–5. **B.**
+1990 Part 1; RR-3562; Volume I chs. 3–5; Bronstein's AAECC paper of 1990 for monomial extensions
+with algebraic steps. **B.**
 
 **14. Integration of elementary functions.** The algebraic logarithmic case and the algebraic
 exponential case. The simple radical case, where the problem decouples into a rational integration

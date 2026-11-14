@@ -9,7 +9,9 @@ moved to [`CLAUDE.md`](./CLAUDE.md) and to §4.1 of
 paper, Bertrand's paper, van Hoeij, the two EUROSAM'79 papers, Hardy, and Abramov's obituary; and
 later the same day four more, replacing files that had first arrived broken: Davenport's 1984 paper,
 Chevalley, Bliss and Stichtenoth; and then eight more — Miller's thesis, the FriCAS status page,
-Hess, Combot, Masser & Zannier, Fulton, the second Chen et al. paper, and Weil's 1948 book.
+Hess, Combot, Masser & Zannier, Fulton, the second Chen et al. paper, and Weil's 1948 book. Revised
+2026-11-13: sixteen works that Trager's 2022 commentary and other held documents cite were supplied
+and are held; [`recommended-sources.md`](./recommended-sources.md) lists the five that were not.
 
 That last delivery came with an `INDEX.md` recording where each file was found and what was tried
 for the ones that were not. Its search notes are reproduced below **as reported**; they were not
@@ -93,7 +95,7 @@ All **[cited]**. The "cited by" column is where the citation was read.
 | :--- | :--- | :--- | :--- |
 | J.H. Davenport. *Intégration formelle.* Rapport de Recherche RR375, IMAG, Grenoble, 1983. | Book ref. [32] | Unknown beyond the title. | An institutional report. Reported search: not in HAL; no scan found. |
 | A. Weil. *Courbes algébriques et variétés abéliennes.* Hermann, Paris, 1971. | Tutorial ref. [22] | The bound behind the finite-order test. | **The 1971 printing is still not held, but its content now is, as far as the citation needs it.** Both 1948 volumes are held: *Variétés abéliennes et courbes algébriques* as a scan, and *Sur les courbes algébriques et les variétés qui s'en déduisent* as a 2022 retranscription, whose part II §IV has the Riemann hypothesis the bound follows from. That the 1971 book is those two reprinted together is **[memory]** and unchecked. Low priority: only a page reference into the 1971 edition is missing. |
-| Ford and Zassenhaus, 1978, on computing the ring of integers of an algebraic number field. | van Hoeij 1994, abstract, as "[Ford,1978]"; Trager's thesis credits "Ford [20]" for the same algorithm | The number-field algorithm Trager adapted for integral bases. | Not looked for. |
+| Ford, PhD thesis, Ohio State, 1978, on computing the maximal order. | van Hoeij 1994, abstract, as "[Ford,1978]"; Trager's thesis credits "Ford [20]" for the same algorithm | The number-field algorithm Trager adapted for integral bases. | Reported search, 2026-11-13: "not digitised anywhere public". Zassenhaus's 1972 paper, which the algorithm comes from, is held. |
 
 ---
 

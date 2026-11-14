@@ -126,8 +126,10 @@ paper, and Weil's 1948 book (which is not the 1971 volume cited). Corpus now **1
 tesseract data was installed). Weil's companion volume, *Sur les courbes algébriques*, followed as
 a 2022 retranscription and resolved the tutorial's citation for the torsion bound: **136 documents /
 70 PDFs**. On 2026-11-13 Raab & Singer's 2022 volume was supplied and twelve more sources for the
-algebraic case were fetched (`bronstein-volume-2/recommended-sources.md` says why each): **149
-documents / 83 PDFs / 9 text sidecars**.
+algebraic case were fetched: **149
+documents / 83 PDFs / 9 text sidecars**. Sixteen of the sources `bronstein-volume-2/recommended-sources.md`
+then listed were supplied the same day, two of them image-only: **165 documents / 99 PDFs / 11 text
+sidecars**.
 
 **The pattern, stated plainly.** Every one of these was an assertion *about a package's API* that
 quoted nothing, so no quotation sweep could see it, and each read as an ordinary one-line library
@@ -175,6 +177,8 @@ Files that are held and correctly indexed, but that a grep-based workflow cannot
 | `../bronstein-volume-2/vanhoeij1994_integral_basis_algebraic_function_field.pdf` | 11 pp | Image-only, **OCR sidecar `.txt` alongside**. |
 | `../bronstein-volume-2/vanhoeij1997_rational_parametrizations_canonical_divisor.pdf` | 19 pp | **Has a text layer that is garbage** throughout (Type 3 fonts, no Unicode map). **OCR sidecar `.txt` alongside.** |
 | `../bronstein-volume-2/vanhoeij1994_computing_parametrizations_rational_curves.pdf` | 8 pp | The same defect. **OCR sidecar `.txt` alongside.** |
+| `../bronstein-volume-2/volcheck1994_computing_in_jacobian_plane_algebraic_curve.pdf` | 13 pp | Image-only, **OCR sidecar `.txt` alongside**. |
+| `../bronstein-volume-2/shimura_taniyama1961_complex_multiplication_of_abelian_varieties.pdf` | 174 pp | Image-only (converted from DjVu before it was supplied). **OCR sidecar `.txt` alongside.** |
 | `../bronstein-volume-2/bronstein1991_risch_differential_equation_algebraic_curve.pdf` | 6 pp | Two columns extracted interleaved, ~1.5 words per line: words grep, phrases never do. `pdftotext -layout` and read. |
 | `../bronstein-volume-2/trager1979_integration_of_simple_radical_extensions.pdf` | 7 pp | Noisy OCR, letter-spaced throughout. Greps unreliable; no sidecar. |
 | `../bronstein-volume-2/bliss1933_algebraic_functions.pdf` | 229 pp | Image-only (converted from DjVu). **Text sidecar `.txt` alongside**, from the DjVu's own text layer. To regenerate, `djvutxt` the source DjVu; the tesseract recipe below also works. |

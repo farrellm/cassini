@@ -12,7 +12,8 @@ Abramov's obituary, changed §1, and then with four more (Davenport 1984, Cheval
 Stichtenoth), and then eight more (Miller, the FriCAS status page, Hess, Combot, Masser & Zannier,
 Fulton, Chen et al. 2016b, Weil 1948). Revised on 2026-11-13 with Raab & Singer's 2022 volume, which
 carries Risch's 1968 report in revised form and Trager's thesis typeset; and the same day with twelve
-sources fetched for the gaps a book would have ([`recommended-sources.md`](./recommended-sources.md)). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
+sources fetched for the gaps a book would have, and then sixteen more supplied for the same purpose
+([`recommended-sources.md`](./recommended-sources.md) lists what is still missing). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
 
 ## How far to trust each statement here
 
@@ -378,6 +379,22 @@ the conference. It is now held (§4.1).
 | `cheze_lecerf2007_lifting_recombination_absolute_factorization.pdf` | *J. Complexity* 23:380–420, authors' version. Absolute factorisation, the modern algorithm. |
 | `raab2012_definite_integration_in_differential_fields.pdf` | Raab's thesis, Linz 2012, 139 pp. Parametric elementary integration over transcendental towers. Not about algebraic curves. |
 | `blake2026_parallel_integration_simple_radical_extensions_1.pdf`, `…_2.pdf` | Blake, arXiv 2026, 17 and 48 pp. The Risch–Norman method justified over a simple radical extension, then with the radical anywhere in a mixed tower. The newest work held on §2.8's subject; preprints. |
+| `sendra_winkler_perezdiaz2008_rational_algebraic_curves.pdf` | Springer 2008, 272 pp. Genus computation and rational parametrisation by adjoint curves, with the field-of-definition question (ch. 5). The book-length source for genus zero. Contents only read. |
+| `zannier2014_elementary_integration_in_families_conjectures_of_pink.pdf` | ICM 2014, 25 pp. Survey of elementary integration in a one-parameter family and its link to torsion and Pink's conjectures; the short companion to Masser & Zannier 2020. |
+| `serre_tate1968_good_reduction_of_abelian_varieties.pdf` | *Annals* 88:492–517. The Néron–Ogg–Shafarevich criterion. One of the two works Trager cites for good reduction. |
+| `duval1991_absolute_factorization_geometric_approach.pdf` | *SIAM J. Comput.* 20:1–21. Absolute factorisation as finding the components of a plane curve, counting them first. |
+| `dejong1998_algorithm_for_computing_integral_closure.pdf` | *JSC* 26:273–277, 5 pp. Integral closure by the Grauert–Remmert criterion; the general form of Trager's idealizer iteration. |
+| `gianni_trager1997_integral_closure_of_noetherian_rings.pdf` | ISSAC '97, 5 pp. Trager's integral-closure method generalised beyond dimension one. |
+| `greuel_laplagne_seelisch2010_normalization_of_rings.pdf` | *JSC* 45:887–901. De Jong's algorithm made practical, in Singular; a history of the problem in its introduction. |
+| `bohm_decker_laplagne2013_parallel_algorithms_for_normalization.pdf` | *JSC* 51:99–114, six authors. Normalisation locally at each singularity and modularly. |
+| `zassenhaus1972_second_round_maximal_order_program.pdf` | 1972, 43 pp. The Round Two maximal-order algorithm for number fields, which Trager's integral-basis algorithm adapts. |
+| `coates1970_construction_of_rational_functions_on_a_curve.pdf` | *PCPS* 68:105–123. The original of Coates' algorithm: a basis for functions with prescribed zeros and poles, over a number field. |
+| `volcheck1994_computing_in_jacobian_plane_algebraic_curve.pdf` | ANTS-I, 13 pp., an extended abstract. Jacobian arithmetic on a general plane curve by Brill–Noether adjoints. Image-only; OCR sidecar. |
+| `lutzen1990_joseph_liouville.pdf` | Springer 1990, 892 pp. The biography; ch. IX is the history of Liouville's work on integration in finite terms. |
+| `shimura_taniyama1961_complex_multiplication_of_abelian_varieties.pdf` | Math. Soc. Japan 1961, 174 pp. The classical account of reduction of abelian varieties modulo a prime; the second of Trager's two citations. Image-only; OCR sidecar. |
+| `katz1981_galois_properties_torsion_points_abelian_varieties.pdf` | *Invent. Math.* 62:481–502. Its appendix proves that reduction mod `𝔭` is injective on torsion when `e_𝔭 < p − 1` — the lemma under §2.6's finite-order test. |
+| `bronstein1990_unification_of_liouvillian_extensions.pdf` | *AAECC* 1:5–24. The origin of Volume I's monomial extensions; transcendental algorithms, but the definition admits algebraic steps. |
+| `du_raab2025_reduction_systems_degree_bounds_integration.pdf` | arXiv 2404.13042v2, 45 pp. Complete reduction systems and degree bounds for the Risch–Norman method. Not about curves; background to Blake's papers. |
 | `abramov_bronstein_petkovsek2020_pi_sigma_difference_equations.pdf` | Held for one fact: the date of Bronstein's death. Its subject (difference equations in ΠΣ*-fields) is not integration. |
 
 ### 4.2 Held elsewhere in the corpus
