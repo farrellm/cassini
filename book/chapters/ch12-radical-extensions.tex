@@ -1,3 +1,424 @@
 \chapter{Radical Extensions}\label{ch:radical}
 
-\unwritten
+Most algebraic integrands met in practice contain a single radical: a square
+root, or an $n$-th root, of a rational function. For these every step of
+the algorithm of Chapters~\ref{ch:hermite} to~\ref{ch:logarithmic-part}
+becomes explicit. The integral basis is given by a formula and is already
+normal at infinity; the linear system of the Hermite reduction is diagonal;
+the integrand splits into terms that can be integrated separately; and the
+poles that carry residues are never ramified. This chapter proves those four
+statements, works an example through all the steps, and then surveys what is
+known beyond them.
+
+\section{The normal form}\label{sec:radical-normal}
+
+A \emph{simple radical extension} of $K(x)$ is a field $E = K(x)[y]/(y^n -
+a)$ with $a \in K(x)$. Write $a = A/B$ with $A, B \in K[x]$. Then $(yB)^n = A
+B^{n-1}$ is a polynomial. Let $A B^{n-1} = A_1 A_2^2 \cdots A_k^k$ be a
+squarefree factorisation, write $i = n\,q_i + r_i$ with $0 \le r_i < n$, and
+put $z = y B / (A_1^{q_1} \cdots A_k^{q_k})$. Then $E = K(x)(z)$ and
+\begin{equation}\label{eq:radical-normal}
+  z^n = H, \qquad H = c \prod_{j=1}^{n-1} p_j^{\,j},
+\end{equation}
+where $c \in K^*$ and $p_1, \dots, p_{n-1} \in K[x]$ are monic, squarefree and
+pairwise coprime: $p_j$ is the product of the $A_i$ with $r_i = j$. This is
+the reduction of~\cite[\S2.2]{bronstein1998tutorial}. Throughout the chapter
+$E = K(x)[z]/(z^n - H)$ with $H$ as in~\eqref{eq:radical-normal}, and we
+assume, as everywhere in Part~II, that $z^n - H$ is absolutely irreducible;
+Chapter~\ref{ch:constant-field} treats binomial polynomials.
+
+Under that assumption, let $\zeta \in \Kbar$ be a primitive $n$-th root of
+unity. The field $E_{\Kbar} = \Kbar(x)[z]/(z^n - H)$ has an automorphism
+$\sigma$ over $\Kbar(x)$ with $\sigma(z) = \zeta z$. It commutes with $D =
+d/dx$, by the uniqueness of the extension of $D$ \VolI{Theorem~3.2.4}. For
+$0 \le i < n$ let
+\begin{equation}\label{eq:projector}
+  T_i = \frac{1}{n} \sum_{l=0}^{n-1} \zeta^{-il}\, \sigma^l .
+\end{equation}
+Then $T_i(z^j) = z^j$ if $j = i$ and $0$ otherwise, so for $c_0, \dots,
+c_{n-1} \in \Kbar(x)$,
+\[
+  T_i \Bigl( \sum_{j=0}^{n-1} c_j z^j \Bigr) = c_i z^i .
+\]
+The operators $T_i$ are the tool for everything that
+follows~\cite[\S2.5 and Appendix~A]{trager1984}.
+
+\section{The integral basis}\label{sec:radical-basis}
+
+For $0 \le i < n$ let
+\begin{equation}\label{eq:radical-basis}
+  e_i = \prod_{j=1}^{n-1} p_j^{\lfloor ij/n \rfloor},
+  \qquad w_{i+1} = \frac{z^i}{e_i} .
+\end{equation}
+
+\begin{theorem}\label{thm:radical-basis}\standing{proved}{}
+$w = (w_1, \dots, w_n)$ is an integral basis of $E$ over $K(x)$. It is normal
+at infinity, with
+\[
+  \tau_{i+1} = \Bigl\lceil \frac{i \deg(H)}{n} \Bigr\rceil - \deg(e_i)
+  \qquad (0 \le i < n)
+\]
+in the notation of~\eqref{eq:tau}.
+\end{theorem}
+
+\begin{proof}
+Let $\alpha = \sum_i c_i z^i \in E$, with $c_i \in K(x)$, be integral over
+$K[x]$. Then $\alpha$ is integral over $\Kbar[x]$, and so is each
+$\sigma^l(\alpha)$, since $\sigma$ fixes $\Kbar[x]$. Sums and products of
+integral elements are integral, so each $T_i(\alpha) = c_i z^i$ is integral
+over $\Kbar[x]$. Now $(c_i z^i)^n = c_i^n H^i$ lies in $K(x)$; so $c_i z^i$ is
+integral if and only if $c_i^n H^i \in K[x]$. For an irreducible $p \in K[x]$
+dividing $p_j$ this says that $n\, \ord{p}(c_i) + i j \ge 0$, that is,
+$\ord{p}(c_i) \ge -\lfloor ij/n \rfloor$; for $p$ not dividing $H$ it says
+$\ord{p}(c_i) \ge 0$. Together: $c_i e_i \in K[x]$. Hence
+\[
+  \alpha = \sum_i (c_i e_i)\, w_{i+1} \in \OO_w ,
+\]
+and the same computation shows that each $w_{i+1}$ is integral.
+
+At infinity the argument is the same. The automorphism $\sigma$ permutes the
+infinite places, so if $\alpha \in \OO_\infty$ then each $c_i z^i \in
+\OO_\infty$, which holds if and only if $c_i^n H^i \in K(x)_\infty$, that is,
+$n \deg(c_i) + i \deg(H) \le 0$, that is, $\deg(c_i) \le -t_i$ with $t_i =
+\lceil i \deg(H)/n \rceil$. So $(x^{-t_i} z^i)_{0 \le i < n}$ is a basis of
+$\OO_\infty$ over $K(x)_\infty$, and $x^{-t_i} z^i$ is $x^{-(t_i - \deg
+e_i)}\, w_{i+1}$ times a unit of $K(x)_\infty$.
+\end{proof}
+
+The basis is formula~(11) of~\cite[\S2.2]{bronstein1998tutorial}, and the
+proof is Trager's~\cite[\S2.5]{trager1984}. For a square root, $n = 2$ and
+$y^2 = p$ with $p$ squarefree, the basis is $(1, y)$ and $\tau_2 = \lceil
+\deg(p)/2 \rceil$, the values used without proof in
+Examples~\ref{ex:running-algpart} and~\ref{ex:running-algpart-2}.
+
+Differentiating $z^n = H$ gives $Dz/z = H'/(nH)$, so
+\begin{equation}\label{eq:radical-derivative}
+  D w_{i+1} = \lambda_i\, w_{i+1}, \qquad
+  \lambda_i = \frac{i}{n} \frac{H'}{H} - \frac{e_i'}{e_i}
+            = \sum_{j=1}^{n-1} \Bigl\{ \frac{ij}{n} \Bigr\} \frac{p_j'}{p_j} ,
+\end{equation}
+where $\{t\} = t - \lfloor t \rfloor$ is the fractional part. The derivation
+matrix of $w$ is diagonal, and $e_w$ divides $p_1 \cdots p_{n-1}$, which is
+squarefree, as Corollary~\ref{cor:integral-suitable} says it must be.
+
+\section{Integration term by term}\label{sec:radical-termwise}
+
+\begin{theorem}\label{thm:radical-termwise}\standing{proved}{}
+Let $f = \sum_{i=0}^{n-1} f_i z^i \in E$ with $f_i \in K(x)$. Then $f$ has an
+elementary integral over $E$ if and only if each term $f_i z^i$ has one.
+Moreover, if $f = Dv + \sum_j c_j\, Du_j/u_j$ as in~\eqref{eq:liouville} and
+$v = \sum_i v_i z^i$, then $f_i z^i - D(v_i z^i)$ is a linear combination with
+constant coefficients of logarithmic derivatives of elements of $E_{\Kbar}$.
+\end{theorem}
+
+\begin{proof}
+One direction is clear. For the other, apply $T_i$ to~\eqref{eq:liouville}.
+Since $\sigma$ commutes with $D$,
+\[
+  f_i z^i = T_i(f) = D(v_i z^i)
+    + \frac{1}{n} \sum_{l=0}^{n-1} \sum_j \zeta^{-il} c_j\,
+      \frac{D(\sigma^l u_j)}{\sigma^l u_j} ,
+\]
+which is of the form~\eqref{eq:liouville} over $E_{\Kbar}$, with $v_i z^i \in
+E$.
+\end{proof}
+
+This is the first result of~\cite[Appendix~A]{trager1984}. The term $f_i z^i$
+lies in the subfield $K(x)(z^i)$, which is itself a simple radical extension
+of $K(x)$, of degree $n/\gcd(n, i)$. So the integration of an element of $E$
+reduces to at most $n - 1$ integrations of a rational function times a single
+radical, each in a field of degree at most $n$, and the term $f_0$ is a
+rational function. By the same argument applied to one radical at a time,
+Trager notes, an integrand in a compositum $K(x)(y_1, \dots, y_k)$ of simple
+radical extensions of full degree splits into its monomials in the $y_i$,
+each of which lies in a simple radical extension.
+
+\section{The Hermite reduction}\label{sec:radical-hermite}
+
+Since the derivation matrix is diagonal, so is the
+system~\eqref{eq:hermite-system}. In the notation of
+Section~\ref{sec:hermite-step}, with $s = 1$ because we are in the pure
+algebraic case, \eqref{eq:Si} and~\eqref{eq:radical-derivative} give
+\[
+  S_{i+1} = u\, \bigl( v\, \lambda_i - (m - 1)\, v' \bigr)\, w_{i+1} ,
+\]
+and the solution of~\eqref{eq:hermite-system} is
+\begin{equation}\label{eq:radical-solution}
+  f_{i+1} = \frac{a_{i+1}}{u\, \bigl( v\, \lambda_i - (m - 1)\, v' \bigr)}
+  \qquad (0 \le i < n) .
+\end{equation}
+
+\begin{proposition}\label{prop:radical-hermite}\standing{proved}{}
+For $m \ge 2$, $v\,\lambda_i - (m - 1)\,v'$ is a rational function whose
+numerator and denominator are both coprime with $v$. Hence the denominator
+of each $f_{i+1}$ in~\eqref{eq:radical-solution} is coprime with $v$.
+\end{proposition}
+
+\begin{proof}
+Let $p$ be an irreducible factor of $v$, and $v = p\, v_1$; then $p$ does not
+divide $v_1$, and $v' \equiv p' v_1 \pmod p$. If $p$ does not divide $H$,
+then $\lambda_i$ has no pole at $p$, so $v \lambda_i \equiv 0$ and $v
+\lambda_i - (m - 1) v' \equiv -(m - 1)\, p' v_1 \pmod p$. If $p$ divides
+$p_j$, then $\lambda_i - \{ij/n\}\, p'/p$ has no pole at $p$, so $v \lambda_i
+\equiv \{ij/n\}\, p' v_1$ and
+\[
+  v \lambda_i - (m - 1) v' \equiv \bigl( \{ij/n\} - (m - 1) \bigr)\, p' v_1
+  \pmod p .
+\]
+In both cases the right side is not zero modulo $p$: $p' v_1$ is coprime with
+$p$, and $\{ij/n\} < 1 \le m - 1$.
+\end{proof}
+
+The proposition is a direct proof of Theorem~\ref{thm:trager} for this
+basis; the tutorial states it without proof~\cite[\S2.2]{bronstein1998tutorial}.
+The reduction step is then: for each $i$, reduce the numerator and the
+denominator of~\eqref{eq:radical-solution} modulo $v$, and let $b_{i+1}$ be
+their quotient modulo $v$.
+
+\begin{example}\label{ex:radical-hermite}
+This is Example~3 of~\cite{bronstein1998tutorial}. Consider
+\[
+  \int \frac{(2x^8 + 1) \sqrt{x^8 + 1}}{x^{17} + 2x^9 + x}\, dx ,
+\]
+in $E = \Q(x)[y]/(y^2 - x^8 - 1)$. Here $H = p_1 = x^8 + 1$, the integral
+basis is $(1, y)$, and $\lambda_1 = \frac12 \cdot 8x^7/(x^8 + 1)$. The
+integrand is $f = (2x^8 + 1)\, y / (x (x^8 + 1)^2)$, so $a = (0, 2x^8 + 1)$,
+$u = x$, $v = x^8 + 1$ and $m = 2$.
+By~\eqref{eq:radical-solution},
+\[
+  f_2 = \frac{2x^8 + 1}{x\, (4x^7 - 8x^7)} = -\frac{2x^8 + 1}{4x^8} .
+\]
+Modulo $v$ we have $x^8 \equiv -1$, so $b_2 \equiv -(-2 + 1)/(-4) = -\frac14$,
+and $B = -y / (4 (x^8 + 1))$. Then $h = f - DB = y/(x (x^8 + 1))$, and
+\[
+  \int \frac{(2x^8 + 1) \sqrt{x^8 + 1}}{x^{17} + 2x^9 + x}\, dx
+  = -\frac{1}{4 \sqrt{x^8 + 1}} + \int \frac{dx}{x \sqrt{x^8 + 1}} .
+\]
+\end{example}
+
+\section{Residues and the logarithmic part}\label{sec:radical-log}
+
+\begin{proposition}\label{prop:radical-residues}\standing{proved}{}
+Let $h = c\, z$ with $c \in K(x)$, and suppose that $h\,dx$ has at most
+simple poles at the finite places. Then the residue of $h\,dx$ is zero at
+every ramified finite place. Consequently
+Proposition~\ref{prop:residue-ideal} applies to $h$.
+\end{proposition}
+
+\begin{proof}
+A finite place $P$ over $x_0$ is ramified only if $x_0$ is a root of some
+$p_j$, and then $n\, \ord{P}(z) = j\, r_P$ by~\eqref{eq:radical-normal}.
+By~\eqref{eq:order-dx},
+\[
+  \ord{P}(h\,dx) = r_P\, \ord{x_0}(c) + \frac{j\, r_P}{n} + r_P - 1 ,
+\]
+where $\ord{x_0}(c)$ is the order of $c$ at $x_0$. If this were $-1$, then
+$\ord{x_0}(c) + 1 + j/n = 0$, which is impossible because $0 < j < n$. So
+$h\,dx$ has no simple pole at $P$, hence no pole at all.
+\end{proof}
+
+This is the remark at the head of~\cite[\S5.4]{trager1984}. It concerns a
+term $c\,z$; a term $c\,z^i$ is treated in the field $K(x)(z^i)$, where $z^i$
+plays the part of $z$ after the normalisation of
+Section~\ref{sec:radical-normal}.
+
+\begin{example}\label{ex:radical-log}
+We finish Example~\ref{ex:radical-hermite}; this is Example~4
+of~\cite{bronstein1998tutorial}. The integrand is $h = 1/(xy) = y/(x (x^8 +
+1))$. The curve has two infinite places, unramified, and $h\,dx$ has order
+$1 + 4 - 2 = 3$ at each, so there is no pole at infinity and no algebraic
+part (Theorem~\ref{thm:algebraic-part}).
+\begin{enumerate}
+\item $d = x (x^8 + 1)$, $d' = 9x^8 + 1$, $dh = y$. The residue polynomial is
+  \begin{align*}
+    R(Z) &= \resultant_x\bigl( \resultant_y( Z (9x^8 + 1) - y,\; y^2 - x^8 - 1 ),\;
+           x (x^8 + 1) \bigr) \\
+         &= 2^{48}\, Z^{16} (Z^2 - 1) .
+  \end{align*}
+  The factor $Z^{16}$ comes from the eight branch places over $x^8 = -1$, in
+  accordance with Proposition~\ref{prop:radical-residues}.
+\item The residues are $1$ at $P = (0, 1)$ and $-1$ at $Q = (0, -1)$. So $k
+  = 1$, $q_1 = 1$, $m = 1$ and $\delta_1 = P - Q$.
+\item The tutorial reports that $\delta_1$, $2\delta_1$ and $3\delta_1$ are
+  not principal. Since $(y + 1)(y - 1) = x^8$, the function $y + 1$ vanishes
+  to order $8$ at $Q$ and nowhere else, and has a pole of order $4$ at each
+  infinite place, as has $x^4$. Hence
+  \[
+    4 \delta_1 = \Bigl( \frac{x^4}{1 + y} \Bigr) ,
+  \]
+  so $n_1 = 4$ and $u_1 = x^4/(1 + y)$.
+\item $\omega = h - \frac14\, Du_1/u_1 = 0$.
+\end{enumerate}
+Therefore
+\[
+  \int \frac{(2x^8 + 1) \sqrt{x^8 + 1}}{x^{17} + 2x^9 + x}\, dx
+  = -\frac{1}{4 \sqrt{x^8 + 1}}
+    + \frac14 \log \frac{x^4}{1 + \sqrt{x^8 + 1}} .
+\]
+The curve has genus $3$, and the integral is elementary because the class
+of $P - Q$ has finite order in its divisor class group: order $4$, if the
+tutorial's report is right. A substitution finds the same
+integral, since $h\,dx$ is a rational differential in $x^8$ and $y$; the
+algorithm did not need to notice.
+\end{example}
+
+\section{Trager's reduction for unnested radicals}\label{sec:radical-trager1979}
+
+Before the general algorithm, Trager~\cite{trager1979} gave a method for a
+single radical that needs no integral basis and no change of variable, and
+his thesis repeats it~\cite[Appendix~A]{trager1984}. We describe the case of
+algebraic functions; the method was designed for an integrand in $F(\theta,
+y)$ with $\theta$ a logarithm or exponential over $F$ and $y$ a radical, and
+we return to that in Chapter~\ref{ch:elementary}.
+
+By Theorem~\ref{thm:radical-termwise} and a change of radical, the integrand
+may be taken to be $R/y$ with $R \in K(x)$ and $y^n = P = c \prod_i P_i^{e_i}$,
+$0 < e_i < n$, the $P_i$ monic, squarefree and pairwise coprime. Let $\phi =
+\prod_i P_i$. Then
+\[
+  D\Bigl( \frac{\phi}{y} \Bigr) = \frac{\gamma}{y}, \qquad
+  \gamma = \phi \sum_i \Bigl( 1 - \frac{e_i}{n} \Bigr) \frac{P_i'}{P_i} \in K[x] ,
+\]
+so that functions of the form $B \phi / y$ with $B \in K(x)$ have derivatives
+of the form (rational function)$/y$ whose denominators come from $B$ alone.
+After a partial fraction decomposition of $R$, three reductions apply.
+\begin{enumerate}
+\item For a term $C/(V^k y)$ with $V$ squarefree and coprime with $\phi$, and
+  $k > 1$: choosing $B$ with $(1 - k)\, V' \phi\, B \equiv C \pmod V$ makes
+  $C/(V^k y) - D(B \phi / (V^{k-1} y))$ a term with $V^{k-1}$ in the
+  denominator.
+\item For a term $C/(W^k y)$ with $W = P_j$: choosing $B$ with
+  \[
+    \Bigl( 1 - k - \frac{e_j}{n} \Bigr)\, W'\, \frac{\phi}{W}\, B \equiv C \pmod W
+  \]
+  lowers $k$ in the same way, and this is solvable for every $k \ge 1$
+  because $e_j < n$. So the factors of $P$ are removed from the denominator
+  altogether.
+\item For a term $C/y$ with $C \in K[x]$: subtracting $D(b\, x^j \phi / y)$
+  for a suitable constant $b$ lowers the degree of $C$, as long as $\deg(C)
+  \ge \deg(\phi) - 1$.
+\end{enumerate}
+The outcome~\cite[\S A.3]{trager1984}: every integral $\int R\,dx/y$ is
+reduced to an algebraic function plus $\int A\,dx/(B y)$ with $B$ squarefree
+and $\deg(A) - \deg(B) < \deg(\phi) - 1$. The first two reductions are the
+Hermite reduction of Section~\ref{sec:radical-hermite} in other notation.
+The third is a reduction at infinity, which the general algorithm replaces by
+the change of variable of Chapter~\ref{ch:algebraic-part}, and which the
+polynomial reduction of Section~\ref{sec:hermite-polynomial} generalises. We
+have not reproduced the proofs, and \seealg{IntegrateAlgebraic} does not use
+this method.
+
+\section{Binomial differentials}\label{sec:radical-chebyshev}
+
+The oldest general result on integrals with one radical concerns the
+\emph{binomial differentials} $x^p (a + b x^r)^q\,dx$ with $p, q, r$
+rational, $r \ne 0$ and $a b \ne 0$.
+
+\begin{theorem}[Chebyshev]\label{thm:chebyshev}\standing{cited}{\cite[\S VIII]{chebyshev1853}}
+Let $p, q, r \in \Q$ with $r \ne 0$, and $a, b \in \C^*$. Then
+\[
+  \int x^p (a + b x^r)^q\, dx
+\]
+is an elementary function if and only if at least one of
+\[
+  q, \qquad \frac{p + 1}{r}, \qquad \frac{p + 1}{r} + q
+\]
+is an integer.
+\end{theorem}
+
+The three cases in which the integral is elementary were known long before;
+they are the cases in which the curve has genus $0$, and each is settled by
+a substitution. Put $t = x^r$ and $s = (p + 1)/r$, so that the differential
+becomes $\frac1r\, t^{s-1} (a + b t)^q\,dt$, and let $N$ be a common
+denominator of the exponents that are not integers. If $q$ is an integer the
+differential is rational in $t^{1/N}$; if $s$ is an integer it is rational in
+$(a + b t)^{1/N}$; and if $s + q$ is an integer, writing it as $\frac1r\,
+t^{s+q-1} ((a + b t)/t)^q\,dt$ shows that it is rational in $((a + b
+t)/t)^{1/N}$. Chapter~\ref{ch:genus-zero} takes these up as examples of
+rational parametrisation.
+
+What Chebyshev proved is the converse: the known cases ``sont les seuls o\`u
+l'int\'egration de ces diff\'erentielles est possible par les signes
+alg\'ebriques et logarithmiques''~\cite[introduction]{chebyshev1853}. We do not
+reproduce his proof. The three integrals that this book follows are binomial
+differentials with $a = 1$, $b = -1$, $r = 3$ and $q = -\frac12$, and the
+theorem agrees with what Chapters~\ref{ch:liouville}
+to~\ref{ch:logarithmic-part} found.
+\begin{center}
+\begin{tabular}{@{}lcccl@{}}
+\toprule
+integrand & $p$ & $(p+1)/r$ & $(p+1)/r + q$ & \\
+\midrule
+$1/\sqrt{1 - x^3}$     & $0$  & $1/3$ & $-1/6$ & not elementary (Example~\ref{ex:first-kind}) \\
+$x/\sqrt{1 - x^3}$     & $1$  & $2/3$ & $1/6$  & not elementary (Example~\ref{ex:running-algpart}) \\
+$1/(x\sqrt{1 - x^3})$  & $-1$ & $0$   & $-1/2$ & elementary (Example~\ref{ex:running-log}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Hyperelliptic curves}\label{sec:radical-hyperelliptic}
+
+For $y^2 = p(x)$ with $p$ squarefree of degree $2g + 1$, the curve is
+hyperelliptic of genus $g$ with one place at infinity, and the divisor
+classes of degree $0$ have a compact normal form due to Mumford, with an
+addition algorithm due to Cantor~\cite{cantor1987}; both are described in
+Chapter~\ref{ch:divisors}. Bertrand~\cite{bertrand1995} specialises Trager's
+algorithm to this case, replacing the ideal arithmetic of
+Section~\ref{sec:log-ideals} and the principality test by Cantor's
+arithmetic in the Jacobian; by his own account the method ``has been
+implemented and successfully compared to Trager's general algorithm''. The
+gain is in the step that dominates the cost in practice, the search for a
+principal multiple $n \delta$: a multiple of a divisor class is computed by
+repeated doubling in the normal form, and the class is principal exactly when
+its normal form is trivial.
+
+\section{Later work\later}\label{sec:radical-later}
+
+Three lines of work after 2005 concern integrals with one radical. We record
+what their authors claim; none of it has been checked here, and of the
+papers cited in this section only the abstracts were read.
+
+Combot~\cite{combot2021} considers the superelliptic integrals $\int P\,dx /
+(Q\, S^{1/k})$ and gives an algorithm that decides elementary integrability
+``generically'', with a stated bound on its complexity in terms of the genus.
+It is to $y^k = S(x)$ what Bertrand's paper is to $y^2 = p(x)$.
+
+Blake~\cite{blake2020} gives a method for pseudo-elliptic integrals by
+searching for a substitution that reduces the integrand to a rational
+function. It is a heuristic, not a decision procedure: it can find an
+elementary integral and cannot prove that there is none.
+
+Two preprints by the same author~\cite{blake2026a,blake2026b} extend the structure theorems behind the
+Risch--Norman method of \VolI{Chapter~10} to a simple radical extension, and
+then to towers in which the radical may occupy any position. They are
+taken up, as far as they can be, in Chapter~\ref{ch:elementary}.
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Compute the integral basis~\eqref{eq:radical-basis}, the $\lambda_i$ and the
+$\tau_i$ for $z^3 = x^2 (x - 1)$.
+\end{exercise}
+
+\begin{exercise}
+Show that for $y^2 = p(x)$ with $p$ squarefree, the reduction step of
+Section~\ref{sec:radical-hermite} for an integrand $A\,y/(u v^m)$, $m \ge 2$,
+is: find $b$ with $u\,(\frac12 v\, p'/p - (m - 1)\, v')\, b \equiv A \pmod v$.
+Compare with the first two reductions of Section~\ref{sec:radical-trager1979}.
+\end{exercise}
+
+\begin{exercise}
+Use \seealg{IntegrateAlgebraic} to show that
+\[
+  \int \frac{dx}{x \sqrt{x^4 + 1}}
+  = \frac14 \log \frac{\sqrt{x^4 + 1} - 1}{\sqrt{x^4 + 1} + 1} .
+\]
+What is the genus of the curve, and what is the order of the residue divisor?
+\end{exercise}
+
+\begin{exercise}
+Apply Theorem~\ref{thm:chebyshev} to $\int \sqrt{1 + x^4}\,dx$, $\int
+\sqrt{x + x^{-1}}\,dx$ and $\int x^5 (1 + x^3)^{2/3}\,dx$, and integrate the
+one that is elementary.
+\end{exercise}

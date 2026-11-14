@@ -372,7 +372,7 @@ the conference. It is now held (§4.1).
 | `risch1969_problem_of_integration_in_finite_terms.pdf` | *Trans. AMS* 139:167–189, 23 pp. The transcendental case as published; Volume I's [75]. The revised 1968 report assumes its definitions. |
 | `vanhoeij1997_rational_parametrizations_canonical_divisor.pdf` | van Hoeij, *JSC* 1997, in the author's preprint, 19 pp. Parametrising a genus-0 curve through `L(D)` and an integral basis. **The source for genus zero**, which §2 omits. Text layer unusable; OCR sidecar. |
 | `vanhoeij1994_computing_parametrizations_rational_curves.pdf` | van Hoeij, ISSAC '94, 8 pp. The predecessor of the row above. OCR sidecar. |
-| `chebyshev1853_integration_des_differentielles_irrationnelles.pdf` | *J. Math. Pures Appl.* 18:87–111, in French. Cited for the theorem on binomial differentials; not yet read for it. |
+| `chebyshev1853_integration_des_differentielles_irrationnelles.pdf` | *J. Math. Pures Appl.* 18:87–111, in French. Cited for the theorem on binomial differentials, which is in it: announced in the introduction and proved in §VIII (those two passages read 2026-11-14). |
 | `cantor1987_computing_in_jacobian_hyperelliptic_curve.pdf` | *Math. Comp.* 48:95–101, 7 pp. The Jacobian arithmetic Bertrand's method uses. |
 | `duval1989_rational_puiseux_expansions.pdf` | *Compositio Math.* 70:119–154. Puiseux expansions with fewer algebraic numbers. |
 | `kaltofen1985_fast_parallel_absolute_irreducibility_testing.pdf` | *JSC* 1:57–67, author's copy. Absolute irreducibility testing. |

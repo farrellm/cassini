@@ -10,7 +10,8 @@ Written 2026-11-13, and revised the same day when Raab & Singer's 2022 volume wa
 holds Risch's 1968 report in revised form and Trager's thesis typeset, which changes the sources of
 chs. 14–15 and removes the worst of the reading risk in §5. Phase 0 was done the same day: the
 skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. Phase 1, chapter 7, was drafted
-the same day and awaits the project owner's reading; no other chapter is written.
+the same day. The project owner then waived the reading gate, and phase 2 (chs. 6, 8, 9, 12) was
+drafted on 2026-11-14. None of the five chapters has been read by the owner.
 
 ## 1. What this book is, and is not
 
@@ -148,8 +149,8 @@ treatment works by adjoints, so it is a cross-check and a source of examples, no
 the diagonal Hermite system. Trager's 1979 generalised Risch algorithm for unnested radicals.
 Hyperelliptic integrals by Jacobian arithmetic. Chebyshev's theorem on `∫xᵖ(a + bxʳ)^q dx`: the
 integrable cases are genus zero (ch. 11), but its content is that the others are not elementary,
-which is a statement about a simple radical extension and needs chs. 9–10; that the theorem is in
-the held 1853 paper is still to be checked. Superelliptic integrals †. Pseudo-elliptic
+which is a statement about a simple radical extension and needs chs. 9–10. The theorem is in the
+held 1853 paper, §VIII (checked 2026-11-14); the book cites it and does not reproduce the proof. Superelliptic integrals †. Pseudo-elliptic
 integrals and what heuristics recover †, including Blake's 2026 preprints on the Risch–Norman
 method over a radical extension †. *Sources:* tutorial §2.2; Trager §2.5 and Appendix A;
 Trager 1979; Bertrand 1995; Chebyshev 1853; Combot 2021; Blake 2020; Axiom `RADFF`. **A** for the
@@ -235,7 +236,7 @@ appendices 30 — roughly 380 pages. The estimate is soft for Part III.
 | :--- | :--- | :--- | :--- |
 | 0 | Set up the LaTeX skeleton: class, macros shared with Volume I's notation, theorem and algorithm environments, build script. | An empty book that compiles, with front matter. | `./build.sh` builds it clean. **Done 2026-11-13.** |
 | 1 | **Prototype: ch. 7, the Hermite reduction.** Self-contained, best-sourced (tutorial, Trager §4.2, RR-3562), and it uses every element of the format — theorem with proof, pseudocode, a failing example, a worked example. | One finished chapter, about 20 pages. | The owner has read it and the conventions of §4 are confirmed or changed. Nothing else is written before this. **Drafted 2026-11-13, 17 pages; not yet read.** |
-| 2 | **The core of Part II:** chs. 6, 8, 9, in that order, then ch. 12 for the simple radical case, which makes chs. 7–9 concrete. | A readable account of Trager's algorithm less the torsion test. | The running examples go through end to end, in this sense: ch. 9 finds a principal multiple of a divisor by trying multiples in turn, which settles `∫ dx/(x√(1 − x³))`, and `∫ x dx/√(1 − x³)` is settled without any divisor. What phase 2 cannot do is stop the search when no multiple is principal; that bound is ch. 10. |
+| 2 | **The core of Part II:** chs. 6, 8, 9, in that order, then ch. 12 for the simple radical case, which makes chs. 7–9 concrete. | A readable account of Trager's algorithm less the torsion test. | The running examples go through end to end, in this sense: ch. 9 finds a principal multiple of a divisor by trying multiples in turn, which settles `∫ dx/(x√(1 − x³))`, and `∫ x dx/√(1 − x³)` is settled without any divisor. What phase 2 cannot do is stop the search when no multiple is principal; that bound is ch. 10. **Drafted 2026-11-14: both running examples go through, and a third (`∫ dx/√(1 − x³)`) is settled in ch. 6.** |
 | 3 | **Part I, back-filled.** Chs. 1–5 written to supply exactly what chs. 6–9 and 12 used, no more. Writing them first would produce a textbook on function fields that the later chapters do not need. | Part I. | Every forward reference from Part II resolves. |
 | 4 | Chs. 10 and 11. Ch. 10 needs a close reading of Trager ch. 6 and Davenport chs. 5–8 from page images. | Part II complete. | — |
 | 5 | **Part III**, chs. 13–16 in order. Begins with a full read of Risch's revised report and of Bronstein 1990 from page images, with a notation concordance (Appendix C) made as it is read. | Part III. | Each **C** chapter states its limits explicitly. |

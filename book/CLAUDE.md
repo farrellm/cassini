@@ -8,9 +8,18 @@ is the outline, the conventions (§4) and the phased plan (§5); read it before 
 here. Its evidence is `what-volume-2-would-have-covered.md` beside it, and the sources, with their
 per-file defects, are indexed in that directory's `CLAUDE.md`.
 
-**State: phase 2 is under way.** Chapter 7 is written (phase 1); the project owner waived the
-plan's reading gate on 2026-11-13 and asked for phase 2 (chs. 6, 8, 9, then 12). A chapter that is
-not yet written is a heading and the words "not yet written".
+**State: phases 1 and 2 are drafted.** Chapters 6, 7, 8, 9 and 12 are written; the project owner
+waived the plan's reading gate on 2026-11-13 and has read none of them yet. Every other chapter and
+appendix is a heading and the words "not yet written". Next is phase 3: chapters 1–5, written to
+supply exactly what the five drafted chapters cite from them.
+
+**What Part I owes.** The drafted chapters cite chapters 1–5 by chapter only, for: finite
+generation of the integral closure, Hermite normal form and the discriminant (ch. 1); places,
+ramification, Puiseux's theorem in the form of eq. (7.2), the facts (D1)–(D4) of §6.2 on
+differentials, Riemann–Roch and the genus (ch. 2); integral bases, the ring at infinity, bases
+normal at infinity (ch. 3); absolute irreducibility and binomial polynomials (ch. 4); divisors as
+ideals, the principality test, Mumford and Cantor (ch. 5). Phase 3 is done when each of these is a
+numbered result and the chapter references are replaced by it.
 
 | Path | What it is |
 | :--- | :--- |
