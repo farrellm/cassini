@@ -9,7 +9,8 @@ evidence it rests on, cited below as *WV2*.
 Written 2026-11-13, and revised the same day when Raab & Singer's 2022 volume was supplied: it
 holds Risch's 1968 report in revised form and Trager's thesis typeset, which changes the sources of
 chs. 14–15 and removes the worst of the reading risk in §5. Phase 0 was done the same day: the
-skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. No chapter is written.
+skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. Phase 1, chapter 7, was drafted
+the same day and awaits the project owner's reading; no other chapter is written.
 
 ## 1. What this book is, and is not
 
@@ -60,7 +61,8 @@ Post-2005 material is marked †.
 
 Preface (what this is; *WV2* §1 in a page). Notation and conventions carried over from Volume I. A
 chapter dependency chart. A reader who wants only square roots can read 1–3, 6–9 in the simple
-radical case, and 12.
+radical case, 12, and then 10: without the finite-order test of ch. 10 no integral on a curve of
+positive genus can be declared non-elementary, square roots included.
 
 ### Part I — Algebraic functions
 
@@ -106,7 +108,9 @@ Volume I §5.5; Trager §5.1. **A.**
 **7. The Hermite reduction.** The canonical form `(A₁w₁ + … + Aₙwₙ)/D`. The reduction step as a
 linear system; Trager's theorem that over an integral basis it is uniquely solvable. Failure over a
 non-integral basis. The lazy Hermite reduction: Theorems 1–3 of the tutorial with the report's
-proofs. The polynomial reduction and additive decomposition †. *Sources:* Trager §4.2; tutorial
+proofs, **proved here once, over a monomial extension `k(t)`**, with Trager's theorem as their
+corollary (settled 2026-11-13; ch. 13 cites it). The tutorial's Theorems 1, 2, 3 are the report's
+Theorem 2, Theorem 3 and §3; the report's Theorem 1 is the reduction step itself. The polynomial reduction and additive decomposition †. *Sources:* Trager §4.2; tutorial
 §2.1; Bronstein RR-3562; Chen, Kauers & Koutschan 2016; Chen, Du & Kauers 2021; Axiom `INTHERAL`.
 **A.** *This is the prototype chapter (§5).*
 
@@ -133,7 +137,8 @@ good-reduction theorems are cited, not proved (Katz's two-page lemma may be shor
 include); the parameter case is **C**.
 
 **11. Genus zero.** Recognising genus 0; rational parametrisation; Euler's substitutions as the
-conic case; reduction to Volume I ch. 2. Chebyshev's theorem on `∫xᵖ(a + bxʳ)^q dx`. *Sources:*
+conic case; reduction to Volume I ch. 2. The three integrable cases of the binomial differential
+`xᵖ(a + bxʳ)^q dx` as examples (the theorem itself is in ch. 12). *Sources:*
 van Hoeij 1997 for parametrisation through `L(D)` and an integral basis; Chebyshev 1853; Axiom
 `INTG0`; Hardy; Sendra, Winkler & Pérez-Díaz 2008 chs. 3–5 for the adjoint-curve route and the
 field of parametrisation. **B** — van Hoeij's paper fits the book's machinery; the book-length
@@ -141,16 +146,21 @@ treatment works by adjoints, so it is a cross-check and a source of examples, no
 
 **12. Radical extensions.** `yⁿ = a`: the closed-form integral basis, already normal at infinity;
 the diagonal Hermite system. Trager's 1979 generalised Risch algorithm for unnested radicals.
-Hyperelliptic integrals by Jacobian arithmetic. Superelliptic integrals †. Pseudo-elliptic
+Hyperelliptic integrals by Jacobian arithmetic. Chebyshev's theorem on `∫xᵖ(a + bxʳ)^q dx`: the
+integrable cases are genus zero (ch. 11), but its content is that the others are not elementary,
+which is a statement about a simple radical extension and needs chs. 9–10; that the theorem is in
+the held 1853 paper is still to be checked. Superelliptic integrals †. Pseudo-elliptic
 integrals and what heuristics recover †, including Blake's 2026 preprints on the Risch–Norman
 method over a radical extension †. *Sources:* tutorial §2.2; Trager §2.5 and Appendix A;
-Trager 1979; Bertrand 1995; Combot 2021; Blake 2020; Axiom `RADFF`. **A.**
+Trager 1979; Bertrand 1995; Chebyshev 1853; Combot 2021; Blake 2020; Axiom `RADFF`. **A** for the
+integral basis, the diagonal system, Trager 1979 and Bertrand; **B** for Chebyshev's theorem and
+for the † sections, whose sources (Combot, Blake's three papers) have been read in abstract only.
 
 ### Part III — Mixed algebraic–transcendental functions
 
 **13. Algebraic extensions of monomial extensions.** `E` algebraic over `k(t)`, `t` a monomial over
 a differential field `k`. Places over normal and special polynomials; the order function on `E`;
-the lazy Hermite reduction in this setting (it is stated there from the start); Liouville's theorem
+the lazy Hermite reduction in this setting, by citation of ch. 7, which proves it there; Liouville's theorem
 and the residue criterion over a curve. The counterpart of Volume I chs. 3–4. *Sources:* Bronstein
 1990 Part 1; RR-3562; Volume I chs. 3–5; Bronstein's AAECC paper of 1990 for monomial extensions
 with algebraic steps. **B.**
@@ -224,8 +234,8 @@ appendices 30 — roughly 380 pages. The estimate is soft for Part III.
 | Phase | Work | Output | Done when |
 | :--- | :--- | :--- | :--- |
 | 0 | Set up the LaTeX skeleton: class, macros shared with Volume I's notation, theorem and algorithm environments, build script. | An empty book that compiles, with front matter. | `./build.sh` builds it clean. **Done 2026-11-13.** |
-| 1 | **Prototype: ch. 7, the Hermite reduction.** Self-contained, best-sourced (tutorial, Trager §4.2, RR-3562), and it uses every element of the format — theorem with proof, pseudocode, a failing example, a worked example. | One finished chapter, about 20 pages. | The owner has read it and the conventions of §4 are confirmed or changed. Nothing else is written before this. |
-| 2 | **The core of Part II:** chs. 6, 8, 9, in that order, then ch. 12 for the simple radical case, which makes chs. 7–9 concrete. | A readable account of Trager's algorithm less the torsion test. | The running examples go through end to end. |
+| 1 | **Prototype: ch. 7, the Hermite reduction.** Self-contained, best-sourced (tutorial, Trager §4.2, RR-3562), and it uses every element of the format — theorem with proof, pseudocode, a failing example, a worked example. | One finished chapter, about 20 pages. | The owner has read it and the conventions of §4 are confirmed or changed. Nothing else is written before this. **Drafted 2026-11-13, 17 pages; not yet read.** |
+| 2 | **The core of Part II:** chs. 6, 8, 9, in that order, then ch. 12 for the simple radical case, which makes chs. 7–9 concrete. | A readable account of Trager's algorithm less the torsion test. | The running examples go through end to end, in this sense: ch. 9 finds a principal multiple of a divisor by trying multiples in turn, which settles `∫ dx/(x√(1 − x³))`, and `∫ x dx/√(1 − x³)` is settled without any divisor. What phase 2 cannot do is stop the search when no multiple is principal; that bound is ch. 10. |
 | 3 | **Part I, back-filled.** Chs. 1–5 written to supply exactly what chs. 6–9 and 12 used, no more. Writing them first would produce a textbook on function fields that the later chapters do not need. | Part I. | Every forward reference from Part II resolves. |
 | 4 | Chs. 10 and 11. Ch. 10 needs a close reading of Trager ch. 6 and Davenport chs. 5–8 from page images. | Part II complete. | — |
 | 5 | **Part III**, chs. 13–16 in order. Begins with a full read of Risch's revised report and of Bronstein 1990 from page images, with a notation concordance (Appendix C) made as it is read. | Part III. | Each **C** chapter states its limits explicitly. |

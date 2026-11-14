@@ -8,9 +8,9 @@ is the outline, the conventions (§4) and the phased plan (§5); read it before 
 here. Its evidence is `what-volume-2-would-have-covered.md` beside it, and the sources, with their
 per-file defects, are indexed in that directory's `CLAUDE.md`.
 
-**State: phase 0 is done.** The book compiles with its front matter; every chapter and appendix
-is a heading and the words "not yet written". Phase 1 is chapter 7, and nothing else is written
-before the project owner has read it.
+**State: phase 2 is under way.** Chapter 7 is written (phase 1); the project owner waived the
+plan's reading gate on 2026-11-13 and asked for phase 2 (chs. 6, 8, 9, then 12). A chapter that is
+not yet written is a heading and the words "not yet written".
 
 | Path | What it is |
 | :--- | :--- |
@@ -44,6 +44,7 @@ macros of the table below are still preferred for anything with a meaning.
 | `\later` | The dagger for post-2005 material, on a heading or in text. |
 | `\VolI{\S3.2}` | A citation of Volume I by place. |
 | `\unwritten` | The placeholder body. Remove it when a chapter gets its first paragraph. |
+| `\OO` | The integral closure of `k[t]` in `E`; `\OO_w` is the module a basis `w` generates. |
 | `\Const`, `\ord{P}`, `\lc`, `\resultant`, `\residue`, `\Tr`, `\Norm`, `\disc`, `\kbar`, `\Kbar`, `\Z`, `\Q`, `\C` | Notation carried over from Volume I. |
 
 ## Rules
@@ -55,8 +56,13 @@ macros of the table below are still preferred for anything with a meaning.
 2. **A macro is added to `v2book.sty` when a chapter first needs it**, with its row in the table
    above. Chapter files define no macros.
 3. **A source enters `references.bib` when the text first cites it**, with fields taken from
-   `../references/bronstein-volume-2/CLAUDE.md`, not from memory. Keys are `firstauthorYEAR`.
+   `../references/bronstein-volume-2/CLAUDE.md`, not from memory. Keys are `firstauthorYEAR`, with a word added when two collide (`bronstein1998lazy`).
 4. **Chapter labels are stable.** Later chapters are written before earlier ones (plan §5, phase
    3), so forward references to `ch:slug` exist from the start. Renaming one means grepping for it.
-5. **The preface and title page say this is a reconstruction and not Bronstein's book.** No edit
+5. **A worked example is computed, not transcribed.** Every number in chapter 7's examples was
+   produced or re-checked in the Wolfram evaluator, including the ones that also appear in
+   Bronstein's tutorial. The first draft had two errors that only running the computation found: a
+   reduction step narrated as failing in fact succeeds, and an exercise called a basis unsuitable
+   that is suitable. Trace the algorithm; do not narrate what it ought to do.
+6. **The preface and title page say this is a reconstruction and not Bronstein's book.** No edit
    may weaken that.
