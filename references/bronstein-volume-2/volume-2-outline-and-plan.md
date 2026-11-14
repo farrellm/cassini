@@ -8,7 +8,8 @@ evidence it rests on, cited below as *WV2*.
 
 Written 2026-11-13, and revised the same day when Raab & Singer's 2022 volume was supplied: it
 holds Risch's 1968 report in revised form and Trager's thesis typeset, which changes the sources of
-chs. 14–15 and removes the worst of the reading risk in §5. Nothing of the book exists yet.
+chs. 14–15 and removes the worst of the reading risk in §5. Phase 0 was done the same day: the
+skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. No chapter is written.
 
 ## 1. What this book is, and is not
 
@@ -201,8 +202,9 @@ appendices 30 — roughly 380 pages. The estimate is soft for Part III.
 
 ## 4. Conventions for the text
 
-- **Typesetting.** LaTeX, built with `lualatex` (installed; `latexmk` is not, so a small build
-  script runs the passes). `book` class, `amsthm`, `algpseudocode` — all present. Pseudocode follows
+- **Typesetting.** LaTeX, built with `lualatex` (it needs `texlive-luatex` for `luaotfload`,
+  installed 2026-11-13; `latexmk` is not installed, so a small build script runs the passes).
+  `book` class, `amsthm`, `algpseudocode` — all present. Pseudocode follows
   Volume I's conventions: a named algorithm with a one-line specification of input and output, then
   the body, with `(* … *)` comments. One file per chapter.
 - **Every algorithm is followed by a worked example that exercises it**, traced step by step, as in
@@ -221,7 +223,7 @@ appendices 30 — roughly 380 pages. The estimate is soft for Part III.
 
 | Phase | Work | Output | Done when |
 | :--- | :--- | :--- | :--- |
-| 0 | Set up the LaTeX skeleton: class, macros shared with Volume I's notation, theorem and algorithm environments, build script. | An empty book that compiles, with front matter. | `lualatex` builds it clean. |
+| 0 | Set up the LaTeX skeleton: class, macros shared with Volume I's notation, theorem and algorithm environments, build script. | An empty book that compiles, with front matter. | `./build.sh` builds it clean. **Done 2026-11-13.** |
 | 1 | **Prototype: ch. 7, the Hermite reduction.** Self-contained, best-sourced (tutorial, Trager §4.2, RR-3562), and it uses every element of the format — theorem with proof, pseudocode, a failing example, a worked example. | One finished chapter, about 20 pages. | The owner has read it and the conventions of §4 are confirmed or changed. Nothing else is written before this. |
 | 2 | **The core of Part II:** chs. 6, 8, 9, in that order, then ch. 12 for the simple radical case, which makes chs. 7–9 concrete. | A readable account of Trager's algorithm less the torsion test. | The running examples go through end to end. |
 | 3 | **Part I, back-filled.** Chs. 1–5 written to supply exactly what chs. 6–9 and 12 used, no more. Writing them first would produce a textbook on function fields that the later chapters do not need. | Part I. | Every forward reference from Part II resolves. |
@@ -257,8 +259,8 @@ Roughly one chapter per working session for the **A** chapters; chs. 10, 14 and 
 | 2 | **Author line and title.** | The working title of §1, with the project owner as author and a preface stating that it is a reconstruction. |
 | 3 | **Whether post-2005 material goes in** (†), or the book stays at what could have been written in 2005. | In, and marked. Hess, Chen–Kauers–Koutschan and Combot are improvements a reader today needs. |
 
-The project owner accepted all three as recommended. `book/` and the root `CLAUDE.md` line are
-created in phase 0, not before.
+The project owner accepted all three as recommended. `book/` and the root `CLAUDE.md` line were
+created in phase 0.
 
 `DESIGN.md` §6.2 keeps the algebraic case out of scope for the code. This book does not change
 that, and no decision here touches `DESIGN.md`.

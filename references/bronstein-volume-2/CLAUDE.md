@@ -11,7 +11,8 @@ for, what its absence costs, where to look, and which to get first.
 [`recommended-sources.md`](./recommended-sources.md) is what the book still lacks a source for;
 it is short.
 [`volume-2-outline-and-plan.md`](./volume-2-outline-and-plan.md) is the chapter outline and writing
-plan for a typeset reconstruction of Volume II; nothing of the book exists yet.
+plan for a typeset reconstruction of Volume II. The book's source is in [`../../book/`](../../book/CLAUDE.md);
+as of 2026-11-13 it is a skeleton that compiles, with no chapter written.
 
 This directory sits beside `papers/`, not inside it, because it is organised around one question
 rather than one kind of source. See [`../CLAUDE.md`](../CLAUDE.md) for the corpus rules and

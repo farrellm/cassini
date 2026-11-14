@@ -1,0 +1,105 @@
+% v2book.sty -- preamble for the reconstruction of Volume II.
+% Conventions: ../references/bronstein-volume-2/volume-2-outline-and-plan.md, section 4.
+% What each macro is for: CLAUDE.md in this directory.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{v2book}[2026/11/13 Volume II reconstruction: shared preamble]
+
+\RequirePackage[letterpaper,textwidth=5.4in,textheight=8.4in]{geometry}
+\RequirePackage{amsmath,amsthm,mathtools}
+\RequirePackage[math-style=TeX,bold-style=TeX,warnings-off={mathtools-colon,mathtools-overbracket}]{unicode-math} % Latin Modern; Unicode allowed in source
+\RequirePackage{microtype}
+\RequirePackage{booktabs,longtable,enumitem}
+\RequirePackage[noend]{algpseudocode}
+\RequirePackage{imakeidx}
+\RequirePackage[hidelinks]{hyperref}
+\makeindex[intoc]
+
+% ---------------------------------------------------------------------------
+% Theorem-like environments. As in Volume I, each kind has its own counter,
+% numbered within the section: Theorem 3.4.1 and Definition 3.4.1 both exist.
+% ---------------------------------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}{Corollary}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{exercise}{Exercise}[chapter]   % Volume I: Exercise 2.3
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem*{openproblem}{Open problem}
+
+% ---------------------------------------------------------------------------
+% Standing (plan section 4; Appendix D). Inside a theorem-like environment:
+%   \standing{proved}{}                     proved in this book
+%   \standing{cited}{Trager, \S4.2}         proved in a named source at a named place
+%   \standing{stated}{}                     stated without proof
+% Each use writes one line to the .aux file; Appendix D prints them on the next pass.
+% ---------------------------------------------------------------------------
+\newcommand{\v@rows}{}
+\newcommand{\v@stdentry}[5]{\g@addto@macro\v@rows{\standingentry{#1}{#2}{#3}{#4}{#5}}}
+\newcommand{\standing}[2]{%
+  \@ifundefined{v@standing@#1}%
+    {\PackageError{v2book}{Unknown standing `#1'}{Use proved, cited or stated.}}{}%
+  \protected@write\@auxout{}{\string\v@stdentry{\@currenvir}{\@currentlabel}{#1}{#2}{\thepage}}%
+  \ignorespaces}
+\@namedef{v@standing@proved}{proved here}
+\@namedef{v@standing@cited}{proved in}
+\@namedef{v@standing@stated}{stated without proof}
+% One row of Appendix D's table.
+\newcommand{\standingentry}[5]{%
+  \MakeUppercase#1 #2 & \@nameuse{v@standing@#3}\if\relax\detokenize{#4}\relax\else\ #4\fi & #5\\}
+\newcommand{\standingrows}{\v@rows}
+
+% ---------------------------------------------------------------------------
+% Algorithms, in Volume I's form: the name and arguments in bold, a title as a
+% comment on the same line, the specification as a comment, then the body with
+% no line numbers and no closing keywords.
+%   \begin{algo}{HermiteReduce}{A, D}{Hermite reduction -- original version}
+%     \Spec{Given \dots, return \dots}
+%     \State $g \gets 0$
+%   \end{algo}
+% ---------------------------------------------------------------------------
+\algrenewcommand\algorithmiccomment[1]{\hfill\textup{(* #1 *)}}
+\algrenewcommand\algorithmicindent{1.5em}
+\newcommand{\alg}[1]{\textbf{#1}}
+\newcommand{\Spec}[1]{\Statex \parbox[t]{\dimexpr\linewidth-\algorithmicindent}{\textup{(*} #1 \textup{*)}}\vspace{.3ex}}
+\newenvironment{algo}[3]{%
+  \par\addvspace{\medskipamountplus}\noindent
+  \phantomsection\label{alg:#1}\index{#1@\textbf{#1} (algorithm)}%
+  \alg{#1}$(#2)$\hfill\textup{(* #3 *)}\par\nobreak\vspace{.5ex}%
+  \begin{algorithmic}\setlength{\itemindent}{0pt}}
+  {\end{algorithmic}\par\addvspace{\medskipamountplus}}
+\newlength{\medskipamountplus}\setlength{\medskipamountplus}{\bigskipamount}
+\newcommand{\seealg}[1]{\hyperref[alg:#1]{\alg{#1}}}
+
+% ---------------------------------------------------------------------------
+% Editorial marks.
+% ---------------------------------------------------------------------------
+% Material later than 2005, which Bronstein could not have used (plan, decision 3).
+\newcommand{\later}{\texorpdfstring{\textsuperscript{\textdagger}}{ (post-2005)}}
+% A citation of Volume I by place: \VolI{\S3.2}, \VolI{Theorem~5.5.1}.
+\newcommand{\VolI}[1]{\cite[#1]{bronstein2005}}
+% A chapter or appendix that exists only as a heading.
+\newcommand{\unwritten}{\begin{center}\itshape This chapter is not yet written.\end{center}}
+
+% ---------------------------------------------------------------------------
+% Notation carried over from Volume I. Extend only with what a chapter uses.
+% ---------------------------------------------------------------------------
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+\DeclareMathOperator{\Const}{Const}          % \Const_D(K): the constants of K under D
+\DeclareMathOperator{\lc}{lc}                % leading coefficient
+\DeclareMathOperator{\resultant}{resultant}
+\DeclareMathOperator{\residue}{residue}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\Norm}{N}
+\DeclareMathOperator{\disc}{disc}
+\newcommand{\ord}[1]{\nu_{#1}}               % the order function at #1: \ord{P}(f)
+\newcommand{\kbar}{\overline{k}}
+\newcommand{\Kbar}{\overline{K}}
+\newcommand{\dx}{\,dx}
+\endinput

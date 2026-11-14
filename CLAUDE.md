@@ -30,6 +30,7 @@ What spans packages stays at the root:
 | [`DESIGN.md`](./DESIGN.md) | The architecture: module boundaries, types, the evaluation contract, the test and benchmark plans. **Start here.** Its paths under `src/`, `test/`, `bench/`, `corpus/` and `oracle/` are relative to `cassini-core/`. |
 | [`notes/`](./notes/) | The reading-and-building guide and its bibliography. Has its own `CLAUDE.md` with strict editing rules. |
 | [`references/`](./references/) | The document corpus the notes cite, indexed, with per-file defect annotations; its totals are in `references/CLAUDE.md`. Gitignored; see rule 6. |
+| [`book/`](./book/CLAUDE.md) | The LaTeX source of a reconstruction of Bronstein's unwritten Volume II, on the integration of algebraic functions. Not documentation of cassini and not one of rule 1's surfaces; its outline and plan are in `references/bronstein-volume-2/`. Has its own `CLAUDE.md`. |
 | `cabal.project` | Lists the three packages. GHC2024, `base ^>=4.21.2.0`. |
 | `.ormolu` | ormolu's fixities and re-exports for all three packages (§2.5). Not style config. |
 | `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker; the Haddock coverage floor; the common-stanza check. |

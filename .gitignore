@@ -37,3 +37,6 @@ cassini-core/corpus/wolfram-docs/
 
 # Python bytecode from the corpus tools.
 __pycache__/
+
+# The book's build products (book/CLAUDE.md).
+book/build/
