@@ -78,7 +78,7 @@ prerequisite, kept to what later chapters use. *Sources:* Chevalley chs. I–II;
 tutorial's Example 1). Trager's algorithm: the radical of the discriminant, the idealizer, the
 iteration. van Hoeij's algorithm by Puiseux expansions. Local bases. Integrality at infinity and
 bases normal at infinity. Reading the genus off a normal integral basis. *Sources:* Trager §2.1–§2.4;
-van Hoeij 1994; tutorial §2, §2.4; Axiom `FFINTBAS`, `WFFINTBS`; Zassenhaus 1972 for the
+van Hoeij 1994; tutorial §2, §2.4; Axiom `FFINTBAS`, `WFFINTBS`; Zassenhaus 1972 and Ford 1978 ch. II for the
 number-field original; de Jong 1998 and Gianni & Trager 1997 for the general criterion; Greuel et
 al. 2010 † and Böhm et al. 2013 † as pointers. **A.**
 
@@ -125,7 +125,8 @@ reduction; the Hasse–Weil bound and the two-primes argument; Trager's computat
 order. Function fields over finite fields. Constants with transcendental parameters: Davenport's
 method, and the Masser–Zannier result as a boundary marker. Elliptic curves. *Sources:* Trager ch.
 6; Risch 1970; Davenport chs. 5–8; Weil 1948 part II §IV; Katz 1981, appendix, for injectivity of
-reduction on torsion; Serre & Tate 1968 and Shimura & Taniyama 1961 for good reduction; Zannier
+reduction on torsion; Deuring 1941 for reduction of a function field, of a prime and of a parameter alike; Serre & Tate
+1968 and Shimura & Taniyama 1961 for good reduction of the Jacobian; Zannier
 2014 and Masser & Zannier 2020 for the parameter case; Axiom `PFO`, `PFOQ`, `FORDER`. **B** — the
 good-reduction theorems are cited, not proved (Katz's two-page lemma may be short enough to
 include); the parameter case is **C**.

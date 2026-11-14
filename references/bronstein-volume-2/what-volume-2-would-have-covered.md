@@ -12,7 +12,7 @@ Abramov's obituary, changed §1, and then with four more (Davenport 1984, Cheval
 Stichtenoth), and then eight more (Miller, the FriCAS status page, Hess, Combot, Masser & Zannier,
 Fulton, Chen et al. 2016b, Weil 1948). Revised on 2026-11-13 with Raab & Singer's 2022 volume, which
 carries Risch's 1968 report in revised form and Trager's thesis typeset; and the same day with twelve
-sources fetched for the gaps a book would have, and then sixteen more supplied for the same purpose
+sources fetched for the gaps a book would have, and then sixteen and two more supplied for the same purpose
 ([`recommended-sources.md`](./recommended-sources.md) lists what is still missing). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
 
 ## How far to trust each statement here
@@ -395,6 +395,8 @@ the conference. It is now held (§4.1).
 | `katz1981_galois_properties_torsion_points_abelian_varieties.pdf` | *Invent. Math.* 62:481–502. Its appendix proves that reduction mod `𝔭` is injective on torsion when `e_𝔭 < p − 1` — the lemma under §2.6's finite-order test. |
 | `bronstein1990_unification_of_liouvillian_extensions.pdf` | *AAECC* 1:5–24. The origin of Volume I's monomial extensions; transcendental algorithms, but the definition admits algebraic steps. |
 | `du_raab2025_reduction_systems_degree_bounds_integration.pdf` | arXiv 2404.13042v2, 45 pp. Complete reduction systems and degree bounds for the Risch–Norman method. Not about curves; background to Blake's papers. |
+| `ford1978_computation_of_maximal_order_dedekind_domain.pdf` | Ohio State thesis, 1978, 146 pp. The Round Two maximal-order algorithm written out, and Round Four. The "Ford" of Trager's integral-basis chapter. |
+| `deuring1941_reduktion_algebraischer_funktionenkoerper.pdf` | *Math. Z.* 47:643–654, in German. Reduction of a function field modulo a prime of the constant field, including specialisation of a parameter; divisors and classes reduce compatibly when irreducibility and genus are preserved. |
 | `abramov_bronstein_petkovsek2020_pi_sigma_difference_equations.pdf` | Held for one fact: the date of Bronstein's death. Its subject (difference equations in ΠΣ*-fields) is not integration. |
 
 ### 4.2 Held elsewhere in the corpus

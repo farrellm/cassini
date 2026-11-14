@@ -8,7 +8,7 @@ Files live under [`papers/`](./papers/), grouped into eight topical directories,
 [`bronstein-volume-2/`](./bronstein-volume-2/) beside it (§9). Each directory has
 its own `CLAUDE.md` with an annotated inventory.
 
-**165 documents (~703 MB) — 99 PDFs, 7 Axiom literate `.pamphlet` sources, 59 HTML captures — plus 11 text sidecars.**
+**167 documents (~709 MB) — 101 PDFs, 7 Axiom literate `.pamphlet` sources, 59 HTML captures — plus 11 text sidecars.**
 
 Eight PDFs are image-only and three more have unusable text layers; each carries a generated `.txt` sidecar beside it (`bachmair1993_…`, `eker1995_…`, and in `bronstein-volume-2/` `trager1984_…`, `vanhoeij1994_integral_basis_…`, `vanhoeij1994_computing_…`, `vanhoeij1997_…`, `bronstein1998_lazy_hermite_reduction`, `volcheck1994_…`, `shimura_taniyama1961_…`, `weil1948_…` (French, `-l fra`) and `bliss1933_…`, the last taken from the source DjVu's text layer rather than by OCR) so the corpus stays greppable; the sidecars are gitignored like the documents they derive from, and are regenerated with `pdftoppm -r 300 -gray -png` piped through `tesseract --psm 1`. HTML
 entries are single-file `curl` captures of the live page, dated per file in the rows below and
@@ -210,7 +210,7 @@ Outside `papers/`: a directory organised around one question — what Bronstein'
 volume would have covered — rather than one kind of source.
 [`what-volume-2-would-have-covered.md`](./bronstein-volume-2/what-volume-2-would-have-covered.md)
 is the guide to it. **Unlike §1–§8, not every row here is cited in the bibliography**: the twenty
-added on 2026-11-12 (the twenty rows before the last) and the twenty-nine added on 2026-11-13 (Raab & Singer's volume supplied, twelve fetched, then sixteen supplied — the last sixteen rows) are cited by other held documents or were leads in the
+added on 2026-11-12 (the twenty rows before the last) and the thirty-one added on 2026-11-13 (Raab & Singer's volume supplied, twelve fetched, then sixteen and two supplied — the last eighteen rows) are cited by other held documents or were leads in the
 guide, and only Abramov's
 obituary among them has a bibliography entry. The first eleven were added **2026-11-11**: six fetched by `curl`, Davenport's monograph from the project owner's own copy, and four — the first four rows — supplied by the project owner the same day from a browser, `curl` having been refused for two and not pursued for two.
 
@@ -279,6 +279,8 @@ obituary among them has a bibliography entry. The first eleven were added **2026
 | [`katz1981_galois_properties_torsion_points_abelian_varieties.pdf`](./bronstein-volume-2/katz1981_galois_properties_torsion_points_abelian_varieties.pdf) | **"Galois Properties of Torsion Points on Abelian Varieties"**<br>*Nicholas M. Katz (Inventiones Mathematicae 62:481–502, 1981)* | Supplied 2026-11-13. Reported source: Anna's Archive; DOI `10.1007/bf01394256` | 22 | 847.8 KB |
 | [`bronstein1990_unification_of_liouvillian_extensions.pdf`](./bronstein-volume-2/bronstein1990_unification_of_liouvillian_extensions.pdf) | **"A Unification of Liouvillian Extensions"**<br>*Manuel Bronstein (AAECC 1:5–24, 1990)* | Supplied 2026-11-13. Reported source: Anna's Archive; DOI `10.1007/bf01810844` | 20 | 1.0 MB |
 | [`du_raab2025_reduction_systems_degree_bounds_integration.pdf`](./bronstein-volume-2/du_raab2025_reduction_systems_degree_bounds_integration.pdf) | **"Reduction systems and degree bounds for integration"**<br>*Hao Du, Clemens G. Raab (arXiv 2404.13042v2, 18 February 2025)*<br>**The arXiv version.** | arXiv: [`2404.13042`](https://arxiv.org/abs/2404.13042)**v2** — supplied 2026-11-13 | 45 | 609.1 KB |
+| [`ford1978_computation_of_maximal_order_dedekind_domain.pdf`](./bronstein-volume-2/ford1978_computation_of_maximal_order_dedekind_domain.pdf) | ***On the Computation of the Maximal Order in a Dedekind Domain***<br>*David James Ford (PhD dissertation, The Ohio State University, 1978)* | Supplied 2026-11-13. Reported source: OhioLINK ETD, accession `osu1487080007253609` (UMI 7902127) | 146 | 4.8 MB |
+| [`deuring1941_reduktion_algebraischer_funktionenkoerper.pdf`](./bronstein-volume-2/deuring1941_reduktion_algebraischer_funktionenkoerper.pdf) | **"Reduktion algebraischer Funktionenkörper nach Primdivisoren des Konstantenkörpers"**<br>*Max Deuring (Mathematische Zeitschrift 47:643–654, 1941)* | Supplied 2026-11-13. Reported source: Sci-Hub, DOI `10.1007/BF01180977`, cut from a scan of the whole volume | 12 | 646.1 KB |
 
 ---
 

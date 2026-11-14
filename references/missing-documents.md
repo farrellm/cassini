@@ -129,7 +129,7 @@ a 2022 retranscription and resolved the tutorial's citation for the torsion boun
 algebraic case were fetched: **149
 documents / 83 PDFs / 9 text sidecars**. Sixteen of the sources `bronstein-volume-2/recommended-sources.md`
 then listed were supplied the same day, two of them image-only: **165 documents / 99 PDFs / 11 text
-sidecars**.
+sidecars**; Ford's thesis and Deuring's 1941 paper followed: **167 documents / 101 PDFs**.
 
 **The pattern, stated plainly.** Every one of these was an assertion *about a package's API* that
 quoted nothing, so no quotation sweep could see it, and each read as an ordinary one-line library
