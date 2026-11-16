@@ -151,8 +151,9 @@ residues of $f\,dx$ are zero. Let $v = v_0 - g$, so that
 The denominator of $h$ with respect to $w$ is squarefree, so $v \in \OO$ by
 Proposition~\ref{prop:v-integral}. Since $w$ is an integral basis, $v = \sum_i
 p_i w_i$ with $p_i \in K[x]$. On the other hand $g = \sum_i g_i w_i$, where
-each $g_i \in K(x)$ is a sum of fractions $b/v^{m-1}$ with $\deg(b) <
-\deg(v)$, produced by the steps of \seealg{HermiteReduce}; so $g_i = 0$ or
+each $g_i \in K(x)$ is a sum of proper fractions, one from each step of
+\seealg{HermiteReduce}: the $b_i$ of Theorem~\ref{thm:hermite-step} has
+smaller degree than the polynomial it is divided by. So $g_i = 0$ or
 $\deg(g_i) < 0$. Therefore
 \[
   v_0 = \sum_{i=1}^n (p_i + g_i)\, w_i,
@@ -310,7 +311,7 @@ $f\,dx$ has a double pole at infinity, so the change of variable is needed.
   \]
 \item Since $z^4 - z$ is squarefree, $w = (1, Y)$ is an integral basis, and it
   is normal at infinity with $(\tau_1, \tau_2) = (0, 2)$
-  (Chapter~\ref{ch:radical}). There are two infinite places, unramified, at
+  (Theorem~\ref{thm:radical-basis}). There are two infinite places, unramified, at
   which $Y/z^2 = \pm 1$.
 \item \seealg{HermiteReduce}: $d = z^2 (z^3 - 1)$, so $v = z$, $m = 2$ and $u
   = z^3 - 1$. From $2 Y\, DY = 4z^3 - 1$ we get $S_2 = u\,(z\, DY - Y) =

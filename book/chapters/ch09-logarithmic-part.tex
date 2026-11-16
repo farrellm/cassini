@@ -285,7 +285,7 @@ residue, $\ord{P}(d) = r_P > 1$, and the two generators no longer cut out the
 place with multiplicity one. Trager disposes of it in two ways
 \cite[\S5.4]{trager1984}. For a simple radical extension it holds
 automatically for each term of the integrand
-(Chapter~\ref{ch:radical}). In general, he replaces the variable $x$ by $x +
+(Proposition~\ref{prop:radical-residues}). In general, he replaces the variable $x$ by $x +
 c\,y$ for an integer $c$, which changes which places are ramified, and
 shows that for all but finitely many $c$ no pole of the integrand is
 ramified in the new model; the choice is checked by computing the residue
@@ -301,7 +301,8 @@ $h$ is not of the form~\eqref{eq:log-sum}; or constants $c_1, \dots, c_k$ and
 functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
 \State $d \gets$ the denominator of $h$ with respect to an integral basis
 \State $R \gets$ the residue polynomial~\eqref{eq:trager-resultant}
-\State $\alpha_1, \dots, \alpha_s \gets$ the distinct nonzero roots of $R$
+\State ensure that no nonzero residue is taken at a ramified place \Comment{Section~\ref{sec:log-ideals}}
+\State $\alpha_1, \dots, \alpha_s \gets$ the distinct nonzero roots of $R$ \Comment{the nonzero residues}
 \State $(q_1, \dots, q_k) \gets$ a basis over $\Q$ of the span of the residues
 \State $m \gets$ a positive integer such that the residues are in $\frac1m (\Z q_1 + \dots + \Z q_k)$
 \For{$j \gets 1$ \textbf{to} $k$}
@@ -317,7 +318,8 @@ functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
 
 When $R$ has no nonzero root, $k = 0$, the loop is empty and $\omega = h$: the
 algorithm returns the empty sum if $h = 0$ and ``not elementary'' otherwise.
-The correctness of the algorithm is Theorem~\ref{thm:log-part}. The one step that is not linear algebra is \seealg{FiniteOrder}, which
+The correctness of the algorithm is Theorem~\ref{thm:log-part}. The one
+step that is not linear algebra is \seealg{FiniteOrder}, which
 decides whether a multiple of $\delta_j$ is principal; it is the subject of
 Chapter~\ref{ch:finite-order}, and as given there it assumes that $K$ is a
 number field.
@@ -337,7 +339,8 @@ Together with Chapter~\ref{ch:algebraic-part} this gives the whole method.
 \end{algo}
 
 \begin{theorem}\label{thm:integrate-algebraic}\standing{proved}{}
-\seealg{IntegrateAlgebraic} is correct. When it returns an integral, the
+Let $K$ be a number field. Then \seealg{IntegrateAlgebraic} is correct. When
+it returns an integral, the
 constants $c_j$ lie in the field generated over $K$ by the residues of
 $f\,dx$, the $u_j$ can be taken with coefficients in that field, and the
 number of logarithms is the least possible.

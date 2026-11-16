@@ -10,7 +10,7 @@ has the same shape: any $f \in E$ can be written
 \[
   f = Dg + h, \qquad g, h \in E,
 \]
-where $h$ has only simple poles at the normal finite places of $E$.
+where $h$ has only simple poles at the normal places of $E$.
 
 Two things are new. The first is that ``numerator'' and ``denominator'' need a
 basis of $E$ to mean anything, and the reduction works for some bases and not
@@ -103,9 +103,9 @@ case, $w$ is suitable when $e_w$ is squarefree. We shall see
 suitable, and (Example~\ref{ex:fail}) that a suitable basis need not be
 integral.
 
-Finally, the \emph{normal part} of $p\index{normal part} \in k[t] \setminus \{0\}$, written $p^*$,
+Finally, the \emph{normal part}\index{normal part} of $p \in k[t] \setminus \{0\}$, written $p^*$,
 is the product of the distinct monic normal irreducible factors of $p$. If
-$p = p_s p_n$ is a splitting factorization \VolI{Definition~3.5.1}, then $p^*$
+$p = p_s p_n$ is a splitting factorisation \VolI{Definition~3.5.1}, then $p^*$
 is the squarefree part of $p_n$, so $p^*$ is computed by gcds alone. Up to a
 unit, $p = p^*$ exactly when $p$ is normal.
 
@@ -231,8 +231,8 @@ $\ord{P}(p^* Dw) \ge 0$.
 
 Let $w$ be a basis of $E$ over $k(t)$ with $w_i \in \OO$, and let $f \in E$
 have numerator $\sum_i a_i w_i$ and denominator $d$ with respect to $w$. Let $d
-= d_s d_n$ be a splitting factorization, and $d_n = d_1 d_2^2 \cdots d_m^m$ a
-squarefree factorization of $d_n$ with $\deg(d_m) > 0$. Suppose that $m \ge
+= d_s d_n$ be a splitting factorisation, and $d_n = d_1 d_2^2 \cdots d_m^m$ a
+squarefree factorisation of $d_n$ with $\deg(d_m) > 0$. Suppose that $m \ge
 2$, and let
 \[
   s = d_s, \qquad v = d_m, \qquad u = d_n / v^m ,
@@ -242,7 +242,7 @@ are pairwise coprime. We look for $b_1, \dots, b_n \in k[t]$ such that
 \begin{equation}\label{eq:hermite-goal}
   f = D\Bigl( \frac{b_1 w_1 + \dots + b_n w_n}{v^{m-1}} \Bigr) + h
 \end{equation}
-where the normal part of the denominator of $h$ has no factor of multiplicity
+where the denominator of $h$ has no normal irreducible factor of multiplicity
 $m$ or more. Let
 \begin{equation}\label{eq:Si}
   S_i = s\,u\,v^m\, D\Bigl( \frac{w_i}{v^{m-1}} \Bigr)
@@ -275,9 +275,9 @@ Then~\eqref{eq:hermite-goal} holds with
       + \frac{\sum_{i=1}^n q_i\, Dw_i}{v^{m-2}} .
 \end{equation}
 If in addition $w$ is suitable, then the denominator of $h$ with respect to
-$w$ divides $s\,u\,v^{m-1} g$, where $g = e_w / \gcd(e_w, u v)$ is normal and
-coprime with $s\,u\,v$. In particular its special part divides $s$, and its
-normal part has no factor of multiplicity $m$ or more.
+$w$ divides $s\,u\,v^{m-1}\,\tilde e$, where $\tilde e = e_w / \gcd(e_w, u v)$ is normal and
+coprime with $s\,u\,v$. In particular its special factors are those of $s$, and it has no normal
+irreducible factor of multiplicity $m$ or more.
 \end{theorem}
 
 \begin{proof}
@@ -297,20 +297,20 @@ and by~\eqref{eq:Si} again $S_i / (s u v^{m-1}) = Dw_i / v^{m-2} - (m-1) (Dv)
 w_i / v^{m-1}$. Collecting terms gives~\eqref{eq:hermite-h}. Note that $Dv$
 and the $Db_i$ are in $k[t]$, because $t$ is a monomial.
 
-Suppose now that $w$ is suitable, and let $\gamma = \gcd(e_w, uv)$ and $g =
+Suppose now that $w$ is suitable, and let $\gamma = \gcd(e_w, uv)$ and $\tilde e =
 e_w / \gamma$. Since $e_w$ is normal, it is squarefree and coprime with $s$,
-so $g$ is normal, coprime with $\gamma$ and with $s$; and any common factor of
-$g$ and $uv$ would divide $\gamma$, so $g$ is coprime with $uv$.
+so $\tilde e$ is normal, coprime with $\gamma$ and with $s$; and any common factor of
+$\tilde e$ and $uv$ would divide $\gamma$, so $\tilde e$ is coprime with $uv$.
 By~\eqref{eq:derivation-matrix},
 \[
   \frac{Dw_i}{v^{m-2}} = \frac{s u v\, Dw_i}{s u v^{m-1}}
-  = \frac{s\,(uv/\gamma) \sum_j m_{ij} w_j}{g\, s u v^{m-1}} ,
+  = \frac{s\,(uv/\gamma) \sum_j m_{ij} w_j}{\tilde e\, s u v^{m-1}} ,
 \]
 and $uv/\gamma \in k[t]$. Hence every term of~\eqref{eq:hermite-h} is an
-element of $\OO_w$ divided by $g\,s\,u\,v^{m-1}$. Each irreducible factor of
-$u$ has multiplicity at most $m - 1$ in $u$, $v$ is squarefree, and $g$ is
+element of $\OO_w$ divided by $\tilde e\,s\,u\,v^{m-1}$. Each irreducible factor of
+$u$ has multiplicity at most $m - 1$ in $u$, $v$ is squarefree, and $\tilde e$ is
 squarefree and coprime with $uv$, so no normal irreducible has multiplicity
-$m$ or more in $g\,u\,v^{m-1}$.
+$m$ or more in $\tilde e\,u\,v^{m-1}$.
 \end{proof}
 
 The theorem says nothing about when~\eqref{eq:hermite-system} has such a
@@ -482,8 +482,8 @@ none of the three defects can occur.
 
 \begin{corollary}\label{cor:integral-suitable}\standing{proved}{}
 An integral basis is suitable. In particular, in the pure algebraic case, if
-$w$ is an integral basis then the least common denominator $e_w$ of $w_1',
-\dots, w_n'$ is squarefree.
+$w$ is an integral basis then the least common denominator $e_w$ of $Dw_1,
+\dots, Dw_n$ is squarefree.
 \end{corollary}
 
 \begin{proof}
@@ -497,8 +497,8 @@ S_n$ be as in Section~\ref{sec:hermite-step}, with $m \ge 2$. Then $S_1,
 \dots, S_n$ are linearly independent over $k(t)$, and the unique solution
 of~\eqref{eq:hermite-system} in $k(t)$ has a denominator coprime with $v$.
 Consequently the reduction step of Theorem~\ref{thm:hermite-step} always
-applies, and yields an $h$ whose denominator with respect to $w$ has normal
-part without factors of multiplicity $m$ or more.
+applies, and yields an $h$ whose denominator with respect to $w$ has no normal
+irreducible factor of multiplicity $m$ or more.
 \end{theorem}
 
 \begin{proof}
@@ -564,8 +564,8 @@ to $w$ is $d_s d_n$ with $d_s$ special and $d_n$ normal.}
 \EndLoop
 \end{algo}
 
-Each pass lowers by at least one the highest multiplicity $m$ in the normal
-part of the denominator of $h$, by Theorem~\ref{thm:trager}, so the loop is
+Each pass lowers by at least one the highest multiplicity $m$ of a normal
+irreducible factor of the denominator of $h$, by Theorem~\ref{thm:trager}, so the loop is
 executed fewer than $m$ times for the $m$ of the input. The coefficients of
 $g$ in the basis $w$ are sums of fractions $b_i / v^{m-1}$ with $\deg(b_i) <
 \deg(v)$; this is what Chapter~\ref{ch:algebraic-part} uses to deal with the
@@ -573,7 +573,7 @@ poles of $g$ at infinity.
 
 \begin{example}\label{ex:running-hermite}
 Let $E = \Q(x)[y]/(y^2 - (1 - x^3))$ and $D = d/dx$. Since $1 - x^3$ is
-squarefree, $w = (1, y)$ is an integral basis (Chapter~\ref{ch:radical}).
+squarefree, $w = (1, y)$ is an integral basis (Theorem~\ref{thm:radical-basis}).
 From $2 y\, Dy = -3x^2$ we get $Dy = 3x^2 y / (2 (x^3 - 1))$, so $e_w = x^3 -
 1$, which is squarefree as Corollary~\ref{cor:integral-suitable} requires.
 
@@ -628,7 +628,7 @@ The solution of~\eqref{eq:hermite-system} is $f_1 = 0$, $f_2 = -2$, so $q =
 \]
 Had we taken $t = e^x$ instead, with $y^2 = t$, the polynomial $t$ would be
 special, and an integrand such as $y / t^2$ would be returned unchanged: its
-denominator $d = d_s = t^2$ has no normal part. Poles at special places are
+denominator $d = d_s = t^2$ has no normal factor. Poles at special places are
 not the Hermite reduction's concern, here as in \VolI{\S5.3}.
 \end{example}
 
@@ -636,20 +636,20 @@ not the Hermite reduction's concern, here as in \VolI{\S5.3}.
 
 Suppose that $w$ is a basis of $E$ over $k(t)$ with $w_i \in \OO$, and that
 we have found $w_0 \in \OO \setminus \OO_w$. We want a basis of the module
-$\OO_w + k[t]\, w_0$. Let $\sum_j c_j w_j$ and $f$ be the numerator and
+$\OO_w + k[t]\, w_0$. Let $\sum_j c_j w_j$ and $c_0$ be the numerator and
 denominator of $w_0$ with respect to $w$. Then $\OO_w + k[t]\, w_0$ is the set
 of combinations, with coefficients in $k[t]$, of the rows of the $(n + 1)$ by
 $n$ matrix
 \begin{equation}\label{eq:extend-matrix}
   \begin{pmatrix}
-    f   &     &        &     \\
-        & f   &        &     \\
+    c_0   &     &        &     \\
+        & c_0   &        &     \\
         &     & \ddots &     \\
-        &     &        & f   \\
+        &     &        & c_0   \\
     c_1 & c_2 & \cdots & c_n
   \end{pmatrix},
 \end{equation}
-each row $(r_1, \dots, r_n)$ standing for the element $\sum_j r_j w_j / f$.
+each row $(r_1, \dots, r_n)$ standing for the element $\sum_j r_j w_j / c_0$.
 Since $k[t]$ is a Euclidean domain, row operations over $k[t]$ bring this
 matrix to triangular form (\seealg{RowReduce},
 Section~\ref{sec:prelim-hermite}), and since it
@@ -659,10 +659,10 @@ has rank $n$, the result has $n$ nonzero rows followed by a zero row.
 \Spec{Given a basis $w$ of $E$ over $k(t)$ with $w_i \in \OO$, and $w_0 \in
 \OO$, return a basis $\bar w$ of $E$ over $k(t)$ with $\bar w_i \in \OO$ and
 $\OO_{\bar w} = \OO_w + k[t]\, w_0$.}
-\State $(c_1, \dots, c_n, f) \gets$ numerator and denominator of $w_0$ with respect to $w$
-\State $C \gets$ the Hermite normal form of the matrix~\eqref{eq:extend-matrix} \Comment{row $n + 1$ is zero}
+\State $(c_1, \dots, c_n, c_0) \gets$ numerator and denominator of $w_0$ with respect to $w$
+\State $C \gets \alg{RowReduce}$ of the matrix~\eqref{eq:extend-matrix} \Comment{row $n + 1$ is zero}
 \For{$i \gets 1$ \textbf{to} $n$}
-  \State $\bar w_i \gets (C_{i1} w_1 + \dots + C_{in} w_n) / f$
+  \State $\bar w_i \gets (C_{i1} w_1 + \dots + C_{in} w_n) / c_0$
 \EndFor
 \State \Return $(\bar w_1, \dots, \bar w_n)$
 \end{algo}
@@ -786,8 +786,8 @@ Lemma~\ref{lem:extend} this happens finitely many times in all. That settles
 basis all of whose $e_i$, hence whose $e_w$, are normal.
 
 In \seealg{LazyHermiteReduce}, $f = Dg + h$ holds throughout, and $w$ is
-suitable at the top of each pass. Let $m$ be the highest multiplicity in the
-normal part of the denominator of $h$ with respect to the current basis. A
+suitable at the top of each pass. Let $m$ be the highest multiplicity of a normal irreducible factor
+of the denominator of $h$ with respect to the current basis. A
 pass that changes the basis does not increase $m$, by
 Lemma~\ref{lem:den-divides}. A pass that does not change the basis performs a
 reduction step, which by Theorem~\ref{thm:hermite-step} lowers $m$ by at
@@ -863,7 +863,7 @@ So
 \]
 The first step succeeded over a basis that the second showed not to be
 integral: a successful step proves nothing about the basis. The factor $F$ in
-the final denominator is the $g$ of Theorem~\ref{thm:hermite-step}; it comes
+the final denominator is the $\tilde e$ of Theorem~\ref{thm:hermite-step}; it comes
 from the basis, not from $f$.
 \end{example}
 
@@ -970,7 +970,7 @@ not integral.
 Show that in Theorem~\ref{thm:hermite-step} the $b_i$ do not depend on the
 choice of $\rho$. Show that when $w$ is an integral basis they are the only
 polynomials of degree less than $\deg(v)$ for which~\eqref{eq:hermite-goal}
-holds with an $h$ whose denominator divides $s\,u\,v^{m-1} g$.
+holds with an $h$ whose denominator divides $s\,u\,v^{m-1}\,\tilde e$.
 \end{exercise}
 
 \begin{exercise}

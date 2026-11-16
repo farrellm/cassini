@@ -172,7 +172,8 @@ is the product of $Z - \sigma(b)$ over the $n$ embeddings.
 
 \section{Differentials}\label{sec:ff-differentials}
 
-In this section $k$ is algebraically closed. A \emph{differential} of $E$ is\index{differential}
+In this section $k$ is algebraically closed and is a field of constants, so
+that $D$ extends $d/dt$. A \emph{differential} of $E$ is\index{differential}
 an expression $f\,dt$ with $f \in E$; for $u \in E$ we put $du = (Du)\,dt$,
 where $D$ is the derivation of $E$ extending $d/dt$, so that every
 differential can also be written $g\,du$ for any $u \notin k$
@@ -238,8 +239,9 @@ There is an integer $g \ge 0$, the \emph{genus} of $E$\index{genus}, such that:
 \item If $\deg(A) \ge 2g - 1$ then $\ell(A) = \deg(A) + 1 - g$.
 \item A divisor $A$ of degree $0$ is principal if and only if $\ell(A) = 1$,
   and otherwise $\ell(A) = 0$.
-\item The differentials of the first kind, together with $0$, form a vector
-  space over $k$ of dimension $g$.
+\item The differentials without poles form a vector space over $k$ of
+  dimension $g$; the nonzero ones are called differentials \emph{of the first
+  kind}.
 \end{enumerate}
 \end{theorem}
 
