@@ -14,9 +14,9 @@ $\operatorname{Tr}$ and $N$ for the trace and norm from $E$ to $k(t)$.
 
 \section{Integral elements}\label{sec:prelim-integral}
 
-An element $\alpha \in E$ is \emph{integral over $k[t]$} if $p(\alpha) = 0$ for
+An element $\alpha \in E$ is \emph{integral over $k[t]$}\index{integral element} if $p(\alpha) = 0$ for
 some monic $p \in k[t][Z]$. The set of such elements is the \emph{integral
-closure} of $k[t]$ in $E$, written $\OO$.
+closure} of $k[t]$ in $E$, written $\OO$.\index{integral closure}
 
 \begin{proposition}\label{prop:integral-basics}\standing{cited}{\cite[Proposition~3.3.1, Theorem~3.3.4(a)]{stichtenoth2009}}
 \begin{enumerate}[label=\textup{(\roman*)}]
@@ -36,7 +36,7 @@ is a root of the monic polynomial $Z^m + \sum_{i<m} a_i a_m^{m-1-i} Z^i$. In
 particular $E = k(t)(y)$ for some $y \in \OO$, by the primitive element
 theorem, and then $E = k(t)[y]/(F)$ with $F \in k[t][y]$ monic and irreducible
 of degree $n$, and $(1, y, \dots, y^{n-1})$ is a basis of integral elements.
-We call such a $y$ an \emph{integral primitive element}.
+We call such a $y$ an \emph{integral primitive element}\index{primitive element, integral}.
 
 For a basis $w = (w_1, \dots, w_n)$ of $E$ over $k(t)$ we write $\OO_w = k[t]
 w_1 + \dots + k[t] w_n$, as in Chapter~\ref{ch:hermite}.
@@ -44,7 +44,7 @@ w_1 + \dots + k[t] w_n$, as in Chapter~\ref{ch:hermite}.
 \section{The discriminant}\label{sec:prelim-disc}
 
 \begin{definition}\label{def:disc}
-The \emph{discriminant} of a basis $w$ of $E$ over $k(t)$ is
+The \emph{discriminant} of a basis\index{discriminant} $w$ of $E$ over $k(t)$ is
 \[
   \disc(w) = \det\bigl( \operatorname{Tr}(w_i w_j) \bigr)_{1 \le i, j \le n}
   \in k(t) .
@@ -153,7 +153,7 @@ This is the procedure of~\cite[\S2.1.1]{trager1984}. Each pass of the inner
 loop replaces the entries below the pivot by remainders of smaller degree, so
 the least degree in column $j$ strictly decreases until those entries vanish;
 since the rank is $n$, column $j$ has a nonzero entry in rows $j, \dots, r$
-at each stage. The result is called a \emph{Hermite normal form} of $M$ once
+at each stage. The result is called a \emph{Hermite normal form}\index{Hermite normal form} of $M$ once
 the entries above each pivot are also reduced modulo the pivot and the pivots
 are made monic; we shall not need that uniqueness.
 

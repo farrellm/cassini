@@ -1,3 +1,53 @@
 \chapter{Notation Concordance}\label{app:concordance}
 
-\unwritten
+The sources use different letters for the same objects. The table gives the
+notation of this book against that of Volume~I~\cite{bronstein2005}, the
+tutorial~\cite{bronstein1998tutorial}, Trager's thesis~\cite{trager1984},
+Bronstein's paper of 1990~\cite{bronstein1990}, and Risch's report in its
+revised form~\cite{raab2022}. A dash means that the object does not occur
+or has no fixed notation. Davenport's monograph is not included: we read it
+only in part.
+
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{longtable}{@{}>{\raggedright}p{.19\linewidth}llllll@{}}
+\toprule
+ & here & Vol.~I & tutorial & Trager & Br.~1990 & Risch \\
+\midrule
+\endhead
+ground field & $k$, $K$ & $k$ & $K$ & $K$ & $k$ & $\mathcal{D}$ \\
+variable or monomial & $x$; $t$ & $x$; $t$ & $x$; $t$ & $x$, $z$ & $\theta$ & $z$; $\theta$ \\
+derivation & $D$ & $D$ & ${}'$ & ${}'$ & ${}'$ & ${}'$ \\
+algebraic generator & $y$ & --- & $y$ & $y$ & $y$ & $w$ \\
+function field & $E$ & --- & $E$ & $K(x, y)$ & $k(\theta, y)$ & $\mathcal{D}(\theta, w)$ \\
+integral closure & $\OO$ & --- & $\mathbf{O}_{K[x]}$ & --- & $\overline{k[\theta]}$ & --- \\
+integral basis & $w_i$ & --- & $w_i$ & $w_i$ & $w_i$ & $\sigma_i$ \\
+derivation matrix & $m_{ij}$, $e_w$ & --- & --- & $M_{ij}$, $E$ & $M_{ij}$, $E$ & --- \\
+denominator & $d$ & $d$ & $D$ & $D$, $Q$ & $D$ & --- \\
+Hermite reduction & $s, u, v, m$ & $u, v$ & $U, V, m$ & $U, V, k$ & $U, V, m$ & --- \\
+order at a place & $\ord{P}$ & $\ord{p}$ & $\ord{P}$ & $v_p$ & $\ord{p}$ & $\operatorname{ord}_p$ \\
+ramification index & $r_P$ & --- & $r$ & $r$ & $r$ & $t$ \\
+residue & $\residue_P$, $\tau_P$ & $\residue_p$ & residue & residue & $\tau_p$ & --- \\
+residue polynomial & $R(Z)$ & $r(z)$ & $R(t)$ & $R(Z)$ & $R(z)$ & --- \\
+residue divisors & $\delta_j$ & --- & $\delta_j$ & $D_i$ & $D_i$ & $Q_i$ \\
+Liouville form & $v$, $c_i$, $u_i$ & $v$, $c_i$, $u_i$ & $v$, $c_i$, $u_i$ & $c_i$, $v_i$ & $v$, $c_i$, $u_i$ & $v_0$, $c_i$, $v_i$ \\
+argument of $\log$, $\exp$ & $\eta$ & --- & $b$ & --- & $\eta$ & $\eta$; $\zeta$ \\
+simple poles only & simple & simple & --- & --- & normal & --- \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+Three collisions are worth a warning. In Trager's thesis $D$ is a
+denominator, a discriminant and a divisor in different chapters, and the
+derivation is a prime. In Bronstein's paper of 1990, $K$ is the function
+field in Part~1 and $k$ the ground field, whereas in Volume~I and the
+tutorial $K$ is the field of constants; and ``normal'' is said there of an
+integrand, where Volume~I and this book say ``simple''. In Risch's report
+$t$ is a ramification index, not a monomial.
+
+The Hermite reduction is indexed differently in every source: with the
+denominator $U V^{k+1}$ and $k > 0$ in Trager, $U V^{m+1}$ and $m > 0$ in
+Bronstein's paper and report, and $U V^m$ with $m \ge 2$ in the tutorial,
+which this book follows.

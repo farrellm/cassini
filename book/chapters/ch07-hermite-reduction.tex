@@ -60,7 +60,7 @@ denominator:
   f = \frac{a_1 w_1 + \dots + a_n w_n}{d},
   \qquad a_1, \dots, a_n, d \in k[t], \quad \gcd(d, a_1, \dots, a_n) = 1.
 \]
-We call $a_1 w_1 + \dots + a_n w_n \in \OO_w$ the \emph{numerator} and $d$ the
+We call $a_1 w_1 + \dots + a_n w_n \in \OO_w$ the \emph{numerator} and $d$ the\index{denominator, with respect to a basis}
 \emph{denominator of $f$ with respect to $w$}.
 \end{definition}
 
@@ -86,7 +86,7 @@ introduces.
 
 \begin{definition}\label{def:suitable}
 Let $w$ be a basis of $E$ over $k(t)$ with $w_i \in \OO$ for each $i$. The
-\emph{derivation matrix} of $w$ is the matrix $(m_{ij})$ over $k[t]$, together
+\emph{derivation matrix} of $w$\index{derivation matrix} is the matrix $(m_{ij})$ over $k[t]$, together
 with the monic $e_w \in k[t]$, such that
 \begin{equation}\label{eq:derivation-matrix}
   D w_i = \frac{1}{e_w} \sum_{j=1}^n m_{ij} w_j \quad (1 \le i \le n),
@@ -94,7 +94,7 @@ with the monic $e_w \in k[t]$, such that
 \end{equation}
 For each $i$ we write $e_i$ for the denominator of $D w_i$ with respect to $w$,
 so that $e_w = \operatorname{lcm}(e_1, \dots, e_n)$. The basis $w$ is
-\emph{suitable} if $e_w$ is normal.
+\emph{suitable} if $e_w$ is normal\index{suitable basis}.
 \end{definition}
 
 The word is Bronstein's~\cite[\S3]{bronstein1998lazy}. In the pure algebraic
@@ -103,7 +103,7 @@ case, $w$ is suitable when $e_w$ is squarefree. We shall see
 suitable, and (Example~\ref{ex:fail}) that a suitable basis need not be
 integral.
 
-Finally, the \emph{normal part} of $p \in k[t] \setminus \{0\}$, written $p^*$,
+Finally, the \emph{normal part} of $p\index{normal part} \in k[t] \setminus \{0\}$, written $p^*$,
 is the product of the distinct monic normal irreducible factors of $p$. If
 $p = p_s p_n$ is a splitting factorization \VolI{Definition~3.5.1}, then $p^*$
 is the squarefree part of $p_n$, so $p^*$ is computed by gcds alone. Up to a
@@ -912,7 +912,7 @@ $K$-subspace of $K[x]^n$ spanned by those monomials $x^j \epsilon_i$,
 $\epsilon_i$ the $i$-th unit vector, that are not the leading term of any
 element of the image of $\phi_\nu$. Then $K[x]^n = \operatorname{im}(\phi_\nu)
 \oplus N_\nu$, and writing a vector as the sum of its two components is the
-\emph{polynomial reduction} with respect to
+\emph{polynomial reduction} with respect\index{polynomial reduction} to
 $\nu$~\cite[Definitions~9 and~10]{chen2016}.
 
 \begin{theorem}[Chen, Kauers, Koutschan]\label{thm:additive}\standing{cited}{\cite[Lemma~12, Theorem~13]{chen2016}}
@@ -934,7 +934,7 @@ integrable in $E$ if and only if all the $p_i$ and all the $q_i$ are zero.
 The decomposition is computed by \seealg{HermiteReduce}, a partial fraction
 split of the remainder into the part with denominator $d$ and the part with
 denominator $e_w$, and the polynomial reduction of the second part. It is
-called an \emph{additive decomposition} of $f$. Its authors' purpose was
+called an \emph{additive decomposition} of $f$\index{additive decomposition}. Its authors' purpose was
 creative telescoping, where the finite dimension of the space of remainders
 bounds the order of a telescoper; for integration, it gives a test for
 integrability in $E$ that does not change the variable to move a point to

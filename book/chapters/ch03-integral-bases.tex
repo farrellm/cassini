@@ -1,6 +1,6 @@
 \chapter{Integral Bases}\label{ch:integral-bases}
 
-An \emph{integral basis} of $E$ over $k(t)$ is a basis $w = (w_1, \dots,
+An \emph{integral basis} of $E$ over $k(t)$\index{integral basis} is a basis $w = (w_1, \dots,
 w_n)$ such that $\OO_w = \OO$: the integral elements of $E$ are exactly the
 combinations of the $w_i$ with polynomial coefficients. One exists by
 Theorem~\ref{thm:closure-fg}. With respect to an integral basis the
@@ -23,7 +23,7 @@ Let $V \subseteq \OO$ be a subring containing $k[t]$ that is a free
 $k[t]$-module of rank $n$; for instance $V = k[t][y]$ for an integral
 primitive element $y$, or $V = \OO_w$ for a basis $w$ such that $\OO_w$ is
 closed under multiplication. For a nonzero ideal $\mathfrak m$ of $V$, the
-\emph{idealizer} of $\mathfrak m$ is
+\emph{idealizer} of $\mathfrak m$\index{idealizer} is
 \[
   \operatorname{Id}(\mathfrak m) = \{ u \in E : u\, \mathfrak m \subseteq \mathfrak m \} .
 \]
@@ -179,7 +179,7 @@ algorithm does not care which method produced the basis.
 From here on $k = K$ and $t = x$. By Theorem~\ref{thm:places}(iii), the ring
 $\OO_\infty$ of elements of $E$ without poles at infinity is a free module of
 rank $n$ over $K(x)_\infty$. A basis of that module is a \emph{local integral
-basis at infinity}. One is computed by the substitution $z = 1/x$, which
+basis at infinity}\index{integral basis!local, at infinity}. One is computed by the substitution $z = 1/x$, which
 turns infinity into the point $z = 0$: the algorithm of
 Section~\ref{sec:ib-criterion}, run for $E$ over $K(z)$ with $q = z$
 throughout and the other factors of the discriminant ignored, gives a basis

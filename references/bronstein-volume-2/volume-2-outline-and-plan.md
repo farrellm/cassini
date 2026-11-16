@@ -12,7 +12,8 @@ chs. 14–15 and removes the worst of the reading risk in §5. Phase 0 was done 
 skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. Phase 1, chapter 7, was drafted
 the same day. The project owner then waived the reading gate, and phase 2 (chs. 6, 8, 9, 12) was
 drafted on 2026-11-14, phases 3 (chs. 1–5) and 4 (chs. 10–11) after it the same day, and phase 5
-(chs. 13–16) on 2026-11-15. None of the sixteen chapters has been read by the owner.
+(chs. 13–16) and phase 6 on 2026-11-15. The book is complete in first draft, 150 pages, and has not
+been read by the owner.
 
 ## 1. What this book is, and is not
 
@@ -244,7 +245,7 @@ The chapters cite proofs where the estimate assumed they would be reproduced.
 | 3 | **Part I, back-filled.** Chs. 1–5 written to supply exactly what chs. 6–9 and 12 used, no more. Writing them first would produce a textbook on function fields that the later chapters do not need. | Part I. | Every forward reference from Part II resolves. **Drafted 2026-11-14, 26 pages against the 110 estimated: the rule held. Chs. 6–9 and 12 now cite numbered results of chs. 1–5.** |
 | 4 | Chs. 10 and 11. Ch. 10 needs a close reading of Trager ch. 6 and Davenport chs. 5–8 from page images. | Part II complete. | — **Drafted 2026-11-14. Ch. 10 cites the good-reduction theorems and does not prove them; its parameter case is a summary.** |
 | 5 | **Part III**, chs. 13–16 in order. Begins with a full read of Risch's revised report and of Bronstein 1990 from page images, with a notation concordance (Appendix C) made as it is read. | Part III. | Each **C** chapter states its limits explicitly. **Drafted 2026-11-15. Risch's revised report was read in full from its text; of Bronstein 1990, eighteen of 57 pages were read from page images, the ones carrying the definitions and propositions used. The notation concordance (Appendix C) was not made as the reading went and is owed to phase 6.** |
-| 6 | Ch. 17, appendices, preface, index, exercises. A pass for notation consistency and a rebuild-and-recheck of every worked example. | The book. | — |
+| 6 | Ch. 17, appendices, preface, index, exercises. A pass for notation consistency and a rebuild-and-recheck of every worked example. | The book. | — **Drafted 2026-11-15.** Ch. 17; appendices A–D, A with a machine-readable copy in `book/data/`; the dependency chart, as a table on the notation page; an index of algorithms and about forty-five terms; a section in ch. 9 on the Gröbner-basis methods, which the outline had placed there and phase 2 had skipped. All thirteen closed forms were re-checked by differentiation. The consistency pass was limited to building clean and replacing chapter-level references; it was not a line-by-line reading. |
 
 Roughly one chapter per working session for the **A** chapters; chs. 10, 14 and 15 will take more.
 

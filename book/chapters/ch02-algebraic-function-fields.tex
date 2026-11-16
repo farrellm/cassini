@@ -18,11 +18,11 @@ over $k$}.
 
 \section{Places and orders}\label{sec:ff-places}
 
-A \emph{place} $P$ of $E$ over $k$ is the maximal ideal of a discrete
+A \emph{place} $P$ of $E$ over $k$\index{place} is the maximal ideal of a discrete
 valuation ring $\OO_P$ of $E$ that contains $k$. It has an \emph{order
 function} $\ord{P} : E^* \to \Z$, surjective, with $\ord{P}(fg) = \ord{P}(f) +
 \ord{P}(g)$ and $\ord{P}(f + g) \ge \min(\ord{P}(f), \ord{P}(g))$, such that
-$\OO_P = \{ f : \ord{P}(f) \ge 0 \}$; a \emph{uniformising parameter} at $P$
+$\OO_P = \{ f : \ord{P}(f) \ge 0 \}$; a \emph{uniformising parameter}\index{uniformising parameter} at $P$
 is a $\pi$ with $\ord{P}(\pi) = 1$. The field $\OO_P / P$ is a finite
 extension of $k$, whose degree is the \emph{degree} of $P$, and for $f \in
 \OO_P$ the class of $f$ in it is the \emph{value} $f(P)$. We say that $f$ has
@@ -36,7 +36,7 @@ with order function the $\ord{p}$ of \VolI{Chapter~4}, and one more, the
 one of these. If it restricts to the place of $p$ we say that $P$ is
 \emph{finite} and \emph{lies over} $p$; then $\ord{P}(a) = r_P\, \ord{p}(a)$
 for $a \in k(t)$, where $r_P = \ord{P}(p) \ge 1$ is the \emph{ramification
-index} of $P$. If it restricts to the place at infinity, $P$ is
+index}\index{ramification index} of $P$. If it restricts to the place at infinity, $P$ is
 \emph{infinite}, and $\ord{P}(a) = -r_P \deg(a)$ with $r_P = -\ord{P}(t)$.
 The place $P$ is \emph{ramified} if $r_P > 1$.
 
@@ -172,14 +172,14 @@ is the product of $Z - \sigma(b)$ over the $n$ embeddings.
 
 \section{Differentials}\label{sec:ff-differentials}
 
-In this section $k$ is algebraically closed. A \emph{differential} of $E$ is
+In this section $k$ is algebraically closed. A \emph{differential} of $E$ is\index{differential}
 an expression $f\,dt$ with $f \in E$; for $u \in E$ we put $du = (Du)\,dt$,
 where $D$ is the derivation of $E$ extending $d/dt$, so that every
 differential can also be written $g\,du$ for any $u \notin k$
 \cite[\S4.3]{stichtenoth2009}. At a place $P$ with uniformising parameter
 $\pi$, write $f\,dt = (f\, dt/d\pi)\,d\pi$, where $dt/d\pi$ is the derivative
 of the Laurent series of $t$. The \emph{order} of $f\,dt$ at $P$ is the order
-of the series $f\,dt/d\pi$, and the \emph{residue} is its coefficient of
+of the series $f\,dt/d\pi$, and the \emph{residue} is its coefficient\index{residue} of
 $\pi^{-1}$. Neither depends on the choice of
 $\pi$~\cite[Theorem~4.3.2 and Remark~4.3.7]{stichtenoth2009}. With $\pi$ as
 in Theorem~\ref{thm:puiseux}, $dt/d\pi$ is $r \pi^{r-1}$ at a finite place
@@ -214,7 +214,7 @@ the residue theorem~\cite[Corollary~4.3.3]{stichtenoth2009}.
 
 \section{Divisors and the Riemann--Roch theorem}\label{sec:ff-rr}
 
-Again $k$ is algebraically closed. A \emph{divisor} of $E$ is a formal sum $A
+Again $k$ is algebraically closed. A \emph{divisor} of $E$ is a formal sum\index{divisor} $A
 = \sum_P n_P P$ over the places, with integer coefficients almost all zero;
 its \emph{degree} is $\sum_P n_P$, and $A \ge B$ means that every coefficient
 of $A - B$ is nonnegative. The divisor of $u \in E^*$ is $(u) = \sum_P
@@ -227,12 +227,12 @@ is the space of functions whose poles are no worse than $A$ allows; it is a
 vector space over $k$ of finite dimension $\ell(A)$.
 
 \begin{theorem}\label{thm:riemann-roch}\standing{cited}{\cite[Theorems~1.4.11, 1.5.15 and~1.5.17, Corollaries~1.4.12 and~1.5.16, Remark~4.3.7]{stichtenoth2009}}
-There is an integer $g \ge 0$, the \emph{genus} of $E$, such that:
+There is an integer $g \ge 0$, the \emph{genus} of $E$\index{genus}, such that:
 \begin{enumerate}[label=\textup{(\roman*)}]
 \item Every principal divisor has degree $0$; more precisely, a nonconstant
   $u$ has exactly $[E : k(u)]$ zeros and as many poles, counted with
   multiplicity.
-\item \textup{(Riemann--Roch)} $\ell(A) = \deg(A) + 1 - g + \ell(W - A)$ for
+\item \textup{(Riemann--Roch)}\index{Riemann--Roch theorem} $\ell(A) = \deg(A) + 1 - g + \ell(W - A)$ for
   every divisor $A$, where $W$ is the divisor of any nonzero differential,
   and $\deg(W) = 2g - 2$.
 \item If $\deg(A) \ge 2g - 1$ then $\ell(A) = \deg(A) + 1 - g$.
