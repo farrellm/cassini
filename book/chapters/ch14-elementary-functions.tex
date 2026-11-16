@@ -66,11 +66,13 @@ problem in $\kbar$: the recursion.
 Let $t$ be a logarithm over $k$ and $h \in E$ simple, with an elementary
 integral over $E$. Then $\tau_P(h)$ is defined at every infinite place, and
 there is a representation~\eqref{eq:liouville-mixed}, in which the $u_i$ that
-lie in $\kbar$ are listed separately,
+are algebraic over $k$ are listed separately,
 \[
   h = Dv + \sum_j d_j\, \frac{D\gamma_j}{\gamma_j} + \sum_i c_i\, \frac{Du_i}{u_i},
-  \qquad \gamma_j \in \kbar^* ,
+  \qquad \gamma_j \in (\overline{C} k)^* ,
 \]
+where $\overline{C} k$ is the field generated over $k$ by the constants
+algebraic over $C$,
 such that $\tau_P(h) = \sum_i c_i\, \ord{P}(u_i)$ at every place $P$, finite or
 infinite. The sum of the $\tau_P(h)$ over all places, weighted by their
 degrees, is zero. If $q_1, \dots, q_l$ is a basis over $\Q$ of the span of the
@@ -88,7 +90,7 @@ Section~\ref{sec:fo-parameters}. Subtracting the logarithms found leaves an
 integrand $h_1$ for which we must solve
 \begin{equation}\label{eq:E3}
   h_1 = Dv + \sum_j d_j\, \frac{D\gamma_j}{\gamma_j}, \qquad
-  v \in E, \quad \gamma_j \in \kbar^*, \quad d_j \text{ constants.}
+  v \in E, \quad \gamma_j \in (\overline{C} k)^*, \quad d_j \text{ constants.}
 \end{equation}
 
 \paragraph{The algebraic part.} Substituting~\eqref{eq:log-v}
@@ -131,7 +133,7 @@ of~\eqref{eq:radical-basis} and the $\lambda_i$ just defined. Let $h_1
 has a solution if and only if
 \begin{enumerate}[label=\textup{(\roman*)}]
 \item $A_1/U \in k(t)$ has an integral of the form $B_1 + \sum_j d_j \log
-  \gamma_j$ with $B_1 \in k[t]$ and $\gamma_j \in \kbar^*$, and
+  \gamma_j$ with $B_1 \in k[t]$ and $\gamma_j \in (\overline{C} k)^*$, and
 \item for $1 \le i < n$, the Risch differential equation
   \[
     DB_{i+1} + \lambda_i\, B_{i+1} = \frac{A_{i+1}}{U}
@@ -231,7 +233,8 @@ then~\eqref{eq:Sexp} has a solution in $k$.
 \end{theorem}
 
 So either the system has no solution and the integral is not elementary, or
-$m$ is lowered. \eqref{eq:Sexp} is a coupled system of $n$ first-order linear
+$m$ is lowered; the system may have more than one solution, and Bronstein
+notes that any of them will do. \eqref{eq:Sexp} is a coupled system of $n$ first-order linear
 differential equations over $k$. For a simple radical extension it is
 diagonal:
 \[
@@ -247,13 +250,15 @@ places over $t = 0$ with those at infinity. Running the same reduction for
 $\bar t$ removes the poles at infinity. This is the one change of variable
 that the mixed case allows.
 
-\paragraph{The rest.} After both reductions, Bronstein shows that $v$ can be
-taken in $\kbar$, and the logarithms are found from residues, which now have
-to be defined at the special places as
-well~\cite[Definition~2.21, Propositions~2.22 to~2.24]{bronstein1990}. That
-definition carries an assumption: that $D\eta$ is not a linear combination
-with constant coefficients of logarithmic derivatives of elements of
-$\kbar$. We have not reproduced this part.
+\paragraph{The rest.} After both reductions the integrand has no pole at a
+special place, and then $v$ has no pole at any place, so $v \in k$. The
+logarithms are found from residues, which now have to be defined at the
+special places as well; with them the residues at all places again sum to
+zero, weighted by degrees, and the residue divisors again have principal
+multiples~\cite[Definition~2.21, Propositions~2.22 to~2.24]{bronstein1990}.
+That definition carries an assumption: that $D\eta$ is not a linear
+combination with constant coefficients of logarithmic derivatives of elements
+of $\overline{C} k$. We have not reproduced this part.
 
 \begin{example}\label{ex:elem-exp}
 This is Example~15 of~\cite{bronstein1998tutorial}. Consider

@@ -10,7 +10,7 @@ only in part.
 
 \begin{center}
 \footnotesize
-\setlength{\tabcolsep}{3.5pt}
+\setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{1.3}
 \begin{longtable}{@{}>{\raggedright}p{.19\linewidth}llllll@{}}
 \toprule
@@ -30,9 +30,9 @@ Hermite reduction & $s, u, v, m$ & $u, v$ & $U, V, m$ & $U, V, k$ & $U, V, m$ & 
 order at a place & $\ord{P}$ & $\ord{p}$ & $\ord{P}$ & $v_p$ & $\ord{p}$ & $\operatorname{ord}_p$ \\
 ramification index & $r_P$ & --- & $r$ & $r$ & $r$ & $t$ \\
 residue & $\residue_P$, $\tau_P$ & $\residue_p$ & residue & residue & $\tau_p$ & --- \\
-residue polynomial & $R(Z)$ & $r(z)$ & $R(t)$ & $R(Z)$ & $R(z)$ & --- \\
+residue polynomial & $R(Z)$ & $r(z)$ & $R(t)$, $R(z)$ & $R(Z)$ & $R(z)$ & --- \\
 residue divisors & $\delta_j$ & --- & $\delta_j$ & $D_i$ & $D_i$ & $Q_i$ \\
-Liouville form & $v$, $c_i$, $u_i$ & $v$, $c_i$, $u_i$ & $v$, $c_i$, $u_i$ & $c_i$, $v_i$ & $v$, $c_i$, $u_i$ & $v_0$, $c_i$, $v_i$ \\
+Liouville form & $v$, $c_i$, $u_i$ & $v$, $c_i$, $u_i$ & $v$, $c_i$, $u_i$ & $v_0$, $c_i$, $v_i$ & $v$, $c_i$, $u_i$ & $v_0$, $c_i$, $v_i$ \\
 argument of $\log$, $\exp$ & $\eta$ & --- & $b$ & --- & $\eta$ & $\eta$; $\zeta$ \\
 simple poles at normal places & simple & simple $+$ reduced & --- & --- & normal & --- \\
 \bottomrule
@@ -46,7 +46,9 @@ field in Part~1 and $k$ the ground field, whereas in Volume~I and the
 tutorial $K$ is the field of constants; and ``normal'' is said there of an
 integrand, where this book says ``simple''; Volume~I's ``simple'' is
 narrower, and excludes a special factor in the denominator. In Risch's report
-$t$ is a ramification index, not a monomial.
+$t$ is a ramification index, not a monomial, and the $\sigma_i$ are a
+basis, normal at infinity, of the multiples of a divisor, of which an
+integral basis is the case of the zero divisor.
 
 The Hermite reduction is indexed differently in every source: with the
 denominator $U V^{k+1}$ and $k > 0$ in Trager, $U V^{m+1}$ and $m > 0$ in

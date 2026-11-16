@@ -11,8 +11,9 @@ per-file defects, are indexed in that directory's `CLAUDE.md`.
 **State: the book is complete in first draft (phases 0 to 6, 2026-11-13 to 2026-11-15).** All 17
 chapters and four appendices are written, 148 pages. The project owner waived the plan's reading
 gate on 2026-11-13 and has not yet read any of it; nothing here has had a second reader. A review
-against the sources on 2026-11-16 (the plan's §5, fifth pass) corrected six claims about sources
-and two errors in the mathematics, and lists what it did not check. What
+against the sources on 2026-11-16 (the plan's §5, fifth pass) corrected nine claims about sources
+and three errors in the mathematics (two of them in what chapter 14 reports of Bronstein 1990),
+and says what it read each claim against. What
 the book leaves undone is listed in its own §17.4, and that list is the agenda for a revision.
 
 **Part III is not on the footing of Part II.** Chapters 13–16 prove what follows from Lemma 7.2.1

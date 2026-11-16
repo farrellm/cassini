@@ -188,8 +188,13 @@ does not apply.
 Bronstein's paper of 1991~\cite{bronstein1991} gives ``a new rational
 algorithm for solving Risch differential equations over algebraic curves'',
 that is, for $E$ a finite extension of $K(x)$ with $K$ a field of constants.
-By its introduction the algorithm uses only rational operations, and it had
-been implemented in the Scratchpad system. By the abstract, the method also
+By its introduction the algorithm ``uses only rational operations and never
+needs to compute in an extension of $K$'', his $K$ being the function
+field, and it had been implemented in
+Maple and in Scratchpad. It reduces the equation to a system of first-order
+linear differential equations over the rational functions, then to linear
+equations of order $n$ over the rational functions, which are solved one by
+one. By the abstract, the method also
 applies to linear differential equations of higher order with coefficients in
 an algebraic extension of the rational functions; and ``in the general
 (`mixed function') case, this algorithm finds the denominator of any
@@ -200,8 +205,8 @@ For $E$ over $k(t)$ with $t$ a logarithm or an exponential, the rational
 method gives the $d$ of Corollary~\ref{cor:rde-denominator}, and what
 remains, equation~\eqref{eq:risch-integral} for an integral $Z$, still goes
 through the expansions of Section~\ref{sec:rde-solving}. We have read the
-abstract and part of the introduction of the paper, whose text layer is
-nearly unusable, and have not reproduced its algorithm.
+abstract and the introduction of the paper, from the page image, its text
+layer being nearly unusable, and have not reproduced its algorithm.
 
 \section{What is open}\label{sec:rde-open}
 

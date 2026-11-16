@@ -282,12 +282,38 @@ and 160–162), every quotation compared with its source, and the computations o
 
 Everything else checked held: all the Stichtenoth, Volume I and Trager theorem numbers, the
 quotations from Hardy, Lützen, Risch, Kauers, Miller, Bertrand, Masser & Zannier, FriCAS and the
-lazy Hermite report, and every number in the worked examples other than `e_w`. **Not checked in
-this pass:** statements cited from sources read only in abstract (the text says so at each), the
-row-by-row content of Appendix C beyond its Hermite and "simple" rows, the idealizer computations
-of Example 3.1.2 beyond the trace matrices and discriminants, and Bronstein 1990's Propositions
-2.11–2.15, 2.18 and 2.22–2.24 beyond their existence and subject. The book is still unread by its
-owner.
+lazy Hermite report, and every number in the worked examples other than `e_w`.
+
+**The pass was completed the same day** by checking what its first round had left out:
+
+- *Sources read only in abstract.* Each statement the book makes about Kaltofen, Duval 1991,
+  Chèze & Lecerf, Coates, Volcheck, Hess, de Jong, van Hoeij 1997, Sendra et al., Combot, Blake
+  (three papers), Schultz, Zannier, Raab, Davenport 1984, Deuring, Katz, Chebyshev and Bertrand
+  was compared with the abstract or introduction it rests on. Two were wrong: Hess was quoted as
+  "without the Brill–Noether method…" where he writes "which does not use the Brill–Noether
+  method…" (ch. 5 and this directory's `CLAUDE.md`), and Coates's method was said to work "by
+  linear algebra on the coefficients", which his introduction does not say. Combot's hypotheses
+  on `S` are now stated.
+- *Bronstein 1991*, from the page image of its first page: the quotations hold; the
+  implementation was in Maple as well as Scratchpad, and the outline of the method is added to
+  §15.4.
+- *Bronstein 1990, Propositions 2.11–2.15, 2.18, 2.22–2.24 and Definition 2.21*, from the page
+  images of pp. 140–142, 146 and 151–154. The statements are as ch. 14 gives them, with two
+  corrections: the logarithms that do not lie on the curve have arguments in `C̄k`, the
+  extension of `k` by constants, where ch. 14 said `k̄`; and after both reductions in the
+  exponential case `v` is in `k`, where ch. 14 said "can be taken in `k̄`". Bronstein's remark
+  that any solution of `(S_exp)` will do is added.
+- *The idealizer computations of Example 3.1.2*, by solving the membership conditions in the
+  Wolfram evaluator: on the first pass the idealizer is `O_v + k[x]·y³/x`, on the second it is
+  `O_v̄` itself, as the example says.
+- *Appendix C*, every row against the sources. One cell was wrong (Trager writes the Liouville
+  form with `v₀, cᵢ, vᵢ`), one incomplete (the tutorial's residue polynomial is `R(t)` in §2.5
+  and `R(z)` in §3), and Risch's `σᵢ` are a basis for the multiples of a divisor, which is now
+  said.
+
+**Still not done:** a reading of the sources cited only in abstract beyond the abstract or
+introduction, and of Bronstein 1990 beyond the pages named here and in phase 5. The book is still
+unread by its owner.
 
 **Risks.**
 
