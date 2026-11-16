@@ -159,18 +159,18 @@ of each $f_{i+1}$ in~\eqref{eq:radical-solution} is coprime with $v$.
 \end{proposition}
 
 \begin{proof}
-Let $p$ be an irreducible factor of $v$, and $v = p\, v_1$; then $p$ does not
-divide $v_1$, and $v' \equiv p' v_1 \pmod p$. If $p$ does not divide $H$,
-then $\lambda_i$ has no pole at $p$, so $v \lambda_i \equiv 0$ and $v
-\lambda_i - (m - 1) v' \equiv -(m - 1)\, p' v_1 \pmod p$. If $p$ divides
-$p_j$, then $\lambda_i - \{ij/n\}\, p'/p$ has no pole at $p$, so $v \lambda_i
-\equiv \{ij/n\}\, p' v_1$ and
+Let $q$ be an irreducible factor of $v$, and $v = q\, v_1$; then $q$ does not
+divide $v_1$, and $v' \equiv q' v_1 \pmod q$. If $q$ does not divide $H$,
+then $\lambda_i$ has no pole at $q$, so $v \lambda_i \equiv 0$ and $v
+\lambda_i - (m - 1) v' \equiv -(m - 1)\, q' v_1 \pmod q$. If $q$ divides
+$p_j$, then $\lambda_i - \{ij/n\}\, q'/q$ has no pole at $q$, so $v \lambda_i
+\equiv \{ij/n\}\, q' v_1$ and
 \[
-  v \lambda_i - (m - 1) v' \equiv \bigl( \{ij/n\} - (m - 1) \bigr)\, p' v_1
-  \pmod p .
+  v \lambda_i - (m - 1) v' \equiv \bigl( \{ij/n\} - (m - 1) \bigr)\, q' v_1
+  \pmod q .
 \]
-In both cases the right side is not zero modulo $p$: $p' v_1$ is coprime with
-$p$, and $\{ij/n\} < 1 \le m - 1$.
+In both cases the right side is not zero modulo $q$: $q' v_1$ is coprime with
+$q$, and $\{ij/n\} < 1 \le m - 1$.
 \end{proof}
 
 The proposition is a direct proof of Theorem~\ref{thm:trager} for this
@@ -330,9 +330,10 @@ is an elementary function if and only if at least one of
 is an integer.
 \end{theorem}
 
-The three cases in which the integral is elementary were known long before;
-they are the cases in which the curve has genus $0$, and each is settled by
-a substitution. Put $t = x^r$ and $s = (p + 1)/r$, so that the differential
+The three cases in which the integral is elementary were known long before.
+In each of them a substitution carries the differential to a curve of genus
+$0$, though the curve on which it was given may have higher genus, as
+Example~\ref{ex:g0-pseudo} shows. Put $t = x^r$ and $s = (p + 1)/r$, so that the differential
 becomes $\frac1r\, t^{s-1} (a + b t)^q\,dt$, and let $N$ be a common
 denominator of the exponents that are not integers. If $q$ is an integer the
 differential is rational in $t^{1/N}$; if $s$ is an integer it is rational in
@@ -371,8 +372,7 @@ algorithm to this case, replacing the ideal arithmetic of
 Section~\ref{sec:log-ideals} and the principality test by Cantor's
 arithmetic in the Jacobian; by his own account the method ``has been
 implemented and successfully compared to Trager's general algorithm''. The
-gain is in the step that dominates the cost in practice, the search for a
-principal multiple $n \delta$: a multiple of a divisor class is computed by
+gain is in the search for a principal multiple $n \delta$: a multiple of a divisor class is computed by
 repeated doubling in the normal form, and the class is principal exactly when
 its normal form is trivial.
 

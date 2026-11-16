@@ -375,13 +375,13 @@ Let $c_1, \dots, c_n \in k[t]$ and let $G \in k[t]$ divide $B$. Then
 \end{lemma}
 
 \begin{proof}
-Suppose first that $G = B$, and let $h = A \sum_i c_i w_i / B^M$. Then $B^M h
+Suppose first that $G = B$, and let $\psi = A \sum_i c_i w_i / B^M$. Then $B^M \psi
 = A \sum_i c_i w_i \in \OO$, and
 \[
-  B^M Dh = B^M \sum_i A c_i\, D\Bigl(\frac{w_i}{B^M}\Bigr) + \sum_i D(A c_i)\, w_i
+  B^M D\psi = B^M \sum_i A c_i\, D\Bigl(\frac{w_i}{B^M}\Bigr) + \sum_i D(A c_i)\, w_i
          = \frac{1}{B} \sum_i c_i R_i + \sum_i D(A c_i)\, w_i \in \OO .
 \]
-By Lemma~\ref{lem:lower-pole}, $B^{M-1} h = (A/B) \sum_i c_i w_i \in \OO$.
+By Lemma~\ref{lem:lower-pole}, $B^{M-1} \psi = (A/B) \sum_i c_i w_i \in \OO$.
 
 In general, let $H = B/G$. Differentiating $w_i / B^M = (w_i / G^M) H^{-M}$
 gives
@@ -898,36 +898,36 @@ through the behaviour at infinity, which is the subject of
 Chapter~\ref{ch:algebraic-part}. Chen, Kauers and Koutschan~\cite{chen2016}
 answer it by a second reduction, which confines the remainder to a space of
 finite dimension. We state their result; it needs the notion of a basis
-\emph{normal at infinity}, for which see Chapter~\ref{ch:integral-bases}.
+\emph{normal at infinity} (Definition~\ref{def:normal-infinity}).
 
-Let $\nu = (\nu_1, \dots, \nu_n)$ be a basis of $E$ over $K(x)$, and let $a
-\in K[x]$ and the matrix $(\beta_{ij})$ over $K[x]$ be such that $a\, D\nu_i =
-\sum_j \beta_{ij} \nu_j$. For a row vector $p = (p_1, \dots, p_n) \in K[x]^n$,
+Let $\mu = (\mu_1, \dots, \mu_n)$ be a basis of $E$ over $K(x)$, and let $a
+\in K[x]$ and the matrix $(\beta_{ij})$ over $K[x]$ be such that $a\, D\mu_i =
+\sum_j \beta_{ij} \mu_j$. For a row vector $p = (p_1, \dots, p_n) \in K[x]^n$,
 \[
-  D\Bigl( \sum_i p_i \nu_i \Bigr) = \frac{1}{a} \sum_j \phi_\nu(p)_j\, \nu_j,
-  \qquad \phi_\nu(p) = a\, Dp + p\, (\beta_{ij}) .
+  D\Bigl( \sum_i p_i \mu_i \Bigr) = \frac{1}{a} \sum_j \phi_\mu(p)_j\, \mu_j,
+  \qquad \phi_\mu(p) = a\, Dp + p\, (\beta_{ij}) .
 \]
-The map $\phi_\nu : K[x]^n \to K[x]^n$ is $K$-linear. Let $N_\nu$ be the
+The map $\phi_\mu : K[x]^n \to K[x]^n$ is $K$-linear. Let $N_\mu$ be the
 $K$-subspace of $K[x]^n$ spanned by those monomials $x^j \epsilon_i$,
 $\epsilon_i$ the $i$-th unit vector, that are not the leading term of any
-element of the image of $\phi_\nu$. Then $K[x]^n = \operatorname{im}(\phi_\nu)
-\oplus N_\nu$, and writing a vector as the sum of its two components is the
+element of the image of $\phi_\mu$. Then $K[x]^n = \operatorname{im}(\phi_\mu)
+\oplus N_\mu$, and writing a vector as the sum of its two components is the
 \emph{polynomial reduction} with respect\index{polynomial reduction} to
-$\nu$~\cite[Definitions~9 and~10]{chen2016}.
+$\mu$~\cite[Definitions~9 and~10]{chen2016}.
 
 \begin{theorem}[Chen, Kauers, Koutschan]\label{thm:additive}\standing{cited}{\cite[Lemma~12, Theorem~13]{chen2016}}
 Let $w$ be an integral basis of $E$ over $K(x)$ that is normal at infinity.
-Then there are integers $\tau_1, \dots, \tau_n \ge 0$ such that $\nu =
-(x^{-\tau_1} w_1, \dots, x^{-\tau_n} w_n)$ is integral at infinity, and an
-integer $\lambda \ge 0$ such that $a = x^\lambda e_w$ serves as the $a$ above
-for $\nu$; and the space $N_\nu$ has finite dimension over $K$. Every $f \in
+Then, with the integers $\tau_i \ge 0$ of~\eqref{eq:tau}, the basis $\mu =
+(x^{-\tau_1} w_1, \dots, x^{-\tau_n} w_n)$ is integral at infinity, and there
+is an integer $\lambda \ge 0$ such that $a = x^\lambda e_w$ serves as the $a$ above
+for $\mu$; and the space $N_\mu$ has finite dimension over $K$. Every $f \in
 E$ can be written
 \[
   f = Dg + \frac{1}{d} \sum_{i=1}^n p_i w_i
-         + \frac{1}{x^\lambda e_w} \sum_{i=1}^n q_i \nu_i
+         + \frac{1}{x^\lambda e_w} \sum_{i=1}^n q_i \mu_i
 \]
 with $g \in E$, $d \in K[x]$ squarefree and coprime with $e_w$, $p_i \in K[x]$
-with $\deg(p_i) < \deg(d)$, and $(q_1, \dots, q_n) \in N_\nu$. Moreover $f$ is
+with $\deg(p_i) < \deg(d)$, and $(q_1, \dots, q_n) \in N_\mu$. Moreover $f$ is
 integrable in $E$ if and only if all the $p_i$ and all the $q_i$ are zero.
 \end{theorem}
 

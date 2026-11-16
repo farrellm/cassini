@@ -56,7 +56,7 @@ $n \tilde\delta$ with $n$ dividing $h$, and \seealg{PrincipalMultiple} with
 $B = h$, or with the bound $(\sqrt q + 1)^{2g}$ if $h$ is not known, finds the
 exact order of the class. The algorithms of Chapters~\ref{ch:integral-bases}
 and~\ref{ch:divisors} work over a finite field whose characteristic exceeds
-$n$, the restriction coming from the trace radical of
+the degree of $\tilde E$ over $\mathbb{F}_q(x)$, the restriction coming from the trace radical of
 Theorem~\ref{thm:trager-criterion}.
 
 \section{Good reduction}\label{sec:fo-reduction}
@@ -170,7 +170,7 @@ number field $K$, return $(N, u)$ with $N \ge 1$ least such that $N\delta$ is
 principal and $N\delta = (u)$; or ``infinite'' if no multiple of $\delta$ is
 principal.}
 \State choose primes $\mathfrak p$, $\mathfrak q$ of $K$ of different residue characteristics $p$, $q$ at which $E$ and $\delta$ have good reduction
-\State $o_{\mathfrak p} \gets$ the order of the class of $\tilde\delta$ in the reduction at $\mathfrak p$ \Comment{\seealg{PrincipalMultiple}, $B = (\sqrt{q_{\mathfrak p}} + 1)^{2g}$}
+\State $o_{\mathfrak p} \gets$ the order of the class of $\tilde\delta$ in the reduction at $\mathfrak p$ \Comment{\seealg{PrincipalMultiple}, with the bound of Theorem~\ref{thm:class-number}}
 \State $o_{\mathfrak q} \gets$ the same at $\mathfrak q$
 \State $o_{\mathfrak p}' \gets$ the part of $o_{\mathfrak p}$ prime to $p$, \ $o_{\mathfrak q}' \gets$ the part of $o_{\mathfrak q}$ prime to $q$
 \If{the parts of $o_{\mathfrak p}'$ and $o_{\mathfrak q}'$ prime to $pq$ differ} \Return ``infinite'' \EndIf

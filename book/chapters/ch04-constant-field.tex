@@ -118,7 +118,8 @@ algebraic number field, for which Trager refers to his own earlier algorithm.
 Trager adds a test that often makes the algorithm unnecessary. If $w$ is an
 integral basis of $E$ normal at infinity, the elements of $E$ with no poles
 at all are spanned over $K$ by the $w_i$ that have no pole at infinity
-(Lemma~\ref{lem:termwise}), and these elements are exactly $K_0$. So $F$ is
+(the first part of Lemma~\ref{lem:termwise}, which does not need $K$ to be
+algebraically closed in $E$), and these elements are exactly $K_0$. So $F$ is
 absolutely irreducible if and only if exactly one $w_i$ is integral at
 infinity. Since the integration algorithm computes such a basis anyway, the
 test is free. In the example above, $(1, y, y^2/x, y^3/x)$ is an integral
@@ -160,7 +161,8 @@ k^4$ exactly when $4$ divides every $e_i$. If $\delta = 1$, no prime dividing
 $n$ divides every $e_i$, and both conditions hold. If $\delta > 1$, then $g =
 h^\delta$ with $h = c^{1/\delta} \prod_i g_i^{e_i/\delta}$, and $y^{n/\delta}
 - h$ divides $y^n - h^\delta$; it is absolutely irreducible by the first
-part, because $\gcd(n/\delta, e_1/\delta, \dots) = 1$.
+part, because $\gcd(n/\delta, e_1/\delta, \dots) = 1$, or trivially if $n =
+\delta$.
 \end{proof}
 
 This is the algorithm of~\cite[\S3.3]{trager1984}. For the normal form $z^n

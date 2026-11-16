@@ -217,7 +217,7 @@ $G \in k[t][y]$ and $H \in k[t]$. Let
 With the notation above, the roots of $R$ in $\kbar$ are the numbers
 $\tau_P(f)/r_P$, for $P$ over the roots of $d_n$. If $f$ has an elementary
 integral over $E$, then all the roots of $R$ are constants; equivalently, $R
-= a\, R_0$ with $a \in k$ and $R_0 \in \overline{C}[Z]$ monic.
+= c_0\, R_0$ with $c_0 \in k$ and $R_0 \in \overline{C}[Z]$ monic.
 \end{theorem}
 
 \begin{proof}
@@ -248,7 +248,9 @@ Let $k = \Q(x)$, $t = \log x$, and $E = k(t)[y]/(F)$ with $F = y^4 - 2 t y^2 +
 t^2 - t$, of which $\sqrt{t + \sqrt t}$ is a root. The integrand is $f = (t +
 y)/(1 + t)$. With respect to $(1, y, y^2, y^3)$ its denominator is $d = 1 +
 t$, which is normal, and $F(-1, y) = y^4 + 2y^2 + 2$ is squarefree, so the
-places over $t = -1$ are unramified and $f$ is simple. Here $Dd = 1/x$, $G =
+places over $t = -1$ are unramified and $f$ is simple. The basis need not be
+an integral basis for what follows: Theorem~\ref{thm:tau}(iv) asks only that
+$d f = t + y$ have no pole over the root of $d$. Here $Dd = 1/x$, $G =
 t + y$ and $H = 1$, and
 \begin{align*}
   R(Z) &= \resultant_t\Bigl( \resultant_y\bigl( t + y - \tfrac{Z}{x},\; F \bigr),\; 1 + t \Bigr) \\
