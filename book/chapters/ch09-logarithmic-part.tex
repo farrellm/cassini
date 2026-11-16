@@ -106,8 +106,11 @@ where $\operatorname{pp}_Z$ is the primitive part with respect to $Z$.
 \end{theorem}
 
 \begin{proof}
-Let $x_0 \in \Kbar$ be a root of $d$. By Theorem~\ref{thm:puiseux-embeddings}, the $n$ embeddings of $E$ over $K(x)$
-into the field of Puiseux series in $x - x_0$ over $\Kbar$ fall into groups,
+Let $x_0 \in \Kbar$ be a root of $d$. The characteristic polynomial of $a$ is the same whether $a$ is regarded in
+$E$ over $K(x)$ or in $E_{\Kbar}$ over $\Kbar(x)$. By
+Theorem~\ref{thm:puiseux-embeddings}, the $n$ embeddings of $E_{\Kbar}$ over
+$\Kbar(x)$ into the field of Puiseux series in $x - x_0$ over $\Kbar$ fall
+into groups,
 one for each place $P$ over $x_0$, the group of $P$ consisting of $r_P$
 embeddings; and for $b \in E$ without a pole at $P$, each embedding in that
 group sends $b$ to a series without negative exponents whose constant term is
@@ -125,11 +128,11 @@ The statement about residues is Lemma~\ref{lem:residue-value}.
 
 For~\eqref{eq:trager-resultant}, let $\rho = \resultant_y(Z H d' - G, F)$,
 which by~\eqref{eq:charpoly-resultant} is $\pm (H d')^n \chi_a$. Its leading
-coefficient in $Z$ is $\pm (H d')^n$, and its content $c \in K[x]$ divides
+coefficient in $Z$ is $\pm (H d')^n$, and its content $c_\rho \in K[x]$ divides
 that. Let $x_0$ be a root of $d$. The coefficients of $\chi_a$ have no pole
 at $x_0$, so every coefficient of $\rho$ vanishes at $x_0$ to at least the
-order of $(H d')^n$; hence $c$ vanishes there to exactly that order, and
-$\operatorname{pp}_Z(\rho) = \rho / c$ is $\chi_a$ times a rational function
+order of $(H d')^n$; hence $c_\rho$ vanishes there to exactly that order, and
+$\operatorname{pp}_Z(\rho) = \rho / c_\rho$ is $\chi_a$ times a rational function
 of $x$ with neither zero nor pole at any root of $d$. The product over the
 roots of $d$ is then the same up to a nonzero constant.
 \end{proof}
@@ -138,8 +141,8 @@ Formula~\eqref{eq:trager-resultant} is the one
 in~\cite[\S2.5]{bronstein1998tutorial}. With $H = 1$ the primitive part can
 be omitted, since the content then divides a power of $d'$, which is coprime
 with $d$; that is formula~(7) of~\cite[\S5.2]{trager1984}. The primitive part matters when $H$ has a root
-in common with $d$, that is, when $h$ has a pole over a point where the
-plane curve $F = 0$ is singular.
+in common with $d$, which can happen only when $h$ has a pole over a point
+where the plane curve $F = 0$ is singular.
 
 $R$ is computed in $K$, but its roots are in general not in $K$. By
 Theorem~\ref{thm:liouville-residues}, the field they generate over $K$ is
@@ -226,8 +229,8 @@ field of $R$ is a vector space of finite dimension over $\Q$, the roots of
 $R$ are vectors in it, and a basis of their span together with the
 coordinates $\rho_{Pj}$ is found by Gaussian elimination. If $K$ contains
 parameters, the roots are first written as polynomials in the parameters
-with coefficients in a number field, and the same is done with the
-coefficients of the monomials~\cite[\S5.2]{trager1984}. The splitting field
+with coefficients in a number field, and the monomials in the parameters
+are then treated as further basis vectors~\cite[\S5.2]{trager1984}. The splitting field
 can have degree as large as the factorial of the degree of $R$. As Trager
 remarks, there is no escaping this, since the answer cannot be written over a
 smaller field.
