@@ -3087,6 +3087,15 @@ the schedule ends.
 is a specialist project of its own rather than a milestone, and must not appear on a roadmap as a
 matter of effort.
 
+The repository does hold an account of it: `book/`, a reconstruction of the unwritten second volume
+of `bronstein2005_*.pdf`, built by `./book/build.sh` into `book/build/volume2.pdf`. It is the place
+to read what the decision is a decision about, and it does not change the decision. It is not the
+implementer's textbook whose absence the paragraph above records: it is a first draft assembled from
+the literature, read by no one but its writer, and its own §17.4 lists what it cites without proof
+and what it only summarises, the mixed algebraic–transcendental case above all. Its worked
+integrals are in `book/data/test-integrals.tsv`, in Wolfram Language syntax; no test suite reads
+that file.
+
 ### 6.3 Summation
 
 `Cassini.Summation.Gosper` (indefinite hypergeometric summation) and `.Zeilberger` (creative
@@ -4400,3 +4409,9 @@ facts about them. The corpus is gitignored, so a fresh clone has the indexes and
 documents: `references/downloaded-references-summary.md`'s Source column is how to re-fetch them,
 and `references/CLAUDE.md` holds the corpus rules, including which copies have OCR defects that make
 `grep` lie in both directions.
+
+`book/` is not part of that research and not a source for this document. It is a separate text on
+the algebraic case of integration (§6.2), with its own `CLAUDE.md`; its outline and plan are in
+`references/bronstein-volume-2/`. Its built PDF, `book/build/volume2.pdf`, is gitignored like the
+corpus, so a fresh clone has the LaTeX and no PDF until `./book/build.sh` is run, which needs
+`lualatex`.
