@@ -12,7 +12,8 @@ The chapter is not on the same footing as those of Part~II. For a simple
 radical extension the method is complete and rational, and we give it with
 proofs and two worked examples. For a general algebraic extension the
 sources solve the problem through expansions at the places at infinity and
-over $t = 0$; the tutorial says of this, twice, that ``the details are quite
+over $t = 0$; the tutorial sends its reader to them for the details each
+time, and says at the end that ``the details are quite
 technical''~\cite[\S3.8 and \S3.9]{bronstein1998tutorial}. We state what is
 done and where, and do not reproduce it.
 
@@ -107,11 +108,25 @@ In general Bronstein bounds the degrees of the $B_i$
 comparing the expansions of the two sides at the infinite places, following
 Risch. When the system is diagonal no expansions are needed.
 
+That happens for a simple radical extension $E = k(t)[z]/(z^n - H)$, with
+$H = c \prod_j p_j^{\,j}$ as in~\eqref{eq:radical-normal}, where now $c \in
+k^*$ and the $p_j \in k[t]$ are monic, squarefree and pairwise coprime.
+Theorem~\ref{thm:radical-basis} and its proof use nothing about the ground
+field but its characteristic, so~\eqref{eq:radical-basis} is an integral
+basis of $E$ over $k(t)$, and $Dw_{i+1} = \lambda_i w_{i+1}$ with
+\[
+  \lambda_i = \frac{i}{n} \frac{DH}{H} - \frac{De_i}{e_i}
+            = \frac{i}{n} \frac{Dc}{c}
+              + \sum_{j=1}^{n-1} \Bigl\{ \frac{ij}{n} \Bigr\} \frac{Dp_j}{p_j} .
+\]
+The term in $Dc/c$ is new: in Chapter~\ref{ch:radical} the coefficient $c$
+was a constant. It is in $k$, so the denominator of $\lambda_i$ still divides
+$p_1 \cdots p_{n-1}$.
+
 \begin{theorem}[simple radicals, logarithmic case]\label{thm:log-radical}\standing{proved}{}
 Let $t$ be a logarithm over $k$, and let $E = k(t)[z]/(z^n - H)$ be a simple
 radical extension with the integral basis $w$
-of~\eqref{eq:radical-basis} and the $\lambda_i$
-of~\eqref{eq:radical-derivative}, formed with $D$ in place of $d/dx$. Let $h_1
+of~\eqref{eq:radical-basis} and the $\lambda_i$ just defined. Let $h_1
 = \sum_{i=0}^{n-1} (A_{i+1}/U)\, w_{i+1}$ with $U$ normal. Then~\eqref{eq:E3}
 has a solution if and only if
 \begin{enumerate}[label=\textup{(\roman*)}]
@@ -262,8 +277,13 @@ Let $k = \Q(x)$, $t = e^x$ and $E = k(t)[y]/(y^3 - t - x)$. The integrand is
              {\bar t\,(x^2\,\bar t + x)} ,
   \]
   whose denominator is divisible by $\bar t$: $m = 1$.
-\item Here $D\bar t = -\bar t$, so $D\eta = -1$, and the values at $\bar t =
-  0$ of the $\lambda_i$ are $0$, $-\frac23$ and $-\frac13$. The diagonal
+\item Here $D\bar t = -\bar t$, so $D\eta = -1$. With $H = \bar t^2 (1 + x
+  \bar t)$ we have $DH/H = (-2 + (1 - 3x)\,\bar t)/(1 + x \bar t)$, whose
+  value at $\bar t = 0$ is $-2$, and $De_2/e_2 = D\bar t/\bar t = -1$; so the
+  values at $\bar t = 0$ of the $\lambda_i = \frac{i}{3} DH/H - De_i/e_i$ are
+  $0$, $-\frac23$ and $-\frac43 + 1 = -\frac13$. (Here $c = x$ is not a
+  constant, and the term $\frac{i}{3} Dc/c$ is needed if the $\lambda_i$ are
+  computed from the $p_j$.) The diagonal
   system is
   \[
     0 = Dc_1 + c_1, \qquad 0 = Dc_2 + \tfrac13\, c_2, \qquad
@@ -329,8 +349,8 @@ implementation of a complete algorithm''. He names three things that a
 rational algorithm would need:
 \begin{enumerate}[label=\textup{(\roman*)}]
 \item a formula for the residues $\tau_P$ at the special places;
-\item a way to solve $Dv = f$ for $v \in k$, with $f$ simple, without the
-  expansions of $f$ at the special places;
+\item a way to solve $Dv = f$ for $v$ in the field, when $f$ is simple,
+  ``without computing the Puiseux expansions of $f$ at the special places'';
 \item a rational algorithm for the Risch equation.
 \end{enumerate}
 Chapter~\ref{ch:risch-equation} takes up the third. We know of no source

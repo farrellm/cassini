@@ -3,8 +3,9 @@
 Hermite's reduction~\cite{hermite1872} writes a rational function as a
 derivative plus a rational function whose denominator is squarefree, using
 nothing more than gcd computations \VolI{\S2.2}. Volume~I carries it to a
-monomial extension $k(t)$, where the remaining integrand is \emph{simple}: its
-denominator has no multiple normal factor \VolI{\S5.3}. This chapter carries it
+monomial extension $k(t)$, where what remains is a \emph{simple} function,
+whose denominator is normal, plus a \emph{reduced} one, whose denominator is
+special \VolI{\S5.3}. This chapter carries it
 one step further, to a finite algebraic extension $E$ of $k(t)$. The result
 has the same shape: any $f \in E$ can be written
 \[
@@ -344,8 +345,10 @@ of~\eqref{eq:hermite-system}, which here reads $\sum_i f_i S_i = y^3$, is
   f_1 = f_2 = 0, \qquad f_3 = -2, \qquad f_4 = \frac{x + 1}{x} .
 \]
 Its denominator $q = x$ is not coprime with $v = x$, so
-Theorem~\ref{thm:hermite-step} does not apply. Note that $e_w = F$ is
-squarefree: the basis is suitable, and the reduction fails all the same.
+Theorem~\ref{thm:hermite-step} does not apply. Note that $e_w = x F$: the
+$S_i$ above show that $x F\, Dw_i \in \OO_w$, and neither factor can be
+dropped. It is squarefree, so the basis is suitable, and the reduction fails
+all the same.
 \end{example}
 
 \section{What a failure produces}\label{sec:hermite-failure}
@@ -518,7 +521,7 @@ states it as: the $S_i$ form a \emph{local integral basis} at $v$, that is,
 every integral element is a combination of the $S_i$ with coefficients in
 $K(x)$ whose denominators are coprime with $v$. His proof is direct, and is
 in substance the proof of Lemma~\ref{lem:lazy-key} run by contradiction; the
-squarefreeness of $e_w$ is his Lemma~4.1.
+squarefreeness of $e_w$ he deduces from his Lemma~4.1.
 
 \begin{remark}\label{rem:trager-form}
 Trager arranges the computation differently.
@@ -818,7 +821,7 @@ We run \seealg{LazyHermiteReduce} on
   f = \frac{y^3}{x^3}, \qquad y^4 + (x^2 + x)\, y - x^2 = 0 ,
 \]
 from the basis $w = (1, y, y^2, y^3)$ of Example~\ref{ex:fail}, which is
-suitable, with $e_w = F$.
+suitable, with $e_w = x F$.
 \begin{enumerate}
 \item With respect to $w$, $d = x^3$, so $s = u = 1$, $v = x$ and $m = 3$. The
   $S_i = x^3 D(w_i / x^2)$ are independent, and the solution
@@ -862,9 +865,10 @@ So
   \int \frac{y^3}{x^3}\, dx = \frac{2 x y^2 - y^3}{x^2} + \int h\, dx .
 \]
 The first step succeeded over a basis that the second showed not to be
-integral: a successful step proves nothing about the basis. The factor $F$ in
-the final denominator is the $\tilde e$ of Theorem~\ref{thm:hermite-step}; it comes
-from the basis, not from $f$.
+integral: a successful step proves nothing about the basis. The factor $F$
+entered the denominator at the first step, where $u v = x$ and $e_w = x F$:
+it is the $\tilde e$ of Theorem~\ref{thm:hermite-step}, and it comes from the
+basis, not from $f$.
 \end{example}
 
 \section{The polynomial reduction\later}\label{sec:hermite-polynomial}

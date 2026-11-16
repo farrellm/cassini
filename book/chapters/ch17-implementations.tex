@@ -7,9 +7,11 @@ list.
 
 \section{Bronstein's integrator}\label{sec:impl-axiom}
 
-The algorithm of Parts~I and~II was implemented by Bronstein in Scratchpad,
-later Axiom, in 1987 and 1988; his paper of 1990 mentions the implementation
-as recently completed~\cite[Conclusions]{bronstein1990}.
+The algorithm of Part~II was implemented by Bronstein in Scratchpad, later
+Axiom, in 1987 and 1988; his paper of 1990 mentions the implementation as
+recently completed~\cite[Conclusions]{bronstein1990}. The integral-basis
+packages now in the Axiom sources are later and by other hands
+(Appendix~\ref{app:code}).
 Appendix~\ref{app:code} lists its constructors against the chapters of this
 book. Read as a design, it has three layers.
 
@@ -95,9 +97,9 @@ no source for. They are stated where they arise; we collect them.
 \item \emph{A rational algorithm for the mixed case.} Bronstein's algorithm
   for an algebraic extension of $k(t)$ uses Puiseux expansions at the special
   places. He names three things a rational algorithm would need: a formula
-  for the residues at the special places, a way to integrate in $k$ without
-  expansions at those places, and a rational algorithm for the Risch
-  equation (Section~\ref{sec:elem-status}).
+  for the residues at the special places, a way to decide whether a simple
+  element is a derivative without expansions at those places, and a rational
+  algorithm for the Risch equation (Section~\ref{sec:elem-status}).
 \item \emph{The Risch equation in the mixed case.} The rational algorithm
   of 1991 finds the denominator of a solution and not the solution
   (Section~\ref{sec:rde-open}).

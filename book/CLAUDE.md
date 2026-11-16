@@ -10,7 +10,9 @@ per-file defects, are indexed in that directory's `CLAUDE.md`.
 
 **State: the book is complete in first draft (phases 0 to 6, 2026-11-13 to 2026-11-15).** All 17
 chapters and four appendices are written, 148 pages. The project owner waived the plan's reading
-gate on 2026-11-13 and has not yet read any of it; nothing here has had a second reader. What
+gate on 2026-11-13 and has not yet read any of it; nothing here has had a second reader. A review
+against the sources on 2026-11-16 (the plan's §5, fifth pass) corrected six claims about sources
+and two errors in the mathematics, and lists what it did not check. What
 the book leaves undone is listed in its own §17.4, and that list is the agenda for a revision.
 
 **Part III is not on the footing of Part II.** Chapters 13–16 prove what follows from Lemma 7.2.1
@@ -76,6 +78,7 @@ macros of the table below are still preferred for anything with a meaning.
    produced or re-checked in the Wolfram evaluator, including the ones that also appear in
    Bronstein's tutorial. The first draft had two errors that only running the computation found: a
    reduction step narrated as failing in fact succeeds, and an exercise called a basis unsuitable
-   that is suitable. Trace the algorithm; do not narrate what it ought to do.
+   that is suitable. The review of 2026-11-16 found a third: `e_w` given as `F` where the computation
+   gives `xF`. Trace the algorithm; do not narrate what it ought to do.
 7. **The preface and title page say this is a reconstruction and not Bronstein's book.** No edit
    may weaken that.

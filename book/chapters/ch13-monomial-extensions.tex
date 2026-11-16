@@ -90,9 +90,13 @@ An element $f \in E$ is \emph{simple}\index{simple element} if $\ord{P}(f) \ge -
 normal place $P$.
 \end{definition}
 
-For $E = k(t)$ these are the simple functions of Volume~I
-\VolI{Corollary~4.4.1}. Bronstein's word for it is \emph{normal}; we keep
-``normal'' for polynomials and places.
+For $E = k(t)$ these are the functions whose denominator has no multiple
+normal factor: the sums of a simple and a reduced function in the sense of
+Volume~I, where ``simple'' is said only of a function whose denominator is
+normal \VolI{Definition~3.5.2 and Corollary~4.4.1}. Our definition allows
+poles of any order at the special places, as Bronstein's does in his
+paper~\cite[Definition~1.4]{bronstein1990}; his word there is \emph{normal},
+and we keep ``normal'' for polynomials and places.
 
 \begin{proposition}\label{prop:simple}\standing{proved}{}
 Let $w$ be an integral basis of $E$ over $k(t)$, and let $d$ be the
@@ -240,7 +244,8 @@ $k[Z]$~\cite[\S3.8]{bronstein1998tutorial}. The criterion is necessary and
 not sufficient. Its value is that it often ends the computation at once.
 
 \begin{example}\label{ex:criterion-fails}
-This is the first example of~\cite[\S2]{bronstein1990}. Consider
+This is the first of the examples that follow Proposition~2.9
+in~\cite{bronstein1990}. Consider
 \[
   \int \frac{\log x + \sqrt{\log x + \sqrt{\log x}}}{1 + \log x}\, dx .
 \]

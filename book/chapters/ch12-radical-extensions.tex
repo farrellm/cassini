@@ -244,7 +244,26 @@ part (Theorem~\ref{thm:algebraic-part}).
 \item The residues are $1$ at $P = (0, 1)$ and $-1$ at $Q = (0, -1)$. So $k
   = 1$, $q_1 = 1$, $m = 1$ and $\delta_1 = P - Q$.
 \item The tutorial reports that $\delta_1$, $2\delta_1$ and $3\delta_1$ are
-  not principal. Since $(y + 1)(y - 1) = x^8$, the function $y + 1$ vanishes
+  not principal. Here is a proof. A function with divisor $k\,(P - Q)$, $k \ge
+  1$, lies in $\LL(kQ)$, and by Theorem~\ref{thm:riemann-roch}(ii), applied
+  over $\overline{\Q}$ with $g = 3$,
+  \[
+    \ell(kQ) = k + 1 - 3 + \ell(W - kQ) .
+  \]
+  If $\omega_0$ is a differential with divisor $W$, then $u \mapsto u\,
+  \omega_0$ carries $\LL(W - kQ)$ onto the space of differentials of the
+  first kind that vanish to order at least $k$ at $Q$. The differentials of
+  the first kind are the $q(x)\,dx/y$ with $\deg(q) \le 2$:
+  by~\eqref{eq:order-dx}, $x^i\,dx/y$ has order $1 - 1 = 0$ at the branch
+  places and $-i + 4 - 2 = 2 - i$ at the two infinite places, so these have
+  no poles, and they span a space of dimension $3 = g$
+  (Theorem~\ref{thm:riemann-roch}(v)). At $Q$, $x$ is a uniformising
+  parameter and $y \ne 0$, so $q\,dx/y$ vanishes there to the order to which
+  $x$ divides $q$; the space in question has dimension $3 - k$ for $k \le 3$.
+  Hence $\ell(kQ) = 1$ for $k = 1, 2, 3$: only the constants have their poles
+  confined to $Q$ with order at most $3$, and $k \delta_1$ is not principal.
+
+  Since $(y + 1)(y - 1) = x^8$, the function $y + 1$ vanishes
   to order $8$ at $Q$ and nowhere else, and has a pole of order $4$ at each
   infinite place, as has $x^4$. Hence
   \[
@@ -260,8 +279,8 @@ Therefore
     + \frac14 \log \frac{x^4}{1 + \sqrt{x^8 + 1}} .
 \]
 The curve has genus $3$, and the integral is elementary because the class
-of $P - Q$ has finite order in its divisor class group: order $4$, if the
-tutorial's report is right. A substitution finds the same
+of $P - Q$ has finite order in its divisor class group, namely $4$. A
+substitution finds the same
 integral, since $h\,dx$ is a rational differential in $x^8$ and $y$; the
 algorithm did not need to notice.
 \end{example}

@@ -115,6 +115,22 @@ The exact constant field is then generated over $K$ by the coefficients of
 the factor returned. The last step needs factorisation of polynomials over an
 algebraic number field, for which Trager refers to his own earlier algorithm.
 
+\begin{example}\label{ex:absolute-factor}
+Let $F = y^4 - 2x^2$ over $K = \Q$, the polynomial of
+Section~\ref{sec:const-exact}. The degrees in $x$ and in $y$ are $2$ and $4$,
+which are not coprime. Take $x_0 = 1$: $F(1, y) = y^4 - 2$ is squarefree, and
+it is irreducible over $\Q$, so $F_1 = y^4 - 2$, of degree $4$, and $M =
+\Q[w]/(w^4 - 2)$. Over $M(x)$,
+\[
+  y^4 - 2x^2 = (y^2 - w^2 x)(y^2 + w^2 x) ,
+\]
+and neither factor splits further, because $\pm w^2 x$ is not a square in
+$M(x)$. The algorithm returns $M$ and $y^2 - w^2 x$. The coefficients of
+that factor generate $\Q(w^2) = \Q(\sqrt2)$, which is the exact constant
+field found in Section~\ref{sec:const-exact}. The field $M$ is larger: the
+specialisation gives a field that contains $K_0$, not $K_0$ itself.
+\end{example}
+
 Trager adds a test that often makes the algorithm unnecessary. If $w$ is an
 integral basis of $E$ normal at infinity, the elements of $E$ with no poles
 at all are spanned over $K$ by the $w_i$ that have no pole at infinity

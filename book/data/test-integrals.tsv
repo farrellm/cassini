@@ -10,7 +10,7 @@ T03	ex:running-log	1/(x Sqrt[1 - x^3])	Log[(Sqrt[1 - x^3] - 1)/(Sqrt[1 - x^3] + 
 T04	ex:running-hermite	1/(1 - x^3)^(3/2)	REDUCES:T01	equals 2 x/(3 Sqrt[1 - x^3]) plus one third of T01
 T05	ex:mixed-hermite	1/(x Log[x]^(3/2))	-2/Sqrt[Log[x]]	Hermite reduction over k(t), t = Log[x]
 T06	ex:log-sqrt2	1/((x - 1) Sqrt[x^2 + 1])	Log[(x - 1)/(1 + x + Sqrt[2] Sqrt[x^2 + 1])]/Sqrt[2]	genus 0; constant field extended by Sqrt[2]
-T07	ex:radical-log	(2 x^8 + 1) Sqrt[x^8 + 1]/(x^17 + 2 x^9 + x)	-1/(4 Sqrt[x^8 + 1]) + Log[x^4/(1 + Sqrt[x^8 + 1])]/4	genus 3; residue divisor of order dividing 4
+T07	ex:radical-log	(2 x^8 + 1) Sqrt[x^8 + 1]/(x^17 + 2 x^9 + x)	-1/(4 Sqrt[x^8 + 1]) + Log[x^4/(1 + Sqrt[x^8 + 1])]/4	genus 3; residue divisor of order 4
 T08	ex:fo-infinite	1/((x - 3) Sqrt[x^3 - 2])	NOT_ELEMENTARY	residue divisor of infinite order
 T09	ex:g0-binomial	x^5 (1 + x^3)^(2/3)	(1 + x^3)^(8/3)/8 - (1 + x^3)^(5/3)/5	binomial differential, genus 0
 T10	ex:elem-log	((x^2 + 2 x + 1) Sqrt[x + Log[x]] + (3 x + 1) Log[x] + 3 x^2 + x)/((x Log[x] + x^2) Sqrt[x + Log[x]] + x^2 Log[x] + x^3)	2 Sqrt[x + Log[x]] + 2 Log[x + Sqrt[x + Log[x]]]	square root over a logarithm

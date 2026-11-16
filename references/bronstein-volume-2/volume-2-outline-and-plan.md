@@ -13,7 +13,8 @@ skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. Phase 1, chap
 the same day. The project owner then waived the reading gate, and phase 2 (chs. 6, 8, 9, 12) was
 drafted on 2026-11-14, phases 3 (chs. 1–5) and 4 (chs. 10–11) after it the same day, and phase 5
 (chs. 13–16) and phase 6 on 2026-11-15. The book is complete in first draft, 148 pages after the consistency passes (150 when first complete), and has not
-been read by the owner.
+been read by the owner. A review against the sources followed on 2026-11-16 (§5, the fifth pass); it
+left the page count at 148.
 
 ## 1. What this book is, and is not
 
@@ -39,7 +40,7 @@ Read as a book outline it has five gaps. The outline in §3 closes each.
 | :--- | :--- | :--- | :--- |
 | 1 | It follows the tutorial's section list, and never asks what **Volume I's own chapter list** implies. Volume I has chapters on parametric problems (7), the coupled system (8) and structure theorems (9); each has an algebraic counterpart. The parametric logarithmic derivative problem appears in *WV2* only inside a FriCAS quotation. | These are what the mixed case calls as subroutines. A book that mirrors Volume I has to say what is known for each. | Ch. 16 |
 | 2 | **Genus zero** appears only as a row of the code table (`INTG0`). | It is the case most integrands in practice fall into, and it needs none of the divisor machinery: a rational parametrisation reduces it to Volume I. | Ch. 11 |
-| 3 | **The constant field** is reduced to the two words "absolute factorisation". Residues live in an algebraic extension of the constants; the curve must be geometrically irreducible; a transcendental parameter in the constants changes the torsion problem (Davenport chs. 6; Masser & Zannier). | Trager gives it a chapter. It is where a correct-looking implementation is wrong. | Chs. 4 and 10 |
+| 3 | **The constant field** is reduced to the two words "absolute factorisation". Residues live in an algebraic extension of the constants; the curve must be geometrically irreducible; a transcendental parameter in the constants changes the torsion problem (Davenport ch. 6; Masser & Zannier). | Trager gives it a chapter. It is where a correct-looking implementation is wrong. | Chs. 4 and 10 |
 | 4 | **The classical theory** (Abel, Liouville, Chebyshev, Hardy's conjecture) is held, in Hardy, and unused. | Volume I opens with it; so should this. It also supplies the standard test integrals. | Ch. 6 |
 | 5 | **Post-2005 work** is listed in §4.1 as sources and not placed in the reconstruction: the polynomial reduction of Chen, Kauers & Koutschan, Hess's Riemann–Roch algorithm, the Gröbner-basis logarithmic part of Kauers and of Miller, Combot. | "Best version" means the book may use what Bronstein could not have. Each must be marked as later than 2005. | Chs. 5, 7, 9, 12 |
 
@@ -173,7 +174,7 @@ exponential case. The simple radical case, where the problem decouples into a ra
 and a family of Risch differential equations over `k(t)`. The general case through expansions at
 infinity (and at `t = 0`). Davenport's 1984 case — transcendentals over one curve — as an
 instructive special case. *Sources:* Bronstein 1990 Part 2; tutorial §3.8–§3.9; Davenport 1984;
-Axiom `INTAF`, `INTPAF`. **B** — the tutorial says twice that "the details are quite technical";
+Axiom `INTAF`, `INTPAF`. **B** — the tutorial defers the general case to its references in both sections and says once, at the end of §3.9, that "the details are quite technical" (it had been recorded here as saying it twice; corrected 2026-11-16);
 the 1990 paper has them, in a text layer whose formulas are noise. Risch's own treatment, by
 Puiseux expansions, is in Raab & Singer pp. 203–220.
 
@@ -245,9 +246,48 @@ The chapters cite proofs where the estimate assumed they would be reproduced.
 | 3 | **Part I, back-filled.** Chs. 1–5 written to supply exactly what chs. 6–9 and 12 used, no more. Writing them first would produce a textbook on function fields that the later chapters do not need. | Part I. | Every forward reference from Part II resolves. **Drafted 2026-11-14, 26 pages against the 110 estimated: the rule held. Chs. 6–9 and 12 now cite numbered results of chs. 1–5.** |
 | 4 | Chs. 10 and 11. Ch. 10 needs a close reading of Trager ch. 6 and Davenport chs. 5–8 from page images. | Part II complete. | — **Drafted 2026-11-14. Ch. 10 cites the good-reduction theorems and does not prove them; its parameter case is a summary.** |
 | 5 | **Part III**, chs. 13–16 in order. Begins with a full read of Risch's revised report and of Bronstein 1990 from page images, with a notation concordance (Appendix C) made as it is read. | Part III. | Each **C** chapter states its limits explicitly. **Drafted 2026-11-15. Risch's revised report was read in full from its text; of Bronstein 1990, eighteen of 57 pages were read from page images, the ones carrying the definitions and propositions used. The notation concordance (Appendix C) was not made as the reading went and is owed to phase 6.** |
-| 6 | Ch. 17, appendices, preface, index, exercises. A pass for notation consistency and a rebuild-and-recheck of every worked example. | The book. | — **Drafted 2026-11-15.** Ch. 17; appendices A–D, A with a machine-readable copy in `book/data/`; the dependency chart, as a table on the notation page; an index of algorithms and about forty-five terms; a section in ch. 9 on the Gröbner-basis methods, which the outline had placed there and phase 2 had skipped. Appendix A has thirteen entries, eight of them closed forms; those eight and the two reduction identities (T02, T04) were re-checked by differentiation in one run. The consistency pass was limited to building clean and replacing chapter-level references; it was not a line-by-line reading. **A second pass was made on 2026-11-15:** the preface and chs. 1–3, 6 and 8 were re-read in full; chs. 4, 5, 7, 9 and 12 in the parts where definitions, algorithms and cross-chapter facts sit, between a third and two thirds of each; chs. 10, 11 and 13–17 and the appendices were not re-read, and were checked only by script (every reference names the right kind of object, every numbered part cited exists and says what is claimed of it, every algorithm named is defined) and against the facts they restate from other chapters. **A third pass, the same day,** read chs. 4, 5, 7, 10, 11, 12 and 13 to the end and the first 140 lines of ch. 14, and fixed: a basis called `ν` beside the order function `ν_P` in §7.8; two meanings of `n` in one paragraph of ch. 10; a letter clash in Proposition 12.4.1 and in the residue criterion; a wrong statement in ch. 12 that the integrable binomial cases are those of genus zero (the running example is integrable on a curve of genus one); an unsupported remark on cost. **A fourth pass, 2026-11-16,** read the rest of ch. 14 and chs. 15 and 16 in full, and fixed: an undefined `b_i^{(0)}` in §14.3; two glosses on Davenport 1984 and Bronstein 1991 that went beyond what was read; `h_i` meaning two things in §15.3; a claim in ch. 16 that Volume I's treatment of the parametric problems is complete, three lines after quoting Volume I to the contrary; a claim that Bronstein 1991 covers the parametric equation, which its abstract does not say. Ch. 17 was then read in full and three assertions of our own in it were either sourced or removed. The rest of ch. 9 was read afterwards: its proof of the residue polynomial spoke of the embeddings of `E` over `K(x)` where the theorem it uses is about the algebraically closed case, and used `c` for two things; both fixed. Every chapter has now been read line by line. The appendices were not re-read: they were checked against the chapters when written, and Appendix C's row on the Hermite reduction was simplified during the second pass. It found and fixed: a letter used for two things in Theorem 7.3.1; "normal part" used in two senses in ch. 7; the definition of normality at infinity used in chs. 3 and 5 before it is given in ch. 8 (now restated in ch. 3 and noted in the dependency table); primes used for derivatives without saying so in ch. 12; `τ_i` and `τ_P` unremarked; a transposed Vandermonde product in ch. 1; ch. 9's main theorem stated without its number-field hypothesis; the letter `f` for a denominator in `ExtendBasis`, which also called for a Hermite normal form where the text had been changed to `RowReduce`; `LogarithmicPart` without its step on branch places; the letter `v` meaning two things inside the proof of Theorem 8.3.1; American spellings. |
+| 6 | Ch. 17, appendices, preface, index, exercises. A pass for notation consistency and a rebuild-and-recheck of every worked example. | The book. | — **Drafted 2026-11-15.** Ch. 17; appendices A–D, A with a machine-readable copy in `book/data/`; the dependency chart, as a table on the notation page; an index of algorithms and about forty-five terms; a section in ch. 9 on the Gröbner-basis methods, which the outline had placed there and phase 2 had skipped. Appendix A has thirteen entries, eight of them closed forms; those eight and the two reduction identities (T02, T04) were re-checked by differentiation in one run. The consistency pass was limited to building clean and replacing chapter-level references; it was not a line-by-line reading. **A second pass was made on 2026-11-15:** the preface and chs. 1–3, 6 and 8 were re-read in full; chs. 4, 5, 7, 9 and 12 in the parts where definitions, algorithms and cross-chapter facts sit, between a third and two thirds of each; chs. 10, 11 and 13–17 and the appendices were not re-read, and were checked only by script (every reference names the right kind of object, every numbered part cited exists and says what is claimed of it, every algorithm named is defined) and against the facts they restate from other chapters. **A third pass, the same day,** read chs. 4, 5, 7, 10, 11, 12 and 13 to the end and the first 140 lines of ch. 14, and fixed: a basis called `ν` beside the order function `ν_P` in §7.8; two meanings of `n` in one paragraph of ch. 10; a letter clash in Proposition 12.4.1 and in the residue criterion; a wrong statement in ch. 12 that the integrable binomial cases are those of genus zero (the running example is integrable on a curve of genus one); an unsupported remark on cost. **A fourth pass, 2026-11-16,** read the rest of ch. 14 and chs. 15 and 16 in full, and fixed: an undefined `b_i^{(0)}` in §14.3; two glosses on Davenport 1984 and Bronstein 1991 that went beyond what was read; `h_i` meaning two things in §15.3; a claim in ch. 16 that Volume I's treatment of the parametric problems is complete, three lines after quoting Volume I to the contrary; a claim that Bronstein 1991 covers the parametric equation, which its abstract does not say. Ch. 17 was then read in full and three assertions of our own in it were either sourced or removed. The rest of ch. 9 was read afterwards: its proof of the residue polynomial spoke of the embeddings of `E` over `K(x)` where the theorem it uses is about the algebraically closed case, and used `c` for two things; both fixed. Every chapter has now been read line by line. The appendices were not re-read: they were checked against the chapters when written, and Appendix C's row on the Hermite reduction was simplified during the second pass. The second pass found and fixed: a letter used for two things in Theorem 7.3.1; "normal part" used in two senses in ch. 7; the definition of normality at infinity used in chs. 3 and 5 before it is given in ch. 8 (now restated in ch. 3 and noted in the dependency table); primes used for derivatives without saying so in ch. 12; `τ_i` and `τ_P` unremarked; a transposed Vandermonde product in ch. 1; ch. 9's main theorem stated without its number-field hypothesis; the letter `f` for a denominator in `ExtendBasis`, which also called for a Hermite normal form where the text had been changed to `RowReduce`; `LogarithmicPart` without its step on branch places; the letter `v` meaning two things inside the proof of Theorem 8.3.1; American spellings. |
 
 Roughly one chapter per working session for the **A** chapters; chs. 10, 14 and 15 will take more.
+
+**A fifth pass, 2026-11-16,** was a review of the whole book against its sources, not a consistency
+pass: every chapter and appendix was read line by line, every proof and worked example followed by
+hand, every citation of a numbered result looked up in the source where the source has a usable
+text (Volume I, Stichtenoth, Trager's thesis as typeset, the tutorial, Chen–Kauers–Koutschan,
+Chen–Du–Kauers, Risch's report, Cantor) or on the page image (Bronstein 1990, pp. 135, 139, 140
+and 160–162), every quotation compared with its source, and the computations of chs. 3, 7, 9, 12,
+13 and 14 and all closed forms of Appendix A run again in the Wolfram evaluator. It found:
+
+- *Wrong about a source.* The tutorial says "the details are quite technical" once, not twice
+  (ch. 14, this file, *WV2* §2.8). Davenport's remark on Mazur's bound is in his ch. 5, not ch. 7;
+  the procedure is in ch. 7 (ch. 10). Volume I's "simple" means a normal denominator; the book
+  used it in ch. 7 and ch. 13 as if it allowed a special factor (now stated, with Bronstein 1990's
+  Definition 1.4). The Axiom integral-basis packages are by Miller and by Miller and Williamson,
+  1990–1991, and `HELLFDIV` is dated 1993; ch. 17, Appendix B and *WV2* §4.3 said all the
+  constructors were Bronstein's of 1987–1988. Risch's phrase is "simpler variants", quoted in
+  ch. 16 in the singular. The nested-logarithm example of ch. 13 is the first after Bronstein's
+  Proposition 2.9, not the first of his §2.
+- *Wrong in the mathematics.* In Examples 7.3.1 and 7.7.1, `e_w` for the basis `(1, y, y², y³)`
+  is `xF`, not `F` (recomputed; the basis is suitable either way, and nothing downstream
+  changes). In ch. 14 the `λ_i` of a simple radical extension over `k(t)` were said to be those of
+  ch. 12 "with `D` in place of `d/dx`"; the sum over the `p_j` is short by `(i/n)·Dc/c` when the
+  leading coefficient `c` of the radicand is not a constant, as in Example 14.3.1, whose values
+  were right because they had been computed from `DH/H`. The formula is now stated in ch. 14.
+- *Incomplete.* `AbsoluteFactor` had no worked example, against §4; Example 4.2.1 is added.
+  Example 12.5.1 took from the tutorial that `δ`, `2δ`, `3δ` are not principal; a proof from
+  Riemann–Roch is added, so the order of the class is 4 and no longer "4, if the tutorial is
+  right". Example 10.4.1 said the running computation involved the denominators 2 and 8; only 2.
+- *Unclear.* Two exercises (2.3, 3.2) restated; the description of a place of degree 1 in ch. 11;
+  Bronstein's second obstacle in ch. 14 and ch. 17, where his `k` is not the book's `k`.
+
+Everything else checked held: all the Stichtenoth, Volume I and Trager theorem numbers, the
+quotations from Hardy, Lützen, Risch, Kauers, Miller, Bertrand, Masser & Zannier, FriCAS and the
+lazy Hermite report, and every number in the worked examples other than `e_w`. **Not checked in
+this pass:** statements cited from sources read only in abstract (the text says so at each), the
+row-by-row content of Appendix C beyond its Hermite and "simple" rows, the idealizer computations
+of Example 3.1.2 beyond the trace matrices and discriminants, and Bronstein 1990's Propositions
+2.11–2.15, 2.18 and 2.22–2.24 beyond their existence and subject. The book is still unread by its
+owner.
 
 **Risks.**
 
@@ -260,9 +300,11 @@ Roughly one chapter per working session for the **A** chapters; chs. 10, 14 and 
   the rest is slow and transcription errors are likely; hence the rule that results are re-derived
   or machine-checked, not copied.
 - *Risch's reports are held only as the 2022 revision* of the 1968 one, with parts of the 1969 one.
-  Only its first two pages have been read so far; how much of ch. 15 it carries is not yet known.
-  Bronstein 1990, which presents "Risch's solution of the associated equation problem" itself,
-  remains the main source for Part III.
+  It was read in full in phase 5: it carries the statement of the parametric Risch equation and its
+  solution by expansions, which ch. 15 cites and does not reproduce. Bronstein 1990, which presents
+  "Risch's solution of the associated equation problem" itself, remains the main source for
+  Part III, and of its 57 pages those carrying the statements the book uses were read from page
+  images.
 - *Chs. 15–16 may turn out to be mostly negative results.* That is an accurate picture of the
   subject, and the book says so rather than padding.
 - *Scope creep in Part I.* Controlled by phase 3's rule.

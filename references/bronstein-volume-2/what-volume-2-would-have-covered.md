@@ -236,8 +236,8 @@ The second subject the preface names, and the part with the least written down a
 tutorial's §3.8 and §3.9 treat `E` algebraic over `K(t)` with `t` a logarithm or an exponential. In
 the simple radical case the problem decouples into a rational integration problem and a family of
 Risch differential equations over `K(t)`. In general the polynomial part is replaced by Puiseux
-expansions at infinity (and at `t = 0` in the exponential case), and the tutorial says twice that
-"the details are quite technical" and defers to Bronstein's 1990 paper and Risch's 1968 and 1969
+expansions at infinity (and at `t = 0` in the exponential case), and the tutorial says that
+"the details are quite technical" (once, at the end of §3.9) and defers to Bronstein's 1990 paper and Risch's 1968 and 1969
 reports (the first now **[held]** in a revised form that includes parts of the second; §3, [73]). Solving the Risch differential equation when the base field is itself an algebraic curve is
 the subject of the preface's reference [14] **[held]**
 (`bronstein1991_risch_differential_equation_algebraic_curve.pdf`). Its introduction states the
@@ -412,8 +412,10 @@ the conference. It is now held (§4.1).
 
 ### 4.3 The code: Bronstein's algebraic integrator in Axiom
 
-**[held]** The Axiom sources carry `++ Author: Manuel Bronstein` on the packages below, dated
-1987–1988 where a date is given. This is the algorithm of §2 as running code, and for an implementer
+**[held]** The Axiom sources carry `++ Author: Manuel Bronstein` on the packages below, created
+in 1987–1988, with three exceptions (checked 2026-11-16): `FFINTBAS` is by Victor Miller (1990),
+`WFFINTBS` by Victor Miller and Clifton Williamson (1991), and `HELLFDIV`, Bronstein's, is dated
+1993. This is the algorithm of §2 as running code, and for an implementer
 it answers questions the papers leave to the reader. Line numbers are in the held pamphlets.
 
 | Constructor | File, line | Its own description |
