@@ -12,7 +12,7 @@ for, what its absence costs, where to look, and which to get first.
 it is short.
 [`volume-2-outline-and-plan.md`](./volume-2-outline-and-plan.md) is the chapter outline and writing
 plan for a typeset reconstruction of Volume II. The book's source is in [`../../book/`](../../book/CLAUDE.md);
-as of 2026-11-15 it is complete in first draft: 17 chapters and four appendices, 150 pages, unread by its owner.
+as of 2026-11-15 it is complete in first draft: 17 chapters and four appendices, 148 pages, unread by its owner.
 
 This directory sits beside `papers/`, not inside it, because it is organised around one question
 rather than one kind of source. See [`../CLAUDE.md`](../CLAUDE.md) for the corpus rules and

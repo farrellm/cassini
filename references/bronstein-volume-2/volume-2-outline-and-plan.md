@@ -12,7 +12,7 @@ chs. 14–15 and removes the worst of the reading risk in §5. Phase 0 was done 
 skeleton is in [`../../book/`](../../book/CLAUDE.md) and compiles. Phase 1, chapter 7, was drafted
 the same day. The project owner then waived the reading gate, and phase 2 (chs. 6, 8, 9, 12) was
 drafted on 2026-11-14, phases 3 (chs. 1–5) and 4 (chs. 10–11) after it the same day, and phase 5
-(chs. 13–16) and phase 6 on 2026-11-15. The book is complete in first draft, 150 pages, and has not
+(chs. 13–16) and phase 6 on 2026-11-15. The book is complete in first draft, 148 pages after the consistency passes (150 when first complete), and has not
 been read by the owner.
 
 ## 1. What this book is, and is not
