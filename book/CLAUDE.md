@@ -8,11 +8,17 @@ is the outline, the conventions (§4) and the phased plan (§5); read it before 
 here. Its evidence is `what-volume-2-would-have-covered.md` beside it, and the sources, with their
 per-file defects, are indexed in that directory's `CLAUDE.md`.
 
-**State: phases 1 to 4 are drafted; Parts I and II are complete in draft.** Chapters 1–12 are
+**State: phases 1 to 5 are drafted; all three parts are complete in draft.** Chapters 1–16 are
 written; the project owner waived the plan's reading gate on 2026-11-13 and has read none of them
-yet. Chapters 13–17 and the appendices are a heading and the words "not yet written". Next is phase
-5: Part III, chapters 13–16, which begins with a full read of Risch's revised report and of
-Bronstein 1990 from page images.
+yet. Chapter 17 and the appendices are a heading and the words "not yet written". Next is phase 6:
+chapter 17, the appendices, the preface, the index, the dependency chart, and a consistency pass.
+
+**Part III is not on the footing of Part II.** Chapters 13–16 prove what follows from Lemma 7.2.1
+(the generalised residue, the residue criterion, the order bounds at normal places, the diagonal
+cases for a simple radical) and cite the rest: the residues at special places, the general
+`(S_log)`/`(S_exp)` systems, and the solution of the Risch equation by expansions are stated from
+Bronstein 1990 and Risch's revised report and not reproduced. Chapter 16 is mostly a statement of
+what has no source. Do not let a later edit make these chapters sound more complete than they are.
 
 | Path | What it is |
 | :--- | :--- |

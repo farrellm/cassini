@@ -1,3 +1,300 @@
 \chapter[Extensions of Monomial Extensions]{Algebraic Extensions of Monomial Extensions}\label{ch:monomial}
 
-\unwritten
+Part~II integrated functions on a curve over a field of constants. An
+elementary function in general is built by several steps, each a logarithm,
+an exponential or an algebraic function of what came before, and the
+algebraic steps can come anywhere: $\sqrt{x + \log x}$ has its square root on
+top of a logarithm. To integrate such a function one views it, as Risch did,
+as an algebraic function of one variable over a field that is no longer a
+field of constants: an element of a finite extension $E$ of $k(t)$, where
+$t$ is a monomial over a differential field $k$ and $k$ contains everything
+built before $t$.
+
+This chapter sets up that view. It is the counterpart of
+\VolI{Chapters~3 and~4}: places take the part of irreducible polynomials,
+and the order function at a place takes the part of the order function at a
+polynomial. Its results are the generalised residue and the residue
+criterion, a necessary condition for an elementary integral that needs no
+more than two resultants. The source is Part~1 and the beginning of Part~2
+of Bronstein's paper~\cite{bronstein1990}; several of his statements are
+proved here from Lemma~\ref{lem:order-derivative} in place of the Puiseux
+expansions he uses.
+
+\section{The setting}\label{sec:mono-setting}
+
+Throughout Part~III, $(k, D)$ is a differential field of characteristic $0$,
+$t$ is a monomial over $k$ \VolI{Definition~3.4.1}, and
+\[
+  E = k(t)[y]/(F)
+\]
+is a finite extension of $k(t)$ of degree $n$, with $F \in k[t][y]$ monic in
+$y$ and irreducible over $\kbar(t)$, so that $k$ is algebraically closed in
+$E$ (Theorem~\ref{thm:absolute-irreducibility}, whose proof does not use the
+derivation). $D$ extends uniquely to $E$. The field of constants of $k$ is
+$C$, and we assume $\Const_D(E) = C$. This is the setting of
+Chapter~\ref{ch:hermite}, and everything proved there applies.
+
+We are interested in three kinds of monomial, in the terminology of
+\VolI{\S5.1}:
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & $Dt$ & special irreducible polynomials \\
+\midrule
+$t = x$ & $1$ & none \\
+$t$ a logarithm, $t = \log \eta$ & $D\eta/\eta$, with $\eta \in k^*$ & none \\
+$t$ an exponential, $t = \exp \eta$ & $t\, D\eta$, with $\eta \in k$ & $t$ only \\
+\bottomrule
+\end{tabular}
+\end{center}
+The last column is \VolI{Theorems~5.1.1 and~5.1.2}. A \emph{place} of $E$ is a
+place over $k$ (Section~\ref{sec:ff-places}); it is \emph{normal} if it is
+finite and lies over a normal irreducible polynomial, and \emph{special} if
+it lies over a special one. In the first two cases every finite place is
+normal; in the exponential case the finite places are normal except those
+over $t = 0$. The places at infinity behave like special places in all three
+cases, and Bronstein calls them special too
+\cite[\S1]{bronstein1990}.
+
+What we know about derivatives at these places is the following.
+
+\begin{theorem}\label{thm:orders-all-places}\standing{cited}{Lemma~\ref{lem:order-derivative}; \cite[Lemmas~1.7 and~1.8]{bronstein1990}}
+Let $P$ be a place of $E$ with ramification index $r$, and $f \in E$ with $Df
+\ne 0$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item If $P$ is normal: $\ord{P}(Df) = \ord{P}(f) - r$ if $\ord{P}(f) \ne 0$,
+  and $\ord{P}(Df) \ge 1 - r$ otherwise.
+\item If $t$ is an exponential and $P$ lies over $t = 0$ or is infinite:
+  $\ord{P}(Df) = \ord{P}(f)$ if $\ord{P}(f) \ne 0$, and $\ord{P}(Df) \ge 0$
+  otherwise.
+\item If $t$ is a logarithm, or $t = x$, and $P$ is infinite: $\ord{P}(f) \le
+  \ord{P}(Df) \le \ord{P}(f) + r$ if $\ord{P}(f) \ne 0$, and $\ord{P}(Df) \ge
+  0$ otherwise.
+\end{enumerate}
+\end{theorem}
+
+Part~(i) is Lemma~\ref{lem:order-derivative}. Parts~(ii) and~(iii) are
+Bronstein's Lemma~1.8, proved by expanding $f$ in powers of $t^{\pm 1/r}$ and
+differentiating term by term; in~(ii) the equality holds because a
+cancellation of the leading term would make the product of a power of $t$
+and an element of $\kbar$ a constant, against the assumption that $t$ is a monomial with
+$\Const_D(k(t)) = C$. For $t = x$, (iii) is the statement that differentiation
+raises the order at infinity by exactly $r$ when the order is not zero
+(Lemma~4.3 of~\cite{trager1984}); for a logarithm the order can rise by less,
+because the coefficients of the expansion are no longer constants.
+
+\section{Simple elements and the Hermite reduction}\label{sec:mono-hermite}
+
+\begin{definition}\label{def:simple}
+An element $f \in E$ is \emph{simple} if $\ord{P}(f) \ge -r_P$ at every
+normal place $P$.
+\end{definition}
+
+For $E = k(t)$ these are the simple functions of Volume~I
+\VolI{Corollary~4.4.1}. Bronstein's word for it is \emph{normal}; we keep
+``normal'' for polynomials and places.
+
+\begin{proposition}\label{prop:simple}\standing{proved}{}
+Let $w$ be an integral basis of $E$ over $k(t)$, and let $d$ be the
+denominator of $f \in E$ with respect to $w$, with splitting factorisation $d
+= d_s d_n$. Then $f$ is simple if and only if $d_n$ is squarefree. In
+particular, the $h$ returned by \seealg{HermiteReduce}, and by
+\seealg{LazyHermiteReduce} when the basis it returns is integral, is simple.
+\end{proposition}
+
+\begin{proof}
+At a normal place $P$ over the irreducible $p$, the order of a polynomial is
+$r_P$ times its multiplicity at $p$, and $d_s$ has order $0$. If $d_n$ is
+squarefree, then $\ord{P}(d) \le r_P$, and $d f \in \OO$, so $\ord{P}(f) \ge
+-r_P$. Conversely, let $f$ be simple and let $d_n^*$ be the squarefree part of
+$d_n$. Then $d_n^* d_s f$ has nonnegative order at every normal place,
+because $f$ is simple, and at every special finite place, because $d f \in
+\OO$ and $d_n$ has order $0$ there. So $d_n^* d_s f \in \OO = \OO_w$ by
+Theorem~\ref{thm:places}(ii), and $d$ divides $d_n^* d_s$.
+\end{proof}
+
+This is Proposition~1.18 of~\cite{bronstein1990}. So the first step of the
+integration of an element of $E$ is the Hermite reduction of
+Chapter~\ref{ch:hermite}, exactly as in Part~II: it produces $g$ and a simple
+$h$ with $f = Dg + h$, and it decides nothing.
+
+\section{The generalised residue}\label{sec:mono-residue}
+
+On a curve over constants, the residue of $f\,dx$ at a place over $x_0$ where
+$f$ has at most a simple pole is the value of $r\,(x - x_0)\,f$
+(Lemma~\ref{lem:residue-value}). Over a monomial extension there is no
+differential to take residues of, but the same expression makes sense.
+
+\begin{definition}\label{def:tau}
+Let $P$ be a normal place of $E$ over the monic irreducible $p \in k[t]$,
+with ramification index $r$, and let $f \in E$ with $\ord{P}(f) \ge -r$. The
+\emph{residue} of $f$ at $P$ is
+\[
+  \tau_P(f) = \Bigl( r\, f\, \frac{p}{Dp} \Bigr)(P) \in \kbar ,
+\]
+the value at $P$ of a function that has no pole there, because $Dp$ does not
+vanish at $P$.
+\end{definition}
+
+This is Definition~2.3 of~\cite{bronstein1990}, and for $E = k(t)$ it is the
+residue of \VolI{Definition~4.4.1}.
+
+\begin{theorem}\label{thm:tau}\standing{proved}{}
+Let $P$ be a normal place with ramification index $r$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item $\tau_P$ is additive, and $\tau_P(c f) = c\, \tau_P(f)$ for a constant
+  $c$.
+\item For $u \in E^*$, $\ord{P}(Du/u) \ge -r$ and $\tau_P(Du/u) = \ord{P}(u)$.
+\item If $v \in E$ has no pole at $P$, then $\ord{P}(Dv) \ge 1 - r$ and
+  $\tau_P(Dv) = 0$.
+\item If $f = g/d$ with $d \in k[t]$, $g \in E$ without pole at $P$, and $p$
+  divides $d$ exactly once, then $\tau_P(f) = r\,(g/Dd)(P)$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(i) is clear. Take $\sigma$, $\alpha$ and $\pi$ as in
+Theorem~\ref{thm:puiseux}, so that $\pi^r = t - \alpha$, and let $\Delta$ be
+the derivation of $\kbar((\pi))$ constructed in the proof of
+Lemma~\ref{lem:order-derivative}. There $\Delta\pi / \pi = D(t - \alpha) / (r
+\pi^r)$, and $D(t - \alpha)$ has a nonzero value $\epsilon$ at $P$ because
+$p$ is normal. Writing $p = (t - \alpha)\, p_1$, we get $Dp \equiv D(t -
+\alpha)\, p_1$ modulo $\pi^r$, so $p/Dp$ is $\pi^r/\epsilon$ times a series
+with constant term $1$.
+
+(ii) Let $u = \pi^\nu u_0$ with $u_0$ of order $0$. Then $Du/u = \nu\,
+\Delta\pi/\pi + \Delta u_0 / u_0$. The first term is $\nu \epsilon / (r
+\pi^r)$ times a series with constant term $1$, and the second has order at
+least $1 - r$ by Lemma~\ref{lem:order-derivative}(ii). Multiplying by $r\,
+p/Dp$ gives $\nu$ plus terms of positive order.
+
+(iii) is Lemma~\ref{lem:order-derivative}(i) and~(ii), and then $r\,(Dv)\,
+p/Dp$ has positive order.
+
+(iv) Write $d = p\, c$ with $c$ prime to $p$. Then $Dd \equiv (Dp)\, c$ modulo
+$p$, so $p/Dp$ and $d/Dd$ differ by a factor with value $1$ at $P$, and $r f
+p/Dp$ has the value of $r g/Dd$.
+\end{proof}
+
+These are Lemma~2.7 and Propositions~2.4, 2.5 and~2.8 of~\cite{bronstein1990}.
+Liouville's theorem holds over $E$ as over any differential field
+\VolI{Theorem~5.5.3}: if $f \in E$ has an elementary integral over $E$, then
+\begin{equation}\label{eq:liouville-mixed}
+  f = Dv + \sum_{i=1}^m c_i\, \frac{Du_i}{u_i}
+\end{equation}
+with $v \in E$, constants $c_i$ algebraic over $C$, and $u_i \in E(c_1, \dots,
+c_m)^*$.
+
+\begin{corollary}\label{cor:tau-liouville}\standing{proved}{}
+Let $f \in E$ be simple and suppose that~\eqref{eq:liouville-mixed} holds.
+Then $v$ has no pole at any normal place, and at every normal place $P$
+\[
+  \tau_P(f) = \sum_{i=1}^m c_i\, \ord{P}(u_i) .
+\]
+In particular $\tau_P(f)$ is a constant.
+\end{corollary}
+
+\begin{proof}
+If $\ord{P}(v) < 0$ at a normal place, then $\ord{P}(Dv) = \ord{P}(v) - r <
+-r$, while $f$ and the $Du_i/u_i$ have order at least $-r$; so $v$ has no
+pole. Apply Theorem~\ref{thm:tau}.
+\end{proof}
+
+\section{The residue criterion}\label{sec:mono-criterion}
+
+The residues are computed as in Chapter~\ref{ch:logarithmic-part}. Let $f$
+be simple, with numerator $\sum_i a_i w_i$ and denominator $d = d_s d_n$ with
+respect to an integral basis $w$, and write $\sum_i a_i w_i / d_s = G/H$ with
+$G \in k[t][y]$ and $H \in k[t]$. Let
+\begin{equation}\label{eq:mixed-resultant}
+  R(Z) = \resultant_t\bigl( \operatorname{pp}_Z\bigl(
+           \resultant_y( G - Z\, H\, Dd_n,\; F ) \bigr),\; d_n \bigr) \in k[Z] .
+\end{equation}
+
+\begin{theorem}[the residue criterion]\label{thm:residue-criterion}\standing{proved}{}
+With the notation above, the roots of $R$ in $\kbar$ are the numbers
+$\tau_P(f)/r_P$, for $P$ over the roots of $d_n$. If $f$ has an elementary
+integral over $E$, then all the roots of $R$ are constants; equivalently, $R
+= a\, R_0$ with $a \in k$ and $R_0 \in \overline{C}[Z]$ monic.
+\end{theorem}
+
+\begin{proof}
+The first statement is the proof of Theorem~\ref{thm:residue-polynomial}
+with $k$ in place of $K$, $Dd_n$ in place of $d'$, and
+Theorem~\ref{thm:tau}(iv) in place of Lemma~\ref{lem:residue-value}: over
+$\kbar$, the function $a = d_n f / Dd_n$ has no pole at the places over the
+roots of $d_n$, its values there are the $\tau_P(f)/r_P$, and its
+characteristic polynomial specialises at each root to the product of $Z -
+a(P)$ with multiplicities $r_P$ (Theorem~\ref{thm:puiseux-embeddings}). The
+second is Corollary~\ref{cor:tau-liouville}.
+\end{proof}
+
+This is Propositions~2.6 and~2.9 of~\cite{bronstein1990}, which generalise
+the criterion of Rothstein for transcendental integrands
+\VolI{Theorem~5.6.1}. The condition is tested without factoring $R$: with
+$\kappa$ the derivation of $k[Z]$ that differentiates the coefficients, all
+the roots of $R$ are constants if and only if $R$ divides $\kappa(R)$ in
+$k[Z]$~\cite[\S3.8]{bronstein1998tutorial}. The criterion is necessary and
+not sufficient. Its value is that it often ends the computation at once.
+
+\begin{example}\label{ex:criterion-fails}
+This is the first example of~\cite[\S2]{bronstein1990}. Consider
+\[
+  \int \frac{\log x + \sqrt{\log x + \sqrt{\log x}}}{1 + \log x}\, dx .
+\]
+Let $k = \Q(x)$, $t = \log x$, and $E = k(t)[y]/(F)$ with $F = y^4 - 2 t y^2 +
+t^2 - t$, of which $\sqrt{t + \sqrt t}$ is a root. The integrand is $f = (t +
+y)/(1 + t)$. With respect to $(1, y, y^2, y^3)$ its denominator is $d = 1 +
+t$, which is normal, and $F(-1, y) = y^4 + 2y^2 + 2$ is squarefree, so the
+places over $t = -1$ are unramified and $f$ is simple. Here $Dd = 1/x$, $G =
+t + y$ and $H = 1$, and
+\begin{align*}
+  R(Z) &= \resultant_t\Bigl( \resultant_y\bigl( t + y - \tfrac{Z}{x},\; F \bigr),\; 1 + t \Bigr) \\
+       &= \frac{Z^4 + 4x Z^3 + 8x^2 Z^2 + 8x^3 Z + 5x^4}{x^4} .
+\end{align*}
+Its roots are $x$ times the roots of $W^4 + 4W^3 + 8W^2 + 8W + 5$, and are not
+constants. Accordingly $R$ does not divide $\kappa(R)$: the remainder is
+$4\,(Z^3 + 4x Z^2 + 6x^2 Z + 5x^3)/x^4$. So the integral is not elementary, and
+this was decided by two resultants: no integral basis, no divisor, no
+question of finite order.
+\end{example}
+
+\section{What remains}\label{sec:mono-remains}
+
+When the criterion is passed, the residues $\tau_P(f)$ at the normal places
+are constants, and Corollary~\ref{cor:tau-liouville} gives the orders of the
+$u_i$ at the normal places as in Chapter~\ref{ch:logarithmic-part}. Three
+things are new, compared with Part~II, and they are the subject of the next
+two chapters.
+\begin{enumerate}
+\item The places that are not normal, those at infinity and, for an
+  exponential, those over $t = 0$, cannot be moved out of the way. In
+  Part~II a change of variable made infinity an ordinary point; here $1/(t -
+  N)$ is not a monomial of the same kind as $t$. The orders of the $u_i$ at
+  those places have to be found by other means.
+\item Some of the $u_i$ may lie in $k$, or in $\kbar$, and have no zeros or
+  poles on the curve at all. They contribute nothing to any residue, and
+  are found by a recursive call in $k$.
+\item The algebraic part $v$ is no longer $g$ plus a constant. Its
+  coefficients in an integral basis satisfy differential equations over $k$,
+  or over $k(t)$.
+\end{enumerate}
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Show that for $E = k(t)$ Definition~\ref{def:tau} is the residue of
+\VolI{Definition~4.4.1}, and Theorem~\ref{thm:residue-criterion} is the residue
+criterion of \VolI{Theorem~5.6.1}.
+\end{exercise}
+
+\begin{exercise}
+Let $k = \Q(x)$, $t = \log x$ and $y^2 = t$. Compute $\tau_P$ of $f = y/(x\,(t
+- 1))$ at the two places over $t = 1$, and the polynomial $R$. Is the
+criterion passed?
+\end{exercise}
+
+\begin{exercise}
+Apply the residue criterion to $\int dx / ((x - 1)\sqrt{\log x})$.
+\end{exercise}

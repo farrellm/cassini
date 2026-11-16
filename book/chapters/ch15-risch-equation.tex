@@ -1,3 +1,254 @@
 \chapter{The Risch Differential Equation on a Curve}\label{ch:risch-equation}
 
-\unwritten
+Integrating exponentials leads to first-order linear differential equations.
+In Volume~I the integral of $a\,e^{\eta}$ is $z\,e^{\eta}$ with $Dz + (D\eta)\,z
+= a$, and \VolI{Chapter~6} solves such equations in $k(t)$. In
+Chapter~\ref{ch:elementary} the same happened on a curve: the reduction at a
+special place asked for solutions of the system~\eqref{eq:Sexp}, which is a
+differential equation of this kind for an element of an algebraic extension.
+This chapter is about the equation
+\begin{equation}\label{eq:risch}
+  Dz + f\,z = g, \qquad f, g \in E ,
+\end{equation}
+to be solved for $z \in E$, where $E = k(t)[y]/(F)$ is as in
+Chapter~\ref{ch:monomial}; and about the parametric form in which $g =
+\sum_i c_i g_i$ with given $g_i \in E$ and unknown constants $c_i$, which is
+what the recursion needs.
+
+What is known is less than for integration. Risch's method solves the
+equation by expansions at every pole; Bronstein's rational algorithm of 1991
+is complete for a curve over constants; and for the mixed case the rational
+algorithm stops at the denominator. We prove the bound at the normal places,
+state the rest with its sources, treat the diagonal case completely, and say
+what is open.
+
+\section{The order of a solution at a normal place}\label{sec:rde-normal}
+
+\begin{theorem}\label{thm:rde-normal}\standing{proved}{}
+Let $z \in E$ satisfy~\eqref{eq:risch}, and let $P$ be a normal place with
+ramification index $r$. Put $\alpha = \ord{P}(z)$, $\beta = \ord{P}(f)$ and
+$\gamma = \ord{P}(g)$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item If $\beta < -r$, then $\alpha \ge \min(0, \gamma - \beta)$.
+\item If $\beta > -r$, then $\alpha \ge \min(0, \gamma + r)$.
+\item If $\beta = -r$, then either $\alpha \ge \min(0, \gamma + r)$, or
+  $\tau_P(f)$ is a positive integer and $\alpha = -\tau_P(f)$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Suppose $\alpha < 0$. By Lemma~\ref{lem:order-derivative}(i), $\ord{P}(Dz) =
+\alpha - r$, and $\ord{P}(f z) = \alpha + \beta$.
+
+(i) If $\beta < -r$ the two orders differ, the smaller is $\alpha + \beta$,
+and it must equal $\ord{P}(Dz + fz) = \gamma$. So $\alpha = \gamma - \beta$.
+
+(ii) If $\beta > -r$ the smaller is $\alpha - r = \gamma$, so $\alpha = \gamma
++ r$.
+
+(iii) If $\beta = -r$, both terms have order $\alpha - r$. Either their
+leading terms do not cancel, and $\alpha - r = \gamma$; or they cancel. In
+the notation of the proof of Theorem~\ref{thm:tau}, let $z = c\,\pi^\alpha +
+\dots$ and $f = a\,\pi^{-r} + \dots$. The leading term of $Dz$ is $\alpha\,c\,
+\pi^{\alpha - 1}\,\Delta\pi = (\alpha\,c\,\epsilon / r)\,\pi^{\alpha - r}$, and
+that of $f z$ is $a\,c\,\pi^{\alpha - r}$. They cancel exactly when $\alpha =
+-r a/\epsilon$, and $r a/\epsilon$ is the value at $P$ of $r f p/Dp$, which is
+$\tau_P(f)$.
+\end{proof}
+
+This is Proposition~3.3 of~\cite{bronstein1990}, and for $E = k(t)$ it is
+the bound of \VolI{\S6.1}. Case~(iii) is the first appearance of
+\emph{cancellation}: the equation itself does not bound the pole, but it
+names the only pole it permits, which is computed from $f$. The values
+of $\tau_P(f)/r_P$ are roots of the polynomial $R$
+of~\eqref{eq:mixed-resultant} formed for $f$, so the candidates are found
+among its positive rational roots.
+
+The same argument, with $\sum_i c_i g_i$ in place of $g$ and $\gamma$ the
+least of the orders of the $g_i$, gives the same bounds for the parametric
+equation.
+
+\begin{corollary}\label{cor:rde-denominator}\standing{proved}{}
+Let $w$ be an integral basis of $E$ over $k(t)$. There is a $d \in k[t]$,
+computable from $f$ and $g$ and with all its irreducible factors normal, such
+that for every solution $z \in E$ of~\eqref{eq:risch}, $d\,z$ has no pole at
+any normal place.
+\end{corollary}
+
+\begin{proof}
+At a normal place where neither $f$ nor $g$ has a pole, $\beta \ge 0 > -r$
+and $\gamma \ge 0$, so $\alpha \ge 0$ by~(ii). The remaining normal places
+lie over the finitely many normal irreducible factors $p$ of the
+denominators of $f$ and $g$ with respect to $w$. For each such $p$, the
+theorem gives a lower bound $-n_P$ for $\alpha$ at each place $P$ over $p$,
+and $d = \prod_p p^{N_p}$ with $N_p \ge n_P / r_P$ for all $P$ over $p$ has
+the property.
+\end{proof}
+
+The proof factors the denominators into irreducibles and, in case~(iii),
+needs the residues $\tau_P(f)$, which may be algebraic over $k$. That is not
+a rational algorithm in the sense of Chapter~\ref{ch:logarithmic-part}.
+
+\section{The special places}\label{sec:rde-special}
+
+At the places that are not normal the order of $z$ is bounded by a different
+mechanism, which requires computing in $k$.
+
+\begin{theorem}\label{thm:rde-special}\standing{cited}{\cite[Propositions~3.4 and~3.5]{bronstein1990}}
+Let $z$, $\alpha$, $\beta$, $\gamma$ be as in Theorem~\ref{thm:rde-normal},
+for a place $P$ that is not normal.
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item Let $t = \exp \eta$ and let $P$ be unramified, over $t = 0$ or at
+  infinity. If $\beta < 0$ then $\alpha \ge \min(0, \gamma - \beta)$; if
+  $\beta > 0$ then $\alpha \ge \min(0, \gamma)$; and if $\beta = 0$ then
+  either $\alpha \ge \min(0, \gamma)$, or the value $f(P) \in \kbar$ satisfies
+  \[
+    f(P) = -\epsilon\,\alpha\, D\eta - \frac{Dc}{c}
+    \qquad \text{for some } c \in \kbar^*,
+  \]
+  where $\epsilon = 1$ over $t = 0$ and $\epsilon = -1$ at infinity, and this
+  determines $\alpha$.
+\item Let $t = \log \eta$ and let $P$ be an infinite place with ramification
+  index $r$. Then either $\alpha \ge \min(0, \gamma - r)$, or the coefficient
+  $a$ of $t^{-1}$ in the expansion of $f$ at $P$ satisfies
+  \[
+    a = -D\beta_0 + \frac{\alpha}{r}\, \frac{D\eta}{\eta}
+    \qquad \text{for some } \beta_0 \in \kbar ,
+  \]
+  and this determines $\alpha$.
+\end{enumerate}
+\end{theorem}
+
+In both cancellation cases the candidate $\alpha$ is found by a problem in
+$\kbar$: in~(i), whether $\exp(\int f(P))$ is an element of $\kbar$ times a
+power of $t$, and which power; in~(ii), whether $a$ is a derivative plus a
+constant multiple of $D\eta/\eta$, and which multiple. These are the
+problems that \VolI{Chapter~7} calls the parametric logarithmic derivative
+problem and limited integration, here over $\kbar$; we return to them in
+Chapter~\ref{ch:parametric}. Ramification at the special places in the
+exponential case is removed beforehand by replacing $t$ by a root of it,
+$\exp(\eta/N)$, as Risch does.
+
+\section{Solving the equation}\label{sec:rde-solving}
+
+With lower bounds for $\alpha$ at all places, Bronstein reduces to an
+equation with an integral unknown~\cite[Proposition~3.7]{bronstein1990}. Let
+$d \in k[t]$ be such that $Z = d\,z$ has no pole at a finite place, taking
+into account the special place over $t = 0$ in the exponential case. Then
+\begin{equation}\label{eq:risch-integral}
+  DZ + \Bigl( f - \frac{Dd}{d} \Bigr) Z = d\,g ,
+\end{equation}
+and $Z = \sum_i h_i w_i$ with $h_i \in k[t]$, where $w$ is an integral basis
+normal at infinity. The bounds at the infinite places bound the degrees of
+the $h_i$:
+\[
+  \deg(h_i) \le \min_P \frac{\ord{P}(w_i)}{r_P} - b + \deg(d),
+\]
+the minimum over the infinite places, $b$ being the least of $0$ and the
+bounds for $\alpha$ there. The $h_i$ are then polynomials of bounded degree
+with unknown coefficients in $k$, and substituting
+in~\eqref{eq:risch-integral} and comparing expansions at the infinite places
+gives differential equations over $\kbar$ for those coefficients, of the same
+kind, which are solved recursively. This is Risch's
+method~\cite[pp.~209--211 and~216--219]{raab2022}, and it yields his
+statement for the parametric equation: one can find $h_1, \dots, h_r \in E$
+and a system of linear equations with constant coefficients such that the
+solutions are the $z = \sum_j y_j h_j$ with $(c_1, \dots, c_m, y_1, \dots,
+y_r)$ a constant solution of the system. We have not reproduced the
+expansions.
+
+\paragraph{The diagonal case.} If $E = k(t)[z_0]/(z_0^n - H)$ is a simple
+radical extension and $f \in k(t)$, then in the basis $w$
+of~\eqref{eq:radical-basis} the equation~\eqref{eq:risch} falls apart.
+
+\begin{proposition}\label{prop:rde-radical}\standing{proved}{}
+Let $E$ be a simple radical extension of $k(t)$ with the basis $w$
+of~\eqref{eq:radical-basis} and $Dw_{i+1} = \lambda_i w_{i+1}$. Let $f \in
+k(t)$ and $g = \sum_i g_{i+1} w_{i+1}$ with $g_{i+1} \in k(t)$. Then $z = \sum_i
+z_{i+1} w_{i+1}$ with $z_{i+1} \in k(t)$ satisfies~\eqref{eq:risch} if and
+only if
+\[
+  Dz_{i+1} + (f + \lambda_i)\, z_{i+1} = g_{i+1} \qquad (0 \le i < n).
+\]
+\end{proposition}
+
+\begin{proof}
+$D(z_{i+1} w_{i+1}) = (Dz_{i+1} + \lambda_i z_{i+1})\, w_{i+1}$, and the
+$w_{i+1}$ are linearly independent over $k(t)$.
+\end{proof}
+
+These are $n$ Risch differential equations over $k(t)$, solved by
+\VolI{Chapter~6}. The equations of Theorem~\ref{thm:log-radical}(ii) are the
+case $f = 0$, and those after~\eqref{eq:Sexp} are of this form over $k$. When
+$f$ itself involves the radical, the system is coupled and the proposition
+does not apply.
+
+\section{Bronstein's rational algorithm}\label{sec:rde-rational}
+
+Bronstein's paper of 1991~\cite{bronstein1991} gives ``a new rational
+algorithm for solving Risch differential equations over algebraic curves'',
+that is, for $E$ a finite extension of $K(x)$ with $K$ a field of constants.
+It never computes in an algebraic closure and never expands in series; the
+paper reports an implementation in the Scratchpad system. By the abstract, the method also
+applies to linear differential equations of higher order with coefficients in
+an algebraic extension of the rational functions; and ``in the general
+(`mixed function') case, this algorithm finds the denominator of any
+solution of the equation''.
+
+So for a curve over constants the Risch equation has a rational algorithm.
+For $E$ over $k(t)$ with $t$ a logarithm or an exponential, the rational
+method gives the $d$ of Corollary~\ref{cor:rde-denominator}, and what
+remains, equation~\eqref{eq:risch-integral} for an integral $Z$, still goes
+through the expansions of Section~\ref{sec:rde-solving}. We have read the
+abstract and the conclusion of the paper, whose text layer is unusable, and
+have not reproduced its algorithm.
+
+\section{What is open}\label{sec:rde-open}
+
+\begin{openproblem}
+A rational algorithm for $Dz + f z = g$ in a finite extension of $k(t)$, $t$
+a logarithm or an exponential over $k$: one that finds the numerator of a
+solution, as well as its denominator, without Puiseux expansions at the
+special places.
+\end{openproblem}
+
+This is the third of the obstacles listed in the conclusions
+of~\cite{bronstein1990}. The report on the lazy Hermite reduction, eight
+years later, still names a generalisation of the Hermite reduction to
+equations $Dz + fz = g$ in an algebraic extension of $k(t)$ as a direction
+for further work~\cite[Conclusions]{bronstein1998lazy}.
+
+\begin{openproblem}
+The cancellation case over a nonlinear monomial. In \VolI{\S6.6}, solving
+the Risch equation in $k(t)$ when $t$ is a nonlinear monomial, such as a
+tangent, can lead to an equation in a nonconstant algebraic extension of
+$k(t)$, and Volume~I says of this: ``no algorithms are known for such curves
+when $t$ is a nonlinear monomial. Although the techniques of [11, 73] are
+probably generalizable to such curves, they would not yield a practical
+algorithm in their current form.''
+\end{openproblem}
+
+The references [11, 73] there are Bronstein's paper of 1990 and Risch's
+report. Everything in this chapter and the last assumed that $t$ is a
+logarithm or an exponential; we know of no source that carries the theory to
+a nonlinear monomial, and we do not attempt it.
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Let $E = \Q(x)[y]/(y^2 - x)$ and consider $Dz + \frac{1}{2x}\,z = 1$. Find the
+possible orders of a solution at the place over $x = 0$ from
+Theorem~\ref{thm:rde-normal}, and solve the equation with
+Proposition~\ref{prop:rde-radical}.
+\end{exercise}
+
+\begin{exercise}
+Show that Theorem~\ref{thm:rde-normal} reduces to the statement of
+\VolI{\S6.1} when $E = k(t)$.
+\end{exercise}
+
+\begin{exercise}
+Use Proposition~\ref{prop:rde-radical} to decide whether $\int \sqrt{x}\,
+e^{x}\,dx$ is elementary, by writing the integral as $z\,e^x$.
+\end{exercise}
