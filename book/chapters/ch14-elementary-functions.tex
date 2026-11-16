@@ -153,7 +153,8 @@ the denominator, the integrand is
 \begin{enumerate}
 \item With respect to the integral basis $(1, y)$ the denominator $d = x\,(t +
   x)(t + x - x^2)$ is squarefree, so $f$ is simple and the Hermite reduction
-  does nothing.
+  does nothing. (The factor $x$ is a unit of $k[t]$; keeping it in $d$
+  changes nothing below.)
 \item $Dd = t^2 + (2 + 4x - 3x^2)\,t + 2x + 2x^2 - 4x^3$, and
   \[
     R(Z) = x^{12} (x - 1)^2 (x + 1)^2 (2x + 1)^2\; Z^3 (Z - 2) .
@@ -197,8 +198,7 @@ $h$ is $t^m U$ with $U$ normal and $m \ge 0$.
 
 \paragraph{Poles over $t = 0$.} Bronstein removes them one order at a time,
 by a reduction that is to the special places what Hermite's is to the normal
-ones, except that it can fail. Write $h = \sum_i (b_i^{(0)} w_i)/t^m + \dots$,
-where $b_i \in k$ is the value at $t = 0$ of the coefficient of $w_i$ in $t^m
+ones, except that it can fail. Let $b_i \in k$ be the value at $t = 0$ of the coefficient of $w_i$ in $t^m
 h$; one looks for $c_1, \dots, c_n \in k$ such that $h - D(\sum_i c_i w_i /
 t^m)$ has denominator $t^{m-1} U$. Differentiating and evaluating at $t = 0$
 gives the system
@@ -302,13 +302,11 @@ treats the tower in the other order: $K(x, y, \theta_1, \dots, \theta_n)$
 with $y$ algebraic over $K(x)$ and each $\theta_i$ a logarithm or an
 exponential, transcendental over what precedes it. He shows that the
 integration problem and the Risch differential equation are solvable there.
-The curve is then fixed, over a field of constants, and the monomials are
-added on top of it, so that the transcendental algorithm applies with
-coefficients in the function field of the curve. Of the general case, an
+As we read it, the point is that the curve is fixed, over a field of
+constants, and the monomials are added on top of it. Of the general case, an
 algebraic extension over a tower containing transcendentals, he writes that
 it ``me semble \^etre non r\'esolu''. That was in 1984; it is the case this
-chapter is about, and Bronstein's paper is the first published solution of
-it.
+chapter is about, and the case that Bronstein's paper of 1990 addresses.
 
 \paragraph{Parallel integration.\later} Blake's second preprint on the
 Risch--Norman method~\cite{blake2026b} allows the radical ``any position in

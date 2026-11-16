@@ -151,9 +151,9 @@ in~\eqref{eq:risch-integral} and comparing expansions at the infinite places
 gives differential equations over $\kbar$ for those coefficients, of the same
 kind, which are solved recursively. This is Risch's
 method~\cite[pp.~209--211 and~216--219]{raab2022}, and it yields his
-statement for the parametric equation: one can find $h_1, \dots, h_r \in E$
+statement for the parametric equation: one can find $z_1, \dots, z_r \in E$
 and a system of linear equations with constant coefficients such that the
-solutions are the $z = \sum_j y_j h_j$ with $(c_1, \dots, c_m, y_1, \dots,
+solutions are the $z = \sum_j y_j z_j$ with $(c_1, \dots, c_m, y_1, \dots,
 y_r)$ a constant solution of the system. We have not reproduced the
 expansions.
 
@@ -188,8 +188,8 @@ does not apply.
 Bronstein's paper of 1991~\cite{bronstein1991} gives ``a new rational
 algorithm for solving Risch differential equations over algebraic curves'',
 that is, for $E$ a finite extension of $K(x)$ with $K$ a field of constants.
-It never computes in an algebraic closure and never expands in series; the
-paper reports an implementation in the Scratchpad system. By the abstract, the method also
+By its introduction the algorithm uses only rational operations, and it had
+been implemented in the Scratchpad system. By the abstract, the method also
 applies to linear differential equations of higher order with coefficients in
 an algebraic extension of the rational functions; and ``in the general
 (`mixed function') case, this algorithm finds the denominator of any
@@ -200,8 +200,8 @@ For $E$ over $k(t)$ with $t$ a logarithm or an exponential, the rational
 method gives the $d$ of Corollary~\ref{cor:rde-denominator}, and what
 remains, equation~\eqref{eq:risch-integral} for an integral $Z$, still goes
 through the expansions of Section~\ref{sec:rde-solving}. We have read the
-abstract and the conclusion of the paper, whose text layer is unusable, and
-have not reproduced its algorithm.
+abstract and part of the introduction of the paper, whose text layer is
+nearly unusable, and have not reproduced its algorithm.
 
 \section{What is open}\label{sec:rde-open}
 

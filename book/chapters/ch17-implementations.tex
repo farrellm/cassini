@@ -25,8 +25,11 @@ the mixed case of Part~III.
 
 The split of the bottom layer into a general and a special case, made twice,
 is the lesson for an implementer. Simple radical extensions, and among them
-square roots, are where almost all integrands live and where every step is
-explicit; the general case is needed for completeness and costs far more.
+square roots, are where every step is explicit, and where most integrands
+met in practice live: Trager remarks that restricting to unnested radicals
+excludes fewer than one in a hundred of the problems in a table of
+integrals~\cite[Appendix~A]{trager1984}. The general case is needed for
+completeness.
 Bronstein's conclusions add what can be reused unchanged from the algebraic
 case when the mixed case is built on it: ``computing normal integral bases,
 the genus of a curve, and the order of a divisor, making an extension
@@ -52,7 +55,7 @@ the integrator does, on a page of the project's wiki last edited in June
   in the algebraic case.''
 \end{itemize}
 Its summary is that ``a large part of the Risch algorithm dealing with
-algebraic extensions remains unimplemented''. So Part~II of this book is
+algebraic extensions remains unimplemented''. So, by this account, Part~II of this book is
 implemented there with a restriction on the residue polynomial, and of
 Part~III the Hermite reduction and little else. That was the position more
 than thirty years after the paper that Part~III follows.
@@ -79,9 +82,9 @@ it.
 The same gap explains the heuristics. The Gr\"obner-basis method of
 Section~\ref{sec:log-groebner}, the substitution methods of
 Section~\ref{sec:radical-later} and the parallel integration of
-Section~\ref{sec:elem-others} are all offered by their authors as ways to
-find many integrals with little code, in a situation where the complete
-algorithm is rarely implemented in full.
+Section~\ref{sec:elem-others} are methods that find many integrals without deciding the question, and the
+first of them is offered by its author expressly for a situation in which
+the complete algorithm is rarely implemented in full.
 
 \section{Open problems}\label{sec:impl-open}
 
@@ -133,8 +136,9 @@ gives the standing of each result; the larger omissions are these.
   residues from branch places (Section~\ref{sec:log-ideals}). The
   correctness of \seealg{AbsoluteFactor}. Trager's reduction for one radical
   (Section~\ref{sec:radical-trager1979}). Van Hoeij's parametrisation
-  without a rational point. Hess's algorithm. The reduction of divisors
-  modulo a prime in detail.
+  without a rational point. Hess's algorithm. Bronstein's rational
+  algorithm for the Risch equation. The reduction of divisors modulo a prime
+  in detail.
 \item \emph{Part~III.} Outside the simple radical case, the integration of
   Chapter~\ref{ch:elementary} and the solution of the Risch equation in
   Chapter~\ref{ch:risch-equation} are summaries of Bronstein's paper and
