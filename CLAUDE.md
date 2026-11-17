@@ -3,16 +3,18 @@
 A computer algebra system for Haskell: a Wolfram-Language-style term rewriting kernel over an exact
 numeric and polynomial substrate.
 
-**Stage 0 and Stage 1's milestones 1a, 1b and 1c are built.** Stage 0 is the foundations: exact numbers, symbols,
-`Expr` with switchable interning, canonical order, traversal and structural operators, under the
-tooling that enforces the rules below. 1a is the evaluator: attributes, the rule tables, the `Kernel`
+**Stage 0, Stage 1's milestones 1a, 1b and 1c, and its fidelity track are built.** Stage 0 is the
+foundations: exact numbers, symbols, `Expr` with switchable interning, canonical order, traversal
+and structural operators, under the tooling that enforces the rules below. 1a is the evaluator: attributes, the rule tables, the `Kernel`
 effect, the standard evaluation sequence, the syntactic matcher, Cohen's automatic simplification,
 the arithmetic, structural and assignment builtins, FullForm and script mode. 1b is the matcher: the
 sequence and commutative matchers, the rule index, and the pattern builtins (`MatchQ`, `Cases`, the
 `Replace` family). 1c is calculus in the kernel: pure functions, `D` and `Derivative`, the infix
-parser and printer, and the interactive loop. Stage 1's tracks (elementary functions; control flow,
-logic and numbers) are next. [`DESIGN.md`](./DESIGN.md) is the architecture, and it is ahead of the code.
-Where the two disagree, the design is the intent and the code is behind.
+parser and printer, and the interactive loop. The fidelity track brought them up to the design:
+both limits leave `TerminatedEvaluation`, a fraction is `Rational[n, d]` to every compound pattern,
+two allocation savings, and a nightly workflow. Stage 1's other tracks (elementary functions;
+control flow, logic and numbers) are next. [`DESIGN.md`](./DESIGN.md) is the architecture, and
+it is ahead of the code. Where the two disagree, the design is the intent and the code is behind.
 
 Three packages under one `cabal.project` (`DESIGN.md` §2.1, D7). Each has its own `CLAUDE.md`
 with its paths, commands and local traps:
@@ -34,7 +36,7 @@ What spans packages stays at the root:
 | `cabal.project` | Lists the three packages. GHC2024, `base ^>=4.21.2.0`. |
 | `.ormolu` | ormolu's fixities and re-exports for all three packages (§2.5). Not style config. |
 | `lint/`, `scripts/`, `.hlint.yaml` | The §2.6 layering rules, their fixtures and checker; the Haddock coverage floor; the common-stanza check. |
-| `.github/workflows/ci.yml` | CI, §2.8 steps 1–8. |
+| `.github/workflows/ci.yml`, `nightly.yml` | CI, §2.8 steps 1–8; and the nightly job, D45. |
 | `.github/renovate.json` | Renovate, for the workflow's actions only (§2.8, D46). |
 | `README.md`, `CHANGELOG.md`, `LICENSE` | Boilerplate, one copy for the project; each package's `LICENSE` is a symlink to the root's. The changelog is written as changes land, not at release. |
 
@@ -139,8 +141,9 @@ What spans packages stays at the root:
 GHC 9.12.4, cabal 3.16.1.0, `default-language: GHC2024`. Installed locally: `ormolu` 0.8.0.2,
 `hlint` 3.10, and `doctest` 0.25.0 (`cabal install doctest`). CI pins the same versions.
 
-CI (`.github/workflows/ci.yml`) runs `DESIGN.md` §2.8 steps 1–8 on every push and PR. From the
-root, the project-wide checks are:
+CI (`.github/workflows/ci.yml`) runs `DESIGN.md` §2.8 steps 1–8 on every push and PR;
+`.github/workflows/nightly.yml` runs the random-seed property run, the corpus and the oracle daily
+(D45). From the root, the project-wide checks are:
 
 - Build, with CI's warnings: `cabal build all --enable-tests --enable-benchmarks --ghc-options=-Werror`,
   and again with `-f intern` for the weak intern table

@@ -6,10 +6,34 @@
 
 # D25: infinities absorb only numbers, so a·ComplexInfinity stays a product.
 0009-division-by-zero-message 4 D25
-# D30: the recursion cut is Hold[e] in place; Mathics3 aborts the input, and
-# WL 14.1 answers Plus[1, TerminatedEvaluation["RecursionLimit"]]
-# (wolfram/$RecursionLimit/BasicExamples/1).
-0010-recursion-limit-holds 1 D30
+# Mathics3: it aborts an input that reaches $RecursionLimit, where WL replaces
+# one evaluation by TerminatedEvaluation["RecursionLimit"] and carries on
+# (wolfram/$RecursionLimit/BasicExamples/1; the rest are WL 15.0.1's answers,
+# through the Wolfram Cloud MCP, as the cases say; §4.3, D30).
+0010-recursion-limit-terminates 1 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 2 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 3 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 4 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 5 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 7 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 9 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 11 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 13 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 14 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 16 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 18 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 19 Mathics3
+0077-recursion-limit-replaces-second-evaluation-off-chain 20 Mathics3
+# Mathics3: a fraction is an atom to every compound pattern but a literal
+# Rational one; to WL 15.0.1 it is Rational[n, d] to all of them, through the
+# Wolfram Cloud MCP (§4.5.1, D37).
+0066-rational-pattern-matches-a-fraction 3 Mathics3
+0072-rational-is-rational-n-d-to-every-compound-pattern 1 Mathics3
+0072-rational-is-rational-n-d-to-every-compound-pattern 2 Mathics3
+0072-rational-is-rational-n-d-to-every-compound-pattern 3 Mathics3
+0072-rational-is-rational-n-d-to-every-compound-pattern 4 Mathics3
+0072-rational-is-rational-n-d-to-every-compound-pattern 5 Mathics3
+0072-rational-is-rational-n-d-to-every-compound-pattern 6 Mathics3
 
 # Mathics3: Indeterminate^0 is 1 there; WL's NumericFunction rule makes it
 # Indeterminate (§4.15, wolfram_ref_indeterminate.html).

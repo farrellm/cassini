@@ -1,0 +1,4 @@
+(* WL 15.0.1: the iteration limit cuts in place, so p + 1 is 1 + TerminatedEvaluation["IterationLimit"]. *)
+SetDelayed[p, q]
+SetDelayed[q, p]
+Plus[p, 1]

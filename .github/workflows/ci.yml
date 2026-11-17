@@ -26,7 +26,7 @@ env:
   CABAL_VERSION: "3.16.1.0"
   DOCTEST_VERSION: "0.25.0"
   # CI runs the property tests with a fixed seed and prints it on failure
-  # (§7.3); a nightly job will run random seeds at a larger count.
+  # (§7.3); nightly.yml runs random seeds at a larger count (D45).
   QUICKCHECK_SEED: "20261004"
   # The same flags on every cabal command, so no step reconfigures the build.
   CABAL_FLAGS: --enable-tests --enable-benchmarks --ghc-options=-Werror

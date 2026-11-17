@@ -53,7 +53,11 @@ relative paths (`test/regress`, `corpus/wolfram-docs`, `oracle/cases`) resolve f
      the bare tag (`pkspec1`), then fetch the hits' full bodies (`questions/{ids}` or
      `answers/{ids}`, `filter=withbody`) and grep them. Better than either: evaluate it in WL itself
      through the Wolfram Cloud MCP (`https://agenttools.wolfram.com/mcp`, no account needed; its
-     `WolframLanguageEvaluator` tool takes `code`), and cite the version `$Version` reports. If none
+     `WolframLanguageEvaluator` tool takes `code`), and cite the version `$Version` reports.
+     Send one input per call, or wrap several as the elements of one unheld `List`: a call of
+     several lines is evaluated inside an evaluation of the endpoint's own, which moves where
+     anything evaluation-sensitive lands, such as which evaluation `$RecursionLimit` replaces
+     (§4.3). Only the last line's output is shown anyway. If none
      of these settles it, drop the input; don't pin a guess.
    - Benchmark baselines are committed per GHC version and `intern` setting. From milestone 1a, an
      allocation regression fails CI (`bench/check-allocation.py`). Time is gated only against a
@@ -98,7 +102,9 @@ Run them from the repository root, which is no package's directory: name the tar
   extractors exclude what they can recognise, and triage lists the rest.
 - The oracle: `CASSINI_MATHICS_PYTHON=$PWD/.venv/bin/python cabal test cassini-oracle`, from the
   root, with Mathics3 installed in the root's gitignored `.venv` (`.venv/bin/pip install Mathics3`).
-  It skips without the variable.
+  It skips without the variable. `.github/workflows/nightly.yml` runs it, `cassini-corpus` over the
+  vendored and fetched corpora, and `cassini-test` on a random seed at 1000 tests, daily (D45); a
+  seed it prints reproduces with `--quickcheck-replay=SEED`.
 - The Wolfram documentation corpus (milestone W, §7.9):
   `python cassini-core/corpus/tools/extract_wolfram_docs.py <notebook-dir> cassini-core/corpus/wolfram-docs`,
   in a Python environment with `Mathics3` installed. It takes about ten minutes on eight cores.

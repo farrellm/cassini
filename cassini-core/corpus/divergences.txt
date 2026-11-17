@@ -58,10 +58,15 @@ wolfram/Symbol/PropertiesAndRelations/5 pending §4.11
 
 # D30: WL runs f[x_] := f[x + 1] as one evaluation chain, to $IterationLimit;
 # here a user rule evaluates its own right-hand side (§4.4), so the chain
-# deepens to $RecursionLimit and is cut in place. And x = x + 1 is cut at
-# another depth, with another partial result.
+# deepens to $RecursionLimit, and the input ends as
+# TerminatedEvaluation["RecursionLimit"]. The page's Hold[…] is the older
+# language's spelling besides.
 wolfram/SetDelayed/PossibleIssues/3 D30
-wolfram/Set/PossibleIssues/2 D30
+# §4.3: the page shows the older language's cut, Plus[255, Hold[…]], at an
+# older $RecursionLimit. WL 14.1's own wolfram/$RecursionLimit/BasicExamples/1
+# and WL 15.0.1 give Plus[1, TerminatedEvaluation["RecursionLimit"]] for the
+# same input, which is this evaluator's answer.
+wolfram/Set/PossibleIssues/2 §4.3
 
 # D27: the expected outputs are numbered one off from the inputs: Out[3]
 # holds the second input's answer, which is what this evaluator gives.
