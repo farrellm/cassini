@@ -44,7 +44,6 @@ module Cassini.Eval
     evalStep13BuiltinDown,
     restoreUneval,
     Round (..),
-    fixpoint,
     firstJustM,
   )
 where
@@ -141,7 +140,7 @@ nodeExpr n = mkApp n.nodeHead n.nodeArgs
 -- evaluates the head and arguments with 'evaluatePart', and the later ones
 -- with 'evaluate'; the kernel does the rest.
 evalSequence :: (Kernel :> es) => Expr -> Eff es Expr
-evalSequence e0 = kernelConfig >>= \cfg -> fixpointWith cfg (step cfg.trace) e0
+evalSequence e0 = kernelConfig >>= \cfg -> fixpoint cfg (step cfg.trace) e0
   where
     -- Steps 1 and 0 are guards on the other twelve, not stages before them.
     -- The flags: whether to trace, and whether this is a round after a
@@ -193,13 +192,11 @@ data Round = Round
 -- @TerminatedEvaluation["IterationLimit"]@ in place of the expression:
 -- non-termination is a user error, so it gets a message, not an exception
 -- (§4.4).
-fixpoint :: (Kernel :> es) => (Expr -> Eff es Round) -> Expr -> Eff es Expr
-fixpoint f e0 = kernelConfig >>= \cfg -> fixpointWith cfg (const f) e0
-
--- | 'fixpoint' with the configuration already read, telling each round
--- whether it follows a rewrite, which has left the standard chain (§4.3).
-fixpointWith :: (Kernel :> es) => EvalConfig -> (Bool -> Expr -> Eff es Round) -> Expr -> Eff es Expr
-fixpointWith cfg f e0 = withFuel cfg.iterationLimit (go False e0)
+--
+-- The configuration comes in already read, and each round is told whether
+-- it follows a rewrite, which has left the standard chain (§4.3).
+fixpoint :: (Kernel :> es) => EvalConfig -> (Bool -> Expr -> Eff es Round) -> Expr -> Eff es Expr
+fixpoint cfg f e0 = withFuel cfg.iterationLimit (go False e0)
   where
     go left e = do
       fuel <- iterations
