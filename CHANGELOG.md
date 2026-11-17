@@ -4,6 +4,11 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Fix: the `Calculus` law comparing `D` with finite differences failed about one run in a
+  thousand, on terms like `g[(c x)^27]` where a central difference's truncation error exceeds the
+  tolerance. It now extrapolates from two steps and discards points where the two disagree. The
+  evaluator was right; no regression case, since the fix is to a test.
+
 * Renovate keeps the CI's GitHub Actions current (`.github/renovate.json`, DESIGN.md §2.8, D46):
   digest-pinned, one grouped PR a week, minor, patch and digest updates merged once CI passes.
   Toolchain versions and Hackage bounds stay manual.
