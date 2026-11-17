@@ -100,14 +100,19 @@ matchWith cfg = go
           attributesM = liftMatch . headAttributes
         }
     go p s sigma = case p of
-      PCompound h qs -> compound h qs (asApplication s) sigma <|> oneIdentity h qs s sigma
+      PCompound h qs -> compound h qs (asApplication h s) sigma <|> oneIdentity h qs s sigma
       _ -> matchSyntactic ops p s sigma
     -- A rational number is Rational[p, q] to every compound pattern, as in
     -- WL 15.0.1: _[_, _] matches 22/7 and _[_] does not (D37, §4.5.1). Only
     -- matching sees this; the number is still an atom to Length, Part and
-    -- the traversals of ReplaceAll and Cases.
-    asApplication s = case s of
-      Rat_ q -> apply sRational [Int_ (numerator q), Int_ (denominator q)]
+    -- the traversals of ReplaceAll and Cases. A literal head other than
+    -- Rational cannot match, so the application is not built for it: the
+    -- commutative matcher tries a rational coefficient against every
+    -- compound pattern argument.
+    asApplication h s = case s of
+      Rat_ q
+        | PLiteral hd <- h, hd /= Sym sRational -> s
+        | otherwise -> apply sRational [Int_ (numerator q), Int_ (denominator q)]
       _ -> s
     compound h qs s sigma = case s of
       App sh sargs -> do

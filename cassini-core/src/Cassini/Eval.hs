@@ -165,7 +165,7 @@ evalSequence e0 = kernelConfig >>= \cfg -> fixpointWith cfg (step cfg.trace) e0
                   -- Built once for the four rungs, not once per rung.
                   let e' = nodeExpr n''
                   lk <- rungLookups n'' e'
-                  fired <- firstJustM (\r -> r lk n'' e') [userUp, builtinUp, userDown, builtinDown]
+                  fired <- firstJustM (\r -> r lk e') [userUp, builtinUp, userDown, builtinDown]
                   pure (fromMaybe (Round (if null n''.nodeStripped then e' else restoreUneval n'') (not n''.nodeUnheld)) fired)
       | otherwise = pure (Round e True)
 
@@ -409,8 +409,8 @@ evalStep13BuiltinDown :: (Kernel :> es) => Node -> Eff es (Maybe Round)
 evalStep13BuiltinDown = alone builtinDown
 
 -- | One rung run by itself, with its own lookups.
-alone :: (Kernel :> es) => (RungLookups -> Node -> Expr -> Eff es (Maybe Round)) -> Node -> Eff es (Maybe Round)
-alone r n = let e = nodeExpr n in rungLookups n e >>= \lk -> r lk n e
+alone :: (Kernel :> es) => (RungLookups -> Expr -> Eff es (Maybe Round)) -> Node -> Eff es (Maybe Round)
+alone r n = let e = nodeExpr n in rungLookups n e >>= \lk -> r lk e
 
 -- | The symbols the four rungs look up, looked up once a round rather than
 -- once a rung (D32): each upvalue tag among the arguments, for rungs 10 and
@@ -432,9 +432,9 @@ rungLookups n e = do
   down <- traverse lookupSymbol (tagSymbol e)
   pure (RungLookups ups down)
 
--- | Steps 10–13 on a node and the expression it stands for, which the
+-- | Steps 10–13 on the expression a node stands for, which the
 -- sequence builds once for all four.
-userUp, builtinUp, userDown, builtinDown :: (Kernel :> es) => RungLookups -> Node -> Expr -> Eff es (Maybe Round)
+userUp, builtinUp, userDown, builtinDown :: (Kernel :> es) => RungLookups -> Expr -> Eff es (Maybe Round)
 userUp = rung 0 "10 UserUpValue"
 builtinUp = rung 1 "11 BuiltinUpValue"
 userDown = rung 2 "12 UserDownValue"
@@ -442,9 +442,9 @@ builtinDown = rung 3 "13 BuiltinDownValue"
 
 -- | The @i@th rung of 'ladder', which is the only list of rungs: each named
 -- step reads its rung from it rather than restating it (§4.2).
-rung :: (Kernel :> es) => Int -> Text -> RungLookups -> Node -> Expr -> Eff es (Maybe Round)
-rung i name lk n e = case drop i (ladder e) of
-  (UpValue, _) : _ | holdAllComplete n.nodeAttrs -> pure Nothing
+rung :: (Kernel :> es) => Int -> Text -> RungLookups -> Expr -> Eff es (Maybe Round)
+rung i name lk e = case drop i (ladder e) of
+  -- Under HoldAllComplete, 'rungLookups' gives no upvalue tags.
   (UpValue, o) : _ -> firstJustM (fromTable (UpValue, o)) lk.rlUp
   (k, o) : _ -> maybe (pure Nothing) (fromTable (k, o)) lk.rlDown
   [] -> pure Nothing
