@@ -1,0 +1,5 @@
+(* WL 15.0.1, as elements of an unheld List: a rule's right-hand side continues the evaluation whose rule fired (EvaluateRhs, §4.3). Were it a new evaluation, CompoundExpression at its top would be the second to leave the chain, and k[1] would be TerminatedEvaluation[…] whole. *)
+SetDelayed[k[Pattern[n, Blank[]]], CompoundExpression[0, Plus[1, k[Plus[n, 1]]]]]
+k[1]
+SetDelayed[m[Pattern[n, Blank[]]], CompoundExpression[0, List[m[Plus[n, 1]]]]]
+List[m[1]]

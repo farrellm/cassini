@@ -24,6 +24,8 @@
 0077-recursion-limit-replaces-second-evaluation-off-chain 18 Mathics3
 0077-recursion-limit-replaces-second-evaluation-off-chain 19 Mathics3
 0077-recursion-limit-replaces-second-evaluation-off-chain 20 Mathics3
+0079-rule-right-hand-side-continues-its-evaluation 2 Mathics3
+0079-rule-right-hand-side-continues-its-evaluation 4 Mathics3
 # Mathics3: a fraction is an atom to every compound pattern but a literal
 # Rational one; to WL 15.0.1 it is Rational[n, d] to all of them, through the
 # Wolfram Cloud MCP (§4.5.1, D37).

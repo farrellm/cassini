@@ -218,9 +218,7 @@ lookupAttributes s = (.siAttributes) <$> lookupSymbol s
 -- how many of the evaluations enclosing it have left the chain, up to 2, and
 -- whether it has itself, which only a rule's right-hand side starts out
 -- having done. The recursion limit replaces the evaluation that leaves the
--- chain with 'envOff' 1: the second on the path to the cut to leave it. They
--- are fields of 'Env', not a record of their own, which cost 2% of the
--- end-to-end workload's allocation.
+-- chain with 'envOff' 1: the second on the path to the cut to leave it.
 data Env = Env
   { envConfig :: !EvalConfig,
     envDepth :: !Int,

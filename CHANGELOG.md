@@ -11,10 +11,10 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   left the standard chain, which it replaces: `x = x + 1` is
   `1 + TerminatedEvaluation["RecursionLimit"]` and `(r[1]; 7)` is 7, as in WL 15.0.1. Both were
   `Hold[…]` in place, and a runaway could emit its message twice. The `Kernel` effect gains
-  `EvaluateRhs`, `LeaveChain` and `ChainState`, and `Unwind` gains `UTerminated`. §4.3's rule,
+  `EvaluatePart` and `EvaluateRhs`, and `Unwind` gains `UTerminated`. §4.3's rule,
   stated on 2026-11-11 from probes run through a wrapper that moved every answer out by one
   evaluation, is corrected from forty probes run without it. Regression cases 0010 and 0011
-  re-accepted and renamed, 0077 new.
+  re-accepted and renamed, 0077 and 0079 new.
 
 * A rational number is `Rational[n, d]` to every compound pattern, as in WL 15.0.1 (§4.5.1, D37):
   `MatchQ[22/7, _[_, _]]` is `True`, and `_[_]` still does not match. Regression case 0072, which
