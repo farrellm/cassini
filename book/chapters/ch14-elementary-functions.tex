@@ -1,0 +1,382 @@
+\chapter{Integration of Elementary Functions}\label{ch:elementary}
+
+We now integrate an element of $E = k(t)[y]/(F)$, where $t$ is a logarithm or
+an exponential over $k$, assuming that we can integrate in $k$ and solve
+there the differential equations that arise. This is the induction step of
+Risch's theorem, which he proved by Puiseux
+expansions~\cite[pp.~203--220]{raab2022}, and of Bronstein's version of
+it~\cite[Part~2]{bronstein1990}, which uses the Hermite reduction and the
+residue criterion first and expansions only where they cannot be avoided.
+
+The chapter is not on the same footing as those of Part~II. For a simple
+radical extension the method is complete and rational, and we give it with
+proofs and two worked examples. For a general algebraic extension the
+sources solve the problem through expansions at the places at infinity and
+over $t = 0$; the tutorial sends its reader to them for the details each
+time, and says at the end that ``the details are quite
+technical''~\cite[\S3.8 and \S3.9]{bronstein1998tutorial}. We state what is
+done and where, and do not reproduce it.
+
+Notation is that of Chapter~\ref{ch:monomial}: $w$ is an integral basis of
+$E$ over $k(t)$, with derivation matrix $(m_{ij})$ and $e_w$
+(Definition~\ref{def:suitable}), and $C$ is the field of constants.
+
+\section{The reduction to a simple integrand}\label{sec:elem-reduction}
+
+Given $f \in E$:
+\begin{enumerate}
+\item \seealg{HermiteReduce}$(f, w)$ gives $g$ and a simple $h$ with $f = Dg +
+  h$ (Proposition~\ref{prop:simple}). The integral of $f$ is elementary if
+  and only if that of $h$ is.
+\item Compute $R$ by~\eqref{eq:mixed-resultant}. If $R$ does not divide
+  $\kappa(R)$, the integral is not elementary
+  (Theorem~\ref{thm:residue-criterion}).
+\item Otherwise the residues $\tau_P(h)$ at the normal places are constants,
+  and we must find $v$, the $c_i$ and the $u_i$
+  of~\eqref{eq:liouville-mixed}. By Corollary~\ref{cor:tau-liouville}, $v$ has
+  no pole at a normal place.
+\end{enumerate}
+From here the two cases part.
+
+\section{The logarithmic case}\label{sec:elem-log}
+
+Let $t = \log \eta$ with $\eta \in k^*$, so that $Dt = D\eta/\eta$. Every
+finite place is normal, so by Corollary~\ref{cor:tau-liouville} the algebraic
+part of the integral of a simple $h$ is integral:
+\begin{equation}\label{eq:log-v}
+  v = \sum_{i=1}^n B_i w_i, \qquad B_i \in k[t] .
+\end{equation}
+
+\paragraph{The logarithms on the curve.} At the finite places the orders of
+the $u_i$ are given by the residues, as in
+Chapter~\ref{ch:logarithmic-part}. At an infinite place $P$ with
+ramification index $r$, Bronstein defines a residue
+as follows~\cite[Definition~2.10]{bronstein1990}. Let $a \in \kbar$ be the
+coefficient of $t^{-1}$ in the expansion of $h$ at $P$ in powers of
+$t^{-1/r}$. If
+\begin{equation}\label{eq:tau-infinity}
+  a = D\beta + c\, \frac{D\eta}{\eta}
+  \qquad \text{with } \beta \in \kbar \text{ and } c \text{ a constant,}
+\end{equation}
+then $\tau_P(h) = -r c$; otherwise $\tau_P(h)$ is undefined. Since $t$ is a
+monomial, $c$ is unique when it exists, and finding it is an integration
+problem in $\kbar$: the recursion.
+
+\begin{theorem}\label{thm:log-residues}\standing{cited}{\cite[Propositions~2.11, 2.12 and~2.13]{bronstein1990}}
+Let $t$ be a logarithm over $k$ and $h \in E$ simple, with an elementary
+integral over $E$. Then $\tau_P(h)$ is defined at every infinite place, and
+there is a representation~\eqref{eq:liouville-mixed}, in which the $u_i$ that
+are algebraic over $k$ are listed separately,
+\[
+  h = Dv + \sum_j d_j\, \frac{D\gamma_j}{\gamma_j} + \sum_i c_i\, \frac{Du_i}{u_i},
+  \qquad \gamma_j \in (\overline{C} k)^* ,
+\]
+where $\overline{C} k$ is the field generated over $k$ by the constants
+algebraic over $C$,
+such that $\tau_P(h) = \sum_i c_i\, \ord{P}(u_i)$ at every place $P$, finite or
+infinite. The sum of the $\tau_P(h)$ over all places, weighted by their
+degrees, is zero. If $q_1, \dots, q_l$ is a basis over $\Q$ of the span of the
+$\tau_P(h)$ and $\delta_1, \dots, \delta_l$ are the divisors formed from their
+coordinates as in~\eqref{eq:delta}, then each $\delta_j$ has a principal
+multiple.
+\end{theorem}
+
+So the logarithms whose arguments genuinely involve $t$ and $y$ are found as
+in Chapter~\ref{ch:logarithmic-part}: residue divisors, now with support at
+infinity as well, and a principal multiple of each. The field of constants of
+the curve is $\kbar$, which is not a number field, so the test for a
+principal multiple needs the specialisation of
+Section~\ref{sec:fo-parameters}. Subtracting the logarithms found leaves an
+integrand $h_1$ for which we must solve
+\begin{equation}\label{eq:E3}
+  h_1 = Dv + \sum_j d_j\, \frac{D\gamma_j}{\gamma_j}, \qquad
+  v \in E, \quad \gamma_j \in (\overline{C} k)^*, \quad d_j \text{ constants.}
+\end{equation}
+
+\paragraph{The algebraic part.} Substituting~\eqref{eq:log-v}
+in~\eqref{eq:E3}, with $h_1 = \sum_i A_i w_i / U$ where $U$ is normal, and
+comparing coefficients of the $w_i$, assuming $w_1 = 1$:
+\begin{equation}\label{eq:Slog}
+  \frac{A_i}{U} = DB_i + \sum_{j=1}^n \frac{m_{ji}}{e_w}\, B_j
+     + \epsilon_i \sum_j d_j\, \frac{D\gamma_j}{\gamma_j}
+  \qquad (1 \le i \le n),
+\end{equation}
+where $\epsilon_1 = 1$ and $\epsilon_i = 0$ for $i > 1$. This is the system
+$(S_{\log})$ of~\cite[Proposition~2.15]{bronstein1990}: \eqref{eq:E3} has a
+solution if and only if~\eqref{eq:Slog} has one with $B_i \in k[t]$. It is a
+coupled system of linear differential equations over $k(t)$ for the $B_i$.
+In general Bronstein bounds the degrees of the $B_i$
+\cite[Proposition~2.14]{bronstein1990} and determines their coefficients by
+comparing the expansions of the two sides at the infinite places, following
+Risch. When the system is diagonal no expansions are needed.
+
+That happens for a simple radical extension $E = k(t)[z]/(z^n - H)$, with
+$H = c \prod_j p_j^{\,j}$ as in~\eqref{eq:radical-normal}, where now $c \in
+k^*$ and the $p_j \in k[t]$ are monic, squarefree and pairwise coprime.
+Theorem~\ref{thm:radical-basis} and its proof use nothing about the ground
+field but its characteristic, so~\eqref{eq:radical-basis} is an integral
+basis of $E$ over $k(t)$, and $Dw_{i+1} = \lambda_i w_{i+1}$ with
+\[
+  \lambda_i = \frac{i}{n} \frac{DH}{H} - \frac{De_i}{e_i}
+            = \frac{i}{n} \frac{Dc}{c}
+              + \sum_{j=1}^{n-1} \Bigl\{ \frac{ij}{n} \Bigr\} \frac{Dp_j}{p_j} .
+\]
+The term in $Dc/c$ is new: in Chapter~\ref{ch:radical} the coefficient $c$
+was a constant. It is in $k$, so the denominator of $\lambda_i$ still divides
+$p_1 \cdots p_{n-1}$.
+
+\begin{theorem}[simple radicals, logarithmic case]\label{thm:log-radical}\standing{proved}{}
+Let $t$ be a logarithm over $k$, and let $E = k(t)[z]/(z^n - H)$ be a simple
+radical extension with the integral basis $w$
+of~\eqref{eq:radical-basis} and the $\lambda_i$ just defined. Let $h_1
+= \sum_{i=0}^{n-1} (A_{i+1}/U)\, w_{i+1}$ with $U$ normal. Then~\eqref{eq:E3}
+has a solution if and only if
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item $A_1/U \in k(t)$ has an integral of the form $B_1 + \sum_j d_j \log
+  \gamma_j$ with $B_1 \in k[t]$ and $\gamma_j \in (\overline{C} k)^*$, and
+\item for $1 \le i < n$, the Risch differential equation
+  \[
+    DB_{i+1} + \lambda_i\, B_{i+1} = \frac{A_{i+1}}{U}
+  \]
+  has a solution $B_{i+1} \in k[t]$.
+\end{enumerate}
+The solution is then $v = \sum_i B_i w_i$.
+\end{theorem}
+
+\begin{proof}
+Since $Dw_{i+1} = \lambda_i w_{i+1}$ and $\lambda_0 = 0$, the first equation
+of~\eqref{eq:Slog} reads $A_1/U = DB_1 + \sum_j d_j\, D\gamma_j/\gamma_j$,
+and the others read $A_{i+1}/U = DB_{i+1} + \lambda_i B_{i+1}$. And $v$ is of
+the form~\eqref{eq:log-v} by Corollary~\ref{cor:tau-liouville}.
+\end{proof}
+
+Both are problems over $k(t)$, solved in Volume~I: (i) by the integration
+algorithm of \VolI{Chapter~5}, and (ii) by the algorithm for the Risch
+differential equation of \VolI{Chapter~6}. This is equations~(23) and~(24)
+of~\cite[\S3.8]{bronstein1998tutorial}.
+
+\begin{example}\label{ex:elem-log}
+This is Example~14 of~\cite{bronstein1998tutorial}. Consider
+\[
+  \int \frac{(x^2 + 2x + 1)\sqrt{x + \log x} + (3x + 1)\log x + 3x^2 + x}
+            {(x \log x + x^2)\sqrt{x + \log x} + x^2 \log x + x^3}\, dx .
+\]
+Let $k = \Q(x)$, $t = \log x$ and $E = k(t)[y]/(y^2 - x - t)$. Rationalising
+the denominator, the integrand is
+\[
+  f = \frac{((3x + 1)\,t - x^3 + x^2)\,y - (2x^2 - x - 1)\,t - 2x^3 + x^2 + x}
+           {x\,(t + x)(t + x - x^2)} .
+\]
+\begin{enumerate}
+\item With respect to the integral basis $(1, y)$ the denominator $d = x\,(t +
+  x)(t + x - x^2)$ is squarefree, so $f$ is simple and the Hermite reduction
+  does nothing. (The factor $x$ is a unit of $k[t]$; keeping it in $d$
+  changes nothing below.)
+\item $Dd = t^2 + (2 + 4x - 3x^2)\,t + 2x + 2x^2 - 4x^3$, and
+  \[
+    R(Z) = x^{12} (x - 1)^2 (x + 1)^2 (2x + 1)^2\; Z^3 (Z - 2) .
+  \]
+  The roots $0$ and $2$ are constants: the criterion is passed.
+\item The root $2$ is the residue at the place $P$ where $(t, y) = (x^2 - x,
+  -x)$. There is one place $Q$ at infinity, with $r = 2$, and the coefficient
+  of $t^{-1}$ in the expansion of $f$ there is
+  \[
+    a = 1 - 2x + \frac1x = D(x - x^2) + 1 \cdot \frac{Dx}{x} ,
+  \]
+  so $c = 1$ in~\eqref{eq:tau-infinity} and $\tau_Q(f) = -2$. The residue
+  divisor is $\delta = 2P - 2Q$, and it is principal: $\delta = ((x +
+  y)^2)$, since $(x + y)(x - y) = x^2 - x - t$ vanishes simply at the two
+  points with $t = x^2 - x$ and $x + y$ vanishes at the one with $y = -x$.
+\item Subtracting, $h_1 = f - 2\, D(x + y)/(x + y) = (x + 1)\,y / (x\,(t +
+  x))$.
+\item Theorem~\ref{thm:log-radical}: $A_1 = 0$ gives $B_1 = 0$ and no further
+  logarithm; and $\lambda_1 = \frac12 D(x + t)/(x + t) = (x + 1)/(2x\,(t +
+  x))$, so the Risch equation is
+  \[
+    DB_2 + \frac{x + 1}{2x\,(t + x)}\, B_2 = \frac{x + 1}{x\,(t + x)} ,
+  \]
+  with solution $B_2 = 2$.
+\end{enumerate}
+Therefore
+\[
+  \int f\,dx = 2\sqrt{x + \log x} + 2 \log\bigl( x + \sqrt{x + \log x} \bigr) .
+\]
+The integrand is printed with $x^2 + x + 1$ in place of $x^2 + 2x + 1$
+in~\cite[\S2]{bronstein1990}; differentiating the answer shows that the
+tutorial's version is the correct one.
+\end{example}
+
+\section{The exponential case}\label{sec:elem-exp}
+
+Let $t = \exp \eta$ with $\eta \in k$, so that $Dt = t\, D\eta$. Now the
+places over $t = 0$ are special, as are those at infinity, and the algebraic
+part can have poles at both. After the Hermite reduction the denominator of
+$h$ is $t^m U$ with $U$ normal and $m \ge 0$.
+
+\paragraph{Poles over $t = 0$.} Bronstein removes them one order at a time,
+by a reduction that is to the special places what Hermite's is to the normal
+ones, except that it can fail. Let $b_i \in k$ be the value at $t = 0$ of the coefficient of $w_i$ in $t^m
+h$; one looks for $c_1, \dots, c_n \in k$ such that $h - D(\sum_i c_i w_i /
+t^m)$ has denominator $t^{m-1} U$. Differentiating and evaluating at $t = 0$
+gives the system
+\begin{equation}\label{eq:Sexp}
+  b_i = Dc_i - m\, (D\eta)\, c_i + \frac{1}{e_w(0)} \sum_{j=1}^n m_{ji}(0)\, c_j
+  \qquad (1 \le i \le n)
+\end{equation}
+over $k$, the system $(S_{\exp})$ of~\cite[\S2]{bronstein1990}; here $e_w(0)
+\ne 0$ because $e_w$ is normal and $t$ is special.
+
+\begin{theorem}\label{thm:exp-reduction}\standing{cited}{\cite[Proposition~2.18]{bronstein1990}}
+Let $t$ be an exponential over $k$ and $h \in E$ simple with denominator $t^m
+U$, $m \ge 1$. If $h$ has an elementary integral over $E$,
+then~\eqref{eq:Sexp} has a solution in $k$.
+\end{theorem}
+
+So either the system has no solution and the integral is not elementary, or
+$m$ is lowered; the system may have more than one solution, and Bronstein
+notes that any of them will do. \eqref{eq:Sexp} is a coupled system of $n$ first-order linear
+differential equations over $k$. For a simple radical extension it is
+diagonal:
+\[
+  b_{i+1} = Dc_{i+1} + \bigl( \lambda_i(0) - m\, D\eta \bigr)\, c_{i+1}
+  \qquad (0 \le i < n),
+\]
+$n$ separate Risch differential equations over $k$, which is
+equation~(26) of~\cite[\S3.9]{bronstein1998tutorial}.
+
+\paragraph{Poles at infinity.} The substitution $\bar t = 1/t$ is again an
+exponential over $k$, with $D\bar t = -\bar t\, D\eta$, and it exchanges the
+places over $t = 0$ with those at infinity. Running the same reduction for
+$\bar t$ removes the poles at infinity. This is the one change of variable
+that the mixed case allows.
+
+\paragraph{The rest.} After both reductions the integrand has no pole at a
+special place, and then $v$ has no pole at any place, so $v \in k$. The
+logarithms are found from residues, which now have to be defined at the
+special places as well; with them the residues at all places again sum to
+zero, weighted by degrees, and the residue divisors again have principal
+multiples~\cite[Definition~2.21, Propositions~2.22 to~2.24]{bronstein1990}.
+That definition carries an assumption: that $D\eta$ is not a linear
+combination with constant coefficients of logarithmic derivatives of elements
+of $\overline{C} k$. We have not reproduced this part.
+
+\begin{example}\label{ex:elem-exp}
+This is Example~15 of~\cite{bronstein1998tutorial}. Consider
+\[
+  \int \frac{3\,(x + e^x)^{1/3} + (2x^2 + 3x)\,e^x + 5x^2}{x\,(x + e^x)^{1/3}}\, dx .
+\]
+Let $k = \Q(x)$, $t = e^x$ and $E = k(t)[y]/(y^3 - t - x)$. The integrand is
+\[
+  f = \frac{((2x^2 + 3x)\,t + 5x^2)\,y^2 + 3t + 3x}{x\,(t + x)} .
+\]
+\begin{enumerate}
+\item With respect to $(1, y, y^2)$ the denominator $x\,(t + x)$ is normal,
+  and $R(Z) = x^8 (1 - x)^3 Z^3$: the criterion is passed and there are no
+  residues at the normal places.
+\item The denominator is not divisible by $t$, so there is nothing to do
+  over $t = 0$. Put $\bar t = 1/t$ and $z = \bar t\,y$, so that $z^3 = \bar
+  t^2 (1 + x \bar t)$. By~\eqref{eq:radical-basis} the integral basis is
+  $\bar w = (1, z, z^2/\bar t)$, and
+  \[
+    f = \frac{3x\,\bar t^2 + 3\,\bar t + (5x^2\,\bar t + 2x^2 + 3x)\,\bar w_3}
+             {\bar t\,(x^2\,\bar t + x)} ,
+  \]
+  whose denominator is divisible by $\bar t$: $m = 1$.
+\item Here $D\bar t = -\bar t$, so $D\eta = -1$. With $H = \bar t^2 (1 + x
+  \bar t)$ we have $DH/H = (-2 + (1 - 3x)\,\bar t)/(1 + x \bar t)$, whose
+  value at $\bar t = 0$ is $-2$, and $De_2/e_2 = D\bar t/\bar t = -1$; so the
+  values at $\bar t = 0$ of the $\lambda_i = \frac{i}{3} DH/H - De_i/e_i$ are
+  $0$, $-\frac23$ and $-\frac43 + 1 = -\frac13$. (Here $c = x$ is not a
+  constant, and the term $\frac{i}{3} Dc/c$ is needed if the $\lambda_i$ are
+  computed from the $p_j$.) The diagonal
+  system is
+  \[
+    0 = Dc_1 + c_1, \qquad 0 = Dc_2 + \tfrac13\, c_2, \qquad
+    2x + 3 = Dc_3 + \tfrac23\, c_3 ,
+  \]
+  with solution $c_1 = c_2 = 0$, $c_3 = 3x$.
+\item $h = f - D(3x\,\bar w_3/\bar t) = 3/x$, which is in $k$.
+\end{enumerate}
+Since $\bar w_3 / \bar t = z^2/\bar t^2 = y^2$,
+\[
+  \int \frac{3\,(x + e^x)^{1/3} + (2x^2 + 3x)\,e^x + 5x^2}{x\,(x + e^x)^{1/3}}\, dx
+  = 3x\,(x + e^x)^{2/3} + 3 \log x .
+\]
+\end{example}
+
+\section{Other routes to the same cases}\label{sec:elem-others}
+
+\paragraph{Trager's reduction for one radical.} The method of
+Section~\ref{sec:radical-trager1979} was designed for this
+situation~\cite[Appendix~A]{trager1984}: an integrand $R/y$ with $R \in
+F(\theta)$, $\theta$ a logarithm or an exponential over $F$, and $y^n \in
+F[\theta]$ depending on $\theta$. The reductions at the finite poles are as
+before. The reduction of the polynomial part leads, for a logarithm, to a
+recursive integration in $F$ for each coefficient, and, when the leading
+coefficient of $y^n$ is not a constant, to a first-order linear differential
+equation in $F$; for an exponential, to such an equation at each step, both
+at $\theta = 0$ and at infinity. Trager shows that each equation has at most
+one solution, and that the reductions succeed whenever the integral is
+elementary. It is the same computation as
+Theorems~\ref{thm:log-radical} and~\ref{thm:exp-reduction} in the diagonal
+case, organised around $1/y$ in place of an integral basis, and it finds
+the algebraic part only.
+
+\paragraph{Transcendentals over one curve.} Davenport~\cite{davenport1984}
+treats the tower in the other order: $K(x, y, \theta_1, \dots, \theta_n)$
+with $y$ algebraic over $K(x)$ and each $\theta_i$ a logarithm or an
+exponential, transcendental over what precedes it. He shows that the
+integration problem and the Risch differential equation are solvable there.
+As we read it, the point is that the curve is fixed, over a field of
+constants, and the monomials are added on top of it. Of the general case, an
+algebraic extension over a tower containing transcendentals, he writes that
+it ``me semble \^etre non r\'esolu''. That was in 1984; it is the case this
+chapter is about, and the case that Bronstein's paper of 1990 addresses.
+
+\paragraph{Parallel integration.\later} Blake's second preprint on the
+Risch--Norman method~\cite{blake2026b} allows the radical ``any position in
+the tower'', which it calls ``the setting of Bronstein's algorithm for mixed
+elementary functions''. It is a heuristic method with a structure theorem
+behind it, not a decision procedure, and we have read only its abstract.
+
+\section{How much of this is an algorithm}\label{sec:elem-status}
+
+For a simple radical over one logarithm or exponential, the procedures above
+are rational and complete as far as the algebraic part goes, and the
+logarithmic part is that of Chapter~\ref{ch:logarithmic-part} with a larger
+field of constants. For a general algebraic extension, Bronstein's own
+assessment is the place to
+start~\cite[Conclusions]{bronstein1990}. His algorithm computes Puiseux
+expansions in the solution of the Risch equation, at infinity in the
+logarithmic case, and Laurent expansions at the special places in the
+exponential case, and he calls this ``the major obstacle to an efficient
+implementation of a complete algorithm''. He names three things that a
+rational algorithm would need:
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item a formula for the residues $\tau_P$ at the special places;
+\item a way to solve $Dv = f$ for $v$ in the field, when $f$ is simple,
+  ``without computing the Puiseux expansions of $f$ at the special places'';
+\item a rational algorithm for the Risch equation.
+\end{enumerate}
+Chapter~\ref{ch:risch-equation} takes up the third. We know of no source
+that supplies the first two in general.
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Use Theorem~\ref{thm:log-radical} to integrate $1/(x \log(x)^{3/2})$
+(Example~\ref{ex:mixed-hermite}) starting from the simple integrand that
+the Hermite reduction leaves, and $\sqrt{\log x}/x$.
+\end{exercise}
+
+\begin{exercise}
+Show that $\int \sqrt{\log x}\,dx$ is not elementary: with $y^2 = t$, the
+Risch equation of Theorem~\ref{thm:log-radical}(ii) is $DB_2 + B_2/(2xt) =
+1$, and it has no solution in $\Q(x)[t]$.
+\end{exercise}
+
+\begin{exercise}
+In Example~\ref{ex:elem-exp}, verify the expression of $f$ in the basis
+$\bar w$ and the three values $\lambda_i(0)$.
+\end{exercise}

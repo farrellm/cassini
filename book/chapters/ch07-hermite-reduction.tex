@@ -1,0 +1,996 @@
+\chapter{The Hermite Reduction}\label{ch:hermite}
+
+Hermite's reduction~\cite{hermite1872} writes a rational function as a
+derivative plus a rational function whose denominator is squarefree, using
+nothing more than gcd computations \VolI{\S2.2}. Volume~I carries it to a
+monomial extension $k(t)$, where what remains is a \emph{simple} function,
+whose denominator is normal, plus a \emph{reduced} one, whose denominator is
+special \VolI{\S5.3}. This chapter carries it
+one step further, to a finite algebraic extension $E$ of $k(t)$. The result
+has the same shape: any $f \in E$ can be written
+\[
+  f = Dg + h, \qquad g, h \in E,
+\]
+where $h$ has only simple poles at the normal places of $E$.
+
+Two things are new. The first is that ``numerator'' and ``denominator'' need a
+basis of $E$ to mean anything, and the reduction works for some bases and not
+for others. Trager~\cite{trager1984} showed that it always works for an
+integral basis. The second is Bronstein's observation~\cite{bronstein1998lazy}
+that when the reduction fails for a given basis, the failure itself produces
+an integral element outside the module the basis generates, so that the basis
+can be improved exactly as far as the integrand requires and no further. We
+prove the second statement and obtain the first as a corollary.
+
+Following the report in which the lazy reduction first
+appeared~\cite{bronstein1998lazy}, the chapter is written over a monomial
+extension from the start. The reader interested only in algebraic functions
+should take $k = K$ a field of constants, $t = x$ and $D = d/dx$ throughout; in
+that case every squarefree polynomial is normal, there are no special
+polynomials, and every $s$ and $d_s$ below is $1$. We call this the
+\emph{pure algebraic case}. Chapter~\ref{ch:monomial} uses the general case.
+
+\section{Numerators and denominators}\label{sec:hermite-numden}
+
+Throughout this chapter, $(k, D)$ is a differential field of characteristic
+$0$, $t$ is a monomial over $k$ \VolI{Definition~3.4.1}, and $E$ is a finite
+algebraic extension of $k(t)$ of degree $n$. By \VolI{Theorem~3.2.3}, $D$
+extends uniquely to a derivation of $E$, which we also write $D$. Recall that
+$p \in k[t]$ is \emph{normal} if $\gcd(p, Dp) = 1$ and \emph{special} if
+$p \mid Dp$ \VolI{Definition~3.4.2}; a normal polynomial is squarefree, and
+factors of normal polynomials are normal \VolI{Theorem~3.4.1}.
+
+We write $\OO$ for the integral closure of $k[t]$ in $E$
+(Section~\ref{sec:prelim-integral}). It is a ring, and a free $k[t]$-module
+of rank $n$ (Theorem~\ref{thm:closure-fg}). For a basis $w = (w_1, \dots, w_n)$ of $E$ over
+$k(t)$ we write
+\[
+  \OO_w = k[t]\,w_1 + \dots + k[t]\,w_n
+\]
+for the $k[t]$-module it generates. We only ever use bases made of integral
+elements, so that $\OO_w \subseteq \OO$; any basis can be made such by
+multiplying each element by a suitable polynomial
+(Proposition~\ref{prop:integral-basics}). The basis $w$ is an \emph{integral basis} if
+$\OO_w = \OO$ (Chapter~\ref{ch:integral-bases}).
+
+\begin{definition}\label{def:numden}
+Let $w$ be a basis of $E$ over $k(t)$ and $f \in E$. Write $f = \sum_{i=1}^n
+f_i w_i$ with $f_i \in k(t)$, and put the $f_i$ over their monic least common
+denominator:
+\[
+  f = \frac{a_1 w_1 + \dots + a_n w_n}{d},
+  \qquad a_1, \dots, a_n, d \in k[t], \quad \gcd(d, a_1, \dots, a_n) = 1.
+\]
+We call $a_1 w_1 + \dots + a_n w_n \in \OO_w$ the \emph{numerator} and $d$ the\index{denominator, with respect to a basis}
+\emph{denominator of $f$ with respect to $w$}.
+\end{definition}
+
+Both are determined by $f$ and $w$, and $f \in \OO_w$ if and only if $d = 1$.
+They do depend on $w$: enlarging $\OO_w$ can only shrink the denominator.
+
+\begin{lemma}\label{lem:den-divides}\standing{proved}{}
+Let $w$ and $\bar w$ be bases of $E$ over $k(t)$ with $\OO_w \subseteq
+\OO_{\bar w}$. Then for every $f \in E$ the denominator of $f$ with respect to
+$\bar w$ divides its denominator with respect to $w$.
+\end{lemma}
+
+\begin{proof}
+Let $d$ be the denominator of $f$ with respect to $w$. Then $d f \in \OO_w
+\subseteq \OO_{\bar w}$, so $d f = \sum_i c_i \bar w_i$ with $c_i \in k[t]$,
+and the denominator of $f$ with respect to $\bar w$ is $d / \gcd(d, c_1,
+\dots, c_n)$.
+\end{proof}
+
+Derivatives of integral elements need not be integral: for $y^2 = x$ we have
+$dy/dx = y/(2x)$. So we record the denominators that differentiation
+introduces.
+
+\begin{definition}\label{def:suitable}
+Let $w$ be a basis of $E$ over $k(t)$ with $w_i \in \OO$ for each $i$. The
+\emph{derivation matrix} of $w$\index{derivation matrix} is the matrix $(m_{ij})$ over $k[t]$, together
+with the monic $e_w \in k[t]$, such that
+\begin{equation}\label{eq:derivation-matrix}
+  D w_i = \frac{1}{e_w} \sum_{j=1}^n m_{ij} w_j \quad (1 \le i \le n),
+  \qquad \gcd(e_w, m_{11}, m_{12}, \dots, m_{nn}) = 1.
+\end{equation}
+For each $i$ we write $e_i$ for the denominator of $D w_i$ with respect to $w$,
+so that $e_w = \operatorname{lcm}(e_1, \dots, e_n)$. The basis $w$ is
+\emph{suitable} if $e_w$ is normal\index{suitable basis}.
+\end{definition}
+
+The word is Bronstein's~\cite[\S3]{bronstein1998lazy}. In the pure algebraic
+case, $w$ is suitable when $e_w$ is squarefree. We shall see
+(Corollary~\ref{cor:integral-suitable}) that an integral basis is always
+suitable, and (Example~\ref{ex:fail}) that a suitable basis need not be
+integral.
+
+Finally, the \emph{normal part}\index{normal part} of $p \in k[t] \setminus \{0\}$, written $p^*$,
+is the product of the distinct monic normal irreducible factors of $p$. If
+$p = p_s p_n$ is a splitting factorisation \VolI{Definition~3.5.1}, then $p^*$
+is the squarefree part of $p_n$, so $p^*$ is computed by gcds alone. Up to a
+unit, $p = p^*$ exactly when $p$ is normal.
+
+\section{The derivative at a finite place}\label{sec:hermite-order}
+
+In $k(t)$, differentiation lowers the order at a normal irreducible $p$ by
+exactly one wherever that order is not zero, and does not lower the order at a
+special one \VolI{Theorem~4.4.2}. Everything in this chapter rests on the
+analogue for $E$, in which ``one'' becomes the ramification index.
+
+We use the following from Chapter~\ref{ch:function-fields}
+(Theorems~\ref{thm:places} and~\ref{thm:puiseux}). The field $E$ is
+an algebraic function field of one variable over $k$. A \emph{finite place}
+of $E$ is a place $P$ with $\ord{P}(t) \ge 0$; it lies over a unique monic
+irreducible $p \in k[t]$, namely the one with $\ord{P}(p) > 0$, and
+$\ord{P}(p)$ is the \emph{ramification index} of $P$. An element of $E$ is in
+$\OO$ if and only if its order is nonnegative at every finite place. Finally,
+Puiseux's theorem: if $P$ lies over $p$ with ramification index $r$, and
+$\alpha \in \kbar$ is a root of $p$, then there is an embedding of fields
+\begin{equation}\label{eq:puiseux}
+  \sigma : E \longrightarrow \kbar((\pi)), \qquad
+  \sigma(t) = \alpha + \pi^r, \qquad \sigma|_k = \mathrm{id},
+\end{equation}
+into the field of formal Laurent series in an indeterminate $\pi$, such that
+$\ord{P}(f)$ is the order in $\pi$ of $\sigma(f)$ for every $f \in E$.
+
+\begin{lemma}\label{lem:order-derivative}\standing{proved}{}
+Let $P$ be a finite place of $E$ over the monic irreducible $p \in k[t]$, with
+ramification index $r$, and let $f \in E \setminus \{0\}$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item If $p$ is normal and $\ord{P}(f) \ne 0$, then $\ord{P}(Df) = \ord{P}(f) - r$.
+\item If $p$ is normal and $\ord{P}(f) = 0$, then $\ord{P}(Df) \ge 1 - r$.
+\item If $p$ is special, then $\ord{P}(Df) \ge \ord{P}(f)$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Extend $D$ to $\kbar$, which can be done in exactly one way
+\VolI{Theorem~3.2.3}, and take $\sigma$, $\alpha$ and $\pi$ as
+in~\eqref{eq:puiseux}. Let $H \in k[t]$ be such that $Dt = H$, and put
+\[
+  \eta = \frac{H(\alpha + \pi^r) - D\alpha}{r\,\pi^{r-1}} \in \kbar((\pi)).
+\]
+Define $\Delta$ on $\kbar((\pi))$ by
+\[
+  \Delta \Bigl( \sum_{i \ge j} c_i \pi^i \Bigr)
+    = \sum_{i \ge j} (Dc_i)\, \pi^i
+      + \eta \sum_{i \ge j} i\, c_i\, \pi^{i-1} .
+\]
+It is the sum of the coefficientwise action of $D$ and of $\eta\, d/d\pi$, both
+of which are derivations of $\kbar((\pi))$, so it is a derivation. It agrees
+with $D$ on $k$, and
+\[
+  \Delta(\sigma(t)) = \Delta(\alpha + \pi^r) = D\alpha + r \pi^{r-1} \eta
+    = H(\alpha + \pi^r) = \sigma(Dt),
+\]
+so $\Delta \circ \sigma$ and $\sigma \circ D$ agree on $k[t]$, hence on $k(t)$.
+Both are derivations of $E$ into the field $\kbar((\pi))$, in which $E$ acts
+through $\sigma$, and both extend the same derivation of $k(t)$; since $E$ is
+separable algebraic over $k(t)$, they are equal. The argument is that of
+\VolI{Theorem~3.2.3}: applying either one to the minimal polynomial equation of
+an element of $E$ over $k(t)$ determines its value. Hence $\sigma(Df) = \Delta(\sigma(f))$ for all
+$f \in E$, and it remains to read off orders in $\pi$.
+
+The numerator of $\eta$ is the series $H(\alpha + \pi^r) - D\alpha$ in $\pi^r$,
+with constant term $H(\alpha) - D\alpha$. If $p$ is normal, then $H(\alpha) \ne
+D\alpha$ \VolI{Theorem~3.4.2}, so $\eta$ has order exactly $1 - r$. If $p$ is
+special, then $H(\alpha) = D\alpha$ \VolI{Theorem~3.4.3}, so the numerator has
+order at least $r$ and $\eta$ has order at least $1$.
+
+Let $\sigma(f) = \sum_{i \ge j} c_i \pi^i$ with $c_j \ne 0$, so that $j =
+\ord{P}(f)$. The first sum in $\Delta(\sigma(f))$ has order at least $j$. If
+$j \ne 0$, the second has leading term $j c_j \pi^{j-1} \eta$, of order $j - r$
+when $p$ is normal and at least $j$ when $p$ is special. If $j = 0$, the
+second sum starts at $i = 1$ or later, so it has order at least $0 + (1 - r)$
+when $p$ is normal and at least $1$ when $p$ is special. Since $r \ge 1$, the
+three statements follow.
+\end{proof}
+
+For $k(t) = K(x)$ and $D = d/dx$, part~(i) is Lemma~4.2 of Trager's
+thesis~\cite[\S4.2]{trager1984}, proved there the same way. Bronstein's
+report takes the statement from Lemma~1.7 of~\cite{bronstein1990}.
+
+The first consequence is the one the reduction turns on: a function whose
+poles are not made worse by differentiation did not have those poles.
+
+\begin{lemma}\label{lem:lower-pole}\standing{proved}{}
+Let $p \in k[t]$ be normal, $f \in E$ and $M \ge 1$ an integer. If $p^M f \in
+\OO$ and $p^M Df \in \OO$, then $p^{M-1} f \in \OO$.
+\end{lemma}
+
+\begin{proof}
+Suppose that $p^{M-1} f \notin \OO$. Then there is a finite place $P$ with
+$\ord{P}(p^{M-1} f) < 0$. Since $\ord{P}(p^M f) \ge 0$, we have $\ord{P}(p) >
+0$, so $P$ lies over an irreducible factor $p_1$ of $p$, which is normal, and
+because $p$ is squarefree $\ord{P}(p) = \ord{P}(p_1) = r$, the ramification
+index of $P$. Now $\ord{P}(f) < -(M-1) r \le 0$, so
+Lemma~\ref{lem:order-derivative}(i) gives $\ord{P}(Df) = \ord{P}(f) - r$, and
+\[
+  \ord{P}(p^M Df) = M r + \ord{P}(f) - r = \ord{P}(p^{M-1} f) < 0,
+\]
+contradicting $p^M Df \in \OO$.
+\end{proof}
+
+The second consequence controls the denominators of derivatives.
+
+\begin{lemma}\label{lem:normal-part}\standing{proved}{}
+Let $w \in \OO$ and $p \in k[t] \setminus \{0\}$. If $p\, Dw \in \OO$, then
+$p^* Dw \in \OO$.
+\end{lemma}
+
+\begin{proof}
+Let $P$ be a finite place, over the irreducible $q$ with ramification index
+$r$. If $q$ is special, then $\ord{P}(Dw) \ge \ord{P}(w) \ge 0$ by
+Lemma~\ref{lem:order-derivative}(iii). If $q$ is normal and divides $p$, then
+it divides $p^*$, and $\ord{P}(p^* Dw) \ge r + (-r) = 0$ by
+Lemma~\ref{lem:order-derivative}(i) and~(ii). If $q$ is normal and does not
+divide $p$, then $\ord{P}(Dw) = \ord{P}(p\, Dw) \ge 0$. In every case
+$\ord{P}(p^* Dw) \ge 0$.
+\end{proof}
+
+\section{The reduction step}\label{sec:hermite-step}
+
+Let $w$ be a basis of $E$ over $k(t)$ with $w_i \in \OO$, and let $f \in E$
+have numerator $\sum_i a_i w_i$ and denominator $d$ with respect to $w$. Let $d
+= d_s d_n$ be a splitting factorisation, and $d_n = d_1 d_2^2 \cdots d_m^m$ a
+squarefree factorisation of $d_n$ with $\deg(d_m) > 0$. Suppose that $m \ge
+2$, and let
+\[
+  s = d_s, \qquad v = d_m, \qquad u = d_n / v^m ,
+\]
+so that $d = s\,u\,v^m$, $v$ is normal, $s$ is special, and $s$, $u$ and $v$
+are pairwise coprime. We look for $b_1, \dots, b_n \in k[t]$ such that
+\begin{equation}\label{eq:hermite-goal}
+  f = D\Bigl( \frac{b_1 w_1 + \dots + b_n w_n}{v^{m-1}} \Bigr) + h
+\end{equation}
+where the denominator of $h$ has no normal irreducible factor of multiplicity
+$m$ or more. Let
+\begin{equation}\label{eq:Si}
+  S_i = s\,u\,v^m\, D\Bigl( \frac{w_i}{v^{m-1}} \Bigr)
+      = s\,u\,v\, Dw_i - (m-1)\, s\,u\, (Dv)\, w_i
+  \qquad (1 \le i \le n).
+\end{equation}
+Since $D(b_i w_i / v^{m-1}) = (Db_i) w_i / v^{m-1} + b_i S_i / (s u v^m)$, the
+terms of~\eqref{eq:hermite-goal} with denominator $s u v^m$ cancel if $\sum_i
+b_i S_i$ agrees with $\sum_i a_i w_i$ ``modulo $v$''. This leads to the linear
+system
+\begin{equation}\label{eq:hermite-system}
+  f_1 S_1 + \dots + f_n S_n = a_1 w_1 + \dots + a_n w_n
+\end{equation}
+for $f_1, \dots, f_n \in k(t)$. Expressing each $S_i$ in the basis $w$
+through~\eqref{eq:derivation-matrix} makes~\eqref{eq:hermite-system} an $n$ by
+$n$ system over $k(t)$.
+
+\begin{theorem}[the reduction step]\label{thm:hermite-step}\standing{proved}{}
+With the notation above, suppose that~\eqref{eq:hermite-system} has a solution
+$f_i = c_i / q$ with $q, c_1, \dots, c_n \in k[t]$ and $\gcd(q, v) = 1$. Let
+$\rho, z \in k[t]$ be such that $\rho q + z v = 1$, and let $q_i, b_i \in
+k[t]$ be the quotient and remainder of $\rho c_i$ by $v$:
+\[
+  \rho\, c_i = v\, q_i + b_i, \qquad b_i = 0 \text{ or } \deg(b_i) < \deg(v).
+\]
+Then~\eqref{eq:hermite-goal} holds with
+\begin{equation}\label{eq:hermite-h}
+  h = \frac{\sum_{i=1}^n \bigl( z a_i - s u \,( (m-1) (Dv)\, q_i + D b_i ) \bigr) w_i}
+           {s\,u\,v^{m-1}}
+      + \frac{\sum_{i=1}^n q_i\, Dw_i}{v^{m-2}} .
+\end{equation}
+If in addition $w$ is suitable, then the denominator of $h$ with respect to
+$w$ divides $s\,u\,v^{m-1}\,\tilde e$, where $\tilde e = e_w / \gcd(e_w, u v)$ is normal and
+coprime with $s\,u\,v$. In particular its special factors are those of $s$, and it has no normal
+irreducible factor of multiplicity $m$ or more.
+\end{theorem}
+
+\begin{proof}
+Let $B = \sum_i b_i w_i$. By~\eqref{eq:Si},
+\[
+  f - D\Bigl(\frac{B}{v^{m-1}}\Bigr)
+  = \frac{\sum_i a_i w_i - \sum_i b_i S_i}{s u v^m}
+    - \frac{\sum_i (Db_i) w_i}{v^{m-1}} .
+\]
+Since $b_i = \rho c_i - v q_i$ and $\sum_i c_i S_i = q \sum_i a_i w_i$,
+\[
+  \sum_i a_i w_i - \sum_i b_i S_i
+  = (1 - \rho q) \sum_i a_i w_i + v \sum_i q_i S_i
+  = v \Bigl( z \sum_i a_i w_i + \sum_i q_i S_i \Bigr),
+\]
+and by~\eqref{eq:Si} again $S_i / (s u v^{m-1}) = Dw_i / v^{m-2} - (m-1) (Dv)
+w_i / v^{m-1}$. Collecting terms gives~\eqref{eq:hermite-h}. Note that $Dv$
+and the $Db_i$ are in $k[t]$, because $t$ is a monomial.
+
+Suppose now that $w$ is suitable, and let $\gamma = \gcd(e_w, uv)$ and $\tilde e =
+e_w / \gamma$. Since $e_w$ is normal, it is squarefree and coprime with $s$,
+so $\tilde e$ is normal, coprime with $\gamma$ and with $s$; and any common factor of
+$\tilde e$ and $uv$ would divide $\gamma$, so $\tilde e$ is coprime with $uv$.
+By~\eqref{eq:derivation-matrix},
+\[
+  \frac{Dw_i}{v^{m-2}} = \frac{s u v\, Dw_i}{s u v^{m-1}}
+  = \frac{s\,(uv/\gamma) \sum_j m_{ij} w_j}{\tilde e\, s u v^{m-1}} ,
+\]
+and $uv/\gamma \in k[t]$. Hence every term of~\eqref{eq:hermite-h} is an
+element of $\OO_w$ divided by $\tilde e\,s\,u\,v^{m-1}$. Each irreducible factor of
+$u$ has multiplicity at most $m - 1$ in $u$, $v$ is squarefree, and $\tilde e$ is
+squarefree and coprime with $uv$, so no normal irreducible has multiplicity
+$m$ or more in $\tilde e\,u\,v^{m-1}$.
+\end{proof}
+
+The theorem says nothing about when~\eqref{eq:hermite-system} has such a
+solution, and it need not.
+
+\begin{example}\label{ex:fail}
+This is Example~1 of~\cite[\S2.1]{bronstein1998tutorial}. Let $K$ be a field
+of characteristic $0$, $D = d/dx$,
+\[
+  E = K(x)[y] / (y^4 + (x^2 + x)\, y - x^2),
+\]
+and $w = (1, y, y^2, y^3)$, which consists of integral elements since the
+defining polynomial is monic in $y$. Consider
+\[
+  f = \frac{y^3}{x^2} = \frac{w_4}{x^2} .
+\]
+Here $d = x^2$, so $s = u = 1$, $v = x$ and $m = 2$. Writing $F = 27 x^4 + 108
+x^3 + 418 x^2 + 108 x + 27$, we find $S_1 = x^2 D(1/x) = -1$ and
+\begin{align*}
+  F\,S_2 &= 24 (1 - x^2)\, y^3 + 32 x (1 - x)\, y^2 \\
+         &\qquad - (9 x^4 + 45 x^3 + 209 x^2 + 63 x + 18)\, y
+           - 18 x (x - 1)(x + 1)^2 , \\
+  F\,S_3 &= 64 x (1 - x)\, y^3 + 9 (x - 1)(x + 1)^3\, y^2 \\
+         &\qquad + 12 x (x - 1)(x + 1)^2\, y + 48 x^2 (1 - x^2) , \\
+  F\,S_4 &= x (27 x^3 + 81 x^2 + 209 x + 27)\, y^3 + 18 x (x - 1)(x + 1)^2\, y^2 \\
+         &\qquad + 24 x^2 (x^2 - 1)\, y + 96 x^3 (1 - x) .
+\end{align*}
+The $S_i$ are linearly independent over $K(x)$, and the unique solution
+of~\eqref{eq:hermite-system}, which here reads $\sum_i f_i S_i = y^3$, is
+\[
+  f_1 = f_2 = 0, \qquad f_3 = -2, \qquad f_4 = \frac{x + 1}{x} .
+\]
+Its denominator $q = x$ is not coprime with $v = x$, so
+Theorem~\ref{thm:hermite-step} does not apply. Note that $e_w = x F$: the
+$S_i$ above show that $x F\, Dw_i \in \OO_w$, and neither factor can be
+dropped. It is squarefree, so the basis is suitable, and the reduction fails
+all the same.
+\end{example}
+
+\section{What a failure produces}\label{sec:hermite-failure}
+
+The system~\eqref{eq:hermite-system} can fail to give a reduction step in two
+ways: the $S_i$ can be linearly dependent over $k(t)$, or they can be
+independent and the unique solution can have a denominator with a factor in
+common with $v$. A third defect is that the basis may not be suitable, so that
+the step, even when it succeeds, does not lower the multiplicity. In each
+case the defect exhibits an element of $\OO$ that is not in $\OO_w$. The
+three theorems of this section say which; they are Theorems~2 and~3 and
+Section~3 of~\cite{bronstein1998lazy}, and Theorems~1, 2 and~3
+of~\cite[\S2.1]{bronstein1998tutorial}, in that order.
+
+\begin{lemma}\label{lem:lazy-key}\standing{proved}{}
+Let $w$ be a basis of $E$ over $k(t)$ with $w_i \in \OO$, let $A, B \in k[t]$
+with $B$ normal, let $M \ge 1$ be an integer, and let
+\[
+  R_i = A\,B^{M+1}\, D\Bigl( \frac{w_i}{B^M} \Bigr) \qquad (1 \le i \le n).
+\]
+Let $c_1, \dots, c_n \in k[t]$ and let $G \in k[t]$ divide $B$. Then
+\[
+  \frac{1}{G} \sum_{i=1}^n c_i R_i \in \OO
+  \quad\Longrightarrow\quad
+  \frac{A\,(B/G)}{G} \sum_{i=1}^n c_i w_i \in \OO .
+\]
+\end{lemma}
+
+\begin{proof}
+Suppose first that $G = B$, and let $\psi = A \sum_i c_i w_i / B^M$. Then $B^M \psi
+= A \sum_i c_i w_i \in \OO$, and
+\[
+  B^M D\psi = B^M \sum_i A c_i\, D\Bigl(\frac{w_i}{B^M}\Bigr) + \sum_i D(A c_i)\, w_i
+         = \frac{1}{B} \sum_i c_i R_i + \sum_i D(A c_i)\, w_i \in \OO .
+\]
+By Lemma~\ref{lem:lower-pole}, $B^{M-1} \psi = (A/B) \sum_i c_i w_i \in \OO$.
+
+In general, let $H = B/G$. Differentiating $w_i / B^M = (w_i / G^M) H^{-M}$
+gives
+\[
+  R_i = A\,H\,G^{M+1} D\Bigl(\frac{w_i}{G^M}\Bigr) - M A\, G\, (DH)\, w_i .
+\]
+Let $r_i = (AH)\, G^{M+1} D(w_i / G^M)$. Then
+\[
+  \frac{1}{G} \sum_i c_i r_i
+  = \frac{1}{G} \sum_i c_i R_i + M A\, (DH) \sum_i c_i w_i \in \OO ,
+\]
+and $G$ is normal, being a factor of $B$. The first case, applied with $AH$
+in place of $A$ and $G$ in place of $B$, gives $(AH/G) \sum_i c_i w_i \in
+\OO$.
+\end{proof}
+
+In the next two theorems the notation is that of
+Section~\ref{sec:hermite-step}: $d = s\,u\,v^m$ with $m \ge 2$, and the $S_i$
+are given by~\eqref{eq:Si}. They are the $R_i$ of Lemma~\ref{lem:lazy-key}
+for $A = s u$, $B = v$ and $M = m - 1$.
+
+\begin{theorem}[dependent case]\label{thm:lazy-dependent}\standing{proved}{}
+Suppose that $S_1, \dots, S_n$ are linearly dependent over $k(t)$, and let
+$c_1, \dots, c_n \in k[t]$ be not all zero and such that $\sum_i c_i S_i = 0$.
+Then
+\[
+  w_0 = \frac{s\,u}{v} \sum_{i=1}^n c_i w_i \in \OO .
+\]
+If moreover $\gcd(c_1, \dots, c_n) = 1$, then $w_0 \notin \OO_w$.
+\end{theorem}
+
+\begin{proof}
+Since $v^{-1} \sum_i c_i S_i = 0 \in \OO$, Lemma~\ref{lem:lazy-key} with $G =
+v$ gives $w_0 \in \OO$. If $w_0 \in \OO_w$, then $v$ divides $s\,u\,c_i$ for
+each $i$, because $w$ is a basis; as $v$ is coprime with $s u$, it divides
+every $c_i$, which contradicts $\gcd(c_1, \dots, c_n) = 1$ since $\deg(v) >
+0$.
+\end{proof}
+
+\begin{theorem}[independent case]\label{thm:lazy-independent}\standing{proved}{}
+Suppose that $S_1, \dots, S_n$ are linearly independent over $k(t)$, and let
+$q, c_1, \dots, c_n \in k[t]$ be such that
+\[
+  \sum_{i=1}^n a_i w_i = \frac{1}{q} \sum_{i=1}^n c_i S_i .
+\]
+Let $\gamma = \gcd(v, q)$. Then
+\[
+  w_0 = \frac{s\,u\,(v/\gamma)}{\gamma} \sum_{i=1}^n c_i w_i \in \OO .
+\]
+If moreover $\gcd(q, c_1, \dots, c_n) = 1$ and $\deg(\gamma) > 0$, then $w_0
+\notin \OO_w$.
+\end{theorem}
+
+\begin{proof}
+We have $\gamma^{-1} \sum_i c_i S_i = (q/\gamma) \sum_i a_i w_i \in \OO$, so
+$w_0 \in \OO$ by Lemma~\ref{lem:lazy-key} with $G = \gamma$. If $w_0 \in
+\OO_w$, then $\gamma$ divides $s\,u\,(v/\gamma)\,c_i$ for each $i$. Now
+$\gamma$ is coprime with $s u$, and with $v/\gamma$ because $v$ is
+squarefree, so $\gamma$ divides every $c_i$; it also divides $q$, which
+contradicts $\gcd(q, c_1, \dots, c_n) = 1$ when $\deg(\gamma) > 0$.
+\end{proof}
+
+\begin{theorem}[unsuitable case]\label{thm:lazy-unsuitable}\standing{proved}{}
+Let $w$ be a basis of $E$ over $k(t)$ with $w_i \in \OO$, and suppose that
+the denominator $e_i$ of $Dw_i$ with respect to $w$ is not normal. Then
+\[
+  w_0 = e_i^*\, Dw_i \in \OO \setminus \OO_w .
+\]
+\end{theorem}
+
+\begin{proof}
+Since $e_i\, Dw_i \in \OO_w \subseteq \OO$, Lemma~\ref{lem:normal-part} gives
+$w_0 \in \OO$. The denominator of $w_0$ with respect to $w$ is $e_i / e_i^*$,
+because the numerator of $Dw_i$ is coprime with $e_i$; and $e_i / e_i^*$ is
+not a unit, because $e_i$ is not normal.
+\end{proof}
+
+\begin{example}\label{ex:fail-w0}
+In Example~\ref{ex:fail} the $S_i$ are independent, with $q = x$ and $c =
+(0, 0, -2x, x + 1)$. So $\gamma = \gcd(v, q) = x$, and
+Theorem~\ref{thm:lazy-independent} asserts that
+\[
+  w_0 = \frac{1}{x} \bigl( -2x\, y^2 + (x + 1)\, y^3 \bigr)
+      = -2 y^2 + (x + 1)\, \frac{y^3}{x}
+\]
+is integral over $K[x]$, although it is visibly not in $\OO_w$. Indeed $y^3/x$
+is a root of
+\[
+  Z^4 + 3 (x + 1)\, Z^3 + 3 (x + 1)^2\, Z^2 + (x + 1)^3\, Z - x^2 ,
+\]
+which is monic with coefficients in $K[x]$.
+\end{example}
+
+\section{Trager's theorem}\label{sec:hermite-trager}
+
+If $w$ is an integral basis, there is no element of $\OO$ outside $\OO_w$, so
+none of the three defects can occur.
+
+\begin{corollary}\label{cor:integral-suitable}\standing{proved}{}
+An integral basis is suitable. In particular, in the pure algebraic case, if
+$w$ is an integral basis then the least common denominator $e_w$ of $Dw_1,
+\dots, Dw_n$ is squarefree.
+\end{corollary}
+
+\begin{proof}
+If $e_w$ is not normal then some $e_i$ is not normal, and
+Theorem~\ref{thm:lazy-unsuitable} gives an element of $\OO \setminus \OO_w$.
+\end{proof}
+
+\begin{theorem}[Trager]\label{thm:trager}\standing{proved}{}
+Let $w$ be an integral basis, and let $f$, $d = s\,u\,v^m$ and $S_1, \dots,
+S_n$ be as in Section~\ref{sec:hermite-step}, with $m \ge 2$. Then $S_1,
+\dots, S_n$ are linearly independent over $k(t)$, and the unique solution
+of~\eqref{eq:hermite-system} in $k(t)$ has a denominator coprime with $v$.
+Consequently the reduction step of Theorem~\ref{thm:hermite-step} always
+applies, and yields an $h$ whose denominator with respect to $w$ has no normal
+irreducible factor of multiplicity $m$ or more.
+\end{theorem}
+
+\begin{proof}
+If the $S_i$ were dependent, then clearing denominators and removing the
+content of a nontrivial relation would give $c_i$ as in
+Theorem~\ref{thm:lazy-dependent} with $\gcd(c_1, \dots, c_n) = 1$, hence an
+element of $\OO \setminus \OO_w$. So they are independent, and the solution
+of~\eqref{eq:hermite-system} is unique; write it $f_i = c_i / q$ with $\gcd(q,
+c_1, \dots, c_n) = 1$. If $\gcd(v, q)$ had positive degree,
+Theorem~\ref{thm:lazy-independent} would again give an element of $\OO
+\setminus \OO_w$. The last statement is Theorem~\ref{thm:hermite-step},
+since $w$ is suitable by Corollary~\ref{cor:integral-suitable}.
+\end{proof}
+
+For $k(t) = K(x)$ this is the theorem of~\cite[\S4.2]{trager1984}. Trager
+states it as: the $S_i$ form a \emph{local integral basis} at $v$, that is,
+every integral element is a combination of the $S_i$ with coefficients in
+$K(x)$ whose denominators are coprime with $v$. His proof is direct, and is
+in substance the proof of Lemma~\ref{lem:lazy-key} run by contradiction; the
+squarefreeness of $e_w$ he deduces from his Lemma~4.1.
+
+\begin{remark}\label{rem:trager-form}
+Trager arranges the computation differently.
+Before reducing, he multiplies the numerator and the denominator of $f$ by
+whatever is needed to make $e_w$ divide $u v$; the pair is then no longer in
+lowest terms. With $u v = T e_w$, each $S_i$ lies in $\OO_w$, and instead of
+solving~\eqref{eq:hermite-system} over the field one solves the congruences
+\[
+  a_i \equiv -(m - 1)\, s\,u\,(Dv)\, b_i + s\,T \sum_{j=1}^n b_j\, m_{ji}
+  \pmod{v} \qquad (1 \le i \le n)
+\]
+for $b_1, \dots, b_n$ modulo $v$, which by Theorem~\ref{thm:trager} have a
+unique solution. The system decouples, into $n$ congruences in one unknown
+each, when $v$ is coprime with $e_w$, and when the derivation matrix is
+diagonal. The second case is that of a simple radical extension, treated in
+Chapter~\ref{ch:radical}. The Axiom implementation of the algebraic Hermite
+reduction, which is Bronstein's, makes the same normalisation of the
+denominator, and takes the derivation as an argument, so that it serves in
+the mixed case as well.
+\end{remark}
+
+\begin{algo}{HermiteReduce}{f, w}{Hermite reduction over an integral basis}
+\Spec{Given $f \in E$ and an integral basis $w$ of $E$ over $k(t)$, return
+$g, h \in E$ such that $f = Dg + h$ and the denominator of $h$ with respect
+to $w$ is $d_s d_n$ with $d_s$ special and $d_n$ normal.}
+\State $g \gets 0$, \ $h \gets f$
+\Loop
+  \State $(a_1, \dots, a_n, d) \gets$ numerator and denominator of $h$ with respect to $w$
+  \State $(d_s, d_n) \gets \alg{SplitFactor}(d, D)$ \Comment{Volume~I, \S3.5}
+  \State $(d_1, \dots, d_m) \gets \alg{SquareFree}(d_n)$ \Comment{$\deg(d_m) > 0$, or $m = 1$}
+  \If{$m \le 1$} \Return $(g, h)$ \EndIf
+  \State $s \gets d_s$, \ $v \gets d_m$, \ $u \gets d_n / v^m$
+  \For{$i \gets 1$ \textbf{to} $n$}
+    \State $S_i \gets s\,u\,v\, Dw_i - (m - 1)\, s\,u\,(Dv)\, w_i$
+  \EndFor
+  \State $(c_1, \dots, c_n, q) \gets$ the solution $f_i = c_i / q$ of $\sum_i f_i S_i = \sum_i a_i w_i$
+  \State $\rho \gets q^{-1} \bmod v$ \Comment{exists by Theorem~\ref{thm:trager}}
+  \For{$i \gets 1$ \textbf{to} $n$}
+    \State $b_i \gets \rho\, c_i \bmod v$
+  \EndFor
+  \State $B \gets (b_1 w_1 + \dots + b_n w_n) / v^{m-1}$
+  \State $g \gets g + B$, \ $h \gets h - DB$
+\EndLoop
+\end{algo}
+
+Each pass lowers by at least one the highest multiplicity $m$ of a normal
+irreducible factor of the denominator of $h$, by Theorem~\ref{thm:trager}, so the loop is
+executed fewer than $m$ times for the $m$ of the input. The coefficients of
+$g$ in the basis $w$ are sums of fractions $b_i / v^{m-1}$ with $\deg(b_i) <
+\deg(v)$; this is what Chapter~\ref{ch:algebraic-part} uses to deal with the
+poles of $g$ at infinity.
+
+\begin{example}\label{ex:running-hermite}
+Let $E = \Q(x)[y]/(y^2 - (1 - x^3))$ and $D = d/dx$. Since $1 - x^3$ is
+squarefree, $w = (1, y)$ is an integral basis (Theorem~\ref{thm:radical-basis}).
+From $2 y\, Dy = -3x^2$ we get $Dy = 3x^2 y / (2 (x^3 - 1))$, so $e_w = x^3 -
+1$, which is squarefree as Corollary~\ref{cor:integral-suitable} requires.
+
+The two integrands that we follow through Chapters~\ref{ch:hermite}
+to~\ref{ch:finite-order},
+\[
+  \frac{x}{\sqrt{1 - x^3}} = \frac{-x\, y}{x^3 - 1}
+  \qquad\text{and}\qquad
+  \frac{1}{x \sqrt{1 - x^3}} = \frac{-y}{x\,(x^3 - 1)},
+\]
+have squarefree denominators with respect to $w$, so \seealg{HermiteReduce}
+returns them unchanged, with $g = 0$. To see the algorithm work, consider
+instead
+\[
+  f = \frac{1}{(1 - x^3)^{3/2}} = \frac{y}{(x^3 - 1)^2} .
+\]
+\begin{enumerate}
+\item $a = (0, 1)$ and $d = (x^3 - 1)^2$, so $s = u = 1$, $v = x^3 - 1$ and $m
+  = 2$.
+\item $S_1 = -Dv = -3x^2$, and $S_2 = v\, Dy - (Dv)\, y = \frac32 x^2 y - 3
+  x^2 y = -\frac32 x^2 y$.
+\item The system $f_1 S_1 + f_2 S_2 = y$ has the solution $f_1 = 0$, $f_2 =
+  -2/(3x^2)$, so $(c_1, c_2) = (0, -2)$ and $q = 3x^2$, which is coprime
+  with $v$.
+\item Since $x \cdot x^2 = 1 + v$, we get $\rho = x/3$, and $b_2 = \rho\, c_2
+  \bmod v = -2x/3$.
+\item $B = -2 x y / (3 (x^3 - 1)) = 2x / (3y)$, and $h = f - DB = -y / (3
+  (x^3 - 1)) = 1/(3y)$.
+\end{enumerate}
+The denominator of $h$ is squarefree and the algorithm stops:
+\[
+  \int \frac{dx}{(1 - x^3)^{3/2}}
+  = \frac{2x}{3 \sqrt{1 - x^3}} + \frac13 \int \frac{dx}{\sqrt{1 - x^3}} .
+\]
+The integral that remains is not an elementary function
+(Example~\ref{ex:first-kind}).
+\end{example}
+
+\begin{example}\label{ex:mixed-hermite}
+The same algorithm in a mixed case. Let $k = \Q(x)$ with $D = d/dx$, let $t =
+\log x$, so that $Dt = 1/x$, and let $E = k(t)[y]/(y^2 - t)$. The polynomial
+$t$ is normal, since $\gcd(t, Dt) = 1$, and $w = (1, y)$ is an integral basis
+because $t$ is squarefree. We have $Dy = y/(2xt)$, so $e_w = t$. Take
+\[
+  f = \frac{1}{x \log(x)^{3/2}} = \frac{(1/x)\, y}{t^2} .
+\]
+Then $s = u = 1$, $v = t$, $m = 2$, and $S_2 = t\, Dy - (Dt)\, y = -y/(2x)$.
+The solution of~\eqref{eq:hermite-system} is $f_1 = 0$, $f_2 = -2$, so $q =
+1$, $b_2 = -2$ and $B = -2y/t$. Then $h = f - DB = 0$, and
+\[
+  \int \frac{dx}{x \log(x)^{3/2}} = -\frac{2}{\sqrt{\log x}} .
+\]
+Had we taken $t = e^x$ instead, with $y^2 = t$, the polynomial $t$ would be
+special, and an integrand such as $y / t^2$ would be returned unchanged: its
+denominator $d = d_s = t^2$ has no normal factor. Poles at special places are
+not the Hermite reduction's concern, here as in \VolI{\S5.3}.
+\end{example}
+
+\section{Extending a basis}\label{sec:hermite-extend}
+
+Suppose that $w$ is a basis of $E$ over $k(t)$ with $w_i \in \OO$, and that
+we have found $w_0 \in \OO \setminus \OO_w$. We want a basis of the module
+$\OO_w + k[t]\, w_0$. Let $\sum_j c_j w_j$ and $c_0$ be the numerator and
+denominator of $w_0$ with respect to $w$. Then $\OO_w + k[t]\, w_0$ is the set
+of combinations, with coefficients in $k[t]$, of the rows of the $(n + 1)$ by
+$n$ matrix
+\begin{equation}\label{eq:extend-matrix}
+  \begin{pmatrix}
+    c_0   &     &        &     \\
+        & c_0   &        &     \\
+        &     & \ddots &     \\
+        &     &        & c_0   \\
+    c_1 & c_2 & \cdots & c_n
+  \end{pmatrix},
+\end{equation}
+each row $(r_1, \dots, r_n)$ standing for the element $\sum_j r_j w_j / c_0$.
+Since $k[t]$ is a Euclidean domain, row operations over $k[t]$ bring this
+matrix to triangular form (\seealg{RowReduce},
+Section~\ref{sec:prelim-hermite}), and since it
+has rank $n$, the result has $n$ nonzero rows followed by a zero row.
+
+\begin{algo}{ExtendBasis}{w, w_0}{adjoin an integral element to a basis}
+\Spec{Given a basis $w$ of $E$ over $k(t)$ with $w_i \in \OO$, and $w_0 \in
+\OO$, return a basis $\bar w$ of $E$ over $k(t)$ with $\bar w_i \in \OO$ and
+$\OO_{\bar w} = \OO_w + k[t]\, w_0$.}
+\State $(c_1, \dots, c_n, c_0) \gets$ numerator and denominator of $w_0$ with respect to $w$
+\State $C \gets \alg{RowReduce}$ of the matrix~\eqref{eq:extend-matrix} \Comment{row $n + 1$ is zero}
+\For{$i \gets 1$ \textbf{to} $n$}
+  \State $\bar w_i \gets (C_{i1} w_1 + \dots + C_{in} w_n) / c_0$
+\EndFor
+\State \Return $(\bar w_1, \dots, \bar w_n)$
+\end{algo}
+
+\begin{lemma}\label{lem:extend}\standing{proved}{}
+\seealg{ExtendBasis} is correct. Moreover, any sequence of bases $w^{(0)},
+w^{(1)}, \dots$ of $E$ over $k(t)$ with $\OO_{w^{(0)}} \subsetneq
+\OO_{w^{(1)}} \subsetneq \dots \subseteq \OO$ is finite.
+\end{lemma}
+
+\begin{proof}
+Row operations over $k[t]$ do not change the module generated by the rows, so
+$\OO_{\bar w} = \OO_w + k[t]\, w_0$. This module contains $\OO_w$, so $\bar w$
+spans $E$ over $k(t)$, and having $n$ elements it is a basis. It is contained
+in $\OO$, since $\OO$ is a $k[t]$-module containing $w_0$ and the $w_i$. For
+the second statement, $\OO$ is a finitely generated module over the Noetherian
+ring $k[t]$ (Theorem~\ref{thm:closure-fg}), so every ascending chain of
+submodules of $\OO$ is stationary.
+\end{proof}
+
+The chain can be bounded. The discriminant of a basis in $\OO$ is a nonzero
+element of $k[t]$, and passing from $w$ to a basis $\bar w$ with $\OO_w
+\subsetneq \OO_{\bar w}$ divides it by the square of a polynomial of positive
+degree (Corollary~\ref{cor:disc-drops}). So there are at most
+$\frac12 \deg(\disc(w))$ extensions, starting from $w$.
+
+\begin{example}\label{ex:fail-extend}
+In Example~\ref{ex:fail-w0}, the numerator and denominator of $w_0$ with
+respect to $w = (1, y, y^2, y^3)$ are $(0, 0, -2x, x + 1)$ and $x$. Adding
+twice the third row of
+\[
+  \begin{pmatrix}
+    x &   &     &       \\
+      & x &     &       \\
+      &   & x   &       \\
+      &   &     & x     \\
+    0 & 0 & -2x & x + 1
+  \end{pmatrix}
+\]
+to the last leaves $(0, 0, 0, x + 1)$ there, and the fourth and last rows
+then combine to $(0, 0, 0, 1)$. The Hermite normal form has rows $(x, 0, 0,
+0)$, $(0, x, 0, 0)$, $(0, 0, x, 0)$ and $(0, 0, 0, 1)$, so
+\[
+  \bar w = \Bigl( 1,\; y,\; y^2,\; \frac{y^3}{x} \Bigr) .
+\]
+With respect to $\bar w$ the integrand $y^3/x^2 = \bar w_4 / x$ of
+Example~\ref{ex:fail} has the squarefree denominator $x$: the reduction is
+finished, with $g = 0$, by a change of basis alone. The discriminant has
+gone from $-x^4 F$ to $-x^2 F$. The reduction did not need to know
+whether $\bar w$ is an integral basis. It is one
+(Example~\ref{ex:ib-quartic}).
+\end{example}
+
+\section{The lazy Hermite reduction}\label{sec:hermite-lazy}
+
+We can now reduce with respect to any basis of integral elements, repairing it
+as we go.
+
+\begin{algo}{MakeSuitable}{w}{enlarge a basis until it is suitable}
+\Spec{Given a basis $w$ of $E$ over $k(t)$ with $w_i \in \OO$, return a
+suitable basis $\bar w$ with $\bar w_i \in \OO$ and $\OO_w \subseteq
+\OO_{\bar w}$.}
+\Loop
+  \State $(e_1, \dots, e_n) \gets$ the denominators of $Dw_1, \dots, Dw_n$ with respect to $w$
+  \If{$e_i$ is normal for each $i$} \Return $w$ \EndIf
+  \State $i \gets$ an index such that $e_i$ is not normal
+  \State $w \gets \alg{ExtendBasis}(w,\, e_i^*\, Dw_i)$ \Comment{Theorem~\ref{thm:lazy-unsuitable}}
+\EndLoop
+\end{algo}
+
+\begin{algo}{LazyHermiteReduce}{f, w}{lazy Hermite reduction}
+\Spec{Given $f \in E$ and a basis $w$ of $E$ over $k(t)$ with $w_i \in \OO$,
+return $g, h \in E$ and a suitable basis $\bar w$ with $\bar w_i \in \OO$ and
+$\OO_w \subseteq \OO_{\bar w}$, such that $f = Dg + h$ and the denominator of
+$h$ with respect to $\bar w$ is $d_s d_n$ with $d_s$ special and $d_n$
+normal.}
+\State $g \gets 0$, \ $h \gets f$, \ $w \gets \alg{MakeSuitable}(w)$
+\Loop
+  \State $(a_1, \dots, a_n, d) \gets$ numerator and denominator of $h$ with respect to $w$
+  \State $(d_s, d_n) \gets \alg{SplitFactor}(d, D)$
+  \State $(d_1, \dots, d_m) \gets \alg{SquareFree}(d_n)$ \Comment{$\deg(d_m) > 0$, or $m = 1$}
+  \If{$m \le 1$} \Return $(g, h, w)$ \EndIf
+  \State $s \gets d_s$, \ $v \gets d_m$, \ $u \gets d_n / v^m$
+  \For{$i \gets 1$ \textbf{to} $n$}
+    \State $S_i \gets s\,u\,v\, Dw_i - (m - 1)\, s\,u\,(Dv)\, w_i$
+  \EndFor
+  \If{$S_1, \dots, S_n$ are linearly dependent over $k(t)$}
+    \State $(c_1, \dots, c_n) \gets$ coprime polynomials, not all $0$, with $\sum_i c_i S_i = 0$
+    \State $w_0 \gets (s\,u / v) \sum_i c_i w_i$ \Comment{Theorem~\ref{thm:lazy-dependent}}
+    \State $w \gets \alg{MakeSuitable}(\alg{ExtendBasis}(w, w_0))$
+  \Else
+    \State $(c_1, \dots, c_n, q) \gets$ the solution $f_i = c_i / q$ of $\sum_i f_i S_i = \sum_i a_i w_i$ \Comment{$\gcd(q, c_1, \dots, c_n) = 1$}
+    \State $\gamma \gets \gcd(v, q)$
+    \If{$\deg(\gamma) > 0$}
+      \State $w_0 \gets (s\,u\,(v/\gamma) / \gamma) \sum_i c_i w_i$ \Comment{Theorem~\ref{thm:lazy-independent}}
+      \State $w \gets \alg{MakeSuitable}(\alg{ExtendBasis}(w, w_0))$
+    \Else
+      \State $\rho \gets q^{-1} \bmod v$
+      \For{$i \gets 1$ \textbf{to} $n$}
+        \State $b_i \gets \rho\, c_i \bmod v$
+      \EndFor
+      \State $B \gets (b_1 w_1 + \dots + b_n w_n) / v^{m-1}$ \Comment{Theorem~\ref{thm:hermite-step}}
+      \State $g \gets g + B$, \ $h \gets h - DB$
+    \EndIf
+  \EndIf
+\EndLoop
+\end{algo}
+
+\begin{theorem}\label{thm:lazy}\standing{proved}{}
+\seealg{MakeSuitable} and \seealg{LazyHermiteReduce} terminate and are
+correct.
+\end{theorem}
+
+\begin{proof}
+Each call of \seealg{ExtendBasis} in either algorithm is made with a $w_0 \in
+\OO \setminus \OO_w$, by Theorems~\ref{thm:lazy-dependent},
+\ref{thm:lazy-independent} and~\ref{thm:lazy-unsuitable}, and so replaces $w$
+by a basis of integral elements generating a strictly larger module. By
+Lemma~\ref{lem:extend} this happens finitely many times in all. That settles
+\seealg{MakeSuitable}, whose loop does nothing else and which returns only a
+basis all of whose $e_i$, hence whose $e_w$, are normal.
+
+In \seealg{LazyHermiteReduce}, $f = Dg + h$ holds throughout, and $w$ is
+suitable at the top of each pass. Let $m$ be the highest multiplicity of a normal irreducible factor
+of the denominator of $h$ with respect to the current basis. A
+pass that changes the basis does not increase $m$, by
+Lemma~\ref{lem:den-divides}. A pass that does not change the basis performs a
+reduction step, which by Theorem~\ref{thm:hermite-step} lowers $m$ by at
+least one. Since there are finitely many passes of the first kind, the
+algorithm reaches $m \le 1$ and returns; at that point $d_n$ is squarefree
+with all its squarefree factors normal, so it is normal.
+\end{proof}
+
+When $w$ is an integral basis, no branch that changes the basis is ever
+taken, and \seealg{LazyHermiteReduce} is \seealg{HermiteReduce}.
+
+Bronstein's report estimates the gain: each step of the lazy reduction is an
+elimination on a matrix with $n$ or $n + 1$ rows and $n$ columns, where
+computing an integral basis requires eliminations on matrices with $n^2$ rows,
+so that the lazy reduction ``is expected to cost'' $O(n^3)$ operations in
+$k(t)$ against $O(n^4)$~\cite[Conclusions]{bronstein1998lazy}. The estimate is
+his and is not an analysis. The basis returned need not be integral, and the
+later stages of the integration algorithm, as this book presents them, do
+require an integral basis (Chapters~\ref{ch:algebraic-part}
+and~\ref{ch:logarithmic-part}); for those the lazy reduction postpones the
+computation and does not remove it. What it does give on its own is the
+reduction to simple poles, in any tower of monomial and algebraic extensions,
+by rational operations.
+
+\begin{example}\label{ex:lazy-full}
+We run \seealg{LazyHermiteReduce} on
+\[
+  f = \frac{y^3}{x^3}, \qquad y^4 + (x^2 + x)\, y - x^2 = 0 ,
+\]
+from the basis $w = (1, y, y^2, y^3)$ of Example~\ref{ex:fail}, which is
+suitable, with $e_w = x F$.
+\begin{enumerate}
+\item With respect to $w$, $d = x^3$, so $s = u = 1$, $v = x$ and $m = 3$. The
+  $S_i = x^3 D(w_i / x^2)$ are independent, and the solution
+  of~\eqref{eq:hermite-system} has the denominator $q = 4x^3 + 49x^2 + 23x +
+  10$, which is coprime with $x$. Reducing $\rho\, c_i$ modulo $x$ gives $(b_1,
+  b_2, b_3, b_4) = (0, 0, 0, -1)$, so the step succeeds, with $B = -y^3/x^2$.
+  The new integrand $h = f - DB$ is
+  \begin{multline*}
+    x^2 F\, h = -96 x^2 (x - 1) - 24 x (1 - x^2)\, y \\
+              + 18 (x - 1)(x + 1)^2\, y^2
+              + (27 x^3 + 81 x^2 + 209 x + 27)\, y^3 .
+  \end{multline*}
+\item Now $d = x^2 F$, so $v = x$, $m = 2$ and $u = F$. The $S_i = F x^2 D(w_i
+  / x)$ are independent, and the solution of~\eqref{eq:hermite-system} is $f_1
+  = f_2 = f_3 = 0$, $f_4 = 1/x$. So $q = x$ and $\gamma = \gcd(v, q) = x$: the
+  step fails, and Theorem~\ref{thm:lazy-independent} gives $w_0 = F y^3 / x \in
+  \OO \setminus \OO_w$. Since $F$ is coprime with $x$,
+  \seealg{ExtendBasis} returns $\bar w = (1, y, y^2, y^3/x)$, the basis of
+  Example~\ref{ex:fail-extend}. Its derivation matrix has $e_{\bar w} = x F$,
+  which is squarefree, so $\bar w$ is suitable.
+\item With respect to $\bar w$, the numerator of $h$ has coordinates
+  \[
+    \bigl( -96 x^2 (x - 1),\ -24 x (1 - x^2),\ 18 (x - 1)(x + 1)^2,\
+           x\, (27 x^3 + 81 x^2 + 209 x + 27) \bigr)
+  \]
+  and its denominator is still $x^2 F$, so again $v = x$, $m = 2$, $u = F$.
+  With the new $S_i = F x^2 D(\bar w_i / x)$, the solution
+  of~\eqref{eq:hermite-system} is $(f_1, f_2, f_3, f_4) = (0, 0, 2, -x)$, so
+  $q = 1$ and $(b_1, b_2, b_3, b_4) = (0, 0, 2, 0)$. The step succeeds, with
+  $B = 2 \bar w_3 / x = 2 y^2 / x$.
+\item The integrand is now
+  \begin{multline*}
+    x F\, h = 96 x^2 (x - 1)\, \bar w_1 - 24 x (x^2 - 1)\, \bar w_2 \\
+              - 18 (x - 1)(x + 1)^2\, \bar w_3
+              + (27 x^3 + 209 x^2 + 81 x + 27)\, \bar w_4 ,
+  \end{multline*}
+  so its denominator $x F$ is squarefree, and the algorithm returns.
+\end{enumerate}
+So
+\[
+  \int \frac{y^3}{x^3}\, dx = \frac{2 x y^2 - y^3}{x^2} + \int h\, dx .
+\]
+The first step succeeded over a basis that the second showed not to be
+integral: a successful step proves nothing about the basis. The factor $F$
+entered the denominator at the first step, where $u v = x$ and $e_w = x F$:
+it is the $\tilde e$ of Theorem~\ref{thm:hermite-step}, and it comes from the
+basis, not from $f$.
+\end{example}
+
+\section{The polynomial reduction\later}\label{sec:hermite-polynomial}
+
+The Hermite reduction lowers finite poles and stops when they are simple. It
+does not decide whether what is left is a derivative. In this section we are
+in the pure algebraic case, $E$ finite over $K(x)$ with $D = d/dx$, and we
+say that $h \in E$ is \emph{integrable in $E$} if $h = DH$ for some $H \in
+E$. The first step is easy.
+
+\begin{proposition}\label{prop:integrable-remainder}\standing{proved}{}
+Let $w$ be an integral basis of $E$ over $K(x)$, and let $h \in E$ have a
+squarefree denominator with respect to $w$. If $h = DH$ with $H \in E$, then
+$H \in \OO$, and the denominator of $h$ with respect to $w$ divides $e_w$.
+\end{proposition}
+
+\begin{proof}
+Let $P$ be a finite place over the irreducible $p$, with ramification index
+$r$. The denominator of $h$ is squarefree and the $w_i$ are integral, so
+$\ord{P}(h) \ge -r$. If $\ord{P}(H) < 0$, then
+Lemma~\ref{lem:order-derivative}(i) gives $\ord{P}(h) = \ord{P}(H) - r < -r$.
+Hence $H \in \OO = \OO_w$. Write $H = \sum_i b_i w_i$ with $b_i \in K[x]$; then
+$h = \sum_i (Db_i) w_i + \sum_i b_i\, Dw_i$ has a denominator dividing $e_w$.
+\end{proof}
+
+So after \seealg{HermiteReduce}, an $h$ whose denominator has a factor
+outside $e_w$ is not integrable in $E$, and otherwise the question is whether
+$h$ lies in the image of $\OO$ under $D$. That is a question of linear
+algebra over $K$, but in a space of infinite dimension. Trager answers it
+through the behaviour at infinity, which is the subject of
+Chapter~\ref{ch:algebraic-part}. Chen, Kauers and Koutschan~\cite{chen2016}
+answer it by a second reduction, which confines the remainder to a space of
+finite dimension. We state their result; it needs the notion of a basis
+\emph{normal at infinity} (Definition~\ref{def:normal-infinity}).
+
+Let $\mu = (\mu_1, \dots, \mu_n)$ be a basis of $E$ over $K(x)$, and let $a
+\in K[x]$ and the matrix $(\beta_{ij})$ over $K[x]$ be such that $a\, D\mu_i =
+\sum_j \beta_{ij} \mu_j$. For a row vector $p = (p_1, \dots, p_n) \in K[x]^n$,
+\[
+  D\Bigl( \sum_i p_i \mu_i \Bigr) = \frac{1}{a} \sum_j \phi_\mu(p)_j\, \mu_j,
+  \qquad \phi_\mu(p) = a\, Dp + p\, (\beta_{ij}) .
+\]
+The map $\phi_\mu : K[x]^n \to K[x]^n$ is $K$-linear. Let $N_\mu$ be the
+$K$-subspace of $K[x]^n$ spanned by those monomials $x^j \epsilon_i$,
+$\epsilon_i$ the $i$-th unit vector, that are not the leading term of any
+element of the image of $\phi_\mu$. Then $K[x]^n = \operatorname{im}(\phi_\mu)
+\oplus N_\mu$, and writing a vector as the sum of its two components is the
+\emph{polynomial reduction} with respect\index{polynomial reduction} to
+$\mu$~\cite[Definitions~9 and~10]{chen2016}.
+
+\begin{theorem}[Chen, Kauers, Koutschan]\label{thm:additive}\standing{cited}{\cite[Lemma~12, Theorem~13]{chen2016}}
+Let $w$ be an integral basis of $E$ over $K(x)$ that is normal at infinity.
+Then, with the integers $\tau_i \ge 0$ of~\eqref{eq:tau}, the basis $\mu =
+(x^{-\tau_1} w_1, \dots, x^{-\tau_n} w_n)$ is integral at infinity, and there
+is an integer $\lambda \ge 0$ such that $a = x^\lambda e_w$ serves as the $a$ above
+for $\mu$; and the space $N_\mu$ has finite dimension over $K$. Every $f \in
+E$ can be written
+\[
+  f = Dg + \frac{1}{d} \sum_{i=1}^n p_i w_i
+         + \frac{1}{x^\lambda e_w} \sum_{i=1}^n q_i \mu_i
+\]
+with $g \in E$, $d \in K[x]$ squarefree and coprime with $e_w$, $p_i \in K[x]$
+with $\deg(p_i) < \deg(d)$, and $(q_1, \dots, q_n) \in N_\mu$. Moreover $f$ is
+integrable in $E$ if and only if all the $p_i$ and all the $q_i$ are zero.
+\end{theorem}
+
+The decomposition is computed by \seealg{HermiteReduce}, a partial fraction
+split of the remainder into the part with denominator $d$ and the part with
+denominator $e_w$, and the polynomial reduction of the second part. It is
+called an \emph{additive decomposition} of $f$\index{additive decomposition}. Its authors' purpose was
+creative telescoping, where the finite dimension of the space of remainders
+bounds the order of a telescoper; for integration, it gives a test for
+integrability in $E$ that does not change the variable to move a point to
+infinity.
+
+Chen, Du and Kauers~\cite{chen2021} carry this over to the lazy reduction.
+Proposition~\ref{prop:integrable-remainder} has an analogue for suitable
+bases, and the polynomial reduction is performed with respect to a basis
+that is \emph{suitable at infinity}, a condition on the degrees of its
+derivation matrix that plays the part of normality at infinity. The outcome
+is an additive decomposition with respect to a suitable basis, without an
+integral basis being computed~\cite[Theorem~16]{chen2021}. We have not
+reproduced the details.
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Let $E = K(x)[y]/(y^2 - x)$ and $w = (1, y)$. Compute $e_w$, and reduce $f =
+y/x^2$ with \seealg{HermiteReduce}. What does the algorithm do with $f =
+y/x$, and what is its integral?
+\end{exercise}
+
+\begin{exercise}
+Let $E = K(x)[y]/(y^2 - x^3)$ and $w = (1, y)$. Show that $w$ is suitable and
+is not an integral basis, and that nevertheless the reduction step of
+Theorem~\ref{thm:hermite-step} succeeds with respect to $w$ for every
+integrand. So \seealg{LazyHermiteReduce} need never discover that a basis is
+not integral.
+\end{exercise}
+
+\begin{exercise}
+Show that in Theorem~\ref{thm:hermite-step} the $b_i$ do not depend on the
+choice of $\rho$. Show that when $w$ is an integral basis they are the only
+polynomials of degree less than $\deg(v)$ for which~\eqref{eq:hermite-goal}
+holds with an $h$ whose denominator divides $s\,u\,v^{m-1}\,\tilde e$.
+\end{exercise}
+
+\begin{exercise}
+Let $P$ be a finite place over a normal irreducible $p$, with ramification
+index $r$. Use Lemma~\ref{lem:order-derivative} to show that for $f \in E
+\setminus \{0\}$ the order of $Df/f$ at $P$ is at least $-r$, with equality if
+and only if $\ord{P}(f) \ne 0$. This is the analogue of
+\VolI{Corollary~4.4.2}.
+\end{exercise}
+
+\begin{exercise}
+Verify the claim of Example~\ref{ex:lazy-full} that $e_{\bar w} = x F$, and
+find the solution of~\eqref{eq:hermite-system} for $f = y^2/x^2$ with respect
+to $\bar w$. Deduce that
+\[
+  \int \frac{y^2}{x^2}\, dx = -\frac{3 y^2}{x} + \int h\, dx
+\]
+for an $h$ whose denominator with respect to $\bar w$ is squarefree.
+\end{exercise}

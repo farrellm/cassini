@@ -1,0 +1,160 @@
+\chapter{Implementations and Open Problems}\label{ch:implementations}
+
+This chapter looks at the subject from the other side: what has been
+programmed, how far the programs go, and what remains to be done. It ends
+with a list of what this book itself leaves undone, which is not the same
+list.
+
+\section{Bronstein's integrator}\label{sec:impl-axiom}
+
+The algorithm of Part~II was implemented by Bronstein in Scratchpad, later
+Axiom, in 1987 and 1988; his paper of 1990 mentions the implementation as
+recently completed~\cite[Conclusions]{bronstein1990}. The integral-basis
+packages now in the Axiom sources are later and by other hands
+(Appendix~\ref{app:code}).
+Appendix~\ref{app:code} lists its constructors against the chapters of this
+book. Read as a design, it has three layers.
+
+The lowest is the function field: a general one and a radical one, the
+second with the closed-form integral basis of Chapter~\ref{ch:radical}, and
+with them integral bases, over the rationals and over finite fields, and
+divisors, in a general and a hyperelliptic form. The middle layer is the
+integration of an algebraic function on a curve: the Hermite reduction, the
+double resultant for the residues, a search for points of finite order that
+reduces to finite fields, and a separate route for genus $0$. The top layer
+is the integration of algebraic integrands over transcendental functions,
+the mixed case of Part~III.
+
+The split of the bottom layer into a general and a special case, made twice,
+is the lesson for an implementer. Simple radical extensions, and among them
+square roots, are where every step is explicit, and where most integrands
+met in practice live: Trager remarks that restricting to unnested radicals
+excludes fewer than one in a hundred of the problems in a table of
+integrals~\cite[Appendix~A]{trager1984}. The general case is needed for
+completeness.
+Bronstein's conclusions add what can be reused unchanged from the algebraic
+case when the mixed case is built on it: ``computing normal integral bases,
+the genus of a curve, and the order of a divisor, making an extension
+regular''.
+
+\section{The state of implementations}\label{sec:impl-state}
+
+FriCAS is the maintained descendant of that code. Its own account of what
+the integrator does, on a page of the project's wiki last edited in June
+2022~\cite{fricas2022}, is exact and unsparing:
+\begin{itemize}
+\item ``The core integrator should be complete for purely transcendental
+  functions.''
+\item When the top-level function is algebraic, ``FriCAS can apply Hermite
+  reduction. It can find the logarithmic part only in the purely algebraic
+  case. Otherwise, if Hermite reduction does not already yield the integral,
+  FriCAS cannot solve it.''
+\item Even in the purely algebraic case, ``there are restrictions on the
+  Trager resultant: in general FriCAS can only handle resultants having a
+  single nonlinear factor''.
+\item ``The solver for the Risch differential equation can only handle the
+  purely algebraic case. The logarithmic derivative problem is unimplemented
+  in the algebraic case.''
+\end{itemize}
+Its summary is that ``a large part of the Risch algorithm dealing with
+algebraic extensions remains unimplemented''. So, by this account, Part~II of this book is
+implemented there with a restriction on the residue polynomial, and of
+Part~III the Hermite reduction and little else. That was the position more
+than thirty years after the paper that Part~III follows.
+
+Of other systems we can say only what the sources we hold say.
+Davenport's implementation of his own algorithm, in REDUCE, ``deals only
+with square roots''~\cite{davenport1981}. Van Hoeij's paper on integral
+bases says that Trager's method was the one used by Maple and by
+Axiom~\cite{vanhoeij1994}, and his paper on parametrisation announces his
+package of algorithms for algebraic curves for a coming version of
+Maple~\cite{vanhoeij1997}. Kauers, in 2008, compares a heuristic of his own
+with the integrators of Axiom, Maple and Mathematica, and gives this
+judgment of the field: ``all of today's computer algebra systems only
+contain a partial implementation of the complete
+algorithm''~\cite{kauers2008}. An unpublished note by
+Schultz~\cite{schultz2016} revisits Trager's algorithm with a partial
+implementation in Mathematica, and says in its abstract that the algorithm
+as published ``is incomplete in the sense that assumptions are made about the
+function to be integrated in relation to the defining equation'', which the
+note undertakes to remove; we have read only that abstract. We have no
+source for the present state of the commercial systems and say nothing about
+it.
+
+The same gap explains the heuristics. The Gr\"obner-basis method of
+Section~\ref{sec:log-groebner}, the substitution methods of
+Section~\ref{sec:radical-later} and the parallel integration of
+Section~\ref{sec:elem-others} are methods that find many integrals without deciding the question, and the
+first of them is offered by its author expressly for a situation in which
+the complete algorithm is rarely implemented in full.
+
+\section{Open problems}\label{sec:impl-open}
+
+These are the problems that the sources state as open, or that we could find
+no source for. They are stated where they arise; we collect them.
+
+\begin{enumerate}
+\item \emph{A rational algorithm for the mixed case.} Bronstein's algorithm
+  for an algebraic extension of $k(t)$ uses Puiseux expansions at the special
+  places. He names three things a rational algorithm would need: a formula
+  for the residues at the special places, a way to decide whether a simple
+  element is a derivative without expansions at those places, and a rational
+  algorithm for the Risch equation (Section~\ref{sec:elem-status}).
+\item \emph{The Risch equation in the mixed case.} The rational algorithm
+  of 1991 finds the denominator of a solution and not the solution
+  (Section~\ref{sec:rde-open}).
+\item \emph{Cancellation over a nonlinear monomial.} Volume~I states that no
+  algorithm is known (Section~\ref{sec:rde-open}).
+\item \emph{The parametric logarithmic derivative problem and limited
+  integration over a curve.} Decidable by Risch's theorem; we found no
+  algorithm stated as such (Section~\ref{sec:param-known}).
+\item \emph{Integrals depending on a parameter.} For which values of a
+  parameter an integral becomes elementary is a question of arithmetic
+  geometry, settled in a modified form by Masser and Zannier and not by an
+  algorithm (Section~\ref{sec:fo-parameters}).
+\item \emph{The whole algorithm rationally.} The lazy Hermite reduction
+  performs the first step without an integral basis. Bronstein asks, at the
+  end of his report, ``whether the complete algebraic integration algorithm
+  can be performed rationally without computing an integral basis''; he
+  observes that the residues can be had from a norm in place of the inner
+  resultant, and that the remaining difficulty is to represent divisors and
+  test them for principality without desingularising the
+  curve~\cite[Conclusions]{bronstein1998lazy}.
+\end{enumerate}
+
+\section{What this book has not done}\label{sec:impl-gaps}
+
+A reconstruction should say where it is thin. Appendix~\ref{app:standing}
+gives the standing of each result; the larger omissions are these.
+
+\begin{itemize}
+\item \emph{Cited, not proved.} The theory of Chapter~\ref{ch:function-fields},
+  from Stichtenoth. Trager's criterion for an integral basis and his genus
+  formula (Chapter~\ref{ch:integral-bases}). The good-reduction theorems of
+  Chapter~\ref{ch:finite-order}, on which the decision procedure rests.
+  Chebyshev's theorem. The additive decomposition of Chen, Kauers and
+  Koutschan.
+\item \emph{Described, not given.} The change of model that removes
+  residues from branch places (Section~\ref{sec:log-ideals}). The
+  correctness of \seealg{AbsoluteFactor}. Trager's reduction for one radical
+  (Section~\ref{sec:radical-trager1979}). Van Hoeij's parametrisation
+  without a rational point. Hess's algorithm. Bronstein's rational
+  algorithm for the Risch equation. The reduction of divisors modulo a prime
+  in detail.
+\item \emph{Part~III.} Outside the simple radical case, the integration of
+  Chapter~\ref{ch:elementary} and the solution of the Risch equation in
+  Chapter~\ref{ch:risch-equation} are summaries of Bronstein's paper and
+  Risch's report. A reader who needs them must go to those sources, and for
+  the paper to the page images: its text layer does not preserve the
+  formulas.
+\item \emph{Sources read in part.} The post-2005 work cited in
+  Sections~\ref{sec:radical-later} and~\ref{sec:elem-others} was read in
+  abstract only, as were several of the papers cited for alternatives. The
+  text says so at each place.
+\item \emph{Complexity.} There is no analysis of cost anywhere in the book.
+  Bronstein's remark stands: the degree of the extension of the constants
+  needed to write the answer can be the factorial of the degree of the
+  curve, so the worst case is at least exponential, and ``[w]orst-case
+  measurements are not very meaningful, however, since non-integrability can
+  often be proved very early''~\cite[Conclusions]{bronstein1990}.
+\end{itemize}

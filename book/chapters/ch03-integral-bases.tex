@@ -1,0 +1,323 @@
+\chapter{Integral Bases}\label{ch:integral-bases}
+
+An \emph{integral basis} of $E$ over $k(t)$\index{integral basis} is a basis $w = (w_1, \dots,
+w_n)$ such that $\OO_w = \OO$: the integral elements of $E$ are exactly the
+combinations of the $w_i$ with polynomial coefficients. One exists by
+Theorem~\ref{thm:closure-fg}. With respect to an integral basis the
+denominator of an element (Definition~\ref{def:numden}) records its finite
+poles faithfully, and that is what the Hermite reduction needs: over a basis
+of integral elements that is not an integral basis, a function can have a
+denominator without having a pole, and the reduction step can fail
+(Example~\ref{ex:fail}).
+
+This chapter gives Trager's algorithm for computing an integral
+basis~\cite[Chapter~2]{trager1984}, the companion notion at infinity and the
+procedure that makes an integral basis normal there, and the formula that
+reads the genus off the result. Notation is that of
+Chapter~\ref{ch:preliminaries}; from Section~\ref{sec:ib-infinity} on, $k = K$
+is a field of constants and $t = x$.
+
+\section{Trager's criterion}\label{sec:ib-criterion}
+
+Let $V \subseteq \OO$ be a subring containing $k[t]$ that is a free
+$k[t]$-module of rank $n$; for instance $V = k[t][y]$ for an integral
+primitive element $y$, or $V = \OO_w$ for a basis $w$ such that $\OO_w$ is
+closed under multiplication. For a nonzero ideal $\mathfrak m$ of $V$, the
+\emph{idealizer} of $\mathfrak m$\index{idealizer} is
+\[
+  \operatorname{Id}(\mathfrak m) = \{ u \in E : u\, \mathfrak m \subseteq \mathfrak m \} .
+\]
+It is a ring containing $V$, and it is contained in $\OO$: if $m_1, \dots,
+m_n$ generate $\mathfrak m$ over $k[t]$ and $u m_i = \sum_j r_{ij} m_j$ with
+$r_{ij} \in k[t]$, then $\det(r_{ij} - u\, \delta_{ij})$ annihilates
+$\mathfrak m$, hence is zero, and it is a monic polynomial equation for $u$
+over $k[t]$~\cite[Lemma~2.2]{trager1984}. So an idealizer larger than $V$ is a
+larger ring of integral elements. The point of the criterion is the
+converse.
+
+For $q \in k[t]$ squarefree, the \emph{$q$-radical} of $V$ is
+\[
+  J_q(V) = \{ u \in V : u^N \in q V \text{ for some } N \ge 1 \} ,
+\]
+the intersection of the prime ideals of $V$ that contain $q$.
+
+\begin{theorem}[Trager]\label{thm:trager-criterion}\standing{cited}{\cite[Theorem~2.1, Corollary~2.8, Theorem~2.10]{trager1984}}
+Let $V$ be as above, with $k[t]$-basis $v$, and let $q$ be the product of the
+monic irreducible $p \in k[t]$ such that $p^2$ divides $\disc(v)$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item $V = \OO$ if and only if $\operatorname{Id}(J_q(V)) = V$.
+\item $J_q(V) = \{ u \in V : q \text{ divides } \operatorname{Tr}(u w) \text{
+  for all } w \in V \}$.
+\end{enumerate}
+\end{theorem}
+
+Part~(i) comes from the theory of Dedekind domains: $V$ is integrally closed
+if and only if all its nonzero prime ideals are invertible; a prime that
+does not contain the discriminant is invertible; and for a prime $\mathfrak
+m$ that is not invertible, $\mathfrak m^{-1} = \operatorname{Id}(\mathfrak m)
+\supsetneq V$. Primes over an irreducible $p$ with $p^2 \nmid \disc(v)$ need
+not be examined, by Corollary~\ref{cor:disc-drops}. Part~(ii) says that the
+radical equals the \emph{trace radical}; it holds because the characteristic
+of $k[t]/(p)$ is $0$, by Newton's identities relating the traces of the
+powers of $u$ to the coefficients of its minimal polynomial. Trager took the
+method from the algorithm of Zassenhaus~\cite{zassenhaus1972} and
+Ford~\cite{ford1978} for the ring of integers of a number field, where small
+primes need a different treatment of the radical.
+
+Both parts are effective.
+
+\emph{The radical.} Let $T = (\operatorname{Tr}(v_i v_j))$ be the trace
+matrix of $v$. By~(ii), $u = \sum_i u_i v_i$ with $u_i \in k[t]$ lies in
+$J_q(V)$ if and only if $T u \in q\, k[t]^n$. So $J_q(V)$ is the set of $u \in
+k(t)^n$ such that $\binom{T}{q I_n} u \in q\, k[t]^{2n}$, and a basis of it is
+obtained by row reduction as described at the end of
+Section~\ref{sec:prelim-hermite}.
+
+\emph{The idealizer.} Let $m = (m_1, \dots, m_n)$ be a $k[t]$-basis of
+$\mathfrak m$, and for each $i$ let $M_i$ be the matrix over $k(t)$ of the
+map $u \mapsto u\, m_i$, taking coordinates with respect to $v$ to
+coordinates with respect to $m$. Then $u \in \operatorname{Id}(\mathfrak m)$
+if and only if $M_i u \in k[t]^n$ for every $i$. Stacking the $M_i$ gives an
+$n^2 \times n$ matrix; row reduction leaves a square matrix $\tilde M$, and
+the columns of $\tilde M^{-1}$ are the coordinates with respect to $v$ of a
+basis of $\operatorname{Id}(\mathfrak m)$~\cite[\S2.2]{trager1984}. With
+coordinates of the output taken with respect to $v$ instead of $m$, the same
+procedure computes the inverse ideal $\mathfrak m^{-1} = \{ u : u\, \mathfrak
+m \subseteq V \}$, which Chapter~\ref{ch:divisors} uses.
+
+\begin{algo}{IntegralBasis}{F}{Trager's algorithm}
+\Spec{Given $F \in k[t][y]$, monic in $y$ and irreducible of degree $n$,
+return an integral basis of $E = k(t)[y]/(F)$ over $k(t)$.}
+\State $v \gets (1, y, \dots, y^{n-1})$, \ $d \gets$ the discriminant of $F$
+\Loop
+  \State $q \gets$ the product of the monic irreducible $p$ with $p^2 \mid d$
+  \If{$q = 1$} \Return $v$ \EndIf
+  \State $m \gets$ a basis of the $q$-radical of $\OO_v$, from the trace matrix of $v$
+  \State $\bar v \gets$ a basis of the idealizer of that radical
+  \State $A \gets$ the matrix with $v_i = \sum_j A_{ij} \bar v_j$
+  \If{$\det(A) \in k$} \Return $v$ \EndIf
+  \State $d \gets d / \det(A)^2$, \ $v \gets \bar v$
+\EndLoop
+\end{algo}
+
+The loop is executed at most $\frac12 \deg(d) + 1$ times, by
+Corollary~\ref{cor:disc-drops}, and the result is an integral basis by
+Theorem~\ref{thm:trager-criterion}. The product $q$ is found from a
+squarefree factorisation of $d$, without factoring into irreducibles. Trager
+notes one more economy: after the first pass, only the factors of $q$ at
+which the last idealizer was larger need be kept.
+
+\begin{example}\label{ex:ib-cusp}
+Let $F = y^2 - x^3$. Then $v = (1, y)$, the trace matrix is
+$\bigl(\begin{smallmatrix} 2 & 0 \\ 0 & 2x^3 \end{smallmatrix}\bigr)$ and $d
+= 4x^3$, so $q = x$. An element $u_1 + u_2\, y$ is in the $x$-radical when $x$
+divides $2u_1$ and $2x^3 u_2$, that is, when $x$ divides $u_1$: the radical
+has basis $m = (x, y)$. For $u = a + b\,y$ with $a, b \in k(x)$,
+\[
+  u \cdot x = (a)\, x + (b x)\, y, \qquad
+  u \cdot y = (b x^2)\, x + (a)\, y ,
+\]
+so $u$ is in the idealizer when $a$, $bx$ and $b x^2$ are polynomials: the
+idealizer has basis $\bar v = (1, y/x)$. Then $\det(A) = x$, and $d$ becomes
+$4x$. On the second pass $q = 1$, and the algorithm returns $(1, y/x)$.
+\end{example}
+
+\begin{example}\label{ex:ib-quartic}
+Let $F = y^4 + (x^2 + x)\,y - x^2$, the curve of Example~\ref{ex:fail}. The
+trace matrix of $v = (1, y, y^2, y^3)$ is
+\[
+  T = \begin{pmatrix}
+    4 & 0 & 0 & -3x(x+1) \\
+    0 & 0 & -3x(x+1) & 4x^2 \\
+    0 & -3x(x+1) & 4x^2 & 0 \\
+    -3x(x+1) & 4x^2 & 0 & 3x^2(x+1)^2
+  \end{pmatrix},
+\]
+with determinant $d = -x^4 (27x^4 + 108x^3 + 418x^2 + 108x + 27)$, so $q = x$.
+Modulo $x$ only the entry $4$ survives: the $x$-radical consists of the $u$
+with $x \mid u_1$, and has basis $m = (x, y, y^2, y^3)$. Its idealizer
+contains $y^3/x$, because
+\[
+  \frac{y^3}{x} \cdot y = x - (x + 1)\, y, \qquad
+  \frac{y^3}{x} \cdot y^2 = x\,y - (x + 1)\, y^2, \qquad
+  \frac{y^3}{x} \cdot y^3 = x\,y^2 - (x + 1)\, y^3
+\]
+all lie in the radical, and solving the linear conditions shows that it is
+$\OO_{\bar v}$ with $\bar v = (1, y, y^2, y^3/x)$. So $\det(A) = x$ and $d$
+becomes $-x^2 (27x^4 + \dots + 27)$.
+
+On the second pass $q = x$ again. The trace matrix of $\bar v$ modulo $x$ is
+\[
+  \begin{pmatrix} 4 & 0 & 0 & -3 \\ 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 \\ -3 & 0 & 0 & 3 \end{pmatrix},
+\]
+so the radical is $\{ u : x \mid u_1,\ x \mid u_4 \}$, with basis $(x, y, y^2,
+y^3)$ once more, now inside $\OO_{\bar v}$. This time the linear conditions
+for $(c_1 + c_2\, y + c_3\, y^2 + c_4\, y^3/x)/x$ to lie in the idealizer
+have only the zero solution modulo $x$: the idealizer is $\OO_{\bar v}$
+itself, $\det(A) = 1$, and the algorithm returns
+\[
+  \Bigl( 1,\; y,\; y^2,\; \frac{y^3}{x} \Bigr) .
+\]
+This is the basis that the lazy Hermite reduction arrived at in
+Example~\ref{ex:fail-extend}, and it is now shown to be an integral basis.
+\end{example}
+
+\section{Other algorithms}\label{sec:ib-others}
+
+Van Hoeij~\cite{vanhoeij1994} computes an integral basis from the Puiseux
+expansions at the points over the multiple factors of the discriminant, ``a
+variant on the Coates' algorithm'' in his words; his paper says that Trager's
+method was the one then used by Maple and Axiom. The general problem, the
+integral closure of a Noetherian ring, has a criterion due to Grauert and
+Remmert, made into an algorithm by de~Jong~\cite{dejong1998}, to which the
+idealizer test above is closely related; later work on it\later\ is beyond
+what a curve needs. We have not used any of these, and the integration
+algorithm does not care which method produced the basis.
+
+\section{Bases normal at infinity}\label{sec:ib-infinity}
+
+From here on $k = K$ and $t = x$. By Theorem~\ref{thm:places}(iii), the ring
+$\OO_\infty$ of elements of $E$ without poles at infinity is a free module of
+rank $n$ over $K(x)_\infty$. A basis of that module is a \emph{local integral
+basis at infinity}\index{integral basis!local, at infinity}. One is computed by the substitution $z = 1/x$, which
+turns infinity into the point $z = 0$: the algorithm of
+Section~\ref{sec:ib-criterion}, run for $E$ over $K(z)$ with $q = z$
+throughout and the other factors of the discriminant ignored, gives a basis
+of the integral closure of the local ring of $K(z)$ at $z = 0$, which is
+$K(x)_\infty$~\cite[\S2.3]{trager1984}.
+
+An integral basis and a local integral basis at infinity are in general
+different bases. A basis $w$ is \emph{normal at infinity} if some multiples
+$r_i w_i$ of its elements by rational functions form a local integral basis
+at infinity; the $r_i$ can then be taken to be powers $x^{-\tau_i}$ of $x$.
+Such a basis serves both purposes at once. The definition is stated
+formally, with the property that makes it useful, where it is first needed:
+Definition~\ref{def:normal-infinity}, \eqref{eq:tau} and
+Lemma~\ref{lem:termwise} in Section~\ref{sec:algpart-infinity}, which uses
+nothing beyond the present chapter. The following procedure makes a basis of any $K[x]$-module
+normal at infinity without changing the module; it is applied to $\OO$ here
+and to ideals in Chapter~\ref{ch:divisors}.
+
+\begin{algo}{NormalizeAtInfinity}{b, v}{make a module basis normal at infinity}
+\Spec{Given a basis $b$ of $E$ over $K(x)$ and a local integral basis $v$ at
+infinity, return a basis $\bar b$ of $E$ that is normal at infinity and
+generates the same $K[x]$-module as $b$, with the integers $\tau_i$
+of~\eqref{eq:tau}.}
+\Loop
+  \State $M \gets$ the matrix over $K(x)$ with $b_i = \sum_j M_{ij} v_j$
+  \For{$i \gets 1$ \textbf{to} $n$}
+    \State $\kappa_i \gets \max_j \deg(M_{ij})$
+  \EndFor
+  \State $N \gets$ the matrix over $K$ with $N_{ij}$ the value at infinity of $x^{-\kappa_i} M_{ij}$
+  \If{$\det(N) \ne 0$} \Return $(b, \kappa)$ \EndIf
+  \State $c \gets$ a nonzero vector in $K^n$ with $c\, N = 0$
+  \State $i_0 \gets$ an index with $c_{i_0} \ne 0$ and $\kappa_{i_0}$ greatest among such
+  \State $b_{i_0} \gets \sum_i c_i\, x^{\kappa_{i_0} - \kappa_i}\, b_i$ \Comment{sum over $i$ with $c_i \ne 0$}
+\EndLoop
+\end{algo}
+
+\begin{proposition}\label{prop:normalize}\standing{proved}{}
+\seealg{NormalizeAtInfinity} terminates and is correct, with $\tau_i =
+\kappa_i$.
+\end{proposition}
+
+\begin{proof}
+The entries of $x^{-\kappa_i} M_{ij}$ are in $K(x)_\infty$, so $x^{-\kappa_i}
+b_i \in \OO_\infty$, and the matrix expressing these elements in the basis $v$
+has entries in $K(x)_\infty$ and determinant with value $\det(N)$ at infinity.
+If $\det(N) \ne 0$, that matrix is invertible over $K(x)_\infty$, so $(x^{-
+\kappa_i} b_i)$ is a basis of $\OO_\infty$: the basis $b$ is normal at
+infinity with $\tau_i = \kappa_i$.
+
+Otherwise, the new $b_{i_0}$ is a combination of the $b_i$ with polynomial
+coefficients in which $b_{i_0}$ itself has the coefficient $c_{i_0} \in K^*$,
+so the module is unchanged. Its row in $M$ is $\sum_i c_i x^{\kappa_{i_0} -
+\kappa_i} M_i$, whose entries have degree at most $\kappa_{i_0}$, with
+coefficients of $x^{\kappa_{i_0}}$ given by $c\,N = 0$. So $\kappa_{i_0}$
+strictly decreases and the other $\kappa_i$ are unchanged. But $\sum_i
+\kappa_i \ge \deg(\det M)$, and $\det(M)$ changes only by a factor in $K^*$.
+So the loop is executed finitely many times.
+\end{proof}
+
+This is the procedure of~\cite[\S2.3]{trager1984}, where $-\kappa_i$ is
+called the representation order of $b_i$. An example in which the loop is
+entered is Example~\ref{ex:principal-running} below; for an integral basis
+of a simple radical extension it never is
+(Theorem~\ref{thm:radical-basis}).
+
+\section{The genus}\label{sec:ib-genus}
+
+\begin{theorem}\label{thm:genus}\standing{cited}{\cite[\S2.4]{trager1984}; \cite[Theorems~3.4.13 and~3.5.1]{stichtenoth2009}}
+Suppose that $K$ is algebraically closed in $E$. Let $w$ be an integral basis
+of $E$ over $K(x)$ and $v$ a local integral basis at infinity. Then the genus
+of $E$ is
+\[
+  g = \tfrac12 \bigl( \deg(\disc(w)) - \deg(\disc(v)) \bigr) - n + 1 .
+\]
+\end{theorem}
+
+Here $-\deg(\disc(v))$ is the order at infinity of the discriminant of $v$.
+The formula is the Hurwitz genus formula for $E$ over $K(x)$: the two
+discriminants measure the ramification at the finite places and at
+infinity, which in characteristic $0$ is $\sum_P (r_P - 1)$.
+
+\begin{corollary}\label{cor:genus-tau}\standing{proved}{}
+If $w$ is an integral basis of $E$ over $K(x)$ that is normal at infinity,
+with $\tau_i$ as in~\eqref{eq:tau}, and $K$ is algebraically closed in $E$,
+then
+\[
+  g = \tau_1 + \dots + \tau_n - n + 1 .
+\]
+\end{corollary}
+
+\begin{proof}
+Let $v = (x^{-\tau_i} w_i)$. It is a local integral basis at infinity, and
+Lemma~\ref{lem:disc}(ii) gives
+\[
+  \disc(v) = x^{-2 (\tau_1 + \dots + \tau_n)}\, \disc(w) . \qedhere
+\]
+\end{proof}
+
+\begin{example}\label{ex:genus}
+For $y^2 = p(x)$ with $p$ squarefree of degree $m$, the basis $(1, y)$ has
+$\tau = (0, \lceil m/2 \rceil)$ by Theorem~\ref{thm:radical-basis}, so $g =
+\lceil m/2 \rceil - 1$: genus $0$ for $m \le 2$, $1$ for $m = 3, 4$, and $3$
+for $m = 8$.
+
+For the quartic of Example~\ref{ex:ib-quartic}, the Newton polygon of $F$ at
+infinity has two sides: $y^4 \approx -x^2 y$ gives three conjugate expansions
+$y \approx c\,x^{2/3}$ with $c^3 = -1$, and $x^2 y \approx x^2$ gives one
+expansion with $y \approx 1$. So there are two places at infinity: $P_1$
+with $r = 3$, at which $y$ has order $-2$, and $P_2$ with $r = 1$, at which $y
+= 1$. The orders of $\bar v = (1, y, y^2, y^3/x)$ are $(0,
+-2, -4, -3)$ at $P_1$ and $(0, 0, 0, 1)$ at $P_2$, so the least powers of $x$
+that remove the poles are $\tau = (0, 1, 2, 1)$. The discriminant of $(1,
+y/x, y^2/x^2, y^3/x^2)$ is $x^{-8} \disc(\bar v)$, of degree $6 - 8 = -2$,
+and $2 = (3 - 1) + (1 - 1)$ is the ramification at infinity; so this is a
+local integral basis at infinity, $\bar v$ is normal at infinity, and
+\[
+  g = 0 + 1 + 2 + 1 - 4 + 1 = 1 .
+\]
+The curve of Example~\ref{ex:fail} is elliptic.
+\end{example}
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Run \seealg{IntegralBasis} on $y^3 - x^2 (x - 1)$ and compare the result with
+the basis~\eqref{eq:radical-basis}.
+\end{exercise}
+
+\begin{exercise}
+Let $w$ be an integral basis that is normal at infinity, and suppose that
+$K$ is algebraically closed in $E$. Show that exactly one $\tau_i$ is $0$,
+and that the corresponding $w_i$ is in $K$. (Use Lemma~\ref{lem:termwise}.)
+\end{exercise}
+
+\begin{exercise}
+Let $w$ be an integral basis normal at infinity. Show that the space of
+$f \in E$ with no finite poles and poles of order at most $N r_P$ at each
+infinite place $P$ has dimension $\sum_i \max(0, N - \tau_i + 1)$ over $K$,
+and compare with Theorem~\ref{thm:riemann-roch}(iii).
+\end{exercise}

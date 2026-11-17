@@ -1,0 +1,55 @@
+% Integration of Algebraic Functions: a reconstruction of the unwritten second
+% volume of "Symbolic Integration". Build with ./build.sh; see CLAUDE.md.
+\documentclass[11pt]{book}
+\usepackage{v2book}
+
+\title{Integration of Algebraic Functions\\[1ex]
+  \large A reconstruction of the unwritten second volume of\\
+  \emph{Symbolic Integration}}
+\author{Matthew Farrell}
+\date{Draft of \today}
+
+% While writing one chapter: \includeonly{chapters/ch07-hermite-reduction}
+
+\begin{document}
+\frontmatter
+\maketitle
+\include{front/preface}
+\tableofcontents
+\include{front/notation}
+
+\mainmatter
+\part{Algebraic Functions}
+\include{chapters/ch01-algebraic-preliminaries}
+\include{chapters/ch02-algebraic-function-fields}
+\include{chapters/ch03-integral-bases}
+\include{chapters/ch04-constant-field}
+\include{chapters/ch05-divisors}
+
+\part{Integration of Algebraic Functions}
+\include{chapters/ch06-liouville}
+\include{chapters/ch07-hermite-reduction}
+\include{chapters/ch08-algebraic-part}
+\include{chapters/ch09-logarithmic-part}
+\include{chapters/ch10-finite-order}
+\include{chapters/ch11-genus-zero}
+\include{chapters/ch12-radical-extensions}
+
+\part{Mixed Algebraic--Transcendental Functions}
+\include{chapters/ch13-monomial-extensions}
+\include{chapters/ch14-elementary-functions}
+\include{chapters/ch15-risch-equation}
+\include{chapters/ch16-parametric-problems}
+\include{chapters/ch17-implementations}
+
+\appendix
+\include{appendices/app-a-test-integrals}
+\include{appendices/app-b-chapter-to-code}
+\include{appendices/app-c-notation-concordance}
+\include{appendices/app-d-standing}
+
+\backmatter
+\bibliographystyle{plain}
+\bibliography{references}
+\printindex
+\end{document}

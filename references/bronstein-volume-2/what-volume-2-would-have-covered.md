@@ -5,12 +5,15 @@ case and promises a second volume on algebraic functions. That volume never appe
 collects what can be established about it, a reconstruction of its likely contents, and every source
 we know of that carries the material it would have carried.
 
-Written 2026-11-11, and revised the same day when four of the missing sources were supplied —
-Trager's thesis, Bronstein's lazy-Hermite report, his 1990 paper, Risch's 1970 announcement and
-Davenport's monograph — and opened. Revised again on 2026-11-12 with seven more, one of which,
+Written 2026-11-11, and revised the same day when five of the missing sources were supplied —
+Trager's thesis, Bronstein's lazy-Hermite report, his 1990 paper and Risch's 1970 announcement by
+browser download, and Davenport's monograph from the project owner's copy — and opened. Revised again on 2026-11-12 with seven more, one of which,
 Abramov's obituary, changed §1, and then with four more (Davenport 1984, Chevalley, Bliss,
 Stichtenoth), and then eight more (Miller, the FriCAS status page, Hess, Combot, Masser & Zannier,
-Fulton, Chen et al. 2016b, Weil 1948). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
+Fulton, Chen et al. 2016b, Weil 1948). Revised on 2026-11-13 with Raab & Singer's 2022 volume, which
+carries Risch's 1968 report in revised form and Trager's thesis typeset; and the same day with twelve
+sources fetched for the gaps a book would have, and then sixteen and two more supplied for the same purpose
+([`recommended-sources.md`](./recommended-sources.md) lists what is still missing). The per-file annotations for this directory are in [`CLAUDE.md`](./CLAUDE.md).
 
 ## How far to trust each statement here
 
@@ -196,12 +199,14 @@ integer multiple of each `δⱼ` is **principal**, and the generator is the argu
 
 Deciding whether *any* multiple of a divisor is principal is the **points-of-finite-order problem**,
 and it is what separates this from the rational case, where every degree-zero divisor is principal.
-The tutorial's method: reduce the curve modulo a "good" prime, where a multiple `M ≤ (1 + √(p^q))^{2g}`
-is guaranteed principal (it cites Weil), find `M` by trial, and conclude for characteristic 0. The
+The tutorial's method: reduce the curve modulo a "good" prime `p`, to one over the finite field
+with `p^q` elements, where a multiple `M ≤ (1 + √(p^q))^{2g}` (`g` the genus) is guaranteed
+principal (it cites Weil), find `M` by trial, and conclude for characteristic 0. The
 source of that bound is **[held]**, in `weil1948_sur_les_courbes_algebriques_retranscription.pdf`,
-part II §IV: the zeta function's numerator is `∏(1 − αᵢu)` over `2g` roots with `αᵢᾱᵢ = q`. The
-bound itself, `(1 + √q)^{2g}`, is that product at `u = 1` with every `|αᵢ| = √q` — a step Weil does
-not write out in the passage read, so **our inference**.
+part II §IV: the zeta function's numerator is `∏(1 − αᵢu)` over `2g` roots with `αᵢᾱᵢ = q`, where
+Weil's `q` is the number of elements of the field — the tutorial's `p^q`, not its exponent `q`. The
+bound itself, `(1 + √q)^{2g}` in Weil's notation, is that product at `u = 1` with every
+`|αᵢ| = √q` — a step Weil does not write out in the passage read, so **our inference**.
 Geddes §12.8 **[held]** describes the same step as reducing "modulo two different primes" and calls
 it "a significant achievement". The two-prime form is already in Risch's 1970 announcement **[held]**
 (`risch1970_solution_of_integration_in_finite_terms.pdf`): "we will have a bound for the torsion if
@@ -231,9 +236,9 @@ The second subject the preface names, and the part with the least written down a
 tutorial's §3.8 and §3.9 treat `E` algebraic over `K(t)` with `t` a logarithm or an exponential. In
 the simple radical case the problem decouples into a rational integration problem and a family of
 Risch differential equations over `K(t)`. In general the polynomial part is replaced by Puiseux
-expansions at infinity (and at `t = 0` in the exponential case), and the tutorial says twice that
-"the details are quite technical" and defers to Bronstein's 1990 paper and Risch's 1968 and 1969
-reports. Solving the Risch differential equation when the base field is itself an algebraic curve is
+expansions at infinity (and at `t = 0` in the exponential case), and the tutorial says that
+"the details are quite technical" (once, at the end of §3.9) and defers to Bronstein's 1990 paper and Risch's 1968 and 1969
+reports (the first now **[held]** in a revised form that includes parts of the second; §3, [73]). Solving the Risch differential equation when the base field is itself an algebraic curve is
 the subject of the preface's reference [14] **[held]**
 (`bronstein1991_risch_differential_equation_algebraic_curve.pdf`). Its introduction states the
 position in 1991: the published algorithms for algebraic `f` and `g` "require computing with the
@@ -309,14 +314,15 @@ Resolved **[held]** against the reference list of `bronstein2005_symbolic_integr
 | 11 | M. Bronstein. On the integration of elementary functions. *J. Symbolic Computation* 9(2):117–173, February 1990. | The mixed algebraic–transcendental case. Its abstract: "We extend a recent algorithm of Trager to a decision procedure for the indefinite integration of elementary functions." A revision of his 1987 Berkeley dissertation | **Yes** |
 | 14 | M. Bronstein. The Risch differential equation on an algebraic curve. In *Proceedings of ISSAC'91*, pp. 241–246. ACM Press, 1991. | "a new rational algorithm for solving Risch differential equations over algebraic curves" (abstract) — the third obstacle the 1990 paper names. In the mixed case it "finds the denominator of any solution" only | **Yes** |
 | 29 | J.H. Davenport. *On the integration of algebraic functions.* Lecture Notes in Computer Science 102. Springer, Heidelberg, 1981. | **A monograph, not a paper**: Puiseux expansions, Coates' algorithm for a function with prescribed zeros and poles, Risch's theorem, and four chapters on the torsion-divisor problem. Implemented for square roots only | **Yes** |
-| 73 | R. Risch. On the integration of elementary functions which are built up using algebraic operations. Research Report SP-2801/002/00, System Development Corporation, Santa Monica, 1968. | Risch's algebraic case; an unpublished report | No |
-| 74 | R. Risch. Further results on elementary functions. Research Report RC-2402, IBM Research, Yorktown Heights, 1969. | Continuation of [73]; an unpublished report | No |
+| 73 | R. Risch. On the integration of elementary functions which are built up using algebraic operations. Research Report SP-2801/002/00, System Development Corporation, Santa Monica, 1968. | Risch's algebraic case. Unpublished until 2022, when a revision appeared in Raab & Singer's volume: "a revised version of [Ris68], including parts of [Ris69a]", assembled by Singer. Its abstract: "an algorithm to decide if a function built up from the rational functions using logarithms, exponentials and arbitrary algebraic operations can be integrated in terms of functions built up in a similar manner". By Puiseux expansions | **Yes, as revised** — not the 1968 report itself |
+| 74 | R. Risch. Further results on elementary functions. Research Report RC-2402, IBM Research, Yorktown Heights, 1969. | Continuation of [73]; an unpublished report | **In part**: the revision of [73] includes "parts of" it; which parts is not said in the passage read |
 | 76 | R. Risch. The solution of problem of integration in finite terms. *Bulletin of the AMS* 76:605–608, 1970. | The four-page announcement of the complete result, algebraic case included; no proofs | **Yes** |
 | 91 | B.M. Trager. *On the integration of algebraic functions.* PhD thesis, MIT, Computer Science, 1984. | **The core algorithm.** Integral bases, Hermite reduction, normality at infinity, the logarithmic part, absolute factorisation — everything in tutorial §2 that is not Bronstein's own. The thesis's own title page reads *Integration of Algebraic Functions*, without "On the", and is dated September 1984 | **Yes** |
 
 Of Risch's reports the book's own introduction says they were "unfortunately not all of them
 published". That is the real sense in which the algebraic case was hard to get at in 1997: two of
-the nine are corporate research reports and two are theses.
+the nine are corporate research reports and two are theses. One of each — Risch's 1968 report and
+Trager's thesis — was first published in 2022, in the volume held as `raab_singer2022_…` (§4.1).
 
 A neighbouring entry the preface does not list but which belongs with these: [90], B.M. Trager,
 "Integration of simple radical extensions", *Proceedings of EUROSAM'79*, LNCS 72, pp. 408–414. The
@@ -332,7 +338,8 @@ the conference. It is now held (§4.1).
 | File | What it gives you |
 | :--- | :--- |
 | `bronstein1998_symbolic_integration_tutorial.pdf` | **Start here.** Bronstein's *Symbolic Integration Tutorial*, 35 pp. Sections 2 and 3.8–3.9 are the closest thing to a Volume II outline that exists in his own words. Statements and worked examples; proofs are deferred to the references. |
-| `trager1984_integration_of_algebraic_functions.pdf` | **The algorithm.** Trager's MIT thesis, 83 leaves; chapter list in §2. **Image-only scan** — grep the `.txt` OCR sidecar beside it, and read formulas from the page images. |
+| `trager1984_integration_of_algebraic_functions.pdf` | **The algorithm.** Trager's MIT thesis, 83 leaves; chapter list in §2. **Image-only scan** — grep the `.txt` OCR sidecar beside it, and read formulas from the typeset version in the next row, which is not a faithful reprint. |
+| `raab_singer2022_integration_in_finite_terms_fundamental_sources.pdf` | Raab & Singer (eds.), Springer 2022. **Risch's 1968 report**, revised (printed pp. 203–220), with Raab's commentary; and **Trager's thesis typeset**, formulas as text, with a new commentary by Trager on what has happened since. The typeset thesis is a silently revised text — no abstract, seven added references and so different citation numbers, one paragraph of ch. 6 rewritten — and does not replace the scan (`CLAUDE.md` has the comparison). Only the Risch chapter's first two pages, the contents and the commentaries' openings were read. PDF pages are not printed pages. |
 | `davenport1981_on_the_integration_of_algebraic_functions.pdf` | Davenport's monograph, LNCS 102, 199 pp. The Puiseux-expansion route that Trager's "rational" algorithm superseded, but the longest treatment held of the torsion-divisor problem (chs. 5–8), and the only one with timings and worked REDUCE examples. Scanned; the OCR text layer is good, with some letter-spaced runs and a garbled contents page. |
 | `bronstein1990_integration_of_elementary_functions.pdf` | **The mixed case.** *JSC* 9(2):117–173, 57 pp. Extends Trager to towers with logarithms and exponentials; its conclusions list what remained open. The text layer is publisher OCR with errors in names and formulas. |
 | `bronstein1998_lazy_hermite_reduction.pdf` | INRIA RR-3562, November 1998: 13 pages by its own cover, 17 in the HAL file with HAL's cover sheet and the front matter. The proofs the tutorial omits. **The embedded text layer is unreadable** past the cover sheet — grep the `.txt` OCR sidecar. |
@@ -361,6 +368,35 @@ the conference. It is now held (§4.1).
 | `chen_kauers_koutschan2016_reduction_telescoping_algebraic.pdf` | Chen, Kauers & Koutschan, arXiv:1602.00424v1, 8 pp. Trager's Hermite reduction plus a polynomial reduction, used for creative telescoping. A modern, compact restatement of the reduction half of the algorithm. |
 | `chen_du_kauers2021_lazy_hermite_reduction.pdf` | Chen, Du & Kauers, arXiv:2102.06538v2, 20 pp. Sharpens Bronstein's lazy Hermite reduction. The lazy reduction a generation on, combined with a polynomial reduction; read it after Bronstein's own report. |
 | `blake2020_pseudo_elliptic_integrals.pdf` | Blake, arXiv:2004.04910v3, 12 pp. A substitution-based heuristic for pseudo-elliptic integrals, "less than 200 lines of Mathematica code"; author-reported to solve 73.4% of the integrals solved by the best implementation of the full algorithm in randomised tests. Not a decision procedure. |
+| `schultz2016_tragers_algorithm_revisited.pdf` | Schultz, unpublished, 32 pp. Trager's algorithm re-derived with its unstated assumptions removed and a partial Mathematica implementation. Read beside the thesis. Abstract only read. |
+| `risch1969_problem_of_integration_in_finite_terms.pdf` | *Trans. AMS* 139:167–189, 23 pp. The transcendental case as published; Volume I's [75]. The revised 1968 report assumes its definitions. |
+| `vanhoeij1997_rational_parametrizations_canonical_divisor.pdf` | van Hoeij, *JSC* 1997, in the author's preprint, 19 pp. Parametrising a genus-0 curve through `L(D)` and an integral basis. **The source for genus zero**, which §2 omits. Text layer unusable; OCR sidecar. |
+| `vanhoeij1994_computing_parametrizations_rational_curves.pdf` | van Hoeij, ISSAC '94, 8 pp. The predecessor of the row above. OCR sidecar. |
+| `chebyshev1853_integration_des_differentielles_irrationnelles.pdf` | *J. Math. Pures Appl.* 18:87–111, in French. Cited for the theorem on binomial differentials, which is in it: announced in the introduction and proved in §VIII (those two passages read 2026-11-14). |
+| `cantor1987_computing_in_jacobian_hyperelliptic_curve.pdf` | *Math. Comp.* 48:95–101, 7 pp. The Jacobian arithmetic Bertrand's method uses. |
+| `duval1989_rational_puiseux_expansions.pdf` | *Compositio Math.* 70:119–154. Puiseux expansions with fewer algebraic numbers. |
+| `kaltofen1985_fast_parallel_absolute_irreducibility_testing.pdf` | *JSC* 1:57–67, author's copy. Absolute irreducibility testing. |
+| `cheze_lecerf2007_lifting_recombination_absolute_factorization.pdf` | *J. Complexity* 23:380–420, authors' version. Absolute factorisation, the modern algorithm. |
+| `raab2012_definite_integration_in_differential_fields.pdf` | Raab's thesis, Linz 2012, 139 pp. Parametric elementary integration over transcendental towers. Not about algebraic curves. |
+| `blake2026_parallel_integration_simple_radical_extensions_1.pdf`, `…_2.pdf` | Blake, arXiv 2026, 17 and 48 pp. The Risch–Norman method justified over a simple radical extension, then with the radical anywhere in a mixed tower. The newest work held on §2.8's subject; preprints. |
+| `sendra_winkler_perezdiaz2008_rational_algebraic_curves.pdf` | Springer 2008, 272 pp. Genus computation and rational parametrisation by adjoint curves, with the field-of-definition question (ch. 5). The book-length source for genus zero. Contents only read. |
+| `zannier2014_elementary_integration_in_families_conjectures_of_pink.pdf` | ICM 2014, 25 pp. Survey of elementary integration in a one-parameter family and its link to torsion and Pink's conjectures; the short companion to Masser & Zannier 2020. |
+| `serre_tate1968_good_reduction_of_abelian_varieties.pdf` | *Annals* 88:492–517. The Néron–Ogg–Shafarevich criterion. One of the two works Trager cites for good reduction. |
+| `duval1991_absolute_factorization_geometric_approach.pdf` | *SIAM J. Comput.* 20:1–21. Absolute factorisation as finding the components of a plane curve, counting them first. |
+| `dejong1998_algorithm_for_computing_integral_closure.pdf` | *JSC* 26:273–277, 5 pp. Integral closure by the Grauert–Remmert criterion; the general form of Trager's idealizer iteration. |
+| `gianni_trager1997_integral_closure_of_noetherian_rings.pdf` | ISSAC '97, 5 pp. Trager's integral-closure method generalised beyond dimension one. |
+| `greuel_laplagne_seelisch2010_normalization_of_rings.pdf` | *JSC* 45:887–901. De Jong's algorithm made practical, in Singular; a history of the problem in its introduction. |
+| `bohm_decker_laplagne2013_parallel_algorithms_for_normalization.pdf` | *JSC* 51:99–114, six authors. Normalisation locally at each singularity and modularly. |
+| `zassenhaus1972_second_round_maximal_order_program.pdf` | 1972, 43 pp. The Round Two maximal-order algorithm for number fields, which Trager's integral-basis algorithm adapts. |
+| `coates1970_construction_of_rational_functions_on_a_curve.pdf` | *PCPS* 68:105–123. The original of Coates' algorithm: a basis for functions with prescribed zeros and poles, over a number field. |
+| `volcheck1994_computing_in_jacobian_plane_algebraic_curve.pdf` | ANTS-I, 13 pp., an extended abstract. Jacobian arithmetic on a general plane curve by Brill–Noether adjoints. Image-only; OCR sidecar. |
+| `lutzen1990_joseph_liouville.pdf` | Springer 1990, 892 pp. The biography; ch. IX is the history of Liouville's work on integration in finite terms. |
+| `shimura_taniyama1961_complex_multiplication_of_abelian_varieties.pdf` | Math. Soc. Japan 1961, 174 pp. The classical account of reduction of abelian varieties modulo a prime; the second of Trager's two citations. Image-only; OCR sidecar. |
+| `katz1981_galois_properties_torsion_points_abelian_varieties.pdf` | *Invent. Math.* 62:481–502. Its appendix proves that reduction mod `𝔭` is injective on torsion when `e_𝔭 < p − 1` — the lemma under §2.6's finite-order test. |
+| `bronstein1990_unification_of_liouvillian_extensions.pdf` | *AAECC* 1:5–24. The origin of Volume I's monomial extensions; transcendental algorithms, but the definition admits algebraic steps. |
+| `du_raab2025_reduction_systems_degree_bounds_integration.pdf` | arXiv 2404.13042v2, 45 pp. Complete reduction systems and degree bounds for the Risch–Norman method. Not about curves; background to Blake's papers. |
+| `ford1978_computation_of_maximal_order_dedekind_domain.pdf` | Ohio State thesis, 1978, 146 pp. The Round Two maximal-order algorithm written out, and Round Four. The "Ford" of Trager's integral-basis chapter. |
+| `deuring1941_reduktion_algebraischer_funktionenkoerper.pdf` | *Math. Z.* 47:643–654, in German. Reduction of a function field modulo a prime of the constant field, including specialisation of a parameter; divisors and classes reduce compatibly when irreducibility and genus are preserved. |
 | `abramov_bronstein_petkovsek2020_pi_sigma_difference_equations.pdf` | Held for one fact: the date of Bronstein's death. Its subject (difference equations in ΠΣ*-fields) is not integration. |
 
 ### 4.2 Held elsewhere in the corpus
@@ -376,8 +412,10 @@ the conference. It is now held (§4.1).
 
 ### 4.3 The code: Bronstein's algebraic integrator in Axiom
 
-**[held]** The Axiom sources carry `++ Author: Manuel Bronstein` on the packages below, dated
-1987–1988 where a date is given. This is the algorithm of §2 as running code, and for an implementer
+**[held]** The Axiom sources carry `++ Author: Manuel Bronstein` on the packages below, created
+in 1987–1988, with three exceptions (checked 2026-11-16): `FFINTBAS` is by Victor Miller (1990),
+`WFFINTBS` by Victor Miller and Clifton Williamson (1991), and `HELLFDIV`, Bronstein's, is dated
+1993. This is the algorithm of §2 as running code, and for an implementer
 it answers questions the papers leave to the reader. Line numbers are in the held pamphlets.
 
 | Constructor | File, line | Its own description |
@@ -436,16 +474,15 @@ Each of these is **[cited]**: the citation is verified, the content is not.
 | :--- | :--- | :--- |
 | A. Weil. *Courbes algébriques et variétés abéliennes.* Hermann, Paris, 1971. | Tutorial ref. [22] | The bound behind the finite-order test. **Resolved in substance, not in edition:** the two 1948 volumes held (§4.1) carry the mathematics — the bound's source is in *Sur les courbes algébriques*, part II §IV. That the 1971 book reprints those two volumes is **[memory]**, supported by its title joining theirs, and unchecked. |
 | J.H. Davenport. *Intégration formelle.* Rapport de Recherche RR375, IMAG, Grenoble, 1983. | Book ref. [32] | — |
-| R. Risch. The problem of integration in finite terms. *Transactions of the AMS* 139:167–189, 1969. | Book ref. [75] | The published transcendental case; the tutorial cites it for the strong Liouville theorem |
 
 ### 4.5 From memory, unverified
 
 **[memory]**, all of it. These are the leads worth chasing; none has been checked against a document
 in this session, and any detail — a year, a venue, a claim about content — may be wrong.
 
-- **Raab**, *Definite Integration in Differential Fields* (PhD thesis, RISC Linz, 2012): the most
-  recent thesis-length survey of the Risch machinery, with remarks on the algebraic case. The only
-  lead from this list's first version still not held; the others are in §4.1.
+- Raab's thesis, once the first item here, is **[held]** (§4.1) — and the recollection was wrong in
+  part: it is about transcendental towers and has no "remarks on the algebraic case" that a search
+  for algebraic extensions could find.
 - **Implementations other than FriCAS** (for FriCAS see §4.3, which is **[held]**). Maple implements
   Trager's algorithm for algebraic integrands — van Hoeij's abstract **[held]** confirms that
   Trager's integral-basis method is the one "used by Maple 5.2 and AXIOM", which is less than the
@@ -469,7 +506,7 @@ remains:
 | Source | Route tried | Result |
 | :--- | :--- | :--- |
 | Bertrand's thesis [8] | Not attempted | His paper [9], held, covers the subject. |
-| Risch's 1968 and 1969 reports [73], [74] | Not attempted | Corporate research reports; the book's introduction says of Risch's reports "unfortunately not all of them published". |
+| Risch's 1969 report [74], and [73] as originally issued | Not attempted | [73] is held in the revised form published in 2022, which includes parts of [74]. The originals are corporate research reports. |
 
 None of these blocks anything. [`missing-resources.md`](./missing-resources.md) has the full list
 of what is cited and not held.
@@ -482,12 +519,13 @@ of what is cited and not held.
 algebraic case is out of scope.
 
 1. The tutorial, §2, with Geddes §12.8 alongside for a second telling of the same algorithm.
-2. Trager's thesis, chs. 2 and 4–6; ch. 3 (absolute irreducibility) when it is needed.
+2. Trager's thesis, chs. 2 and 4–6; ch. 3 (absolute irreducibility) when it is needed. Read it in
+   the typeset version, checking the scan where the two might differ, and Trager's commentary after it.
 3. Bronstein's RR-3562 for the lazy Hermite reduction, then Chen, Du & Kauers.
-3a. Bronstein 1990 only once the pure algebraic case works — its own conclusion is that it "clearly
+4. Bronstein 1990 only once the pure algebraic case works — its own conclusion is that it "clearly
    requires the prior implementation of the algorithms of Trager (1984)".
-4. The Axiom sources of §4.3, read as a worked answer: `RADFF` and `INTHERAL` first.
-5. Kauers 2008 and Blake 2020, for what a heuristic gets without the divisor machinery.
+5. The Axiom sources of §4.3, read as a worked answer: `RADFF` and `INTHERAL` first.
+6. Kauers 2008 and Blake 2020, for what a heuristic gets without the divisor machinery.
 
 The dependency chain an implementation would need, read off the tutorial's preconditions: integral
 bases in a function field; Puiseux expansions; absolute factorisation; fractional-ideal arithmetic

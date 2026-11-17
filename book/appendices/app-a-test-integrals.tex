@@ -1,0 +1,51 @@
+\chapter{Test Integrals}\label{app:test-integrals}
+
+These are the integrals worked in the book, with the verdict reached and the
+place where it is reached. Every closed form in the table was checked by
+differentiation in a computer algebra system before printing. A verdict of
+``not elementary'' cannot be checked that way; it rests on the argument at
+the place cited.
+
+The same list is in the file \texttt{data/test-integrals.tsv} of the book's
+sources, with integrands and integrals in Wolfram Language syntax, for use
+as a test set.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.9}
+\small
+\begin{longtable}{@{}l>{\raggedright}p{.30\linewidth}>{\raggedright}p{.37\linewidth}l@{}}
+\toprule
+ & integrand & integral & where \\
+\midrule
+\endhead
+T01 & $\dfrac{1}{\sqrt{1 - x^3}}$ & not elementary & Ex.~\ref{ex:first-kind} \\
+T02 & $\dfrac{x}{\sqrt{1 - x^3}}$ & not elementary & Ex.~\ref{ex:running-algpart} \\
+T03 & $\dfrac{1}{x \sqrt{1 - x^3}}$ &
+  $\dfrac13 \log \dfrac{\sqrt{1 - x^3} - 1}{\sqrt{1 - x^3} + 1}$ & Ex.~\ref{ex:running-log} \\
+T04 & $\dfrac{1}{(1 - x^3)^{3/2}}$ &
+  $\dfrac{2x}{3\sqrt{1 - x^3}} + \dfrac13\,\mathrm{T01}$; not elementary & Ex.~\ref{ex:running-hermite} \\
+T05 & $\dfrac{1}{x \log(x)^{3/2}}$ & $-\dfrac{2}{\sqrt{\log x}}$ & Ex.~\ref{ex:mixed-hermite} \\
+T06 & $\dfrac{1}{(x - 1)\sqrt{x^2 + 1}}$ &
+  $\dfrac{1}{\sqrt2} \log \dfrac{x - 1}{1 + x + \sqrt2 \sqrt{x^2 + 1}}$ & Ex.~\ref{ex:log-sqrt2} \\
+T07 & $\dfrac{(2x^8 + 1)\sqrt{x^8 + 1}}{x^{17} + 2x^9 + x}$ &
+  $-\dfrac{1}{4\sqrt{x^8 + 1}} + \dfrac14 \log \dfrac{x^4}{1 + \sqrt{x^8 + 1}}$ & Ex.~\ref{ex:radical-log} \\
+T08 & $\dfrac{1}{(x - 3)\sqrt{x^3 - 2}}$ & not elementary & Ex.~\ref{ex:fo-infinite} \\
+T09 & $x^5 (1 + x^3)^{2/3}$ &
+  $\dfrac{(1 + x^3)^{8/3}}{8} - \dfrac{(1 + x^3)^{5/3}}{5}$ & Ex.~\ref{ex:g0-binomial} \\
+T10 & the integrand of Example~\ref{ex:elem-log} &
+  $2\sqrt{x + \log x} + 2 \log\bigl(x + \sqrt{x + \log x}\bigr)$ & Ex.~\ref{ex:elem-log} \\
+T11 & the integrand of Example~\ref{ex:elem-exp} &
+  $3x\,(x + e^x)^{2/3} + 3 \log x$ & Ex.~\ref{ex:elem-exp} \\
+T12 & $\dfrac{\log x + \sqrt{\log x + \sqrt{\log x}}}{1 + \log x}$ & not elementary & Ex.~\ref{ex:criterion-fails} \\
+T13 & $\dfrac{1}{x\sqrt{x^4 + 1}}$ &
+  $\dfrac14 \log \dfrac{\sqrt{x^4 + 1} - 1}{\sqrt{x^4 + 1} + 1}$ & Ch.~\ref{ch:radical} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+Two further examples are reductions and not integrations. On the curve $y^4 +
+(x^2 + x)\,y - x^2 = 0$, the integrand $y^3/x^2$ is brought to a squarefree
+denominator by a change of basis alone (Example~\ref{ex:fail-extend}), and
+$y^3/x^3$ is reduced by the lazy Hermite reduction to $(2xy^2 - y^3)/x^2$
+plus the integral of a function with squarefree denominator
+(Example~\ref{ex:lazy-full}). Neither is carried further.

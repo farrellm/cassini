@@ -1,0 +1,510 @@
+\chapter{The Logarithmic Part}\label{ch:logarithmic-part}
+
+After Chapter~\ref{ch:algebraic-part} we hold an $h \in E$ such that the
+differential $h\,dx$ has at most simple poles, and we must decide whether
+there are constants $c_i$ and functions $u_i$ with
+\begin{equation}\label{eq:log-sum}
+  h = \sum_{i=1}^k c_i\, \frac{Du_i}{u_i} .
+\end{equation}
+For a rational function this always has a solution, and the Rothstein--Trager
+resultant finds it: its roots are the residues, and for each residue a gcd
+gives the factor of the denominator at which that residue is taken
+\VolI{\S2.4}. For an algebraic function the first half survives intact. The
+residues are the roots of a resultant, and they tell us, by
+Theorem~\ref{thm:liouville-residues}, exactly where each $u_i$ must vanish
+and where it must have poles, up to a common multiple. The second half does
+not survive: on a curve of positive genus, a prescription of zeros and poles
+need not be met by any function, and may be met only after the prescription
+is multiplied by an integer. This chapter carries the problem to that point.
+Testing whether a given divisor is principal is the subject of
+Chapter~\ref{ch:divisors}, and bounding the multiple is the subject of
+Chapter~\ref{ch:finite-order}.
+
+The setting is that of Chapter~\ref{ch:liouville}: $E = K(x)[y]/(F)$ with $F$
+absolutely irreducible and monic in $y$, $D = d/dx$, places are places of
+$E_{\Kbar}$, and $\OO$ is the integral closure of $K[x]$ in $E$. The variable
+$x$ here is the $z$ returned by \seealg{AlgebraicPart}.
+
+\section{Residues}\label{sec:log-residues}
+
+Since the denominator of the integrand is called $d$ in
+Chapter~\ref{ch:hermite} and the derivation is $D$, we write $d$ for the
+denominator and $d' = Dd$ for its derivative.
+
+\begin{lemma}\label{lem:residue-value}\standing{proved}{}
+Let $h \in E$ and let $d \in K[x]$ be squarefree and such that $d h \in \OO$.
+Let
+\[
+  a = \frac{d\,h}{d'} \in E .
+\]
+Then $h\,dx$ has at most simple poles at the finite places. At a finite place
+$P$ over a root of $d$, $a$ has no pole and
+\[
+  \residue_P(h\,dx) = r_P\, a(P) ,
+\]
+where $a(P) \in \Kbar$ is the value of $a$ at $P$. At every other finite
+place the residue of $h\,dx$ is zero.
+\end{lemma}
+
+\begin{proof}
+Let $P$ be a finite place over $x_0$, with ramification index $r = r_P$ and a
+uniformising parameter $\pi$ such that $\pi^r = x - x_0$, as
+in~\eqref{eq:puiseux}. Then $dx = r \pi^{r-1} d\pi$. If $d(x_0) \ne 0$, then
+$h = (dh)/d$ has no pole at $P$, so neither has $h\,dx$. If $d(x_0) = 0$,
+write $d = (x - x_0)\, C$ with $C \in \Kbar[x]$; then $C(x_0) = d'(x_0) \ne 0$
+since $d$ is squarefree, and
+\[
+  h\,dx = \frac{d h}{\pi^r\, C}\; r \pi^{r-1}\, d\pi
+        = r\, \frac{d h}{C}\, \frac{d\pi}{\pi} .
+\]
+Since $dh \in \OO$ and $C$ does not vanish at $P$, the function $dh/C$ has no
+pole at $P$; so $h\,dx$ has at most a simple pole there, with residue $r$
+times the value of $dh/C$ at $P$. That value is the value of $a = dh/d'$,
+because $C$ and $d'$ are polynomials in $x$ that agree at $x_0$.
+\end{proof}
+
+The lemma is Theorems~5.1 and~5.2 of~\cite{trager1984}. By
+Lemma~\ref{lem:simple-poles}, it applies to any $h$ whose denominator with
+respect to an integral basis is squarefree, with $d$ that denominator.
+
+To find all the residues at once without factoring $d$, we use the
+characteristic polynomial of $a$. For $b \in E$ let
+\[
+  \chi_b(Z) = N_{E(Z)/K(x)(Z)}(Z - b) \in K(x)[Z] ,
+\]
+which is monic of degree $n$ in $Z$. If $b = G / c$ with $G \in K[x][y]$ and
+$c \in K[x]$, then, $F$ being monic of degree $n$ in $y$,
+\begin{equation}\label{eq:charpoly-resultant}
+  \resultant_y(F,\; Z c - G) = c^n\, \chi_b(Z) ,
+\end{equation}
+because the resultant is the product of $Z c - G(x, y_j)$ over the $n$ roots
+$y_j$ of $F$ in an algebraic closure of $K(x)$.
+
+\begin{theorem}[the residue polynomial]\index{residue polynomial}\label{thm:residue-polynomial}\standing{proved}{}
+Let $h$, $d$ and $a$ be as in Lemma~\ref{lem:residue-value}. Then the
+coefficients of $\chi_a$ have denominators coprime with $d$, and if $\tilde\chi
+\in K[x][Z]$ is $\chi_a$ multiplied by a polynomial in $x$ coprime with $d$,
+then
+\[
+  R(Z) = \resultant_x(d,\; \tilde\chi) \in K[Z]
+\]
+is, up to a nonzero factor in $K$,
+\[
+  \prod_{P} \bigl( Z - a(P) \bigr)^{r_P} ,
+\]
+the product being over the finite places $P$ over the roots of $d$. In
+particular the nonzero residues of $h\,dx$ at the finite places are the
+numbers $r_P\, \alpha$, where $\alpha$ is a nonzero root of $R$ and $P$ is a
+place over a root of $d$ with $a(P) = \alpha$.
+
+If $a = G/(H d')$ with $G \in K[x][y]$ and $H \in K[x]$, then one may take
+\begin{equation}\label{eq:trager-resultant}
+  R(Z) = \resultant_x\bigl( \operatorname{pp}_Z\bigl(
+           \resultant_y( Z H d' - G,\; F ) \bigr),\; d \bigr) ,
+\end{equation}
+where $\operatorname{pp}_Z$ is the primitive part with respect to $Z$.
+\end{theorem}
+
+\begin{proof}
+Let $x_0 \in \Kbar$ be a root of $d$. The characteristic polynomial of $a$ is the same whether $a$ is regarded in
+$E$ over $K(x)$ or in $E_{\Kbar}$ over $\Kbar(x)$. By
+Theorem~\ref{thm:puiseux-embeddings}, the $n$ embeddings of $E_{\Kbar}$ over
+$\Kbar(x)$ into the field of Puiseux series in $x - x_0$ over $\Kbar$ fall
+into groups,
+one for each place $P$ over $x_0$, the group of $P$ consisting of $r_P$
+embeddings; and for $b \in E$ without a pole at $P$, each embedding in that
+group sends $b$ to a series without negative exponents whose constant term is
+$b(P)$. Now $\chi_a(Z)$ is the product of $Z - \sigma(a)$ over the $n$
+embeddings $\sigma$, and $a$ has no pole at the places over $x_0$ by
+Lemma~\ref{lem:residue-value}. So the coefficients of $\chi_a$, which are in
+$K(x)$, have no pole at $x_0$, and
+\[
+  \chi_a(Z)\big|_{x = x_0} = \prod_{P \text{ over } x_0} \bigl( Z - a(P) \bigr)^{r_P} .
+\]
+The resultant of $d$ and $\tilde\chi$ with respect to $x$ is, up to a nonzero
+constant, the product of $\tilde\chi(x_0, Z)$ over the roots $x_0$ of $d$, and
+$\tilde\chi(x_0, Z)$ is a nonzero constant multiple of $\chi_a(Z)|_{x = x_0}$.
+The statement about residues is Lemma~\ref{lem:residue-value}.
+
+For~\eqref{eq:trager-resultant}, let $\rho = \resultant_y(Z H d' - G, F)$,
+which by~\eqref{eq:charpoly-resultant} is $\pm (H d')^n \chi_a$. Its leading
+coefficient in $Z$ is $\pm (H d')^n$, and its content $c_\rho \in K[x]$ divides
+that. Let $x_0$ be a root of $d$. The coefficients of $\chi_a$ have no pole
+at $x_0$, so every coefficient of $\rho$ vanishes at $x_0$ to at least the
+order of $(H d')^n$; hence $c_\rho$ vanishes there to exactly that order, and
+$\operatorname{pp}_Z(\rho) = \rho / c_\rho$ is $\chi_a$ times a rational function
+of $x$ with neither zero nor pole at any root of $d$. The product over the
+roots of $d$ is then the same up to a nonzero constant.
+\end{proof}
+
+Formula~\eqref{eq:trager-resultant} is the one
+in~\cite[\S2.5]{bronstein1998tutorial}. With $H = 1$ the primitive part can
+be omitted, since the content then divides a power of $d'$, which is coprime
+with $d$; that is formula~(7) of~\cite[\S5.2]{trager1984}. The primitive part matters when $H$ has a root
+in common with $d$, which can happen only when $h$ has a pole over a point
+where the plane curve $F = 0$ is singular.
+
+$R$ is computed in $K$, but its roots are in general not in $K$. By
+Theorem~\ref{thm:liouville-residues}, the field they generate over $K$ is
+the smallest over which the integral can be written, so the extension is
+forced. This is the algebraic counterpart of the Rothstein--Trager theorem
+\VolI{Theorem~2.4.1}.
+
+\section{The divisors of the logarithms}\label{sec:log-divisors}
+
+Let $h \in E$ be such that $h\,dx$ has at most simple poles at \emph{all}
+places, finite and infinite, and write $\rho_P = \residue_P(h\,dx)$. As in
+Theorem~\ref{thm:liouville-residues}, let $q_1, \dots, q_k$ be a basis over
+$\Q$ of the space spanned by the $\rho_P$, write
+\[
+  \rho_P = \sum_{j=1}^k \rho_{Pj}\, q_j, \qquad \rho_{Pj} \in \Q ,
+\]
+and let $m > 0$ be an integer such that every $m \rho_{Pj}$ is an integer.
+The \emph{residue divisors} of $h$\index{residue divisor}, for these choices, are
+\begin{equation}\label{eq:delta}
+  \delta_j = \sum_P m\, \rho_{Pj}\, P \qquad (1 \le j \le k).
+\end{equation}
+A divisor is \emph{principal} if it is the divisor $(u)$ of some $u \in
+E_{\Kbar}^*$, and its \emph{degree} is the sum of its coefficients.
+
+\begin{theorem}[Trager]\label{thm:log-part}\standing{proved}{}
+With the notation above:
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item Each $\delta_j$ has degree $0$.
+\item If $h$ is of the form~\eqref{eq:log-sum}, then for each $j$ there is an
+  integer $n_j > 0$ such that $n_j \delta_j$ is principal.
+\item Suppose that $n_j \delta_j = (u_j)$ with $n_j > 0$ and $u_j \in
+  E_{\Kbar}^*$, for each $j$, and let
+  \[
+    \omega = h - \frac{1}{m} \sum_{j=1}^k \frac{q_j}{n_j}\, \frac{Du_j}{u_j} .
+  \]
+  Then either $\omega = 0$ or $\omega\,dx$ is of the first kind; and $h$ is of
+  the form~\eqref{eq:log-sum} if and only if $\omega = 0$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(i) By~\ref{D:residue}, $\sum_P \rho_P = 0$, that is, $\sum_j (\sum_P
+\rho_{Pj})\, q_j = 0$, and the $q_j$ are linearly independent over $\Q$.
+
+(ii) Apply Theorem~\ref{thm:liouville-residues} to $f = h$, keeping $v = 0$:
+there are an integer $m' > 0$ and functions $w_j$ with
+\begin{equation}\label{eq:log-part-proof}
+  h = \frac{1}{m'} \sum_j q_j\, \frac{Dw_j}{w_j},
+  \qquad (w_j) = m' \sum_P \rho_{Pj}\, P .
+\end{equation}
+Then $(w_j^m) = m' \delta_j$.
+
+(iii) By~\ref{D:log}, the residue of $\omega\,dx$ at $P$ is
+\[
+  \rho_P - \frac{1}{m} \sum_j \frac{q_j}{n_j}\, n_j\, m\, \rho_{Pj} = 0 .
+\]
+Since $h\,dx$ and the $du_j/u_j$ have at most simple poles, so has
+$\omega\,dx$, and a simple pole with residue $0$ is no pole. So $\omega\,dx$
+has no poles. If $\omega = 0$ then $h$ is of the form~\eqref{eq:log-sum}.
+Conversely, if $h$ is of that form, take $m'$ and $w_j$ as
+in~\eqref{eq:log-part-proof}. Then $u_j^{m'}$ and $w_j^{m n_j}$ have the same
+divisor $m' n_j \delta_j$, so by~\ref{D:const} their quotient is a constant,
+and taking logarithmic derivatives, $m'\, Du_j / u_j = m\, n_j\, Dw_j / w_j$.
+Substituting in~\eqref{eq:log-part-proof} gives $\omega = 0$.
+\end{proof}
+
+So the logarithms are found by a search with a definite object: for each
+$j$, the smallest $n_j > 0$ for which $n_j \delta_j$ is principal, and a
+generator. If the search succeeds for every $j$, one subtraction decides the
+question. If for some $j$ no multiple of $\delta_j$ is principal, $h$ is
+not of the form~\eqref{eq:log-sum}. The search over $n$ has no evident end,
+and this is the problem that Hardy thought had no solution
+(Section~\ref{sec:liouville-history}). Chapter~\ref{ch:finite-order} gives a
+bound $B$, computable from $E$ and $\delta$, such that if none of $\delta,
+2\delta, \dots, B\delta$ is principal then no multiple is.
+
+When $E$ has genus $0$, every divisor of degree $0$ is principal, $n_j = 1$
+always, and there are no differentials of the first kind, so $\omega = 0$.
+The theorem then says that every $h$ with only simple poles is a sum of
+logarithms, as for rational functions.
+
+\paragraph{The basis over $\Q$.} If $K$ is a number field, the splitting
+field of $R$ is a vector space of finite dimension over $\Q$, the roots of
+$R$ are vectors in it, and a basis of their span together with the
+coordinates $\rho_{Pj}$ is found by Gaussian elimination. If $K$ contains
+parameters, the roots are first written as polynomials in the parameters
+with coefficients in a number field, and the monomials in the parameters
+are then treated as further basis vectors~\cite[\S5.2]{trager1984}. The splitting field
+can have degree as large as the factorial of the degree of $R$. As Trager
+remarks, there is no escaping this, since the answer cannot be written over a
+smaller field.
+
+\section{Representing the residue divisors}\label{sec:log-ideals}
+
+To test $n \delta_j$ for principality we need $\delta_j$ in a form that can be
+computed with. Theorem~\ref{thm:divisor-ideal} represents a divisor supported at
+finite places by a fractional ideal of $\OO$, the divisor $\sum_P n_P P$
+corresponding to the ideal of those $b$ with $\ord{P}(b) \ge n_P$ at every
+finite $P$. The ideals for the residue divisors are built from the following
+blocks.
+
+\begin{proposition}\label{prop:residue-ideal}\standing{proved}{}
+Let $h$, $d$ and $a$ be as in Lemma~\ref{lem:residue-value}, and suppose that
+$h\,dx$ has residue zero at every ramified place over a root of $d$. Let
+$\alpha \in \Kbar^*$. Then for every finite place $P$,
+\[
+  \min\bigl( \ord{P}(d),\; \ord{P}(d h - \alpha\, d') \bigr) =
+  \begin{cases}
+    1 & \text{if $d$ vanishes at $P$ and } \residue_P(h\,dx) = \alpha, \\
+    0 & \text{otherwise.}
+  \end{cases}
+\]
+\end{proposition}
+
+\begin{proof}
+Both $d$ and $dh - \alpha d'$ are integral, so both orders are nonnegative,
+and $dh - \alpha d' = d'\,(a - \alpha)$. If $d$ does not vanish at $P$, then
+$\ord{P}(d) = 0$. Suppose it does; then $d'$ does not, so $dh - \alpha d'$
+vanishes at $P$ if and only if $a(P) = \alpha$. If $P$ is unramified, then
+$\ord{P}(d) = 1$ because $d$ is squarefree, and $a(P)$ is the residue, by
+Lemma~\ref{lem:residue-value}. If $P$ is ramified, the residue $r_P\, a(P)$ is
+zero by hypothesis, so $a(P) = 0 \ne \alpha$ and the second order is $0$.
+\end{proof}
+
+So when the residues of $h\,dx$ are carried by unramified places, the ideal of $\OO_{K(\alpha)}$
+generated by $d$ and $dh - \alpha d'$ is the ideal of the divisor
+\[
+  \Delta_\alpha = \sum_{\residue_P(h\,dx) = \alpha} P ,
+\]
+and if the distinct nonzero residues are $\alpha_1, \dots, \alpha_s$, with
+$\alpha_i = \sum_j r_{ij} q_j$, then
+\[
+  \delta_j = \sum_{i=1}^s m\, r_{ij}\, \Delta_{\alpha_i} ,
+\]
+an integer combination, which corresponds to a product of powers of these
+ideals. This is Proposition~5.3 and the construction that follows it
+in~\cite{trager1984}. In a field with unique factorisation one would take a
+gcd of $d$ and $dh - \alpha d'$, as the Rothstein--Trager algorithm does; the
+ideal is what replaces the gcd.
+
+The hypothesis cannot be dropped: at a ramified place with a nonzero
+residue, $\ord{P}(d) = r_P > 1$, and the two generators no longer cut out the
+place with multiplicity one. Trager disposes of it in two ways
+\cite[\S5.4]{trager1984}. For a simple radical extension it holds
+automatically for each term of the integrand
+(Proposition~\ref{prop:radical-residues}). In general, he replaces the variable $x$ by $x +
+c\,y$ for an integer $c$, which changes which places are ramified, and
+shows that for all but finitely many $c$ no pole of the integrand is
+ramified in the new model; the choice is checked by computing the residue
+polynomial over the roots of the new discriminant and verifying that it has
+no nonzero root. We do not reproduce the argument.
+
+\section{The algorithm}\label{sec:log-algorithm}
+
+\begin{algo}{LogarithmicPart}{h}{the logarithmic part of an integral}
+\Spec{Given $h \in E$ such that $h\,dx$ has at most simple poles at the
+finite places and no pole at infinity, return either ``not elementary'', when
+$h$ is not of the form~\eqref{eq:log-sum}; or constants $c_1, \dots, c_k$ and
+functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
+\State $d \gets$ the denominator of $h$ with respect to an integral basis
+\State $R \gets$ the residue polynomial~\eqref{eq:trager-resultant}
+\State ensure that no nonzero residue is taken at a ramified place \Comment{Section~\ref{sec:log-ideals}}
+\State $\alpha_1, \dots, \alpha_s \gets$ the distinct nonzero roots of $R$ \Comment{the nonzero residues}
+\State $(q_1, \dots, q_k) \gets$ a basis over $\Q$ of the span of the residues
+\State $m \gets$ a positive integer such that the residues are in $\frac1m (\Z q_1 + \dots + \Z q_k)$
+\For{$j \gets 1$ \textbf{to} $k$}
+  \State $\delta_j \gets$ the residue divisor~\eqref{eq:delta}
+  \State $r \gets \alg{FiniteOrder}(\delta_j)$ \Comment{Section~\ref{sec:fo-two-primes}}
+  \If{$r$ is ``infinite''} \Return ``not elementary'' \EndIf
+  \State $(n_j, u_j) \gets r$
+\EndFor
+\State $\omega \gets h - \frac1m \sum_j (q_j / n_j)\, Du_j / u_j$
+\If{$\omega \ne 0$} \Return ``not elementary'' \EndIf
+\State \Return $\bigl( q_j / (m\, n_j),\; u_j \bigr)_{1 \le j \le k}$
+\end{algo}
+
+When $R$ has no nonzero root, $k = 0$, the loop is empty and $\omega = h$: the
+algorithm returns the empty sum if $h = 0$ and ``not elementary'' otherwise.
+The correctness of the algorithm is Theorem~\ref{thm:log-part}. The one
+step that is not linear algebra is \seealg{FiniteOrder}, which
+decides whether a multiple of $\delta_j$ is principal; it is the subject of
+Chapter~\ref{ch:finite-order}, and as given there it assumes that $K$ is a
+number field.
+
+Together with Chapter~\ref{ch:algebraic-part} this gives the whole method.
+
+\begin{algo}{IntegrateAlgebraic}{f}{integration of an algebraic function}
+\Spec{Given $f \in E$, return an elementary integral of $f$ over $E$, or
+``not elementary'' if there is none.}
+\State $r \gets \alg{AlgebraicPart}(f)$
+\If{$r$ is ``not elementary''} \Return ``not elementary'' \EndIf
+\State $(z, w, g, h) \gets r$
+\State $l \gets \alg{LogarithmicPart}(h)$ \Comment{in the variable $z$}
+\If{$l$ is ``not elementary''} \Return ``not elementary'' \EndIf
+\State $((c_1, u_1), \dots, (c_k, u_k)) \gets l$
+\State \Return $g + c_1 \log u_1 + \dots + c_k \log u_k$
+\end{algo}
+
+\begin{theorem}\label{thm:integrate-algebraic}\standing{proved}{}
+Let $K$ be a number field. Then \seealg{IntegrateAlgebraic} is correct. When
+it returns an integral, the
+constants $c_j$ lie in the field generated over $K$ by the residues of
+$f\,dx$, the $u_j$ can be taken with coefficients in that field, and the
+number of logarithms is the least possible.
+\end{theorem}
+
+\begin{proof}
+By the specification of \seealg{AlgebraicPart}, either $f$ has no elementary
+integral, or $\int f\,dx = g + \int h\,dz$ and $f$ has an elementary integral
+if and only if $h$ is of the form~\eqref{eq:log-sum}; and
+\seealg{LogarithmicPart} decides that and returns such a form. The residues
+of $h\,dz$ are those of $f\,dx$, because $f\,dx = dg + h\,dz$. The last
+statement is Theorem~\ref{thm:liouville-residues}: the $q_j$ are in the field
+generated by the residues, the $u_j$ can be taken with coefficients in it,
+and $k = \dim_{\Q} V$ logarithms are necessary.
+\end{proof}
+
+\section{Gr\"obner-basis formulations\later}\label{sec:log-groebner}
+
+Two later works find the logarithmic part without divisors, by Gr\"obner
+bases. We record what they claim, from their abstracts and, for the first,
+its introduction.
+
+Kauers~\cite{kauers2008} proposes a method that uses Gr\"obner bases to
+compute candidate contributions to the logarithmic part and is, in his
+words, ``easy to implement'': about ten lines in a system that has Gr\"obner
+bases. It is a heuristic by design. It ``does not have the feature of
+finding a closed form of an integral whenever there is one'', though by his
+comparison with the integrators of three systems it very often does. It is
+meant for the situation in which a full implementation of Trager's or
+Davenport's algorithm is not available, which
+Chapter~\ref{ch:implementations} shows to be the usual one.
+
+Miller's thesis~\cite{miller2012} gives an algorithm for the logarithmic
+part of the integral of an algebraic function, and then one for a function
+in a transcendental elementary extension, and justifies both by Gr\"obner
+bases, differential algebra and algebraic geometry. Its abstract says that
+the algorithm ``finds closed-form solutions that have been difficult to
+compute by other means''.
+
+Neither replaces the question of Chapter~\ref{ch:finite-order}. A method
+that produces the logarithms when they exist does not by that fact prove
+that none exist when it fails; for that, some bound on the order of a
+divisor class is needed, in whatever language the method is written.
+
+\section{Examples}\label{sec:log-examples}
+
+\begin{example}\label{ex:running-log}
+We finish the integral
+\[
+  \int \frac{dx}{x \sqrt{1 - x^3}}
+\]
+in $E = \Q(x)[y]/(y^2 + x^3 - 1)$. By Example~\ref{ex:running-algpart-2},
+\seealg{AlgebraicPart} leaves $g = 0$ and
+\[
+  h = \frac{1}{x y} = \frac{-y}{x^4 - x},
+\]
+whose differential has no pole at infinity.
+\begin{enumerate}
+\item $d = x^4 - x$, so $d' = 4x^3 - 1$ and $dh = -y$. Here $G = -y$ and $H =
+  1$.
+\item $\resultant_y(Z (4x^3 - 1) + y,\; y^2 + x^3 - 1) = (4x^3 - 1)^2 Z^2 +
+  x^3 - 1$, which is primitive in $Z$, and its resultant with $x^4 - x$ is
+  \[
+    R(Z) = 729\, Z^6 (Z^2 - 1) .
+  \]
+  The factor $Z^2 - 1$ comes from $x = 0$, and $Z^6$ from the three roots of
+  $x^3 = 1$, each of which carries one place with $r_P = 2$ and $a(P) = 0$.
+\item The nonzero roots are $\pm 1$. They are taken at the places over $x =
+  0$, which are unramified, so they are the residues: $h\,dx$ has residue
+  $1$ at $P = (0, 1)$ and $-1$ at $Q = (0, -1)$, as
+  Lemma~\ref{lem:residue-value} gives directly from $a = -y/(4x^3 - 1)$.
+\item $k = 1$, $q_1 = 1$ and $m = 1$, so $\delta_1 = P - Q$.
+\item $E$ has genus $1$. A function with divisor $P - Q$ would have a single
+  simple pole, and there is none on a curve of positive genus; so $\delta_1$
+  is not principal. A function with divisor $2P - 2Q$ would lie in the space
+  of functions with at most a double pole at $Q$ and no other, which by
+  Corollary~\ref{cor:rr-consequences}(iii) has dimension $2$ and so is spanned by $1$ and
+  $x/(y + 1)$, whose divisor is $P + \infty - 2Q$. No combination of these
+  two vanishes twice at $P$; so $2\delta_1$ is not principal. But
+  \[
+    3\delta_1 = \Bigl( \frac{y - 1}{y + 1} \Bigr) :
+  \]
+  since $(y - 1)(y + 1) = -x^3$, the function $y - 1$ vanishes to order $3$
+  at $P$ and nowhere else, $y + 1$ vanishes to order $3$ at $Q$ and nowhere
+  else, and both have a triple pole at $\infty$. So $n_1 = 3$ and $u_1 = (y -
+  1)/(y + 1)$. Example~\ref{ex:principal-running} reaches the same three
+  conclusions by \seealg{PrincipalMultiple}, without inspection.
+\item $\omega = h - \frac13\, Du_1/u_1 = 0$.
+\end{enumerate}
+Therefore
+\[
+  \int \frac{dx}{x \sqrt{1 - x^3}}
+  = \frac13 \log \frac{\sqrt{1 - x^3} - 1}{\sqrt{1 - x^3} + 1} .
+\]
+The integrand is an elliptic differential, and its integral is elementary:
+it is pseudo-elliptic, in the old terminology. What made it so is that the
+point $P$ has order $3$ on the elliptic curve, with $\infty$ as origin.
+\end{example}
+
+\begin{example}\label{ex:log-sqrt2}
+A new constant. Consider
+\[
+  \int \frac{dx}{(x - 1) \sqrt{x^2 + 1}}
+\]
+in $E = \Q(x)[y]/(y^2 - x^2 - 1)$, which has genus $0$. The differential
+$h\,dx$, with $h = 1/((x - 1)\, y)$, has no pole at the two infinite places.
+With respect to the integral basis $(1, y)$,
+\[
+  h = \frac{y}{(x - 1)(x^2 + 1)} ,
+\]
+so $d = (x - 1)(x^2 + 1)$, $d' = 3x^2 - 2x + 1$, $dh = y$, and $G = y$, $H =
+1$.
+\begin{enumerate}
+\item $\resultant_y(Z d' - y,\; y^2 - x^2 - 1) = d'^{\,2} Z^2 - (x^2 + 1)$,
+  and its resultant with $d$ is
+  \[
+    R(Z) = 128\, Z^4 (2 Z^2 - 1) .
+  \]
+  The factor $Z^4$ comes from the two branch places over $x^2 = -1$, where
+  $a = y/d'$ vanishes; the factor $2Z^2 - 1$ comes from $x = 1$.
+\item The residues are $\pm 1/\sqrt2$, at $P_\pm = (1, \pm\sqrt2)$. They
+  span a space of dimension $1$ over $\Q$: $q_1 = 1/\sqrt2$, $m = 1$,
+  $\delta_1 = P_+ - P_-$. The field of constants must grow to $\Q(\sqrt2)$.
+\item The genus is $0$, so $\delta_1$ is principal. The line $1 + x +
+  \sqrt2\, y = 0$ is tangent to the curve at $P_-$, so $1 + x + \sqrt2\, y$
+  has divisor $2 P_- - \infty_1 - \infty_2$, while $x - 1$ has divisor $P_+ +
+  P_- - \infty_1 - \infty_2$. Hence $n_1 = 1$ and
+  \[
+    u_1 = \frac{x - 1}{1 + x + \sqrt2\, y} .
+  \]
+\end{enumerate}
+Therefore
+\[
+  \int \frac{dx}{(x - 1) \sqrt{x^2 + 1}}
+  = \frac{1}{\sqrt2} \log \frac{x - 1}{1 + x + \sqrt2 \sqrt{x^2 + 1}} .
+\]
+\end{example}
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Let $E = K(x)$ and $h = A/d$ with $d$ squarefree and $\deg(A) < \deg(d)$.
+Show that the residue polynomial of Theorem~\ref{thm:residue-polynomial} is
+the Rothstein--Trager resultant $\resultant_x(A - Z d', d)$ of
+\VolI{Theorem~2.4.1}, up to a constant factor.
+\end{exercise}
+
+\begin{exercise}
+In Example~\ref{ex:running-log}, compute the divisor of $x/(y + 1)$ and of
+$x/(y - 1)$, and verify that their product is a constant. Why must it be?
+\end{exercise}
+
+\begin{exercise}
+Let $h \in E$ be such that $h\,dx$ has at most simple poles and all its
+residues are rational numbers. Show that $h$ is of the form~\eqref{eq:log-sum}
+if and only if there are an integer $n > 0$ and $u \in E^*$ with $n\,h =
+Du/u$.
+\end{exercise}
+
+\begin{exercise}
+Find the residue polynomial of $h = 1/(x\sqrt{x^8 + 1})$, and the divisor
+$\delta_1$. This is taken up in Chapter~\ref{ch:radical}.
+\end{exercise}

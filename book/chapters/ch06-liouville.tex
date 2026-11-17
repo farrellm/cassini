@@ -1,0 +1,355 @@
+\chapter{The Problem and Liouville's Theorem}\label{ch:liouville}
+
+An \emph{algebraic function} is an element of a finite algebraic extension
+$E$ of a rational function field $K(x)$. This part of the book is about one
+question: given $f \in E$, is $\int f\,dx$ an elementary function, and if so,
+which? This chapter states the question precisely, recalls what Liouville's
+theorem says about the answer, sharpens it in the way the algorithm needs,
+and outlines the algorithm that Chapters~\ref{ch:hermite}
+to~\ref{ch:finite-order} develop.
+
+\section{The classical problem}\label{sec:liouville-history}
+
+For rational functions the question has had an answer since the eighteenth
+century: the integral is always elementary, and partial fractions find it
+\VolI{Chapter~2}. For algebraic functions it has no such answer. The integrals
+$\int dx/\sqrt{1 - x^2}$ and $\int dx/\sqrt{1 - x^3}$ look alike, and the
+first is an inverse sine while the second is not an elementary function at
+all.
+
+The theory begins with Liouville, who published eleven papers on integration
+in finite terms between 1833 and 1841~\cite[Chapter~IX]{lutzen1990}. The
+theorem that bears his name, in the form he gave it for algebraic integrands,
+says that if $\int y\,dx$ is expressible in finite terms for an algebraic
+function $y$ of $x$, then
+\[
+  \int y\,dx = t + A \log u + B \log v + \dots + C \log w
+\]
+with $A, B, \dots, C$ constants and $t, u, v, \dots, w$ algebraic functions of
+$x$~\cite[p.~352]{lutzen1990}. The integral, if elementary, is elementary in a
+very restricted way: no exponentials, no nested logarithms, and logarithms
+entering only linearly with constant coefficients. Liouville used this to
+prove particular integrals non-elementary, certain elliptic integrals among
+them. L\"utzen's chapter is the history, including what Abel had done before
+and what Liouville's successors did after.
+
+A theorem about the form of the answer is not a method for finding it. Three
+quarters of a century later Hardy, surveying the subject, wrote of elliptic
+integrals that ``no method has been devised as yet by which we can always
+determine in a finite number of steps whether a given elliptic integral is
+pseudo-elliptic, and integrate it if it is, and there is reason to suppose that
+no such method can be given''~\cite[pp.~47--48]{hardy1916}. (An elliptic
+integral is \emph{pseudo-elliptic}\index{pseudo-elliptic integral} when it is elementary after all.) The
+difficulty he had in mind is the one that Chapter~\ref{ch:finite-order} is
+about. A candidate logarithm $\log u$ is determined by the places where $u$
+must vanish or have poles, with their multiplicities, and there may be no
+such $u$ while there is one with all the multiplicities doubled, or tripled,
+or multiplied by any larger integer. One can try multiples in turn; the
+question is when to stop.
+
+Hardy's supposition was wrong. Risch announced a solution in 1970, in which
+the problem ``reduces to the problem of bounding torsion on the Jacobian
+variety of an algebraic curve''~\cite{risch1970}, and obtained a bound from two good
+reductions of the curve in different characteristics. Davenport~\cite{davenport1981} and
+Trager~\cite{trager1984} then gave algorithms meant to be programmed, the
+first by Puiseux expansions and the second by integral bases and ideals.
+Trager's is the one this book follows.
+
+\section{Function fields and their differentials}\label{sec:liouville-setting}
+
+Throughout Part~II, $K$ is a field of characteristic $0$, $x$ is transcendental
+over $K$, and
+\[
+  E = K(x)[y] / (F)
+\]
+where $F \in K[x][y]$ is monic of degree $n$ in $y$ and absolutely
+irreducible, that is, irreducible over $\Kbar(x)$. Chapter~\ref{ch:constant-field} explains why
+this assumption costs nothing and how to arrange it. Its consequences are
+that $K$ is algebraically closed in $E$, and that for every algebraic
+extension $L$ of $K$,
+\[
+  E_L = L(x)[y] / (F)
+\]
+is a field, of degree $n$ over $L(x)$, containing $E$. The derivation $D =
+d/dx$ of $K(x)$ extends uniquely to $E$ and to each $E_L$
+\VolI{Theorem~3.2.3}, and
+\[
+  \Const_D(E_L) = L
+\]
+because a constant of $E_L$ is algebraic over $L$ \VolI{Lemma~3.3.2}.
+
+We use the language of Chapter~\ref{ch:function-fields}. A \emph{place} always
+means a place of $E_{\Kbar}$; it is \emph{finite} if it lies over a point $x
+= x_0$ with $x_0 \in \Kbar$ and \emph{infinite} otherwise. Each place $P$ has a
+ramification index $r_P$ over $\Kbar(x)$ and a uniformising parameter $\pi$,
+and every $f \in E_{\Kbar}$ has an expansion as a Laurent series in $\pi$ with
+coefficients in $\Kbar$, whose order is $\ord{P}(f)$. A \emph{differential} is
+an expression $f\,dx$ with $f \in E_{\Kbar}$; at $P$ it can be written $(f\,
+dx/d\pi)\, d\pi$, and its \emph{order} $\ord{P}(f\,dx)$ and its \emph{residue}
+$\residue_P(f\,dx)$ are the order of the series $f\,dx/d\pi$ and its
+coefficient of $\pi^{-1}$. Neither depends on the choice of $\pi$. Since $x -
+x_0$ has order $r_P$ at a finite place and $x$ has order $-r_P$ at an infinite
+one,
+\begin{equation}\label{eq:order-dx}
+  \ord{P}(f\,dx) =
+  \begin{cases}
+    \ord{P}(f) + r_P - 1 & \text{if $P$ is finite,} \\
+    \ord{P}(f) - r_P - 1 & \text{if $P$ is infinite.}
+  \end{cases}
+\end{equation}
+For $u \in E_{\Kbar}$ we write $du$ for $(Du)\,dx$. We shall use four facts.
+\begin{enumerate}[label=\textup{(D\arabic*)}]
+\item\label{D:exact} If $\ord{P}(u) \ne 0$ then $\ord{P}(du) = \ord{P}(u) -
+  1$, and if $\ord{P}(u) \ge 0$ then $\ord{P}(du) \ge 0$. In every case
+  $\residue_P(du) = 0$.
+\item\label{D:log} For $u \ne 0$, $\ord{P}(du/u) \ge -1$ and
+  $\residue_P(du/u) = \ord{P}(u)$.
+\item\label{D:const} An element of $E_{\Kbar}$ without poles is in $\Kbar$.
+  Every $u \ne 0$ has a \emph{divisor} $(u) = \sum_P \ord{P}(u)\, P$, a finite
+  sum; and $(u) = 0$ if and only if $u \in \Kbar$.
+\item\label{D:residue} A differential has finitely many poles, and the sum of
+  its residues over all places is zero.
+\end{enumerate}
+\ref{D:exact} and \ref{D:log} are read off the Laurent series, as in the
+proof of Lemma~\ref{lem:order-derivative}; \ref{D:const} and
+\ref{D:residue} are theorems of Chapter~\ref{ch:function-fields}; all four
+are Theorem~\ref{thm:differentials}.
+
+A nonzero differential is \emph{of the first kind}\index{differential!of the first kind} if it has no poles, and
+\emph{of the second kind} if all its residues are zero. The differentials of
+the first kind form a vector space over $\Kbar$ whose dimension is the genus
+of $E$. By~\ref{D:exact}, every nonzero $du$ is of the second kind; and $du$
+has no poles only if $u$ has none, that is, only if $du = 0$.
+
+\begin{example}\label{ex:running-differentials}
+Let $E = \Q(x)[y]/(y^2 - (1 - x^3))$, the field of
+Example~\ref{ex:running-hermite}. Over each $x_0$ with $x_0^3 \ne 1$ there are
+two places, unramified, at which $y = \pm\sqrt{1 - x_0^3}$. Over each of the
+three roots of $x^3 = 1$ there is one place, with $r_P = 2$ and $\ord{P}(y) =
+1$. There is one infinite place $\infty$, with $r_\infty = 2$, $\ord{\infty}(x)
+= -2$ and $\ord{\infty}(y) = -3$. From~\eqref{eq:order-dx} we find the
+following.
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & at $x_0^3 = 1$ & at $\infty$ & at $(x, y) = (0, \pm 1)$ \\
+\midrule
+order of $dx/y$      & $-1 + 1 = 0$ & $3 - 3 = 0$ & $0$ \\
+order of $x\,dx/y$   & $0$          & $-2 + 3 - 3 = -2$ & $1$ \\
+order of $dx/(x y)$  & $0$          & $2 + 3 - 3 = 2$ & $-1$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+So $dx/y$ is of the first kind. The differential $x\,dx/y$ has a single
+pole, a double one at $\infty$; its residue there is zero by~\ref{D:residue},
+so it is of the second kind. And $dx/(xy)$ has two simple poles, at $(0, 1)$
+and $(0, -1)$, with residues $1$ and $-1$: at those places $x$ is a
+uniformising parameter and $1/y = \pm 1$. These are the three behaviours the
+algorithm has to tell apart.
+\end{example}
+
+\section{Liouville's theorem}\label{sec:liouville-theorem}
+
+Elementary extensions, and what it means for $f$ to have an elementary
+integral over a differential field, are defined in
+\VolI{Definitions~5.1.3 and~5.1.4}. The theorem of Liouville, in the strong
+form due to Risch, holds for any differential field of characteristic $0$
+\VolI{Theorem~5.5.3}. For our fields it reads as follows.
+
+\begin{theorem}[Liouville]\label{thm:liouville}\index{Liouville's theorem}\standing{cited}{\cite[Theorem~5.5.3]{bronstein2005}}
+Let $f \in E$. If $f$ has an elementary integral over $E$, then there are $v
+\in E$, constants $c_1, \dots, c_k \in \Kbar$, and $u_1, \dots, u_k \in
+E_L^*$, where $L = K(c_1, \dots, c_k)$, such that
+\begin{equation}\label{eq:liouville}
+  f = Dv + \sum_{i=1}^k c_i\, \frac{Du_i}{u_i} .
+\end{equation}
+\end{theorem}
+
+Conversely, if~\eqref{eq:liouville} holds then $\int f\,dx = v + \sum_i c_i
+\log u_i$ is elementary over $E$. So the integration problem for $E$ is the
+problem of deciding whether~\eqref{eq:liouville} has a solution, and finding
+one.
+
+The representation~\eqref{eq:liouville} is far from unique, and a search
+needs to know where to look for the $c_i$. The answer is that they are
+dictated by the residues of $f\,dx$. Taking residues in~\eqref{eq:liouville}
+at a place $P$ and using \ref{D:exact} and \ref{D:log},
+\begin{equation}\label{eq:residue-liouville}
+  \residue_P(f\,dx) = \sum_{i=1}^k c_i\, \ord{P}(u_i) ,
+\end{equation}
+an integer combination of the $c_i$. The next theorem, which is Trager's
+\cite[\S5.1]{trager1984}, says that one can do no better and need do no
+worse.
+
+\begin{theorem}\label{thm:liouville-residues}\standing{proved}{}
+Let $f \in E$ have an elementary integral over $E$. Let $V \subseteq \Kbar$
+be the vector space over $\Q$ spanned by the residues of $f\,dx$, let $q_1,
+\dots, q_k$ be a basis of $V$ over $\Q$, and let $K' = K(q_1, \dots, q_k)$,
+which is the field generated over $K$ by the residues. For each place $P$
+write $\residue_P(f\,dx) = \sum_j \rho_{Pj}\, q_j$ with $\rho_{Pj} \in \Q$.
+Then there are $v \in E$, an integer $m > 0$ and $u_1, \dots, u_k \in
+E_{K'}^*$ such that
+\begin{equation}\label{eq:liouville-basis}
+  f = Dv + \frac{1}{m} \sum_{j=1}^k q_j\, \frac{Du_j}{u_j},
+  \qquad (u_j) = m \sum_P \rho_{Pj}\, P \quad (1 \le j \le k).
+\end{equation}
+Here $v$ can be taken to be the $v$ of any representation~\eqref{eq:liouville}
+with $v \in E$. Moreover, if~\eqref{eq:liouville} holds with $c_i \in L$ and
+$u_i \in E_L$, then $K' \subseteq L$.
+\end{theorem}
+
+\begin{proof}
+The last statement is~\eqref{eq:residue-liouville}: every residue is in the
+additive group generated by the $c_i$.
+
+By Theorem~\ref{thm:liouville} we have~\eqref{eq:liouville} with $v \in E$,
+$c_i \in L$ and $u_i \in E_L^*$ for some finite extension $L$ of $K$, and
+then $K' \subseteq L$. The argument below leaves $v$ as it is. Extend $q_1, \dots, q_k$ by $b_1, \dots,
+b_l$ to a basis over $\Q$ of the space spanned by $V$ and the $c_i$, and write
+\[
+  c_i = \sum_j r_{ij}\, q_j + \sum_h s_{ih}\, b_h, \qquad r_{ij}, s_{ih} \in \Q .
+\]
+Let $m > 0$ be an integer such that all $m r_{ij}$ and $m s_{ih}$ are
+integers, and put $w_j = \prod_i u_i^{m r_{ij}}$ and $z_h = \prod_i u_i^{m
+s_{ih}}$, which are in $E_L^*$. Since the logarithmic derivative turns
+products into sums,
+\[
+  \sum_i c_i\, \frac{Du_i}{u_i}
+  = \frac{1}{m} \Bigl( \sum_j q_j\, \frac{Dw_j}{w_j}
+                     + \sum_h b_h\, \frac{Dz_h}{z_h} \Bigr) .
+\]
+Taking residues at a place $P$ as in~\eqref{eq:residue-liouville},
+\[
+  m\, \residue_P(f\,dx) = \sum_j q_j\, \ord{P}(w_j) + \sum_h b_h\, \ord{P}(z_h) .
+\]
+The left side is in $V$, and the $q_j$ and $b_h$ together are linearly
+independent over $\Q$. So $\ord{P}(z_h) = 0$ for every $h$ and every $P$, and
+$\ord{P}(w_j) = m \rho_{Pj}$. By~\ref{D:const} each $z_h$ is a constant, so
+$Dz_h = 0$, and
+\[
+  f = Dv + \frac{1}{m} \sum_j q_j\, \frac{Dw_j}{w_j},
+  \qquad (w_j) = m \sum_P \rho_{Pj}\, P .
+\]
+It remains to bring the $w_j$ down from $E_L$ to $E_{K'}$. Let $N$ and
+$\operatorname{Tr}$ be the norm and trace from $E_L$ to $E_{K'}$, and $l = [L
+: K'] = [E_L : E_{K'}]$. The trace commutes with $D$ \VolI{Theorem~3.2.4},
+and $\operatorname{Tr}(Dw/w) = D(Nw)/Nw$, the norm being a product of
+conjugates. Since $f$, $Dv$ and the $q_j$ are in $E_{K'}$, applying the trace
+gives
+\[
+  l f = l\, Dv + \frac{1}{m} \sum_j q_j\, \frac{D(N w_j)}{N w_j} .
+\]
+This is~\eqref{eq:liouville-basis} with $lm$ in place of $m$ and $u_j = N
+w_j$; the divisors of the $u_j$ are then forced, by taking residues once
+more.
+\end{proof}
+
+Three things follow at once. The first is the minimal field of constants:
+the integral can be written over $K'$, and over no field that fails to
+contain $K'$. The second is the minimal number of logarithms, which is $k =
+\dim_{\Q} V$: fewer would not span the residues. The third is that the divisors
+of the $u_j$ are known in advance, up to the common factor $m$. What is not
+known is whether those divisors, or some multiples of them, are divisors of
+functions. That is the whole difficulty, and Chapters~\ref{ch:logarithmic-part}
+and~\ref{ch:finite-order} are about it.
+
+\begin{corollary}\label{cor:second-kind}\standing{proved}{}
+Let $f \in E$ be such that all residues of $f\,dx$ are zero. Then $f$ has an
+elementary integral over $E$ if and only if $f = Dv$ for some $v \in E$.
+\end{corollary}
+
+\begin{proof}
+Here $V = 0$ and $k = 0$ in Theorem~\ref{thm:liouville-residues}.
+\end{proof}
+
+\begin{corollary}\label{cor:first-kind}\standing{proved}{}
+If $f \in E$ and $f\,dx$ is of the first kind, then $f$ has no elementary
+integral over $E$.
+\end{corollary}
+
+\begin{proof}
+By Corollary~\ref{cor:second-kind} we would have $f\,dx = dv$ with $v \in E$.
+By~\ref{D:exact}, $v$ has no poles, since $dv$ has none; so $v \in K$
+by~\ref{D:const}, and $f = Dv = 0$, whereas a differential of the first kind
+is not zero.
+\end{proof}
+
+\begin{example}\label{ex:first-kind}
+By Example~\ref{ex:running-differentials}, $dx/\sqrt{1 - x^3}$ is of the first
+kind. Hence
+\[
+  \int \frac{dx}{\sqrt{1 - x^3}}
+\]
+is not an elementary function, and neither is the integral
+$\int dx/(1 - x^3)^{3/2}$ of Example~\ref{ex:running-hermite}, which
+differs from a third of it by an algebraic function. The same argument
+applies to $\int dx/\sqrt{p(x)}$ for any squarefree $p$ of degree at least
+$3$: these are the integrals of the first kind on elliptic and hyperelliptic
+curves.
+\end{example}
+
+No such shortcut settles the other two integrands of
+Example~\ref{ex:running-differentials}. For $x\,dx/y$,
+Corollary~\ref{cor:second-kind} leaves the question whether it is $dv$ for
+some $v \in E$; for $dx/(xy)$, Theorem~\ref{thm:liouville-residues} leaves the
+question whether some multiple of the divisor $(0, 1) - (0, -1)$ is the
+divisor of a function.
+
+\section{Outline of the algorithm}\label{sec:liouville-outline}
+
+Theorem~\ref{thm:liouville-residues} shapes the algorithm. Given $f \in E$:
+\begin{enumerate}
+\item \emph{Reduce the finite poles.} The Hermite reduction of
+  Chapter~\ref{ch:hermite} writes $f = Dg + h$, where $h\,dx$ has at most
+  simple poles at the finite places. This step never fails and decides
+  nothing.
+\item \emph{Find the algebraic part.} With the poles at infinity put out of
+  the way by a change of variable, Chapter~\ref{ch:algebraic-part} shows
+  that if $f$ has an elementary integral then the $v$
+  of~\eqref{eq:liouville} is $g$, up to a constant, and $h\,dx$ has no poles
+  at infinity. If $h\,dx$ does have a pole at infinity, the integral is not
+  elementary. If $h = 0$, the integral is $g$.
+\item \emph{Compute the residues.} The residues of $h\,dx$ are the roots of
+  a polynomial computed by two resultants, without leaving $K$
+  (Chapter~\ref{ch:logarithmic-part}). A basis $q_1, \dots, q_k$ of their span
+  over $\Q$ gives the divisors $\delta_j = m \sum_P \rho_{Pj} P$
+  of~\eqref{eq:liouville-basis}.
+\item \emph{Find the logarithms.} For each $j$, decide whether some multiple
+  $n_j \delta_j$ with $n_j > 0$ is the divisor of a function $u_j$, and find
+  $u_j$ (Chapters~\ref{ch:divisors} and~\ref{ch:finite-order}). If for some
+  $j$ there is none, the integral is not elementary.
+\item \emph{Check.} If $h = \frac1m \sum_j (q_j / n_j)\, Du_j / u_j$, then
+  \[
+    \int f\,dx = g + \frac{1}{m} \sum_{j=1}^k \frac{q_j}{n_j} \log u_j .
+  \]
+  Otherwise the difference is a differential of the first kind, and the
+  integral is not elementary.
+\end{enumerate}
+Steps~1 and~2 use an integral basis of $E$ (Chapter~\ref{ch:integral-bases}),
+and step~2 needs it normal at infinity. Step~4 needs arithmetic on divisors
+(Chapter~\ref{ch:divisors}) and a bound on the $n_j$
+(Chapter~\ref{ch:finite-order}). When the curve has genus $0$ none of this
+is needed: a rational parametrisation turns $f\,dx$ into a rational
+differential (Chapter~\ref{ch:genus-zero}).
+
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+
+\begin{exercise}
+Verify the table of Example~\ref{ex:running-differentials}, and add a row for
+$dx/y^3$.
+\end{exercise}
+
+\begin{exercise}
+Let $E = K(x)$. Show that Theorem~\ref{thm:liouville-residues} gives, for a
+rational function $f$ with squarefree denominator and no polynomial part, the
+statement that $\int f\,dx$ can be written with $\dim_{\Q} V$ logarithms, where
+$V$ is spanned by the roots of the Rothstein--Trager resultant of
+\VolI{\S2.4}, and with no fewer.
+\end{exercise}
+
+\begin{exercise}
+Let $y^2 = p(x)$ with $p \in K[x]$ squarefree of degree $2g + 1$ or $2g + 2$,
+$g \ge 1$. Show that $x^i\,dx/y$ is of the first kind for $0 \le i < g$, and
+is not for $i \ge g$.
+\end{exercise}

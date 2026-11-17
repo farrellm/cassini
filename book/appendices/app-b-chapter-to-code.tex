@@ -1,0 +1,47 @@
+\chapter{From Chapter to Code}\label{app:code}
+
+Bronstein implemented the integration of algebraic functions in the system
+that became Axiom. Of the constructors below, all but two carry his name as
+author in the Axiom sources, with dates of creation in 1987 and 1988, except
+\texttt{HELLFDIV}, dated 1993. The two are the integral-basis packages:
+\texttt{FFINTBAS} is by Victor Miller, dated 1990, and \texttt{WFFINTBS} by
+Miller and Clifton Williamson, dated 1991. The table
+sets each against the part of this book that describes what it computes.
+The middle column is the constructor's own one-line description. The right
+column is our reading of the correspondence, from those descriptions and
+the constructors' names; apart from the Hermite reduction, whose source we
+have read (Remark~\ref{rem:trager-form}), we have not checked it against
+the code.
+
+\begin{center}
+\small
+\begin{longtable}{@{}l>{\raggedright}p{.44\linewidth}>{\raggedright\arraybackslash}p{.27\linewidth}@{}}
+\toprule
+constructor & its own description & in this book \\
+\midrule
+\endhead
+\texttt{FFINTBAS} & ``Integral bases for function fields of dimension one'' & Section~\ref{sec:ib-criterion} \\
+\texttt{WFFINTBS} & the integral closure and a local integral basis at a prime, over a finite field & Sections~\ref{sec:ib-criterion}, \ref{sec:fo-finite} \\
+\texttt{ALGFF} & ``Function field defined by f(x, y) = 0.'' & Chapter~\ref{ch:function-fields} \\
+\texttt{RADFF} & ``Function field defined by y**n = f(x)'' & Chapter~\ref{ch:radical} \\
+\texttt{FDIV} & finite rational divisors on a curve & Section~\ref{sec:div-ideals} \\
+\texttt{HELLFDIV} & the same on a hyperelliptic curve & Section~\ref{sec:div-hyperelliptic} \\
+\texttt{INTHERAL} & ``Algebraic Hermite reduction.'' & Section~\ref{sec:hermite-trager} \\
+\texttt{DBLRESP} & ``computing the residues of a function on an algebraic curve'' & Section~\ref{sec:log-residues} \\
+\texttt{INTALG} & ``functions for integrating a function on an algebraic curve'' & Chapters~\ref{ch:algebraic-part}, \ref{ch:logarithmic-part} \\
+\texttt{INTPAF} & ``Integration of pure algebraic functions'' & Part~II \\
+\texttt{INTG0} & ``Rationalization of several types of genus 0 integrands'' & Chapter~\ref{ch:genus-zero} \\
+\texttt{PFO(Q)} & ``testing whether a divisor on a curve is a torsion divisor'' & Section~\ref{sec:fo-two-primes} \\
+\texttt{FORDER} & ``Finds the order of a divisor over a finite field'' & Section~\ref{sec:fo-finite} \\
+\texttt{RDIV} & carries the same description as \texttt{FORDER}; by its name, the reduction of a divisor & Section~\ref{sec:fo-reduction} \\
+\texttt{INTAF} & ``integration of algebraic integrands over transcendental functions'' & Chapter~\ref{ch:elementary} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+The division into \texttt{RADFF} and \texttt{ALGFF}, and into
+\texttt{HELLFDIV} and \texttt{FDIV}, is the division between simple radical
+extensions and the general case that runs through
+Chapters~\ref{ch:divisors} and~\ref{ch:radical}, made into types.
+Chapter~\ref{ch:implementations} says how much of this works in the system's
+present descendant.
