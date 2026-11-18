@@ -15,10 +15,10 @@ import Cassini.Builtins.Arithmetic (fromSimplified)
 import Cassini.Builtins.Define (args)
 import Cassini.Core.Expr (Expr, apply, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
-import Cassini.Core.Symbol (Symbol, sList, sPlus, sTimes, symbol)
+import Cassini.Core.Symbol (Symbol, sList, sPlus, sPower, sTimes, symbol)
 import Cassini.Eval.Kernel (Kernel, lookupAttributes)
 import Cassini.Number (Number (NInt))
-import Cassini.Simplify.Automatic (Undefined)
+import Cassini.Simplify.Automatic (Undefined (..))
 import Cassini.Structure (rebuildChanged)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Vector qualified as V
@@ -28,11 +28,19 @@ import Effectful.State.Static.Local (State, get, put, runState)
 -- | A one-argument builtin over a procedure on normal forms. The argument
 -- is already evaluated, so in the evaluator's normal form, which is
 -- 'Cassini.Simplify.Elementary.simplifyE''s (§4.11); what it holds stays out
--- of the procedure's reach ('outsideHeld').
+-- of the procedure's reach ('outsideHeld'). An 'Undefined' answer's message
+-- quotes the @1/0@, @0/0@ or @0^0@ the procedure met, as WL's own evaluation
+-- of it does, not the call.
 unary :: (Kernel :> es) => (Expr -> Either Undefined Expr) -> Expr -> Eff es (Maybe Expr)
 unary f e = case args e of
-  [x] -> outsideHeld f x >>= fromSimplified e
+  [x] -> outsideHeld f x >>= \r -> fromSimplified (either met (const e) r) r
   _ -> pure Nothing
+  where
+    met = \case
+      ZeroToZero -> apply sPower [Int_ 0, Int_ 0]
+      ZeroOverZero -> apply sTimes [Int_ 0, divZero]
+      _ -> divZero
+    divZero = apply sPower [Int_ 0, Int_ (-1)]
 
 -- | A builtin that threads over a single list argument, as WL's @Expand@ and
 -- @Simplify@ do without being @Listable@, and is the given rule otherwise.
@@ -90,8 +98,10 @@ shield = \case
 -- | Put the held arguments back. A sum or product a placeholder sat in is
 -- sorted again, since the arguments and their placeholders need not sort
 -- alike; nothing else depends on it, because equal arguments had equal
--- placeholders and so combined as they would have. 'Nothing' when nothing
--- changed below.
+-- placeholders and so combined as they would have. A node of any other
+-- @Orderless@ head is not sorted here: the procedure does not sort it, and
+-- the evaluator sorts it when it evaluates the builtin's result again.
+-- 'Nothing' when nothing changed below.
 restore :: V.Vector Expr -> Expr -> Maybe Expr
 restore held u = case u of
   Call g [Int_ k] | g == sHeld, Just v <- held V.!? fromInteger k -> Just v

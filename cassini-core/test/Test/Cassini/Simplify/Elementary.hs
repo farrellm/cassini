@@ -15,7 +15,7 @@ import Data.Ratio ((%))
 import Data.Text qualified as T
 import Test.Cassini.Simplify.ElementaryWL (periodicity, values)
 import Test.Gen (genElementary, rat, shrinkExpr, subterms)
-import Test.Kernel (eval, evalStd, ff, std)
+import Test.Kernel (eval, evalStd, ff, parse, std)
 import Test.Numeric (approxEqual, evalAt, genPoint)
 import Test.QuickCheck (Gen, Property, checkCoverage, chooseInteger, counterexample, cover, elements, forAll, forAllShrink, listOf1, sized, (.&&.), (===))
 import Test.Tasty (TestName, TestTree, testGroup)
@@ -31,6 +31,7 @@ tests =
       fig79,
       radicals,
       logTwo,
+      indeterminate,
       testGroup
         "laws (§7.3)"
         [ testProperty "simplifyE u is elementary-normal, or undefined" $
@@ -133,6 +134,16 @@ radicals =
     ]
 
 -- | One input evaluated, against its FullForm.
+-- | Every NumericFunction head this layer rewrites is Indeterminate of an
+-- Indeterminate argument, as the evaluator makes it before the rule runs.
+indeterminate :: TestTree
+indeterminate =
+  testGroup
+    "a NumericFunction of Indeterminate, as the evaluator's (§4.4)"
+    [ testCase (T.unpack i) ((ff <$> simplifyE (parse i)) @?= Right (evalStd [i]))
+    | i <- ["Plus[Indeterminate, x]", "Divide[x, Indeterminate]", "Subtract[Indeterminate, x]", "Minus[Indeterminate]"]
+    ]
+
 row :: TestName -> Text -> Text -> TestTree
 row name i o = testCase name (evalStd [i] @?= o)
 

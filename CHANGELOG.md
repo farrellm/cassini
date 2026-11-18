@@ -31,7 +31,11 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   `Expand` and `Simplify` do. A result a held argument cancels out of is kept:
   `Simplify[Hold[a] (Sin[x]^2 + Cos[x]^2 - 1)]` is 0, where the placeholder had leaked out with
   the unsimplified input. `Log[Sqrt[2], 0]` is `-Infinity` and `Log[1/Sqrt[2], 0]` `Infinity`,
-  where a radical base had been left alone.
+  where a radical base had been left alone. A procedure's `Power::infy` or `Power::indet`
+  quotes the `1/0`, `0/0` or `0^0` it met, where it had quoted the whole `Simplify[…]` call.
+  `Expand` shares each inner sum's powers in Cohen's `Expand_power`, where it had recomputed
+  them once per outer exponent: `Expand[(a+b+c+d)^30]` takes 70 ms and allocates 144 MiB, from
+  116 ms and 194 MiB.
 
 * Interning stays off (D2): on `Expand[(a+b+c+d)^30]` the weak table takes 230 ms and 339 MiB
   against 108 ms and 194 MiB. Both benchmark baselines are regenerated with §8.4's new groups.

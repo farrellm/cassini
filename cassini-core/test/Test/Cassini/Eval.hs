@@ -4,7 +4,7 @@ module Test.Cassini.Eval (tests) where
 
 import Cassini.Eval.Kernel (EvalConfig (..), defaultConfig)
 import Test.Gen (genExpr, shrinkExpr)
-import Test.Kernel (eval, evalStd, evalWith, ff, messageNames, parse, std)
+import Test.Kernel (eval, evalStd, evalWith, ff, messageNames, messagesWithArgs, parse, std)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Test.Tasty.QuickCheck (counterexample, forAllShrink, sized, testProperty, (===))
@@ -73,6 +73,9 @@ tests =
         "messages"
         [ testCase "1/0 is ComplexInfinity with Power::infy" $
             let (r, st) = eval std (parse "Power[0, -1]") in (ff r, messageNames st) @?= ("DirectedInfinity[]", ["Power::infy"]),
+          testCase "a procedure's 1/0 is what Power::infy quotes, not the call" $
+            let (r, st) = eval std (parse "Simplify[Power[Plus[Power[Sin[x], 2], Power[Cos[x], 2], -1], -1]]")
+             in (ff r, messagesWithArgs st) @?= ("DirectedInfinity[]", [("Power::infy", ["Power[0, -1]"])]),
           testCase "0^0 is Indeterminate with Power::indet" $
             let (r, st) = eval std (parse "Power[0, 0]") in (ff r, messageNames st) @?= ("Indeterminate", ["Power::indet"]),
           testCase "Part out of range stays, with Part::partw" $

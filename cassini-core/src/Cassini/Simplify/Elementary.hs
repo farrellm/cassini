@@ -189,7 +189,7 @@ step h vs = case h of
       | V.any isIndeterminate vs -> Right (Sym sIndeterminate)
       | otherwise -> elementaryNode fn f vs
     Nothing
-      | f == sPlus || f == sTimes || f == sPower, V.any isIndeterminate vs -> Right (Sym sIndeterminate)
+      | numeric f, V.any isIndeterminate vs -> Right (Sym sIndeterminate)
       | f == sPlus -> simplifySum (orderless f vs)
       | f == sTimes -> simplifyProductE (orderless f vs)
       | f == sPower, [v, w] <- V.toList vs -> simplifyPowerE v w
@@ -200,6 +200,10 @@ step h vs = case h of
       | otherwise -> Right (mkApp h vs)
   _ -> Right (mkApp h vs)
   where
+    -- the NumericFunction heads of "Cassini.Builtins.Arithmetic" this layer
+    -- rewrites, which the evaluator takes to Indeterminate before their rule
+    -- runs (§4.4, between steps 9 and 10)
+    numeric f = f == sPlus || f == sTimes || f == sPower || f == sDivide || f == sSubtract || f == sMinus
     isIndeterminate = \case
       Sym s -> s == sIndeterminate
       _ -> False

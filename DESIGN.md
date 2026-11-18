@@ -1984,7 +1984,10 @@ Cohen's `Undefined` and the language's result-plus-message meet at one point: `s
 `ComplexInfinity` and `LogOfZero` is `DirectedInfinity[-1]`, both silent as in WL, and
 `ZeroDenominator` and `ZeroOverZero` are mapped as `1/0` and `0/0` are: `ComplexInfinity` with
 `Power::infy`, and `Indeterminate` with `Power::indet`. That is what WL gives for the same inputs,
-because its own evaluation meets the `1/0` or `0/0`, and it needs no new message name. Keeping `simplify` in
+because its own evaluation meets the `1/0` or `0/0`, and it needs no new message name. For the
+same reason a procedure builtin's message (`Expand`, `Simplify`, `TrigExpand`, `TrigReduce`) quotes
+the `1/0`, `0/0` or `0^0` the procedure met, not the call: `Simplify[1/(Sin[x]^2 + Cos[x]^2 - 1)]`
+reports `Infinite expression 1/0`. Keeping `simplify` in
 `Either` rather than in the effect is what lets it be tested as a pure function.
 
 ### 4.8 Zero testing is not available here

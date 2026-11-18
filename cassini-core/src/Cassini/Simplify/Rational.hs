@@ -91,15 +91,39 @@ expandProduct r s = case (r, s) of
 -- power, by the binomial theorem on its first term and the rest.
 expandPower :: Expr -> Integer -> Either Undefined Expr
 expandPower u n = case u of
-  Call p (f : rest@(_ : _))
-    | p == sPlus -> do
-        r <- plus rest
-        terms <- forM [0 .. n] $ \k -> do
-          cf <- power f (Int_ (n - k)) >>= \fk -> times [Int_ (choose n k), fk]
-          rk <- expandPower r k
-          expandProduct cf rk
-        plus terms
+  Call p (f : rest@(_ : _)) | p == sPlus -> do
+    (fks, rks) <- binomialParts f rest n
+    binomial fks rks n
   _ -> power u (Int_ n)
+
+-- | @u^0@ to @u^n@, expanded. Cohen's procedure expands the rest's @r^k@ for
+-- each @k@ separately, and each of those its own rest's powers again, so an
+-- inner sum's powers were recomputed once per outer exponent; here each
+-- sum's powers are computed once and shared.
+expandPowers :: Expr -> Integer -> Either Undefined [Expr]
+expandPowers u n = case u of
+  Call p (f : rest@(_ : _)) | p == sPlus -> do
+    (fks, rks) <- binomialParts f rest n
+    traverse (binomial fks rks) [0 .. n]
+  _ -> traverse (power u . Int_) [0 .. n]
+
+-- | The first term's powers and the rest's, expanded, from 0 to @n@.
+binomialParts :: Expr -> [Expr] -> Integer -> Either Undefined ([Expr], [Expr])
+binomialParts f rest n = do
+  r <- plus rest
+  rks <- expandPowers r n
+  fks <- traverse (power f . Int_) [0 .. n]
+  pure (fks, rks)
+
+-- | @(f + r)^m@ by Cohen's binomial step, from the powers of @f@ and @r@:
+-- each term a monomial times an expanded power.
+binomial :: [Expr] -> [Expr] -> Integer -> Either Undefined Expr
+binomial fks rks m = do
+  let k1 = fromInteger m + 1
+  terms <- forM (zip3 [0 .. m] (reverse (take k1 fks)) (take k1 rks)) $ \(k, fk, rk) -> do
+    cf <- times [Int_ (choose m k), fk]
+    expandProduct cf rk
+  plus terms
 
 -- | The binomial coefficient.
 choose :: Integer -> Integer -> Integer
