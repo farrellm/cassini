@@ -19,7 +19,7 @@
 module Cassini.Simplify.Numeric
   ( simplifyRadical,
     mergeCoefficient,
-    isRadicalNormal,
+    simplifyProductE,
   )
 where
 
@@ -49,11 +49,14 @@ data Radical = Radical !Rational ![(Integer, Rational)]
 simplifyRadical :: Number -> Number -> Maybe (Either Undefined Expr)
 simplifyRadical v (NRat q)
   | b == 0 || b == 1 = Nothing
+  -- an integer radicand that is already normal, without building it
+  | Radical 1 [(n, q')] <- rad, denominator b == 1, n == numerator b, q' == q = Nothing
   | otherwise =
-      let r = build (radical b q)
+      let r = build rad
        in if r == Right (apply sPower [mkNumber v, mkNumber (NRat q)]) then Nothing else Just r
   where
     b = toRational' v
+    rad = radical b q
 simplifyRadical _ _ = Nothing
 
 -- | The normal form of @v^q@ as a 'Radical'.
@@ -86,15 +89,16 @@ integral n q
   where
     b = denominator q
     a = numerator q
-    -- Stops at the first prime above the cofactor, which no later prime
-    -- divides either, rather than walking every prime below the bound.
-    extract = pull (1, n) (primesBelow trialBound)
-    pull (c, m) = \case
+    -- The residue r is n with every prime so far divided out. Stops once
+    -- p² exceeds it: no later prime's square, so no b-th power for b ≥ 2,
+    -- divides it, rather than walking every prime below the bound.
+    extract = pull (1, n, n) (primesBelow trialBound)
+    pull (c, m, r) = \case
       p : ps
-        | m >= p ->
-            let (e, _) = multiplicity p m
+        | p * p <= r ->
+            let (e, r') = multiplicity p r
                 t = e `div` b
-             in pull (if t == 0 then (c, m) else (c * fromInteger p ^^ (a * t), m `div` (p ^ (b * t)))) ps
+             in pull (if t == 0 then (c, m, r') else (c * fromInteger p ^^ (a * t), m `div` (p ^ (b * t)), r')) ps
       _ -> (c, m)
 
 times :: Radical -> Radical -> Radical
@@ -102,8 +106,13 @@ times (Radical c xs) (Radical d ys) = Radical (c * d) (xs <> ys)
 
 -- | The product, through Cohen's operator and the coefficient merge.
 build :: Radical -> Either Undefined Expr
-build (Radical c xs) = do
-  p <- simplifyProduct (V.fromList (Num (fromRational' c) : [apply sPower [Int_ n, Num (fromRational' e)] | (n, e) <- xs]))
+build (Radical c xs) = simplifyProductE (V.fromList (Num (fromRational' c) : [apply sPower [Int_ n, Num (fromRational' e)] | (n, e) <- xs]))
+
+-- | Cohen's 'simplifyProduct', then step 6's coefficient merge: what
+-- @Times@'s built-in downvalue computes.
+simplifyProductE :: V.Vector Expr -> Either Undefined Expr
+simplifyProductE vs = do
+  p <- simplifyProduct vs
   pure (fromMaybe p (mergeCoefficient p))
 
 -- | Step 6 of §4.15, on a product already simplified: the coefficient's
@@ -151,10 +160,3 @@ isSmallPrime p = HashSet.member p smallPrimes
 smallPrimes :: HashSet Integer
 smallPrimes = HashSet.fromList (primesBelow trialBound)
 {-# NOINLINE smallPrimes #-}
-
--- | Whether neither 'simplifyRadical' nor 'mergeCoefficient' applies at
--- this node.
-isRadicalNormal :: Expr -> Bool
-isRadicalNormal u = case u of
-  Call pw [Num v, Num w] | pw == sPower -> isNothing (simplifyRadical v w)
-  _ -> isNothing (mergeCoefficient u)

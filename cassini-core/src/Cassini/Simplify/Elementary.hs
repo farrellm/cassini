@@ -31,10 +31,12 @@ module Cassini.Simplify.Elementary
     simplifyPowerE,
     simplifyProductE,
     nodeE,
+    rebuildE,
 
     -- * The procedure
     simplifyE,
     isElementaryNormal,
+    everyNode,
 
     -- * Construction, each node to normal form
     call,
@@ -46,11 +48,11 @@ where
 
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
-import Cassini.Core.Symbol (Symbol, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
+import Cassini.Core.Symbol (Symbol, sFactorial, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
 import Cassini.Number.Integer (multiplicity)
-import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplify, simplifyPower, simplifyProduct, simplifySum)
-import Cassini.Simplify.Numeric (mergeCoefficient, simplifyRadical)
+import Cassini.Simplify.Automatic (Undefined (..), isASAE, sDivide, sMinus, sSubtract, simplifyDifference, simplifyFactorial, simplifyPower, simplifyQuotient, simplifySum)
+import Cassini.Simplify.Numeric (simplifyProductE, simplifyRadical)
 import Data.HashMap.Strict qualified as HashMap
 import Data.HashSet qualified as HashSet
 import Data.Vector qualified as V
@@ -118,7 +120,7 @@ simplifyElementary :: Symbol -> V.Vector Expr -> Maybe (Either Undefined Expr)
 simplifyElementary f vs = case (fnOf f, V.toList vs) of
   (Just fn, [x]) ->
     let r = elementary fn x
-     in if r == Right (mkApp (Sym f) vs) then Nothing else Just r
+     in if either (const False) (isNode (Sym f) vs) r then Nothing else Just r
   -- Log[b, b^r] is r; any other Log[b, z] is Log[z]/Log[b], as in WL
   -- (wolfram/HoldPattern/BasicExamples/3, wolfram/Log/Scope/SpecificValues/1)
   (Just Log, [b, z])
@@ -156,13 +158,6 @@ simplifyPowerE v w = do
     Call p [b, e] | p == sPower -> fromMaybe (Right r) (simplifyExpPower b e)
     _ -> Right r
 
--- | Cohen's 'simplifyProduct', then §4.15's coefficient merge: what
--- @Times@'s built-in downvalue computes.
-simplifyProductE :: V.Vector Expr -> Either Undefined Expr
-simplifyProductE vs = do
-  p <- simplifyProduct vs
-  pure (fromMaybe p (mergeCoefficient p))
-
 -- | One node whose head and arguments are in normal form, to normal form.
 -- When a rule rewrites the node, the parts of its result that are new are
 -- normalized in turn, and the parts it took from the arguments are not
@@ -171,7 +166,13 @@ simplifyProductE vs = do
 nodeE :: Expr -> V.Vector Expr -> Either Undefined Expr
 nodeE h vs = do
   r <- step h vs
-  if r == mkApp h vs then pure r else settle (knownOf vs) r
+  if isNode h vs r then pure r else settle (knownOf vs) r
+
+-- | Whether the expression is the node @h[vs]@, without building it.
+isNode :: Expr -> V.Vector Expr -> Expr -> Bool
+isNode h vs = \case
+  App h' vs' -> h' == h && vs' == vs
+  _ -> False
 
 -- | The rule for one node, by its head.
 step :: Expr -> V.Vector Expr -> Either Undefined Expr
@@ -182,11 +183,13 @@ step h vs = case h of
     | f == sTimes -> simplifyProductE (orderless f vs)
     | f == sPower, [v, w] <- V.toList vs -> simplifyPowerE v w
     | Just _ <- fnOf f -> fromMaybe (Right (mkApp h vs)) (simplifyElementary f vs)
-    | f `elem` cohenOperators -> simplify (mkApp h vs)
+    -- Cohen's operators, as 'Cassini.Simplify.Automatic.simplify' rewrites them
+    | f == sDivide, [x, y] <- V.toList vs -> simplifyQuotient x y
+    | f == sSubtract || f == sMinus, not (V.null vs) -> simplifyDifference vs
+    | f == sFactorial, [v] <- V.toList vs -> simplifyFactorial v
   _ -> Right (mkApp h vs)
   where
     numericHead f = f == sPlus || f == sTimes || f == sPower || isJust (fnOf f)
-    cohenOperators = map systemSymbol ["Divide", "Subtract", "Minus", "Factorial"]
 
 -- | A @Flat@ and @Orderless@ node's operands as the evaluator hands them to
 -- the built-in (§4.4 steps 8–9): nested operands of the same head spliced
@@ -215,13 +218,17 @@ settle :: HashSet Expr -> Expr -> Either Undefined Expr
 settle known u
   | HashSet.member u known = Right u
   | otherwise = case u of
-      App h as -> do
-        h' <- case h of
-          App _ _ -> settle known h
-          _ -> Right h
-        as' <- traverse (settle known) as
-        nodeE h' as'
+      App h as -> rebuildE (settle known) h as
       _ -> Right u
+
+-- | A node rebuilt bottom-up through 'nodeE': the head when it is compound,
+-- then the arguments, each by the given recursion.
+rebuildE :: (Expr -> Either Undefined Expr) -> Expr -> V.Vector Expr -> Either Undefined Expr
+rebuildE go h as = do
+  h' <- case h of
+    App _ _ -> go h
+    _ -> Right h
+  traverse go as >>= nodeE h'
 
 -- | Cohen's automatic simplification with the elementary rules and §4.15's
 -- radical normalization at every node, bottom-up.
@@ -233,21 +240,22 @@ simplifyE u = case u of
   Num n -> Right (mkNumber (normalize n))
   Str _ -> Right u
   Sym _ -> Right u
-  App h as -> do
-    h' <- case h of
-      App _ _ -> simplifyE h
-      _ -> Right h
-    vs <- traverse simplifyE as
-    nodeE h' vs
+  App h as -> rebuildE simplifyE h as
 
 -- | An ASAE on which no elementary or radical rule fires, at any node.
 isElementaryNormal :: Expr -> Bool
-isElementaryNormal u = isASAE u && go u
+isElementaryNormal u = isASAE u && everyNode nodeNormal u
   where
-    go v = case v of
-      App h as -> nodeNormal h as && (case h of App _ _ -> go h; _ -> True) && all go as
+    nodeNormal = \case
+      App h as -> either (const False) (isNode h as) (step h as)
       _ -> True
-    nodeNormal h as = step h as == Right (mkApp h as)
+
+-- | Whether the predicate holds at every node, heads included.
+everyNode :: (Expr -> Bool) -> Expr -> Bool
+everyNode p u =
+  p u && case u of
+    App h as -> everyNode p h && all (everyNode p) as
+    _ -> True
 
 -- The rules.
 
@@ -276,12 +284,18 @@ circular fn x
       y <- call fn' arg
       if negative then times [Int_ (-1), y] else Right y
   | leadingNegative x = parity fn x
-  | Just (_, s) <- constantPi x = case snd <$> find ((== s) . fst) values of
-      Just v -> v
-      Nothing -> Right (call' fn x)
+  | Just s <- constantPi x, Just v <- HashMap.lookup (fromEnum fn, s) circularValues = v
   | otherwise = Right (call' fn x)
-  where
-    values = [(0, valueAt0 fn), (1 / 6, valueAtSixth fn), (1 / 4, valueAtQuarter fn)]
+
+-- | The special values at 0, π/6 and π/4, built once.
+circularValues :: HashMap (Int, Rational) (Either Undefined Expr)
+circularValues =
+  HashMap.fromList
+    [ ((fromEnum fn, s), v fn)
+    | fn <- [Sin, Cos, Tan, Cot, Sec, Csc],
+      (s, v) <- [(0, valueAt0), (1 / 6, valueAtSixth), (1 / 4, valueAtQuarter)]
+    ]
+{-# NOINLINE circularValues #-}
 
 -- | The cofunction and sign for @fn(θ + k·π/2)@, @k@ mod 4: Cohen's item 4.
 shift :: Fn -> Integer -> (Fn, Bool)
@@ -500,10 +514,10 @@ piPart x = case x of
   _ -> ([],) <$> piCoefficient x
 
 -- | The argument as a constant multiple of π, 0 included.
-constantPi :: Expr -> Maybe ([Expr], Rational)
+constantPi :: Expr -> Maybe Rational
 constantPi = \case
-  Int_ 0 -> Just ([], 0)
-  x -> piPart x >>= \(rest, r) -> if null rest then Just (rest, r) else Nothing
+  Int_ 0 -> Just 0
+  x -> piPart x >>= \(rest, r) -> r <$ guard (null rest)
 
 piCoefficient :: Expr -> Maybe Rational
 piCoefficient = \case

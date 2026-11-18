@@ -28,13 +28,12 @@ module Cassini.Simplify.Rational
   )
 where
 
-import Cassini.Core.Expr (Expr, exprArgs, pattern App, pattern Call, pattern Int_, pattern Num)
+import Cassini.Core.Expr (Expr, pattern Call, pattern Int_, pattern Num)
 import Cassini.Core.Symbol (sPlus, sPower, sTimes)
-import Cassini.Number (Number (NInt, NRat), toRational')
+import Cassini.Number (Number (NInt, NRat))
 import Cassini.Simplify.Automatic (Undefined)
-import Cassini.Simplify.Elementary (plus, power, times)
+import Cassini.Simplify.Elementary (everyNode, plus, power, times)
 import Data.HashSet qualified as HashSet
-import Data.Vector qualified as V
 
 -- $setup
 -- >>> import Cassini.Core.Expr (apply, mkNumber, mkSymbol)
@@ -113,7 +112,7 @@ numerator' :: Expr -> Either Undefined Expr
 numerator' u = case u of
   Num (NRat r) -> Right (Int_ (numerator r))
   Num (NInt _) -> Right u
-  Call p [_, Num e] | p == sPower, isNegative e -> Right (Int_ 1)
+  Call p [_, Num e] | p == sPower, e < NInt 0 -> Right (Int_ 1)
   Call t fs | t == sTimes -> traverse numerator' fs >>= times
   _ -> Right u
 
@@ -122,12 +121,9 @@ denominator' :: Expr -> Either Undefined Expr
 denominator' u = case u of
   Num (NRat r) -> Right (Int_ (denominator r))
   Num (NInt _) -> Right (Int_ 1)
-  Call p [_, Num e] | p == sPower, isNegative e -> power u (Int_ (-1))
+  Call p [_, Num e] | p == sPower, e < NInt 0 -> power u (Int_ (-1))
   Call t fs | t == sTimes -> traverse denominator' fs >>= times
   _ -> Right (Int_ 1)
-
-isNegative :: Number -> Bool
-isNegative e = toRational' e < 0
 
 -- | Cohen's @Rationalize_expression@ (Fig. 6.12): combine the terms of every
 -- sum over a common denominator, recursively.
@@ -138,14 +134,13 @@ rationalizeExpression :: Expr -> Either Undefined Expr
 rationalizeExpression u = case u of
   Call p [b, e] | p == sPower -> rationalizeExpression b >>= (`power` e)
   Call t fs | t == sTimes -> traverse rationalizeExpression fs >>= times
-  Call p ts@(_ : _) | p == sPlus -> traverse rationalizeExpression ts >>= foldrM1 rationalizeSum
+  Call p (t : ts) | p == sPlus -> traverse rationalizeExpression (t :| ts) >>= sumFromRight
   _ -> Right u
   where
-    foldrM1 f = \case
-      [] -> Right (Int_ 0)
-      xs -> case reverse xs of
-        y : ys -> foldlM (flip f) y ys
-        [] -> Right (Int_ 0)
+    -- the terms combined from the right, the last one the seed
+    sumFromRight = \case
+      y :| [] -> Right y
+      y :| (z : zs) -> sumFromRight (z :| zs) >>= rationalizeSum y
 
 -- | Cohen's @Rationalize_sum@: @m/r + n/s → (m s + n r)/(r s)@.
 rationalizeSum :: Expr -> Expr -> Either Undefined Expr
@@ -168,15 +163,11 @@ rationalizeSum u v = do
 -- product has a sum operand, and no power with an integer exponent of at
 -- least 2 has a sum base. Function arguments count as subexpressions.
 isAlgebraicExpanded :: Expr -> Bool
-isAlgebraicExpanded u = here && all isAlgebraicExpanded (V.toList (exprArgs u)) && headOk
+isAlgebraicExpanded = everyNode $ \case
+  Call t fs | t == sTimes -> not (any isSum fs)
+  Call p [b, Int_ n] | p == sPower -> not (n >= 2 && isSum b)
+  _ -> True
   where
-    here = case u of
-      Call t fs | t == sTimes -> not (any isSum fs)
-      Call p [b, Int_ n] | p == sPower -> not (n >= 2 && isSum b)
-      _ -> True
-    headOk = case u of
-      App h@(App _ _) _ -> isAlgebraicExpanded h
-      _ -> True
     isSum = \case
       Call p _ -> p == sPlus
       _ -> False

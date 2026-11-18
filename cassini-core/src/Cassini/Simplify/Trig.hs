@@ -36,7 +36,7 @@ import Cassini.Core.Expr (Expr, exprArgs, mkNumber, pattern App, pattern Call, p
 import Cassini.Core.Symbol (sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt), fromRational')
 import Cassini.Simplify.Automatic (Undefined (..))
-import Cassini.Simplify.Elementary (Fn (..), call, fnOf, nodeE, plus, power, times)
+import Cassini.Simplify.Elementary (Fn (..), call, everyNode, fnOf, nodeE, plus, power, rebuildE, times)
 import Cassini.Simplify.Rational (algebraicExpand, algebraicExpandFrom, choose, denominator', expandMainOp, isAlgebraicExpanded, numerator', rationalizeExpression)
 import Data.HashSet qualified as HashSet
 import Data.Vector qualified as V
@@ -72,6 +72,10 @@ sinCos = \case
     _ -> Nothing
   _ -> Nothing
 
+-- | The family of a sine or cosine.
+familyOf :: Expr -> Maybe Family
+familyOf = fmap (\(fam, _, _) -> fam) . sinCos
+
 -- | Cohen's @Trig_substitute@ and its hyperbolic counterpart: @Tan@, @Cot@,
 -- @Sec@ and @Csc@ in terms of @Sin@ and @Cos@, at every node. Each node is
 -- normalized as it is rebuilt, so a denominator that becomes 0 on the way
@@ -83,13 +87,7 @@ trigSubstitute :: Expr -> Either Undefined Expr
 trigSubstitute = go
   where
     go v = case v of
-      App h as -> do
-        h' <- case h of
-          App _ _ -> go h
-          _ -> Right h
-        as' <- traverse go as
-        w <- nodeE h' as'
-        substitute w
+      App h as -> rebuildE go h as >>= substitute
       _ -> Right v
     substitute w = case w of
       Call f [a] | Just fn <- fnOf f -> case fn of
@@ -117,7 +115,11 @@ trigSubstitute = go
 -- >>> expandTrig (apply (fnSymbol Sin) [apply sPlus [x, y]])
 -- Right Plus[Times[Cos[y], Sin[x]], Times[Cos[x], Sin[y]]]
 expandTrig :: Expr -> Either Undefined Expr
-expandTrig = trigSubstitute >=> go
+expandTrig = trigSubstitute >=> expandSubstituted
+
+-- | 'expandTrig' on an expression with no @Tan@ or the others left.
+expandSubstituted :: Expr -> Either Undefined Expr
+expandSubstituted = go
   where
     go u = case u of
       App h as -> do
@@ -145,7 +147,7 @@ expandTrigRules = rulesFor Circular
 -- | @Expand_trig_rules@ for either family.
 rulesFor :: Family -> Expr -> Either Undefined (Expr, Expr)
 rulesFor fam a = case a of
-  Call p ts@(_ : _ : _) | p == sPlus -> sumRules fam ts
+  Call p (t : ts@(_ : _)) | p == sPlus -> sumRules fam (t :| ts)
   Call t (Int_ n : _ : _) | t == sTimes -> do
     theta <- times [mkNumber (fromRational' (1 / fromInteger n)), a]
     (s1, c1) <- rulesFor fam theta
@@ -163,18 +165,17 @@ rulesFor fam a = case a of
 -- instead gives the same pairs without building a sum of the remaining terms
 -- at every level, which would make the construction quadratic in the
 -- number of terms (§8.4).
-sumRules :: Family -> [Expr] -> Either Undefined (Expr, Expr)
+sumRules :: Family -> NonEmpty Expr -> Either Undefined (Expr, Expr)
 sumRules fam = \case
-  [t] -> rulesFor fam t
-  t : rest -> do
+  t :| [] -> rulesFor fam t
+  t :| (r : rest) -> do
     (sf, cf) <- rulesFor fam t
-    (sr, cr) <- sumRules fam rest
+    (sr, cr) <- sumRules fam (r :| rest)
     s <- sequence [times [sf, cr], times [cf, sr]] >>= plus
     c <- case fam of
       Circular -> sequence [times [cf, cr], times [Int_ (-1), sf, sr]] >>= plus
       Hyperbolic -> sequence [times [cf, cr], times [sf, sr]] >>= plus
     pure (s, c)
-  [] -> (,) <$> call (sinOf fam) (Int_ 0) <*> call (cosOf fam) (Int_ 0)
 
 -- | The multiple-angle formulas (7.20)–(7.21), and their hyperbolic
 -- counterparts from §7.1 Exercise 9: @sin(nθ)@ or @cos(nθ)@ for @n ≥ 1@ in
@@ -197,11 +198,7 @@ multiple fam isSin n s c = do
 contractTrig :: Expr -> Either Undefined Expr
 contractTrig u = case u of
   App h as -> do
-    h' <- case h of
-      App _ _ -> contractTrig h
-      _ -> Right h
-    as' <- traverse contractTrig as
-    v <- nodeE h' as'
+    v <- rebuildE contractTrig h as
     if isProductOrPower v then contractRules v else Right v
   _ -> Right u
 
@@ -251,8 +248,8 @@ separate = foldr place ([], [], [])
       Just Hyperbolic -> (c, circ, f : hyp)
       Nothing -> (f : c, circ, hyp)
     family f = case f of
-      Call p [b, Int_ n] | p == sPower, n > 0 -> (\(fam, _, _) -> fam) <$> sinCos b
-      _ -> (\(fam, _, _) -> fam) <$> sinCos f
+      Call p [b, Int_ n] | p == sPower, n > 0 -> familyOf b
+      _ -> familyOf f
 
 -- | Cohen's @Contract_trig_power@ (§7.2 Exercise 7, and Exercise 9 for the
 -- hyperbolic pair): a positive integer power of a sine or cosine by the
@@ -323,20 +320,20 @@ contractProduct u = case u of
 simplifyTrig :: Expr -> Either Undefined Expr
 simplifyTrig u = do
   w <- trigSubstitute u >>= rationalizeExpression
-  n <- numerator' w >>= expandTrig >>= contractTrig
-  d <- denominator' w >>= expandTrig >>= contractTrig
+  -- substituted already: rationalizing and splitting introduce no Tan
+  n <- numerator' w >>= expandSubstituted >>= contractTrig
+  d <- denominator' w >>= expandSubstituted >>= contractTrig
   case d of
     Int_ 0 -> Left (if n == Int_ 0 then ZeroOverZero else ZeroDenominator)
     -- A numeric denominator is distributed over the numerator: a number does
     -- not distribute over a sum on its own (D29), and rationalization gave
     -- the numerator integer coefficients, so n/16 would otherwise stay
     -- (1/16)·(16 a + 16 b).
-    Num _ -> do
-      r <- power d (Int_ (-1))
-      times [n, r] >>= expandMainOp
     _ -> do
-      r <- power d (Int_ (-1))
-      times [n, r]
+      q <- power d (Int_ (-1)) >>= \r -> times [n, r]
+      case d of
+        Num _ -> expandMainOp q
+        _ -> pure q
 
 -- | Definition 7.4, strengthened per §7.1 Exercise 8 and extended to the
 -- hyperbolic pair: no argument of a sine or cosine is a sum or a product with
@@ -367,11 +364,4 @@ isTrigContracted u = isAlgebraicExpanded u && everyNode ok u
       Call t fs | t == sTimes -> count Circular fs <= 1 && count Hyperbolic fs <= 1
       Call p [b, Int_ n] | p == sPower, n > 0 -> isNothing (sinCos b)
       _ -> True
-    count fam = length . filter (\f -> fmap (\(g, _, _) -> g) (sinCos f) == Just fam)
-
--- | Whether the predicate holds at every node, heads included.
-everyNode :: (Expr -> Bool) -> Expr -> Bool
-everyNode p u =
-  p u && case u of
-    App h as -> everyNode p h && all (everyNode p) (V.toList as)
-    _ -> True
+    count fam = length . filter ((== Just fam) . familyOf)

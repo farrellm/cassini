@@ -45,6 +45,9 @@ module Cassini.Simplify.Automatic
     simplifyDifference,
     simplifyFactorial,
     simplifyFunction,
+    sDivide,
+    sSubtract,
+    sMinus,
 
     -- * Cohen's operand operators
     powerBase,
@@ -461,6 +464,7 @@ summands u
   | isSum u = V.toList (exprArgs u)
   | otherwise = [u]
 
+-- | The heads 'simplify' rewrites away, besides @Factorial@.
 sDivide, sSubtract, sMinus :: Symbol
 sDivide = systemSymbol "Divide"
 sSubtract = systemSymbol "Subtract"

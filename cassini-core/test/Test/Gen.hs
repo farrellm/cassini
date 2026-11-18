@@ -11,8 +11,6 @@ module Test.Gen
     genElementary,
     genTrig,
     genTrigQuotient,
-    elementaryFn,
-    piE,
     genRNE,
     genPattern,
     genSubterm,
@@ -36,6 +34,7 @@ where
 import Cassini.Core.Expr
 import Cassini.Core.Symbol (globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sFactorial, sPattern, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt, NRat), fromRational')
+import Cassini.Simplify.Elementary (Fn)
 import Data.Ratio ((%))
 import Data.Vector qualified as V
 import Test.QuickCheck (Gen, arbitrary, chooseInt, chooseInteger, elements, frequency, oneof, shrink, vectorOf)
@@ -321,28 +320,7 @@ genElementary n
           (4, elementaryFn <$> elements heads <*> argument)
         ]
   where
-    heads =
-      [ "Sin",
-        "Cos",
-        "Tan",
-        "Cot",
-        "Sec",
-        "Csc",
-        "Sinh",
-        "Cosh",
-        "Tanh",
-        "Coth",
-        "Sech",
-        "Csch",
-        "ArcSin",
-        "ArcCos",
-        "ArcTan",
-        "ArcCot",
-        "ArcSec",
-        "ArcCsc",
-        "Exp",
-        "Log"
-      ]
+    heads = map show (universe @Fn) :: [Text]
     argument =
       oneof
         [ genElementary (n `div` 2),
@@ -442,13 +420,11 @@ genTrigQuotient = do
         if cost > budget
           then (fs, budget, quotients)
           else (f : fs, budget - cost, quotients + fromEnum quotient)
-    plainFactor = do
+    plainFactor = factorFrom ["Sin", "Cos"] ["Sinh", "Cosh"]
+    quotientFactor = factorFrom ["Tan", "Sec"] ["Tanh"]
+    factorFrom circularHeads hyperbolicHeads = do
       (arg, w, circular) <- argument
-      f <- elements (if circular then ["Sin", "Cos"] else ["Sinh", "Cosh"])
-      pure (elementaryFn f arg, w)
-    quotientFactor = do
-      (arg, w, circular) <- argument
-      f <- elements (if circular then ["Tan", "Sec"] else ["Tanh"])
+      f <- elements (if circular then circularHeads else hyperbolicHeads)
       pure (elementaryFn f arg, w)
     -- x, y, x + y or x - y, with a multiple of π/6 on circular arguments.
     argument = do
