@@ -1,0 +1,5 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List. Log[b, 0] is Log[0]/Log[b], -Infinity/Log[b]: -Infinity for a base above 1, Infinity for one in (0, 1), where it had been -Infinity for every base. *)
+Log[2, 0]
+Log[Rational[1, 2], 0]
+Log[Pi, 0]
+Log[E, 0]

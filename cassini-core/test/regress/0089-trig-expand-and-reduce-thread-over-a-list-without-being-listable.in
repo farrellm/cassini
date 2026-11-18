@@ -1,0 +1,5 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List. TrigExpand and TrigReduce are only Protected, as Expand and Simplify are, but thread over a list, nested lists included. They had been Listable. *)
+Attributes[TrigExpand]
+Attributes[TrigReduce]
+TrigExpand[List[Sin[Times[2, x]], List[Cos[Times[2, y]]]]]
+TrigReduce[List[Power[Sin[x], 2], Times[Sin[x], Cos[x]]]]

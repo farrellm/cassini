@@ -1,0 +1,11 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List. Log[b, z] is r when b and z are positive radicals with z = b^r, r rational; only an integer base above 1 and an integer or unit-fraction z had qualified, so Log[4, 8] was 3/2 while Log[1/2, 1/8] stayed a quotient. Log[12, 18] is no rational power and stays. *)
+Log[Rational[1, 2], Rational[1, 8]]
+Log[Rational[2, 3], Rational[9, 4]]
+Log[Rational[1, 4], 2]
+Log[Rational[3, 5], Rational[5, 3]]
+Log[Power[2, Rational[1, 2]], Rational[1, 2]]
+Log[Power[2, Rational[1, 2]], 2]
+Log[Power[2, Rational[1, 3]], 2]
+Log[Times[Rational[1, 2], Power[6, Rational[1, 2]]], Rational[3, 2]]
+Log[Rational[3, 2], Times[Rational[1, 2], Power[6, Rational[1, 2]]]]
+Log[12, 18]

@@ -44,8 +44,12 @@ library
     Cassini.Builtins.Calculus
     Cassini.Builtins.Control
     Cassini.Builtins.Define
+    Cassini.Builtins.Elementary
+    Cassini.Builtins.Held
     Cassini.Builtins.Pattern
+    Cassini.Builtins.Polynomial
     Cassini.Builtins.Session
+    Cassini.Builtins.Simplify
     Cassini.Builtins.Structural
     Cassini.Core.Expr
     Cassini.Core.Expr.Internal
@@ -56,6 +60,7 @@ library
     Cassini.Eval.Kernel
     Cassini.Eval.Message
     Cassini.Number
+    Cassini.Number.Integer
     Cassini.Pattern
     Cassini.Pattern.Commutative
     Cassini.Pattern.Match
@@ -65,6 +70,10 @@ library
     Cassini.Rules
     Cassini.Script
     Cassini.Simplify.Automatic
+    Cassini.Simplify.Elementary
+    Cassini.Simplify.Numeric
+    Cassini.Simplify.Rational
+    Cassini.Simplify.Trig
     Cassini.Structure
     Cassini.Syntax.FullForm
     Cassini.Syntax.Lexer
@@ -121,6 +130,9 @@ test-suite cassini-test
     Test.Cassini.Pattern.Syntactic
     Test.Cassini.Rules
     Test.Cassini.Simplify.Automatic
+    Test.Cassini.Simplify.Elementary
+    Test.Cassini.Simplify.ElementaryWL
+    Test.Cassini.Simplify.Trig
     Test.Cassini.Structure
     Test.Cassini.Syntax
     Test.Gen
@@ -220,6 +232,7 @@ benchmark cassini-bench
     Bench.Eval
     Bench.Pattern
     Bench.Simplify
+    Bench.Trig
 
   ghc-options:      -O2 -with-rtsopts=-T
   build-depends:

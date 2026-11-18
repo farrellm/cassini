@@ -56,7 +56,7 @@ where
 
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
-import Cassini.Core.Symbol (Symbol, sFactorial, sPlus, sPower, sTimes, systemSymbol)
+import Cassini.Core.Symbol (sDivide, sFactorial, sMinus, sPlus, sPower, sSubtract, sTimes)
 import Cassini.Number (Number (NInt), add, compareNumber, divide, mul, neg, normalize, pow)
 import Cassini.Structure (Kind (..), exprKind)
 import Data.HashSet qualified as HashSet
@@ -460,8 +460,3 @@ summands :: Expr -> [Expr]
 summands u
   | isSum u = V.toList (exprArgs u)
   | otherwise = [u]
-
-sDivide, sSubtract, sMinus :: Symbol
-sDivide = systemSymbol "Divide"
-sSubtract = systemSymbol "Subtract"
-sMinus = systemSymbol "Minus"

@@ -5,7 +5,9 @@
 --
 -- The built-in downvalues of @Plus@, @Times@ and @Power@ are Cohen's
 -- 'simplifySum', 'simplifyProduct' and 'simplifyPower' on arguments step 3
--- has already evaluated, so already simplified. They are not the recursive
+-- has already evaluated, so already simplified; @Times@ adds §4.15's
+-- coefficient merge, and @Power@ §4.15's radicals and §4.11's
+-- @E^(c·Log[z]) → z^c@ ('simplifyProductE', 'simplifyPowerE'). They are not the recursive
 -- 'Cassini.Simplify.Automatic.simplify', which would re-traverse every
 -- subtree on every round. The other heads rewrite to those three, as in WL:
 -- @Sqrt[x]@ is @Power[x, 1/2]@.
@@ -21,7 +23,8 @@ import Cassini.Core.Expr (Expr, apply, mkNumber, pattern Infinity, pattern Int_,
 import Cassini.Core.Symbol (sDirectedInfinity, sIndeterminate, sPlus, sPower, sTimes)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Number (fromRational')
-import Cassini.Simplify.Automatic (Undefined (..), simplifyPower, simplifyProduct, simplifySum)
+import Cassini.Simplify.Automatic (Undefined (..), simplifySum)
+import Cassini.Simplify.Elementary (simplifyPowerE, simplifyProductE)
 import Data.Ratio ((%))
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -30,7 +33,7 @@ import Effectful (Eff, (:>))
 definitions :: [Definition]
 definitions =
   [ define "Plus" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifySum (V.fromList (args e))))],
-    define "Times" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifyProduct (V.fromList (args e))))],
+    define "Times" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifyProductE (V.fromList (args e))))],
     define "Power" [Listable, NumericFunction, OneIdentity, Protected] [down powerRule],
     define "Divide" numeric [down (rewrite2 (\a b -> apply sTimes [a, apply sPower [b, Int_ (-1)]]))],
     define "Subtract" numeric [down (rewrite2 (\a b -> apply sPlus [a, apply sTimes [Int_ (-1), b]]))],
@@ -47,7 +50,7 @@ definitions =
     numeric = [Listable, NumericFunction, Protected]
     -- Power[x, y, z] is Power[x, Power[y, z]]: right-associative, as WL's.
     powerRule e = case args e of
-      [v, w] -> fromSimplified e (simplifyPower v w)
+      [v, w] -> fromSimplified e (simplifyPowerE v w)
       v : w : rest@(_ : _) -> pure (Just (apply sPower [v, nest w rest]))
       _ -> pure Nothing
     nest y = \case

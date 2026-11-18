@@ -1,16 +1,16 @@
 -- | "Cassini.Builtins.Calculus": each rule of @D@'s table, @Derivative@'s
 -- subvalues, milestone 1c's criterion, and §7.3's @Calculus@ row over
--- arithmetic expressions (DESIGN.md §4.9).
+-- arithmetic and elementary expressions (DESIGN.md §4.9, §4.11).
 module Test.Cassini.Calculus (tests) where
 
-import Cassini.Core.Expr (apply)
+import Cassini.Core.Expr (Expr, apply)
 import Cassini.Core.Symbol (systemSymbol)
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
-import Test.Gen (genBAE, shrinkExpr, sym)
+import Test.Gen (genBAE, genElementary, shrinkExpr, sym)
 import Test.Kernel (eval, evalStd, ff, std)
 import Test.Numeric (evalAt, genPoint)
-import Test.QuickCheck (Property, counterexample, discard, forAll, forAllShrink, sized)
+import Test.QuickCheck (Gen, Property, counterexample, discard, forAll, forAllShrink, sized)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Test.Tasty.QuickCheck (testProperty)
@@ -39,8 +39,10 @@ tests =
           testCase "the sum rule" $ evalStd ["D[Plus[Power[x, 2], x, 1], x]"] @?= "Plus[1, Times[2, x]]",
           testCase "the product rule" $ evalStd ["D[Times[a, x, f[x]], x]"] @?= "Plus[Times[a, f[x]], Times[Derivative[1][f][x], a, x]]",
           testCase "the power rule, symbolic exponent" $ evalStd ["D[Power[x, n], x]"] @?= "Times[n, Power[x, Plus[-1, n]]]",
-          testCase "an exponent depending on the variable waits for Log (§4.11)" $
-            evalStd ["D[Power[2, x], x]"] @?= "D[Power[2, x], x]",
+          testCase "an exponent depending on the variable takes Log (§4.11)" $
+            evalStd ["D[Power[2, x], x]"] @?= "Times[Power[2, x], Log[2]]",
+          testCase "D[E^u] is E^u D[u], because Log[E] is 1 (§4.11)" $
+            evalStd ["D[Power[E, Power[x, 2]], x]"] @?= "Times[2, Power[E, Power[x, 2]], x]",
           testCase "the chain rule, through each argument" $
             evalStd ["D[h[x, Power[x, 2], y], x]"] @?= "Plus[Derivative[1, 0, 0][h][x, Power[x, 2], y], Times[2, Derivative[0, 1, 0][h][x, Power[x, 2], y], x]]",
           testCase "differentiating a derivative raises its order" $ evalStd ["D[Derivative[1][f][x], x]"] @?= "Derivative[2][f][x]",
@@ -69,7 +71,8 @@ tests =
           testCase "a user derivative as a subvalue" $
             evalStd ["SetDelayed[Derivative[1][f][Pattern[x, Blank[]]], fp[x]]", "D[f[Power[x, 2]], x]"] @?= "Times[2, fp[Power[x, 2]], x]"
         ],
-      testProperty "D agrees with finite differences of the test evaluator (§7.3)" finiteDifferences
+      testProperty "D agrees with finite differences of the test evaluator (§7.3)" (finiteDifferences genBAE),
+      testProperty "D agrees with finite differences, over elementary expressions (§7.3)" (finiteDifferences genElementary)
     ]
 
 -- | For an arithmetic expression @e@ in @x@, @D[e, x]@ at a point agrees with
@@ -79,9 +82,9 @@ tests =
 -- thousand, so a point where the two steps' differences disagree by more
 -- than the tolerance is not one the difference can judge, and is discarded,
 -- as are points where either side is undefined or @D@ stays unevaluated.
-finiteDifferences :: Property
-finiteDifferences =
-  forAllShrink (sized (genBAE . min 24)) shrinkExpr $ \e ->
+finiteDifferences :: (Int -> Gen Expr) -> Property
+finiteDifferences gen =
+  forAllShrink (sized (gen . min 24)) shrinkExpr $ \e ->
     forAll genPoint $ \p ->
       let d = fst (eval std (apply (systemSymbol "D") [e, sym "x"]))
           at x0 = evalAt (Map.insert "x" x0 p)

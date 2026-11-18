@@ -16,6 +16,8 @@ import Test.Cassini.Pattern.Sequence qualified
 import Test.Cassini.Pattern.Syntactic qualified
 import Test.Cassini.Rules qualified
 import Test.Cassini.Simplify.Automatic qualified
+import Test.Cassini.Simplify.Elementary qualified
+import Test.Cassini.Simplify.Trig qualified
 import Test.Cassini.Structure qualified
 import Test.Cassini.Syntax qualified
 import Test.Golden (goldenTests)
@@ -39,6 +41,8 @@ main = do
         Test.Cassini.Pattern.Commutative.tests,
         Test.Cassini.Pattern.tests,
         Test.Cassini.Simplify.Automatic.tests,
+        Test.Cassini.Simplify.Elementary.tests,
+        Test.Cassini.Simplify.Trig.tests,
         Test.Cassini.Eval.tests,
         Test.Cassini.Control.tests,
         Test.Cassini.Calculus.tests,

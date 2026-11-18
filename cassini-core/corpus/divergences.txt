@@ -24,10 +24,6 @@ wolfram/DirectedInfinity/PossibleIssues/1 D25
 wolfram/Minus/BasicExamples/1 D29
 wolfram/Subtract/BasicExamples/2 D29
 
-# Radicals of rationals (§4.15), with the track for control flow, logic and numbers.
-wolfram/Listable/Scope/3 pending §4.15
-wolfram/Sqrt/BasicExamples/2 pending §4.15
-
 # The infinity pass and DirectedInfinity's own rules (§4.15), with the same track.
 wolfram/ComplexInfinity/Scope/3 pending §4.15
 wolfram/Sqrt/Scope/SpecificValues/3 pending §4.15
@@ -48,13 +44,6 @@ wolfram/RepeatedNull/PropertiesAndRelations/1 §4.5.1
 # reverse of the inputs': Out[1] is Replace's answer and Out[2] ReplaceList's.
 # Both answers are what this evaluator gives, each for its own input.
 wolfram/ReplaceList/PropertiesAndRelations/1 D27
-
-# Radicals of rationals (§4.15), as above.
-wolfram/Map/PropertiesAndRelations/5 pending §4.15
-
-# Pi and its attributes, with the elementary functions (§4.11).
-wolfram/SymbolName/PropertiesAndRelations/2 pending §4.11
-wolfram/Symbol/PropertiesAndRelations/5 pending §4.11
 
 # D30: WL runs f[x_] := f[x + 1] as one evaluation chain, to $IterationLimit;
 # here a user rule evaluates its own right-hand side (§4.4), so the chain
@@ -145,3 +134,111 @@ expreduce/functional/Map/10 Mathics3
 expreduce/system/Attributes/5 undocumented
 expreduce/system/Attributes/6 undocumented
 mathics/builtin/assignments/test_assignment/test_upset/1 undocumented
+
+# --- The elementary-functions track (§4.11-§4.12) ---
+
+# Mathics3: its normalizer spells 1/Sqrt[3] as Sqrt[3]/3 and a/Sqrt[2] as
+# (1/2) Sqrt[2] a; WL 15.0.1 gives Power[3, Rational[-1, 2]] and
+# Power[2, Rational[-1, 2]] (Test.Cassini.Simplify.ElementaryWL, through the
+# Wolfram Cloud MCP), which is §4.15 step 6's spelling.
+expreduce/arithmetic/Times/24 Mathics3
+wolfram/Cot/BasicExamples/1 Mathics3
+wolfram/Csc/BasicExamples/1 Mathics3
+wolfram/Pi/Applications/4 Mathics3
+wolfram/Sec/BasicExamples/1 Mathics3
+wolfram/Tan/BasicExamples/1 Mathics3
+
+# D16: no Sin[x]/Cos[x] → Tan[x], nor 1/Sin[x] → Csc[x], in automatic
+# evaluation; TrigReduce and Simplify substitute Tan and the others first.
+expreduce/calculus/D/22 D16
+wolfram/Coth/Scope/FunctionIdentitiesAndSimplifications/2 D16
+wolfram/Cot/PropertiesAndRelations/3 D16
+wolfram/Cot/Scope/FunctionIdentitiesAndSimplifications/3 D16
+wolfram/Cot/Scope/FunctionRepresentations/1 D16
+wolfram/Csch/PossibleIssues/3 D16
+wolfram/Csch/Scope/FunctionIdentitiesAndSimplifications/3 D16
+wolfram/Csc/Scope/FunctionIdentitiesAndSimplifications/3 D16
+wolfram/Csc/Scope/FunctionRepresentations/1 D16
+wolfram/D/Scope/ElementaryFunctions/3 D16
+wolfram/Sech/PossibleIssues/3 D16
+wolfram/Sech/Scope/FunctionIdentitiesAndSimplifications/3 D16
+wolfram/Sec/Scope/FunctionIdentitiesAndSimplifications/3 D16
+wolfram/Sec/Scope/FunctionRepresentations/1 D16
+wolfram/Tanh/Scope/FunctionIdentitiesAndSimplifications/2 D16
+wolfram/Tan/PropertiesAndRelations/3 D16
+wolfram/Tan/Scope/FunctionIdentitiesAndSimplifications/3 D16
+wolfram/Tan/Scope/FunctionRepresentations/1 D16
+wolfram/TrigReduce/Scope/1 D16
+wolfram/TrigReduce/Scope/2 D16
+wolfram/TrigReduce/Scope/3 D16
+
+# D17: Simplify is Cohen's Simplify_trig, one strategy. Each of these is
+# equal in value to WL's answer (Sech/Applications/3's is 0 at every point
+# tried) in a form the strategy does not reduce further.
+wolfram/ArcCot/Applications/2 D17
+wolfram/ArcTan/Applications/3 D17
+wolfram/Sech/Applications/3 D17
+wolfram/Sinh/PropertiesAndRelations/2 D17
+
+# D19: no exponential-trigonometric conversion.
+wolfram/Simplify/Scope/1 D19
+wolfram/TrigReduce/PossibleIssues/3 D19
+
+# D20: no complex numbers.
+wolfram/Cosh/Scope/Differentiation/3 D20
+wolfram/Sinh/Scope/Differentiation/3 D20
+
+# §4.12: Cohen's trig-expanded form is not unique, by (7.17), and TrigExpand
+# does not apply sin² + cos² = 1; and Expand of (x + y + z)^1000, 501,501
+# terms, takes longer than the corpus's five seconds.
+wolfram/Expand/Scope/AdvancedUses/4 §4.12
+wolfram/TrigExpand/Scope/1 §4.12
+
+# D48: WL's features on these pages that no track builds: elementary
+# functions of an infinity, ArcTan's two-argument form, D to a symbolic or
+# list-shaped order or of a pure function, Expand's second argument, and
+# b^Log[b, x] → x.
+mathics/builtin/numbers/test_trig/test_trig/1 D48
+mathics/builtin/numbers/test_trig/test_trig/2 D48
+mathics/builtin/numbers/test_trig/test_trig/3 D48
+mathics/builtin/numbers/test_trig/test_trig/4 D48
+mathics/builtin/numbers/test_trig/test_trig/5 D48
+mathics/builtin/numbers/test_trig/test_trig/6 D48
+mathics/builtin/numbers/test_trig/test_trig/7 D48
+mathics/builtin/numbers/test_trig/test_trig/8 D48
+wolfram/ArcCos/Scope/SpecificValues/2 D48
+wolfram/ArcCot/Scope/SpecificValues/2 D48
+wolfram/ArcCsc/Scope/SpecificValues/2 D48
+wolfram/ArcSec/Scope/SpecificValues/3 D48
+wolfram/ArcSin/Scope/SpecificValues/2 D48
+wolfram/ArcTan/Applications/4 D48
+wolfram/ArcTan/BasicExamples/2 D48
+wolfram/ArcTan/Scope/SpecificValues/3 D48
+wolfram/ArcTan/Scope/SpecificValues/4 D48
+wolfram/Cosh/Scope/SpecificValues/2 D48
+wolfram/Cos/Scope/Differentiation/3 D48
+wolfram/Coth/Scope/SpecificValues/2 D48
+wolfram/Csch/Scope/SpecificValues/2 D48
+wolfram/D/BasicExamples/3 D48
+wolfram/Derivative/Scope/3 D48
+wolfram/D/Scope/BasicUses/11 D48
+wolfram/D/Scope/SymbolicFunctions/6 D48
+wolfram/Expand/Scope/AdvancedUses/5 D48
+wolfram/Expand/Scope/AdvancedUses/6 D48
+wolfram/Expand/Scope/AdvancedUses/7 D48
+wolfram/Exp/Scope/Differentiation/2 D48
+wolfram/Exp/Scope/SpecificValues/3 D48
+wolfram/Log/Scope/FunctionIdentitiesAndSimplifications/1 D48
+wolfram/Log/Scope/SpecificValues/2 D48
+wolfram/MapApply/Applications/1 D48
+wolfram/Power/Scope/Differentiation/4 D48
+wolfram/Sech/Scope/SpecificValues/2 D48
+wolfram/Sinh/Scope/SpecificValues/2 D48
+wolfram/Sin/Scope/Differentiation/3 D48
+wolfram/Tanh/Scope/SpecificValues/2 D48
+
+# D27: the expected outputs are numbered out of the inputs' order: Out[1]
+# holds the second input's answer, or Out[3] appears twice.
+wolfram/TrigExpand/BasicExamples/1 D27
+wolfram/TrigExpand/PossibleIssues/1 D27
+

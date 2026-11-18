@@ -12,7 +12,7 @@ module Test.Numeric
 where
 
 import Cassini.Core.Expr (Expr, pattern App, pattern Num, pattern Sym)
-import Cassini.Core.Symbol (sFactorial, sPlus, sPower, sTimes, symName)
+import Cassini.Core.Symbol (sFactorial, sPlus, sPower, sTimes, symContext, symName)
 import Cassini.Number (toRational')
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
@@ -30,7 +30,10 @@ evalAt point = go
   where
     go = \case
       Num n -> Just (fromRational (toRational' n))
-      Sym s -> Map.lookup s.symName point
+      Sym s
+        | s.symName == "Pi" && s.symContext == "System`" -> Just pi
+        | s.symName == "E" && s.symContext == "System`" -> Just (exp 1)
+        | otherwise -> Map.lookup s.symName point
       App (Sym h) as
         | h == sPlus -> sum <$> traverse go (V.toList as)
         | h == sTimes -> product <$> traverse go (V.toList as)
@@ -40,6 +43,10 @@ evalAt point = go
             e' <- go e
             power b' e'
         | h == sFactorial, [x] <- V.toList as -> go x >>= factorial
+        | h.symContext == "System`",
+          [x] <- V.toList as,
+          Just f <- elementary h.symName ->
+            go x >>= f
         | h.symName == "f" -> traverse go (V.toList as) >>= periodic (\w -> sin (1.3 * w))
         | h.symName == "g" -> traverse go (V.toList as) >>= periodic (\w -> cos (0.7 * w) + 2)
       -- Derivative[n1, …, nk][f][a1, …, ak]: f and g are functions of
@@ -83,6 +90,36 @@ evalAt point = go
       | isWhole x && x >= 0 && x <= 20 = Just (product [1 .. x])
       | otherwise = Nothing
     isWhole x = x == fromInteger (round x)
+
+-- | The elementary functions, real-valued and away from their poles and
+-- branch cuts: 'Nothing' within 1e-8 of a pole, for a logarithm of a
+-- non-positive number, and for an inverse outside its real domain.
+elementary :: Text -> Maybe (Double -> Maybe Double)
+elementary = \case
+  "Sin" -> total sin
+  "Cos" -> total cos
+  "Tan" -> Just (\x -> sin x `over` cos x)
+  "Cot" -> Just (\x -> cos x `over` sin x)
+  "Sec" -> Just (\x -> 1 `over` cos x)
+  "Csc" -> Just (\x -> 1 `over` sin x)
+  "Sinh" -> total sinh
+  "Cosh" -> total cosh
+  "Tanh" -> total tanh
+  "Coth" -> Just (\x -> cosh x `over` sinh x)
+  "Sech" -> total (\x -> 1 / cosh x)
+  "Csch" -> Just (\x -> 1 `over` sinh x)
+  "ArcSin" -> Just (\x -> if abs x <= 1 then Just (asin x) else Nothing)
+  "ArcCos" -> Just (\x -> if abs x <= 1 then Just (acos x) else Nothing)
+  "ArcTan" -> total atan
+  "ArcCot" -> Just (\x -> if x == 0 then Just (pi / 2) else Just (atan (1 / x)))
+  "ArcSec" -> Just (\x -> if abs x >= 1 then Just (acos (1 / x)) else Nothing)
+  "ArcCsc" -> Just (\x -> if abs x >= 1 then Just (asin (1 / x)) else Nothing)
+  "Exp" -> total exp
+  "Log" -> Just (\x -> if x > 0 then Just (logBase (exp 1) x) else Nothing)
+  _ -> Nothing
+  where
+    total f = Just (Just . f)
+    over a b = if abs b < 1e-8 then Nothing else Just (a / b)
 
 -- | Whether two values agree to a relative tolerance; values that are not
 -- finite or are too large to compare meaningfully agree with anything.

@@ -1,0 +1,2 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)": Expand is not Listable (Attributes[Expand] is {Protected}) but threads over a list, Expand[{(1 + x)^2, (a + b) c}] being {1 + 2 x + x^2, a c + b c}. *)
+Expand[List[Power[Plus[1, x], 2], Times[Plus[a, b], c]]]

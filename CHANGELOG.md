@@ -4,6 +4,42 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* The elementary functions (DESIGN.md §4.11): `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` …
+  `ArcCsc`, `Exp` and `Log`, with `Pi` and `E`. Special values at multiples of π reduced to the
+  first octant, parity, periodicity with a symbolic remainder as WL 15.0.1 does it (D39), inverses,
+  `E^(c Log[z]) → z^c`, `Log[b, z]` as `Log[z]/Log[b]`, and every derivative. 306 answers agree with
+  WL 15.0.1; `ArcSec[0]` and `ArcCsc[0]` are poles, which the design's table had missed. `D[x^x, x]`
+  now evaluates.
+
+* Radicals of rationals (§4.15 steps 1–6): `Sqrt[8]` is `2 Sqrt[2]`, `64^(1/3)` is 4, and
+  `Sqrt[2]/2` is `1/Sqrt[2]`, one spelling per value for prime radicands below 1024 (D24).
+
+* `Expand`, `TrigExpand`, `TrigReduce` and `Simplify` (§4.12): Cohen's algebraic expansion,
+  trigonometric expansion and contraction, and `Simplify_trig`, circular and hyperbolic. Cohen's
+  Examples 7.15–7.18 simplify to 0. `Simplify` is that one strategy (D17); its cost grows steeply
+  with the degree of the rationalized numerator. `Expand` threads over a list, as WL's does. None of the four rewrites inside a held
+  argument: `Expand[Hold[1 + 1]]` had been `Hold[2]`. `TrigExpand`, `TrigReduce` and `Simplify`
+  report a denominator that `Tan`'s substitution makes 0, where they had dropped the substitution
+  and carried on. `TrigExpand` of a nested product no longer re-expands every level below each
+  node: at depth 40, 30 ms where it took 432 ms. `Log[x, x^2]` stays `Log[x^2]/Log[x]`, as in
+  WL, where it had been 2, which is wrong at `x = -1`. `Log[1/2, 0]` is `Infinity`, where every
+  `Log[b, 0]` had been `-Infinity`, and `Log[x, 0]` stays. `Simplify` threads over a list, as WL's
+  does: `Simplify[{(1 - Cos[x]^2)/Sin[x]^2}]` is `{1}`. `Log[b, z]` is exact for every `z = b^r`
+  over positive radicals: `Log[1/2, 1/8]` is 3, where only an integer base had reduced, and
+  `Log[Sqrt[2], 8]` is 6, where WL leaves an equal quotient. `TrigExpand` and `TrigReduce` are no
+  longer `Listable`, as in WL, where all four are only `Protected`; they thread over a list as
+  `Expand` and `Simplify` do. A result a held argument cancels out of is kept:
+  `Simplify[Hold[a] (Sin[x]^2 + Cos[x]^2 - 1)]` is 0, where the placeholder had leaked out with
+  the unsimplified input. `Log[Sqrt[2], 0]` is `-Infinity` and `Log[1/Sqrt[2], 0]` `Infinity`,
+  where a radical base had been left alone. A procedure's `Power::infy` or `Power::indet`
+  quotes the `1/0`, `0/0` or `0^0` it met, where it had quoted the whole `Simplify[…]` call.
+  `Expand` shares each inner sum's powers in Cohen's `Expand_power`, where it had recomputed
+  them once per outer exponent: `Expand[(a+b+c+d)^30]` takes 70 ms and allocates 144 MiB, from
+  116 ms and 194 MiB.
+
+* Interning stays off (D2): on `Expand[(a+b+c+d)^30]` the weak table takes 230 ms and 339 MiB
+  against 108 ms and 194 MiB. Both benchmark baselines are regenerated with §8.4's new groups.
+
 * The limits leave `TerminatedEvaluation[…]`, as WL does (DESIGN.md §4.3, §4.4, D30). The
   iteration limit cuts in place: `p := q; q := p; p + 1` is
   `1 + TerminatedEvaluation["IterationLimit"]`. The recursion limit emits

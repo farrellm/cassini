@@ -1,0 +1,2 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)": Simplify threads over a list, though it is only Protected, so each element simplifies as it would alone. Without the threading, rationalization stopped at the list and the first element stayed a sum. *)
+Simplify[List[Times[Plus[1, Times[-1, Power[Cos[x], 2]]], Power[Sin[x], -2]], Times[Tan[x], Cos[x]]]]

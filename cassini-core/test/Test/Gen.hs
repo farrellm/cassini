@@ -8,6 +8,9 @@ module Test.Gen
     genNumber,
     genExpr,
     genBAE,
+    genElementary,
+    genTrig,
+    genTrigQuotient,
     genRNE,
     genPattern,
     genSubterm,
@@ -29,8 +32,9 @@ module Test.Gen
 where
 
 import Cassini.Core.Expr
-import Cassini.Core.Symbol (globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sFactorial, sPattern, sPlus, sPower, sTimes)
+import Cassini.Core.Symbol (globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sFactorial, sPattern, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt, NRat), fromRational')
+import Cassini.Simplify.Elementary (Fn)
 import Data.Ratio ((%))
 import Data.Vector qualified as V
 import Test.QuickCheck (Gen, arbitrary, chooseInt, chooseInteger, elements, frequency, oneof, shrink, vectorOf)
@@ -290,3 +294,141 @@ genPattern = go "pv"
       b <- if j > i then elements [sBlankSequence, sBlankNullSequence] else pure sBlankNullSequence
       let v = apply sPattern [sym (path <> "s"), apply b []]
       pure (V.take i as <> V.singleton v <> V.drop j as)
+
+-- | An elementary head applied to one argument.
+elementaryFn :: Text -> Expr -> Expr
+elementaryFn f x = apply (systemSymbol f) [x]
+
+-- | @Pi@, times a rational.
+piE :: Rational -> Expr
+piE r = times [rat r, mkSymbol (systemSymbol "Pi")]
+
+-- | 'genBAE' with the elementary functions of §4.11 among the heads, and
+-- @Pi@, @E@ and rational multiples of π among the leaves, so that the special
+-- values, parity, periodicity, inverses and radicals all fire. An argument
+-- is often @u + r·π@, the shape periodicity reads.
+genElementary :: Int -> Gen Expr
+genElementary n
+  | n <= 1 = leaf
+  | otherwise =
+      frequency
+        [ (2, leaf),
+          (2, plus <$> args 2 3),
+          (2, times <$> args 2 3),
+          (2, power <$> genElementary (n `div` 2) <*> exponentE),
+          (2, power . rat <$> elements [2, 3, 8, 12, 1 % 2, -2, -1] <*> (rat <$> elements [1 % 2, -(1 % 2), 3 % 2, 1 % 3])),
+          (4, elementaryFn <$> elements heads <*> argument)
+        ]
+  where
+    heads = map show (universe @Fn) :: [Text]
+    argument =
+      oneof
+        [ genElementary (n `div` 2),
+          (\u r -> plus [u, piE r]) <$> genElementary (n `div` 3) <*> piMultiple,
+          piE <$> piMultiple,
+          rat <$> elements [0, 1, -1, 1 % 2, -(1 % 2), 2]
+        ]
+    piMultiple = (%) <$> chooseInteger (-25, 25) <*> elements [1, 2, 3, 4, 6, 8, 12]
+    leaf =
+      frequency
+        [ (2, int <$> chooseInteger (-3, 3)),
+          (1, rat <$> elements [1 % 2, -(1 % 3)]),
+          (1, mkSymbol . systemSymbol <$> elements ["Pi", "E"]),
+          (5, sym <$> elements ["a", "x", "y"])
+        ]
+    exponentE =
+      frequency
+        [ (4, int <$> chooseInteger (-2, 3)),
+          (2, rat <$> elements [1 % 2, -(1 % 2)]),
+          (1, sym <$> elements ["x", "y"])
+        ]
+    args lo hi = do
+      k <- chooseInt (lo, hi)
+      vectorOf k (genElementary ((n - 1) `div` k))
+
+-- | Sums of up to three terms, each a small integer times at most two
+-- factors, each factor a circular or hyperbolic function or its square,
+-- sometimes over a denominator of the same shape: the domain of §4.12's
+-- procedures. Arguments are small integer combinations of @x@ and @y@,
+-- sometimes with a multiple of π/6. The bounds are the point: expansion
+-- multiplies out multiple angles and contraction then works through every
+-- term, so the cost grows with the product of the degrees, and an unbounded
+-- generator makes the laws take minutes for no more coverage. The size
+-- parameter only chooses whether there is a denominator.
+genTrig :: Int -> Gen Expr
+genTrig n = do
+  top <- sumOf
+  frequency
+    [ (3, pure top),
+      (if n > 3 then 1 else 0, (\d -> times [top, power d (int (-1))]) <$> sumOf)
+    ]
+  where
+    sumOf = do
+      k <- chooseInt (1, 3)
+      plus <$> vectorOf k termOf
+    termOf = do
+      c <- int <$> elements [-2, -1, 1, 2, 3]
+      k <- chooseInt (1, 2)
+      fs <- vectorOf k factor
+      pure (times (c : fs))
+    factor = do
+      f <-
+        oneof
+          [ elementaryFn <$> elements ["Sin", "Cos", "Sin", "Cos", "Tan", "Sec"] <*> argument True,
+            elementaryFn <$> elements ["Sinh", "Cosh", "Tanh"] <*> argument False
+          ]
+      e <- elements [1, 1, 2]
+      pure (if e == 1 then f else power f (int e))
+    -- π only in a circular argument: a hyperbolic function of a multiple of
+    -- π has no value to reduce to, and its expansion only grows.
+    argument withPi = do
+      a <- chooseInteger (-2, 2)
+      b <- chooseInteger (-1, 1)
+      k <- if withPi then elements [0, 0, 1, 2, 3, -1] else pure 0
+      pure (plus [times [int a, sym "x"], times [int b, sym "y"], piE (k % 6)])
+
+-- | Sums of quotients with little trigonometric content, for
+-- 'Cassini.Simplify.Trig.simplifyTrig''s law: what that law adds over the
+-- 'genTrig' laws is substitution, rationalization and putting the numerator
+-- over the denominator. Cohen's procedure costs time steeply in the degree of
+-- the rationalized numerator: @Rationalize_sum@ takes no least common
+-- multiple, so each quotient's denominator multiplies every other term. So
+-- the degree is budgeted as the term is built, not filtered afterwards: a
+-- factor of @a x + b y@ weighs @|a| + |b|@, twice that if it brings a
+-- denominator (@Tan@, @Sec@, @Tanh@, or an explicit one), the whole
+-- expression weighs at most 8, and at most two factors bring a denominator.
+genTrigQuotient :: Gen Expr
+genTrigQuotient = do
+  k <- chooseInt (1, 3)
+  (terms, budget, quotients) <- foldlM addTerm ([], 8 :: Integer, 0 :: Int) [1 .. k]
+  let top = plus terms
+  divide <- elements [False, False, True]
+  if divide && quotients < 2 && budget >= 2
+    then (\(d, _) -> times [top, power d (int (-1))]) <$> plainFactor
+    else pure top
+  where
+    addTerm (ts, budget, quotients) _ = do
+      c <- int <$> elements [-2, -1, 1, 2]
+      n <- chooseInt (1, 2)
+      (fs, budget', quotients') <- foldlM addFactor ([], budget, quotients) [1 .. n]
+      pure (times (c : fs) : ts, budget', quotients')
+    addFactor (fs, budget, quotients) _ = do
+      quotient <- if quotients < 2 then elements [False, False, True] else pure False
+      (f, w) <- if quotient then quotientFactor else plainFactor
+      let cost = if quotient then 2 * w else w
+      pure $
+        if cost > budget
+          then (fs, budget, quotients)
+          else (f : fs, budget - cost, quotients + fromEnum quotient)
+    plainFactor = factorFrom ["Sin", "Cos"] ["Sinh", "Cosh"]
+    quotientFactor = factorFrom ["Tan", "Sec"] ["Tanh"]
+    factorFrom circularHeads hyperbolicHeads = do
+      (arg, w, circular) <- argument
+      f <- elements (if circular then circularHeads else hyperbolicHeads)
+      pure (elementaryFn f arg, w)
+    -- x, y, x + y or x - y, with a multiple of π/6 on circular arguments.
+    argument = do
+      (a, b) <- elements [(1, 0), (0, 1), (1, 1), (1, -1)]
+      circular <- elements [True, True, False]
+      k <- if circular then elements [0, 0, 1, 2, 3, -1] else pure 0
+      pure (plus [times [int a, sym "x"], times [int b, sym "y"], piE (k % 6)], abs a + abs b, circular)
