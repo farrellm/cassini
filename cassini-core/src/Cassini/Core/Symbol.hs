@@ -31,6 +31,11 @@ module Cassini.Core.Symbol
     sTimes,
     sPower,
     sFactorial,
+    sDivide,
+    sSubtract,
+    sMinus,
+    sPi,
+    sE,
     sList,
     sInteger,
     sRational,
@@ -208,6 +213,19 @@ sPower = systemSymbol "Power"
 -- | @System`Factorial@.
 sFactorial :: Symbol
 sFactorial = systemSymbol "Factorial"
+
+-- | @System`Divide@, @System`Subtract@ and @System`Minus@: the heads
+-- Cohen's 'Cassini.Simplify.Automatic.simplify' rewrites away, besides
+-- @Factorial@.
+sDivide, sSubtract, sMinus :: Symbol
+sDivide = systemSymbol "Divide"
+sSubtract = systemSymbol "Subtract"
+sMinus = systemSymbol "Minus"
+
+-- | @System`Pi@ and @System`E@: constants with no value (DESIGN.md §4.11).
+sPi, sE :: Symbol
+sPi = systemSymbol "Pi"
+sE = systemSymbol "E"
 
 -- | @System`List@.
 sList :: Symbol

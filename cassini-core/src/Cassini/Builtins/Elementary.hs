@@ -16,9 +16,9 @@ import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Arithmetic (fromSimplified)
 import Cassini.Builtins.Define (Definition, define, down, sub)
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (sDerivative, sFunction, sPlus, sPower, sSlot, sTimes)
+import Cassini.Core.Symbol (sDerivative, sE, sFunction, sPlus, sPower, sSlot, sTimes)
 import Cassini.Number (fromRational')
-import Cassini.Simplify.Elementary (Fn (..), fnOf, fnSymbol, sE, simplifyElementary)
+import Cassini.Simplify.Elementary (Fn (..), fnOf, fnSymbol, simplifyElementary)
 import Data.Vector qualified as V
 
 -- | The elementary heads, @Pi@ and @E@, and their derivatives.

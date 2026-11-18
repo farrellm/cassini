@@ -7,10 +7,10 @@
 module Test.Cassini.Simplify.Elementary (tests) where
 
 import Cassini.Core.Expr (Expr, apply, pattern Call, pattern Int_, pattern Num, pattern Sym)
-import Cassini.Core.Symbol (sPower, sTimes)
+import Cassini.Core.Symbol (sPi, sPower, sTimes)
 import Cassini.Number (Number (NInt, NRat))
 import Cassini.Number.Integer (integerRoot)
-import Cassini.Simplify.Elementary (Fn (..), fnOf, isElementaryNormal, sPi, simplifyE)
+import Cassini.Simplify.Elementary (Fn (..), fnOf, isElementaryNormal, simplifyE)
 import Data.Ratio ((%))
 import Data.Text qualified as T
 import Test.Cassini.Simplify.ElementaryWL (periodicity, values)

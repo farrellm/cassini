@@ -22,8 +22,6 @@ module Cassini.Simplify.Elementary
     Fn (..),
     fnSymbol,
     fnOf,
-    sPi,
-    sE,
 
     -- * One node
     simplifyElementary,
@@ -32,6 +30,8 @@ module Cassini.Simplify.Elementary
     simplifyProductE,
     nodeE,
     rebuildE,
+    rebuildArgs,
+    subterms,
 
     -- * The procedure
     simplifyE,
@@ -43,15 +43,16 @@ module Cassini.Simplify.Elementary
     times,
     plus,
     power,
+    negateE,
   )
 where
 
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
-import Cassini.Core.Symbol (Symbol, sFactorial, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
+import Cassini.Core.Symbol (Symbol, sDivide, sE, sFactorial, sIndeterminate, sMinus, sPi, sPlus, sPower, sSubtract, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
 import Cassini.Number.Integer (multiplicity)
-import Cassini.Simplify.Automatic (Undefined (..), isASAE, sDivide, sMinus, sSubtract, simplifyDifference, simplifyFactorial, simplifyPower, simplifyQuotient, simplifySum)
+import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplifyDifference, simplifyFactorial, simplifyPower, simplifyQuotient, simplifySum)
 import Cassini.Simplify.Numeric (simplifyProductE, simplifyRadical)
 import Data.HashMap.Strict qualified as HashMap
 import Data.HashSet qualified as HashSet
@@ -108,11 +109,6 @@ fnOf s = HashMap.lookup s fnTable
 fnTable :: HashMap Symbol Fn
 fnTable = HashMap.fromList [(fnSymbol fn, fn) | fn <- universe]
 {-# NOINLINE fnTable #-}
-
--- | @Pi@ and @E@: constants with no value (§4.11).
-sPi, sE :: Symbol
-sPi = systemSymbol "Pi"
-sE = systemSymbol "E"
 
 -- | One elementary-function node whose arguments are already in normal form.
 -- 'Nothing': no rule applies, and the node is in normal form.
@@ -177,7 +173,7 @@ simplifyPowerE v w = do
 nodeE :: Expr -> V.Vector Expr -> Either Undefined Expr
 nodeE h vs = do
   r <- step h vs
-  if isNode h vs r then pure r else settle (knownOf vs) r
+  if isNode h vs r then pure r else settle (subterms 2 vs) r
 
 -- | Whether the expression is the node @h[vs]@, without building it.
 isNode :: Expr -> V.Vector Expr -> Expr -> Bool
@@ -222,12 +218,15 @@ orderless f vs
       Call g ws | g == f -> ws
       _ -> [v]
 
--- | The arguments, and their arguments two levels down: the subterms a rule's
--- result is likely to reuse, which are already in normal form.
-knownOf :: V.Vector Expr -> HashSet Expr
-knownOf vs = HashSet.fromList (concatMap twoLevels (V.toList vs))
+-- | The expressions, and their arguments down to the given depth: the
+-- subterms a rule's result is likely to reuse, which are already in normal
+-- form. 'nodeE' takes two levels of a node's arguments.
+subterms :: Int -> V.Vector Expr -> HashSet Expr
+subterms depth = V.foldl' (add depth) HashSet.empty
   where
-    twoLevels v = v : concatMap (\c -> c : V.toList (exprArgs c)) (V.toList (exprArgs v))
+    add d known v
+      | d <= 0 = HashSet.insert v known
+      | otherwise = V.foldl' (add (d - 1)) (HashSet.insert v known) (exprArgs v)
 
 -- | Normalize a rule's result, bottom up, skipping the subterms known to be
 -- normal already.
@@ -241,11 +240,18 @@ settle known u
 -- | A node rebuilt bottom-up through 'nodeE': the head when it is compound,
 -- then the arguments, each by the given recursion.
 rebuildE :: (Expr -> Either Undefined Expr) -> Expr -> V.Vector Expr -> Either Undefined Expr
-rebuildE go h as = do
+rebuildE go h as = snd <$> rebuildArgs go h as
+{-# INLINE rebuildE #-}
+
+-- | 'rebuildE', with the rebuilt arguments too.
+rebuildArgs :: (Expr -> Either Undefined Expr) -> Expr -> V.Vector Expr -> Either Undefined (V.Vector Expr, Expr)
+rebuildArgs go h as = do
   h' <- case h of
     App _ _ -> go h
     _ -> Right h
-  traverse go as >>= nodeE h'
+  as' <- traverse go as
+  (as',) <$> nodeE h' as'
+{-# INLINE rebuildArgs #-}
 
 -- | Cohen's automatic simplification with the elementary rules and §4.15's
 -- radical normalization at every node, bottom-up.
@@ -299,7 +305,7 @@ circular fn x
       sπ <- times [Num (fromRational' s), Sym sPi]
       arg <- plus (rest <> [sπ])
       y <- call fn' arg
-      if negative then times [Int_ (-1), y] else Right y
+      if negative then negateE y else Right y
   | leadingNegative x = parity fn x
   | Just s <- constantPi x, Just v <- HashMap.lookup (fn, s) circularValues = v
   | otherwise = Right (call' fn x)
@@ -390,7 +396,7 @@ inverseTable =
     cosValues = [(v, 1 / 2 - r) | (v, r) <- sinValues] <> [(neg v, 1 / 2 + r) | (v, r) <- sinValues, r /= 0]
     secValues = [(v, 1 / 2 - r) | (v, r) <- cscValues] <> [(neg v, 1 / 2 + r) | (v, r) <- cscValues]
     cotValues = [(rad 0 1 0, 1 / 2), (rad 1 3 (1 / 2), 1 / 6), (rad 1 1 0, 1 / 4), (rad 1 3 (-(1 / 2)), 1 / 3)]
-    neg v = v >>= \e -> times [Int_ (-1), e]
+    neg v = v >>= negateE
     tables =
       [ (ArcSin, sinValues),
         (ArcCos, cosValues),
@@ -498,7 +504,7 @@ coprimeBasis = go . ordNub . filter (> 1)
 parity :: Fn -> Expr -> Either Undefined Expr
 parity fn x
   | fn `elem` [Sin, Tan, Cot, Csc, Sinh, Tanh, Coth, Csch, ArcSin, ArcTan, ArcCot, ArcCsc] =
-      negateArg x >>= call fn >>= \y -> times [Int_ (-1), y]
+      negateArg x >>= call fn >>= negateE
   | fn `elem` [Cos, Sec, Cosh, Sech] = negateArg x >>= call fn
   | otherwise = Right (call' fn x)
 
@@ -518,10 +524,8 @@ leadingNegative x = case x of
 -- kept and its leading sign flips.
 negateArg :: Expr -> Either Undefined Expr
 negateArg x = case x of
-  Call p ts | p == sPlus -> traverse negateTerm ts >>= plus
-  _ -> negateTerm x
-  where
-    negateTerm t = times [Int_ (-1), t]
+  Call p ts | p == sPlus -> traverse negateE ts >>= plus
+  _ -> negateE x
 
 -- | A π term in the argument: @r·π@ alone, or among the terms of a sum,
 -- with the other terms.
@@ -567,6 +571,10 @@ call' fn y = apply (fnSymbol fn) [y]
 times, plus :: [Expr] -> Either Undefined Expr
 times = nodeE (Sym sTimes) . V.fromList
 plus = nodeE (Sym sPlus) . V.fromList
+
+-- | @-y@, normalized.
+negateE :: Expr -> Either Undefined Expr
+negateE y = times [Int_ (-1), y]
 
 -- | @v^w@, normalized.
 power :: Expr -> Expr -> Either Undefined Expr

@@ -7,9 +7,9 @@
 module Test.Cassini.Simplify.Trig (tests) where
 
 import Cassini.Core.Expr (Expr, apply, mkNumber, mkSymbol, pattern Call)
-import Cassini.Core.Symbol (sPlus, sTimes)
+import Cassini.Core.Symbol (sPi, sPlus, sTimes)
 import Cassini.Number (fromRational')
-import Cassini.Simplify.Elementary (Fn (Sec), fnSymbol, sPi, simplifyE)
+import Cassini.Simplify.Elementary (Fn (Sec), fnSymbol, simplifyE)
 import Cassini.Simplify.Trig (contractTrig, expandTrig, isTrigContracted, isTrigExpanded, simplifyTrig, trigSubstitute)
 import Data.Text qualified as T
 import Test.Gen (genTrig, genTrigQuotient, shrinkExpr)

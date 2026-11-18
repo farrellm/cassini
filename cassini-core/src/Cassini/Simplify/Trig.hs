@@ -32,14 +32,12 @@ module Cassini.Simplify.Trig
   )
 where
 
-import Cassini.Core.Expr (Expr, exprArgs, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num)
+import Cassini.Core.Expr (Expr, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num)
 import Cassini.Core.Symbol (sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt), fromRational')
 import Cassini.Simplify.Automatic (Undefined (..))
-import Cassini.Simplify.Elementary (Fn (..), call, everyNode, fnOf, nodeE, plus, power, rebuildE, times)
+import Cassini.Simplify.Elementary (Fn (..), call, everyNode, fnOf, negateE, plus, power, rebuildArgs, rebuildE, subterms, times)
 import Cassini.Simplify.Rational (algebraicExpand, algebraicExpandFrom, choose, denominator', expandMainOp, isAlgebraicExpanded, numerator', rationalizeExpression)
-import Data.HashSet qualified as HashSet
-import Data.Vector qualified as V
 
 -- $setup
 -- >>> import Cassini.Core.Expr (apply, mkSymbol)
@@ -123,20 +121,15 @@ expandSubstituted = go
   where
     go u = case u of
       App h as -> do
-        h' <- case h of
-          App _ _ -> go h
-          _ -> Right h
-        as' <- traverse go as
-        v <- nodeE h' as'
+        (as', v) <- rebuildArgs go h as
         w <- case sinCos v of
           Just (fam, isSin, a) -> pick isSin <$> rulesFor fam a
           Nothing -> Right v
-        algebraicExpandFrom (expanded as') w
+        -- the operands, and theirs: each is a result of go, so expanded,
+        -- and a rebuilt node reuses them, a sum's terms spliced in a level down
+        algebraicExpandFrom (subterms 1 as') w
       _ -> Right u
     pick isSin (s, c) = if isSin then s else c
-    -- The operands, and theirs: each is a result of go, so expanded, and a
-    -- rebuilt node reuses them, a sum's terms spliced in a level down.
-    expanded as' = HashSet.fromList (concatMap (\a -> a : V.toList (exprArgs a)) (V.toList as'))
 
 -- | Cohen's @Expand_trig_rules@: the pair @(sin A, cos A)@, so that a sum of
 -- @n@ terms costs @2 (n - 1)@ rule applications (§7.1 Exercise 6). Not
@@ -155,7 +148,7 @@ rulesFor fam a = case a of
     sinN <- multiple fam True m s1 c1
     cosN <- multiple fam False m s1 c1
     -- sin and sinh are odd, cos and cosh even (§7.1 Exercise 5)
-    sinN' <- if n < 0 then times [Int_ (-1), sinN] else Right sinN
+    sinN' <- if n < 0 then negateE sinN else Right sinN
     pure (sinN', cosN)
   _ -> (,) <$> call (sinOf fam) a <*> call (cosOf fam) a
 
@@ -288,7 +281,7 @@ contractProduct u = case u of
           diffArg <- difference theta phi
           revArg <- difference phi theta
           let half f x = call f x >>= \y -> times [mkNumber (fromRational' (1 / 2)), y]
-              neg x = x >>= \y -> times [Int_ (-1), y]
+              neg x = x >>= negateE
               (cosF, sinF) = (cosOf fam, sinOf fam)
           terms <- case (sinA, sinB) of
             -- the one row the families differ in: which term is subtracted
@@ -307,7 +300,7 @@ contractProduct u = case u of
   where
     -- a power factor contracted, then the product again
     viaPower x y = contractPower x >>= \x' -> times [x', y] >>= contractRules
-    difference x y = times [Int_ (-1), y] >>= \ny -> plus [x, ny] >>= algebraicExpand
+    difference x y = negateE y >>= \ny -> plus [x, ny] >>= algebraicExpand
 
 -- | Cohen's @Simplify_trig@ (Fig. 7.10): substitute, rationalize, then
 -- expand and contract the numerator and the denominator separately. A
