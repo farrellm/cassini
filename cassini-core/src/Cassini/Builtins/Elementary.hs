@@ -30,9 +30,7 @@ definitions =
          define "Derivative" [] [sub (pure . derivativeOf)]
        ]
   where
-    rule fn e = case args e of
-      [x] -> maybe (pure Nothing) (fromSimplified e) (simplifyElementary (fnSymbol fn) (V.singleton x))
-      _ -> pure Nothing
+    rule fn e = maybe (pure Nothing) (fromSimplified e) (simplifyElementary (fnSymbol fn) (V.fromList (args e)))
 
 -- | @Derivative[n][f]@ for an elementary @f@: the table of §4.11 for the
 -- first derivative, and for a higher one, the derivative of that pure

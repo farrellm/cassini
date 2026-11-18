@@ -294,7 +294,8 @@ contractProduct u = case u of
 -- | Cohen's @Simplify_trig@ (Fig. 7.10): substitute, rationalize, then
 -- expand and contract the numerator and the denominator separately. A
 -- denominator that contracts to 0 is 'ZeroDenominator', or 'ZeroOverZero'
--- when the numerator does too.
+-- when the numerator does too; one that contracts to a number is
+-- distributed over the numerator.
 simplifyTrig :: Expr -> Either Undefined Expr
 simplifyTrig u = do
   w <- rationalizeExpression (trigSubstitute u)
@@ -302,6 +303,13 @@ simplifyTrig u = do
   d <- denominator' w >>= expandTrig >>= contractTrig
   case d of
     Int_ 0 -> Left (if n == Int_ 0 then ZeroOverZero else ZeroDenominator)
+    -- A numeric denominator is distributed over the numerator: a number does
+    -- not distribute over a sum on its own (D29), and rationalization gave
+    -- the numerator integer coefficients, so n/16 would otherwise stay
+    -- (1/16)·(16 a + 16 b).
+    Num _ -> do
+      r <- power d (Int_ (-1))
+      times [n, r] >>= expandMainOp
     _ -> do
       r <- power d (Int_ (-1))
       times [n, r]

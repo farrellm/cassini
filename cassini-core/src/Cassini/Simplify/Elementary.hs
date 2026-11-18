@@ -43,6 +43,7 @@ import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol (Symbol, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
 import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplify, simplifyPower, simplifyProduct, simplifySum)
+import Cassini.Number.Integer (isPerfectPower)
 import Cassini.Simplify.Numeric (mergeCoefficient, simplifyRadical)
 import Data.HashMap.Strict qualified as HashMap
 import Data.HashSet qualified as HashSet
@@ -104,6 +105,17 @@ simplifyElementary f vs = case (fnOf f, V.toList vs) of
   (Just fn, [x]) ->
     let r = elementary fn x
      in if r == Right (mkApp (Sym f) vs) then Nothing else Just r
+  -- Log[b, b^r] is r; any other Log[b, z] is Log[z]/Log[b], as in WL
+  -- (wolfram/HoldPattern/BasicExamples/3, wolfram/Log/Scope/SpecificValues/1)
+  (Just Log, [b, z])
+    -- base 0 is left alone; base 1 divides by Log[1] = 0
+    | b == Int_ 0 -> Nothing
+    | b == Int_ 1 -> Just (Left (if z == Int_ 1 then ZeroOverZero else ZeroDenominator))
+    | Just r <- logBase' b z -> Just (Right (Num (fromRational' r)))
+    | otherwise -> Just $ do
+        lz <- call Log z
+        lb <- call Log b >>= (`power` Int_ (-1))
+        times [lz, lb]
   _ -> Nothing
 
 -- | @E^(c·Log[z]) → z^c@ for numeric @c@, on a base and exponent in normal
@@ -348,6 +360,31 @@ logRule x = case x of
   Sym e | e == sE -> Right (Int_ 1)
   Call p [Sym e, r@(Num _)] | p == sPower, e == sE -> Right r
   _ -> Right (call' Log x)
+
+-- | @r@ when @z@ is @b^r@ exactly, @r@ rational: @z@ written as a power of
+-- @b@, or both integer powers of one integer.
+logBase' :: Expr -> Expr -> Maybe Rational
+logBase' b z
+  | b == z, b /= Int_ 1, b /= Int_ 0 = Just 1
+  | Call p [b', Num r] <- z, p == sPower, b' == b = Just (toRational' r)
+  | Int_ n <- b, n > 1, Num q <- z, q > NInt 0 = do
+      let (m, i) = rootOf n
+          r = toRational' q
+          (k, sign) = if numerator r == 1 then (denominator r, -1) else (numerator r, 1)
+      guard (denominator r == 1 || numerator r == 1)
+      j <- powerOf m k
+      Just (sign * fromInteger j / fromInteger i)
+  | otherwise = Nothing
+  where
+    -- n = m^i with m not a perfect power
+    rootOf n = case isPerfectPower n of
+      Just (m, j) -> let (m', i) = rootOf m in (m', i * j)
+      Nothing -> (n, 1)
+    -- k = m^j
+    powerOf m k
+      | k == 1 = Just 0
+      | k `mod` m == 0 = (+ 1) <$> powerOf m (k `div` m)
+      | otherwise = Nothing
 
 -- | Parity, on an argument whose leading operand has a negative
 -- coefficient: odd heads pull the sign out, even heads drop it, and the
