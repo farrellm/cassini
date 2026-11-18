@@ -2265,7 +2265,11 @@ MuPAD disagreeing, so each rule names the column it reproduces, and those rows a
   in `(-π, π]`: `Log[x, x^2]` stays a quotient, being 0, not 2, at `x = -1`. Base 1 divides by
   `Log[1] = 0`, so `Log[1, z]` is `Left ZeroDenominator` and `Log[1, 1]` `Left ZeroOverZero`,
   which §4.7 maps to `Power::infy` and `Power::indet`; WL 15.0.1 gives the same results, but its
-  message for `Log[1, 1]` is `Divide::indet`. Base 0 is left alone until §4.15's infinity pass
+  message for `Log[1, 1]` is `Divide::indet`. `Log[b, 0]` is `-∞/Log[b]`, whose direction is
+  `Log[b]`'s sign: `Left LogOfZero` for a base known above 1 (a rational, `Pi` or `E`), `Infinity`
+  for a rational base in `(0, 1)`, and left alone otherwise, where WL 15.0.1 gives `Log[x, 0]` as
+  `-∞/Log[x]`; reading every base's `Log[0]` as `LogOfZero` had made `Log[1/2, 0]` `-∞`
+  (regression case 0085). Base 0 is left alone until §4.15's infinity pass
   exists, where WL gives `Log[0, 0]` as `Indeterminate`. Added with the track, from the corpus.
 
 **Every rule is an identity over ℂ.** The kernel works in ℂ, as WL does, so a transformation that

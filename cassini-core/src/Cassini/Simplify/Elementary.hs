@@ -38,7 +38,7 @@ module Cassini.Simplify.Elementary
   )
 where
 
-import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Num, pattern Str, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol (Symbol, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
@@ -117,6 +117,10 @@ simplifyElementary f vs = case (fnOf f, V.toList vs) of
     -- base 0 is left alone; base 1 divides by Log[1] = 0
     | b == Int_ 0 -> Nothing
     | b == Int_ 1 -> Just (Left (if z == Int_ 1 then ZeroOverZero else ZeroDenominator))
+    -- Log[0]/Log[b] is -∞/Log[b], whose direction is Log[b]'s sign: -∞ for a
+    -- base known above 1, ∞ for a rational base in (0, 1), and left alone
+    -- where that sign is not known (WL 15.0.1: Log[x, 0] is -∞/Log[x])
+    | z == Int_ 0 -> logOfZeroOver b
     | Just r <- logBase' b z -> Just (Right (Num (fromRational' r)))
     | otherwise -> Just $ do
         lz <- call Log z
@@ -366,6 +370,15 @@ logRule x = case x of
   Sym e | e == sE -> Right (Int_ 1)
   Call p [Sym e, r@(Num _)] | p == sPower, e == sE -> Right r
   _ -> Right (call' Log x)
+
+-- | @Log[b, 0]@, for a base other than 0 and 1.
+logOfZeroOver :: Expr -> Maybe (Either Undefined Expr)
+logOfZeroOver = \case
+  Num n
+    | n > NInt 1 -> Just (Left LogOfZero)
+    | n > NInt 0 -> Just (Right Infinity)
+  Sym c | c == sPi || c == sE -> Just (Left LogOfZero)
+  _ -> Nothing
 
 -- | @r@ when @z@ is @b^r@ exactly, @r@ rational: @z@ written as a power of
 -- @b@, or both integer powers of one integer. @Log[b^r] = r Log[b]@ needs

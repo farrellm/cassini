@@ -22,7 +22,8 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   report a denominator that `Tan`'s substitution makes 0, where they had dropped the substitution
   and carried on. `TrigExpand` of a nested product no longer re-expands every level below each
   node: at depth 40, 30 ms where it took 432 ms. `Log[x, x^2]` stays `Log[x^2]/Log[x]`, as in
-  WL, where it had been 2, which is wrong at `x = -1`.
+  WL, where it had been 2, which is wrong at `x = -1`. `Log[1/2, 0]` is `Infinity`, where every
+  `Log[b, 0]` had been `-Infinity`, and `Log[x, 0]` stays.
 
 * Interning stays off (D2): on `Expand[(a+b+c+d)^30]` the weak table takes 230 ms and 339 MiB
   against 108 ms and 194 MiB. Both benchmark baselines are regenerated with §8.4's new groups.

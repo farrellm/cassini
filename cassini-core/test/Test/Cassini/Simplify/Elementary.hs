@@ -92,7 +92,12 @@ logTwo =
       row "a symbolic base with an exponent outside (-1, 1] stays a quotient" "Log[x, Power[x, 2]]" "Times[Power[Log[x], -1], Log[Power[x, 2]]]",
       row "a symbolic base with an exponent inside (-1, 1] reduces" "Log[x, Power[x, Rational[1, 2]]]" "Rational[1, 2]",
       row "base 1 divides by zero (WL 15.0.1: ComplexInfinity)" "Log[1, 2]" "DirectedInfinity[]",
-      row "Log[1, 1] is 0/0 (WL 15.0.1: Indeterminate)" "Log[1, 1]" "Indeterminate"
+      row "Log[1, 1] is 0/0 (WL 15.0.1: Indeterminate)" "Log[1, 1]" "Indeterminate",
+      row "Log[b, 0] for a base above 1 is -Infinity (WL 15.0.1)" "Log[3, 0]" "DirectedInfinity[-1]",
+      row "Log[b, 0] for a base in (0, 1) is Infinity (WL 15.0.1)" "Log[Rational[1, 3], 0]" "DirectedInfinity[1]",
+      -- WL 15.0.1 gives -Infinity/Log[x]; until the infinity pass (§4.15),
+      -- leaving it is the one answer that is not wrong for some x
+      row "Log[b, 0] for a base of unknown sign stays" "Log[x, 0]" "Log[x, 0]"
     ]
   where
     row name i o = testCase name (evalStd [i] @?= o)
