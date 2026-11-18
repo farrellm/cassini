@@ -237,10 +237,15 @@ evalStep0Own s = do
 -- standard chain in a round after a rewrite (§4.3).
 evalStep2Head :: (Kernel :> es) => Bool -> Bool -> Expr -> V.Vector Expr -> Eff es Node
 evalStep2Head tr left h as = do
-  h' <- (if left then evaluate else evaluatePart) h
+  h' <- evaluateAt left h
   when (tr && h' /= h) $ traceStep "2 Head" (mkApp h' as)
   attrs <- headAttributes h'
   pure Node {nodeHead = h', nodeArgs = as, nodeAttrs = attrs, nodeForced = [], nodeStripped = [], nodeUnheld = False, nodeTrace = tr, nodeLeft = left}
+
+-- | How steps 2 and 3 evaluate a part: on the standard chain in the first
+-- round, and as having left it in a round after a rewrite (§4.3).
+evaluateAt :: (Kernel :> es) => Bool -> Expr -> Eff es Expr
+evaluateAt left = if left then evaluate else evaluatePart
 
 -- | "The attributes of @h@" for steps 4–9: a symbol's own; for
 -- @Function[_, _, attrs]@, @attrs@, one attribute or a list (§4.13); none
@@ -282,7 +287,7 @@ evalStep3Args held n = do
           [x] -> sub x
           ys -> sub (apply sSequence ys)
       | otherwise = pure a
-    sub = if n.nodeLeft then evaluate else evaluatePart
+    sub = evaluateAt n.nodeLeft
     forced = \case
       App (Sym s) _ -> s == sEvaluate && not (holdAllComplete n.nodeAttrs)
       _ -> False

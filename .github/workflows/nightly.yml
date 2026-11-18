@@ -17,9 +17,11 @@ on:
 permissions:
   contents: read
 
+# Only a pull request's run is superseded by a newer push; a manual run does
+# not cancel the scheduled one on the same branch, or the night is lost.
 concurrency:
-  group: nightly-${{ github.ref }}
-  cancel-in-progress: true
+  group: nightly-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
