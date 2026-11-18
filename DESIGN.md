@@ -487,9 +487,9 @@ cycle. `Main`, `Test.**` and `Bench.**` appear throughout because `hlint .`, run
 every package's suite directories and `cassini-repl/app/`. The rules are by module name, so one
 config covers all three packages. §4.11–§4.12's modules need no rule of their own: `Cassini.Simplify.**` and
 `Cassini.Builtins.**` already place them, and they import only downward within L4
-(`Simplify.Trig` → `.Elementary`, `.Rational`; `.Rational` → `.Elementary`, for `simplifyE`;
-`.Elementary` → `.Numeric`; `.Numeric` → `.Automatic`; `Builtins.Arithmetic` → `Simplify.Elementary`, for `simplifyExpPower`,
-and → `Simplify.Numeric`). The same holds for
+(`Simplify.Trig` → `.Elementary`, `.Rational`; `.Rational` → `.Elementary`, for its node constructors;
+`.Elementary` → `.Numeric`; `.Numeric` → `.Automatic`; `Builtins.Arithmetic` → `Simplify.Elementary`, for
+`simplifyPowerE` and `simplifyProductE`). The same holds for
 §4.13–§4.15 and §6.5: `Cassini.Number.Integer` sees no `Expr`, and `Cassini.Solve` is in `A`, where
 rule 3 keeps it off `Expr` and `Cassini.Builtins.Polynomial` converts its results.
 

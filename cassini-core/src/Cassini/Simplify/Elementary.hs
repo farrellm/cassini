@@ -88,6 +88,9 @@ data Fn
   | Log
   deriving stock (Eq, Show, Enum, Bounded)
 
+instance Hashable Fn where
+  hashWithSalt salt = hashWithSalt salt . fromEnum
+
 -- | The head's @System`@ symbol, from a table built once: every rule and
 -- every node the procedures build asks for one, and 'systemSymbol' is a
 -- lookup in the global symbol table.
@@ -117,36 +120,44 @@ sE = systemSymbol "E"
 -- >>> simplifyElementary (fnSymbol Sin) (V.singleton (apply sTimes [Int_ (-1), x]))
 -- Just (Right Times[-1, Sin[x]])
 simplifyElementary :: Symbol -> V.Vector Expr -> Maybe (Either Undefined Expr)
-simplifyElementary f vs = case (fnOf f, V.toList vs) of
-  (Just fn, [x]) ->
-    let r = elementary fn x
-     in if either (const False) (isNode (Sym f) vs) r then Nothing else Just r
+simplifyElementary f vs = do
+  fn <- fnOf f
+  let r = elementaryNode fn f vs
+  if either (const False) (isNode (Sym f) vs) r then Nothing else Just r
+
+-- | The node @f[vs]@, @f@ the symbol of @fn@, to normal form: the node
+-- itself when no rule applies.
+elementaryNode :: Fn -> Symbol -> V.Vector Expr -> Either Undefined Expr
+elementaryNode fn f vs = case (fn, V.toList vs) of
+  (_, [x]) -> elementary fn x
   -- Log[b, b^r] is r; any other Log[b, z] is Log[z]/Log[b], as in WL
   -- (wolfram/HoldPattern/BasicExamples/3, wolfram/Log/Scope/SpecificValues/1)
-  (Just Log, [b, z])
+  (Log, [b, z])
     -- base 0 is left alone; base 1 divides by Log[1] = 0
-    | b == Int_ 0 -> Nothing
-    | b == Int_ 1 -> Just (Left (if z == Int_ 1 then ZeroOverZero else ZeroDenominator))
+    | b == Int_ 0 -> unchanged
+    | b == Int_ 1 -> Left (if z == Int_ 1 then ZeroOverZero else ZeroDenominator)
     -- Log[0]/Log[b] is -∞/Log[b], whose direction is Log[b]'s sign: -∞ for a
     -- base known above 1, ∞ for a rational base in (0, 1), and left alone
     -- where that sign is not known (WL 15.0.1: Log[x, 0] is -∞/Log[x])
-    | z == Int_ 0 -> logOfZeroOver b
-    | Just r <- logBase' b z -> Just (Right (Num (fromRational' r)))
-    | otherwise -> Just $ do
+    | z == Int_ 0 -> fromMaybe unchanged (logOfZeroOver b)
+    | Just r <- logBase' b z -> Right (Num (fromRational' r))
+    | otherwise -> do
         lz <- call Log z
         lb <- call Log b >>= (`power` Int_ (-1))
         times [lz, lb]
-  _ -> Nothing
+  _ -> unchanged
+  where
+    unchanged = Right (mkApp (Sym f) vs)
 
 -- | @E^(c·Log[z]) → z^c@ for numeric @c@, on a base and exponent in normal
 -- form: the principal @z^c@ is defined as @E^(c·Log[z])@.
 simplifyExpPower :: Expr -> Expr -> Maybe (Either Undefined Expr)
-simplifyExpPower b w
-  | b /= Sym sE = Nothing
-  | otherwise = case w of
-      Call l [z] | l == sLog -> Just (Right z)
-      Call t [c@(Num _), Call l [z]] | t == sTimes, l == sLog -> Just (nodeE (Sym sPower) (V.fromList [z, c]))
-      _ -> Nothing
+simplifyExpPower b w = case b of
+  Sym e | e == sE -> case w of
+    Call l [z] | l == sLog -> Just (Right z)
+    Call t [c@(Num _), Call l [z]] | t == sTimes, l == sLog -> Just (nodeE (Sym sPower) (V.fromList [z, c]))
+    _ -> Nothing
+  _ -> Nothing
 
 -- | Cohen's 'simplifyPower', then §4.15's radicals and 'simplifyExpPower':
 -- what @Power@'s built-in downvalue computes.
@@ -177,19 +188,25 @@ isNode h vs = \case
 -- | The rule for one node, by its head.
 step :: Expr -> V.Vector Expr -> Either Undefined Expr
 step h vs = case h of
-  Sym f
-    | numericHead f, V.elem (Sym sIndeterminate) vs -> Right (Sym sIndeterminate)
-    | f == sPlus -> simplifySum (orderless f vs)
-    | f == sTimes -> simplifyProductE (orderless f vs)
-    | f == sPower, [v, w] <- V.toList vs -> simplifyPowerE v w
-    | Just _ <- fnOf f -> fromMaybe (Right (mkApp h vs)) (simplifyElementary f vs)
-    -- Cohen's operators, as 'Cassini.Simplify.Automatic.simplify' rewrites them
-    | f == sDivide, [x, y] <- V.toList vs -> simplifyQuotient x y
-    | f == sSubtract || f == sMinus, not (V.null vs) -> simplifyDifference vs
-    | f == sFactorial, [v] <- V.toList vs -> simplifyFactorial v
+  Sym f -> case fnOf f of
+    Just fn
+      | V.any isIndeterminate vs -> Right (Sym sIndeterminate)
+      | otherwise -> elementaryNode fn f vs
+    Nothing
+      | f == sPlus || f == sTimes || f == sPower, V.any isIndeterminate vs -> Right (Sym sIndeterminate)
+      | f == sPlus -> simplifySum (orderless f vs)
+      | f == sTimes -> simplifyProductE (orderless f vs)
+      | f == sPower, [v, w] <- V.toList vs -> simplifyPowerE v w
+      -- Cohen's operators, as 'Cassini.Simplify.Automatic.simplify' rewrites them
+      | f == sDivide, [x, y] <- V.toList vs -> simplifyQuotient x y
+      | f == sSubtract || f == sMinus, not (V.null vs) -> simplifyDifference vs
+      | f == sFactorial, [v] <- V.toList vs -> simplifyFactorial v
+      | otherwise -> Right (mkApp h vs)
   _ -> Right (mkApp h vs)
   where
-    numericHead f = f == sPlus || f == sTimes || f == sPower || isJust (fnOf f)
+    isIndeterminate = \case
+      Sym s -> s == sIndeterminate
+      _ -> False
 
 -- | A @Flat@ and @Orderless@ node's operands as the evaluator hands them to
 -- the built-in (§4.4 steps 8–9): nested operands of the same head spliced
@@ -284,14 +301,14 @@ circular fn x
       y <- call fn' arg
       if negative then times [Int_ (-1), y] else Right y
   | leadingNegative x = parity fn x
-  | Just s <- constantPi x, Just v <- HashMap.lookup (fromEnum fn, s) circularValues = v
+  | Just s <- constantPi x, Just v <- HashMap.lookup (fn, s) circularValues = v
   | otherwise = Right (call' fn x)
 
 -- | The special values at 0, π/6 and π/4, built once.
-circularValues :: HashMap (Int, Rational) (Either Undefined Expr)
+circularValues :: HashMap (Fn, Rational) (Either Undefined Expr)
 circularValues =
   HashMap.fromList
-    [ ((fromEnum fn, s), v fn)
+    [ ((fn, s), v fn)
     | fn <- [Sin, Cos, Tan, Cot, Sec, Csc],
       (s, v) <- [(0, valueAt0), (1 / 6, valueAtSixth), (1 / 4, valueAtQuarter)]
     ]
@@ -351,17 +368,17 @@ hyperbolic fn x
 -- principal ranges, the poles of @ArcSec@ and @ArcCsc@ at 0, then parity.
 inverse :: Fn -> Expr -> Either Undefined Expr
 inverse fn x
-  | Just v <- HashMap.lookup (fromEnum fn, x) inverseTable = v
+  | Just v <- HashMap.lookup (fn, x) inverseTable = v
   -- ArcSec[x] is ArcCos[1/x], and ArcCsc[x] ArcSin[1/x]: poles at 0, as WL's
   | Int_ 0 <- x, fn == ArcSec || fn == ArcCsc = Left Pole
   | leadingNegative x = parity fn x
   | otherwise = Right (call' fn x)
 
 -- | The inverse tables, keyed on the spelling the forward tables emit.
-inverseTable :: HashMap (Int, Expr) (Either Undefined Expr)
+inverseTable :: HashMap (Fn, Expr) (Either Undefined Expr)
 inverseTable =
   HashMap.fromList
-    [ ((fromEnum fn, key), times [Num (fromRational' r), Sym sPi])
+    [ ((fn, key), times [Num (fromRational' r), Sym sPi])
     | (fn, entries) <- tables,
       (Right key, r) <- entries
     ]
@@ -399,8 +416,14 @@ logOfZeroOver = \case
   Num n
     | n > NInt 1 -> Just (Left LogOfZero)
     | n > NInt 0 -> Just (Right Infinity)
-  Sym c | c == sPi || c == sE -> Just (Left LogOfZero)
+  x | positiveConstant x -> Just (Left LogOfZero)
   _ -> Nothing
+
+-- | @Pi@ and @E@, the constants known positive.
+positiveConstant :: Expr -> Bool
+positiveConstant = \case
+  Sym c -> c == sPi || c == sE
+  _ -> False
 
 -- | @r@ when @z@ is @b^r@ exactly, @r@ rational. @Log[b^r] = r Log[b]@ needs
 -- @r·Arg[b]@ in @(-π, π]@, so there are two cases:
@@ -418,19 +441,15 @@ logOfZeroOver = \case
 -- Nothing
 logBase' :: Expr -> Expr -> Maybe Rational
 logBase' b z
-  | b == z, b /= Int_ 1, b /= Int_ 0 = Just 1
+  | b == z = Just 1
   | Just fb <- positiveRadical b, Just fz <- positiveRadical z = proportion fb fz
   | Call p [b', Num r] <- z,
     p == sPower,
     b' == b,
     let q = toRational' r,
-    positive b || (q > -1 && q <= 1) =
+    positiveConstant b || (q > -1 && q <= 1) =
       Just q
   | otherwise = Nothing
-  where
-    positive = \case
-      Sym c -> c == sPi || c == sE
-      _ -> False
 
 -- | A positive radical as integers above 1 with rational exponents: a
 -- positive rational, a positive integer to a rational power, or a product of

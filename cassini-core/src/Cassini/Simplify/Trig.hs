@@ -172,9 +172,7 @@ sumRules fam = \case
     (sf, cf) <- rulesFor fam t
     (sr, cr) <- sumRules fam (r :| rest)
     s <- sequence [times [sf, cr], times [cf, sr]] >>= plus
-    c <- case fam of
-      Circular -> sequence [times [cf, cr], times [Int_ (-1), sf, sr]] >>= plus
-      Hyperbolic -> sequence [times [cf, cr], times [sf, sr]] >>= plus
+    c <- sequence [times [cf, cr], times ([Int_ (-1) | fam == Circular] <> [sf, sr])] >>= plus
     pure (s, c)
 
 -- | The multiple-angle formulas (7.20)–(7.21), and their hyperbolic
@@ -183,8 +181,9 @@ sumRules fam = \case
 multiple :: Family -> Bool -> Integer -> Expr -> Expr -> Either Undefined Expr
 multiple fam isSin n s c = do
   terms <- forM [j | j <- [0 .. n], odd j == isSin] $ \j -> do
+    -- j is odd for a sine and even for a cosine, so j `div` 2 serves both
     let sign = case fam of
-          Circular -> if isSin then (-1) ^ ((j - 1) `div` 2) else (-1) ^ (j `div` 2)
+          Circular -> (-1) ^ (j `div` 2)
           Hyperbolic -> 1
     cj <- power c (Int_ (n - j))
     sj <- power s (Int_ j)
@@ -280,12 +279,8 @@ contractPower v = case v of
 contractProduct :: Expr -> Either Undefined Expr
 contractProduct u = case u of
   Call t [a, b] | t == sTimes -> case (a, b) of
-    (Call p _, _) | p == sPower -> do
-      a' <- contractPower a
-      times [a', b] >>= contractRules
-    (_, Call p _) | p == sPower -> do
-      b' <- contractPower b
-      times [a, b'] >>= contractRules
+    (Call p _, _) | p == sPower -> viaPower a b
+    (_, Call p _) | p == sPower -> viaPower b a
     _
       | Just (fam, sinA, theta) <- sinCos a,
         Just (_, sinB, phi) <- sinCos b -> do
@@ -294,15 +289,15 @@ contractProduct u = case u of
           revArg <- difference phi theta
           let half f x = call f x >>= \y -> times [mkNumber (fromRational' (1 / 2)), y]
               neg x = x >>= \y -> times [Int_ (-1), y]
-          terms <- case (fam, sinA, sinB) of
-            (Circular, True, True) -> sequence [half Cos diffArg, neg (half Cos sumArg)]
-            (Circular, False, False) -> sequence [half Cos sumArg, half Cos diffArg]
-            (Circular, True, False) -> sequence [half Sin sumArg, half Sin diffArg]
-            (Circular, False, True) -> sequence [half Sin sumArg, half Sin revArg]
-            (Hyperbolic, True, True) -> sequence [half Cosh sumArg, neg (half Cosh diffArg)]
-            (Hyperbolic, False, False) -> sequence [half Cosh sumArg, half Cosh diffArg]
-            (Hyperbolic, True, False) -> sequence [half Sinh sumArg, half Sinh diffArg]
-            (Hyperbolic, False, True) -> sequence [half Sinh sumArg, half Sinh revArg]
+              (cosF, sinF) = (cosOf fam, sinOf fam)
+          terms <- case (sinA, sinB) of
+            -- the one row the families differ in: which term is subtracted
+            (True, True) -> case fam of
+              Circular -> sequence [half cosF diffArg, neg (half cosF sumArg)]
+              Hyperbolic -> sequence [half cosF sumArg, neg (half cosF diffArg)]
+            (False, False) -> sequence [half cosF sumArg, half cosF diffArg]
+            (True, False) -> sequence [half sinF sumArg, half sinF diffArg]
+            (False, True) -> sequence [half sinF sumArg, half sinF revArg]
           plus terms
     _ -> Right u
   Call t (a : rest@(_ : _ : _)) | t == sTimes -> do
@@ -310,6 +305,8 @@ contractProduct u = case u of
     times [a, b] >>= contractRules
   _ -> Right u
   where
+    -- a power factor contracted, then the product again
+    viaPower x y = contractPower x >>= \x' -> times [x', y] >>= contractRules
     difference x y = times [Int_ (-1), y] >>= \ny -> plus [x, ny] >>= algebraicExpand
 
 -- | Cohen's @Simplify_trig@ (Fig. 7.10): substitute, rationalize, then

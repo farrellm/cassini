@@ -156,10 +156,8 @@ powerRule e = do
   guard (p == sPower)
   [u, n] <- Just us
   let baseTerm = apply sTimes [n, apply sPower [u, apply sPlus [n, Int_ (-1)]], dOf u x]
-  Just $
-    if freeOf n x
-      then baseTerm
-      else apply sPlus [baseTerm, apply sTimes [f, apply (fnSymbol Log) [u], dOf n x]]
+      exponentTerm = apply sTimes [f, apply (fnSymbol Log) [u], dOf n x]
+  Just (if freeOf n x then baseTerm else if freeOf u x then exponentTerm else apply sPlus [baseTerm, exponentTerm])
 
 -- | The chain rule, for any other head @h@:
 -- @D[h[g1, …, gn], x]@ is the sum, over each @gi@ that depends on the

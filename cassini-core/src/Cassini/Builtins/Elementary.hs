@@ -14,8 +14,8 @@ module Cassini.Builtins.Elementary (definitions) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Arithmetic (fromSimplified)
-import Cassini.Builtins.Define (Definition, args, define, down, sub)
-import Cassini.Core.Expr (Expr, apply, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Sym)
+import Cassini.Builtins.Define (Definition, define, down, sub)
+import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (sDerivative, sFunction, sPlus, sPower, sSlot, sTimes)
 import Cassini.Number (fromRational')
 import Cassini.Simplify.Elementary (Fn (..), fnOf, fnSymbol, sE, simplifyElementary)
@@ -30,7 +30,7 @@ definitions =
          define "Derivative" [] [sub (pure . derivativeOf)]
        ]
   where
-    rule fn e = maybe (pure Nothing) (fromSimplified e) (simplifyElementary (fnSymbol fn) (V.fromList (args e)))
+    rule fn e = maybe (pure Nothing) (fromSimplified e) (simplifyElementary (fnSymbol fn) (exprArgs e))
 
 -- | @Derivative[n][f]@ for an elementary @f@: the table of §4.11 for the
 -- first derivative, and for a higher one, the derivative of that pure
@@ -40,35 +40,34 @@ derivativeOf = \case
   App (Call d [Int_ n]) (V.toList -> [Sym f])
     | d == sDerivative,
       n >= 1,
-      Just fn <- fnOf f,
-      Just body <- derivativeBody fn ->
-        let d1 = apply sFunction [body]
+      Just fn <- fnOf f ->
+        let d1 = apply sFunction [derivativeBody fn]
          in Just (if n == 1 then d1 else mkApp (apply sDerivative [Int_ (n - 1)]) (V.singleton d1))
   _ -> Nothing
 
 -- | The body of the first derivative, in @#1@.
-derivativeBody :: Fn -> Maybe Expr
+derivativeBody :: Fn -> Expr
 derivativeBody = \case
-  Sin -> Just (f Cos)
-  Cos -> Just (neg (f Sin))
-  Tan -> Just (sq (f Sec))
-  Cot -> Just (neg (sq (f Csc)))
-  Sec -> Just (times [f Sec, f Tan])
-  Csc -> Just (neg (times [f Cot, f Csc]))
-  Sinh -> Just (f Cosh)
-  Cosh -> Just (f Sinh)
-  Tanh -> Just (sq (f Sech))
-  Coth -> Just (neg (sq (f Csch)))
-  Sech -> Just (neg (times [f Sech, f Tanh]))
-  Csch -> Just (neg (times [f Coth, f Csch]))
-  ArcSin -> Just (pow (oneMinus (pow slot 2)) (-(1 / 2)))
-  ArcCos -> Just (neg (pow (oneMinus (pow slot 2)) (-(1 / 2))))
-  ArcTan -> Just (pow (onePlus (pow slot 2)) (-1))
-  ArcCot -> Just (neg (pow (onePlus (pow slot 2)) (-1)))
-  ArcSec -> Just (times [pow slot (-2), pow (oneMinus (pow slot (-2))) (-(1 / 2))])
-  ArcCsc -> Just (neg (times [pow slot (-2), pow (oneMinus (pow slot (-2))) (-(1 / 2))]))
-  Exp -> Just (apply sPower [Sym sE, slot])
-  Log -> Just (pow slot (-1))
+  Sin -> f Cos
+  Cos -> neg (f Sin)
+  Tan -> sq (f Sec)
+  Cot -> neg (sq (f Csc))
+  Sec -> times [f Sec, f Tan]
+  Csc -> neg (times [f Cot, f Csc])
+  Sinh -> f Cosh
+  Cosh -> f Sinh
+  Tanh -> sq (f Sech)
+  Coth -> neg (sq (f Csch))
+  Sech -> neg (times [f Sech, f Tanh])
+  Csch -> neg (times [f Coth, f Csch])
+  ArcSin -> pow (oneMinus (pow slot 2)) (-(1 / 2))
+  ArcCos -> neg (derivativeBody ArcSin)
+  ArcTan -> pow (onePlus (pow slot 2)) (-1)
+  ArcCot -> neg (derivativeBody ArcTan)
+  ArcSec -> times [pow slot (-2), pow (oneMinus (pow slot (-2))) (-(1 / 2))]
+  ArcCsc -> neg (derivativeBody ArcSec)
+  Exp -> apply sPower [Sym sE, slot]
+  Log -> pow slot (-1)
   where
     slot = apply sSlot [Int_ 1]
     f fn = apply (fnSymbol fn) [slot]

@@ -64,8 +64,8 @@ radical :: Rational -> Rational -> Radical
 radical v q
   -- step 3 alone: (-1)^q
   | v == -1 =
-      let k = truncate q :: Integer
-       in Radical (if even k then 1 else -1) [(-1, q - fromInteger k)]
+      let (k, r) = properFraction q :: (Integer, Rational)
+       in Radical (if even k then 1 else -1) [(-1, r)]
   -- step 1: a negative base
   | v < 0 = radical (-1) q `times` radical (negate v) q
   -- step 2: a fraction
@@ -83,8 +83,8 @@ integral n q
   | (c, n') <- extract, n' /= n = Radical c [] `times` integral n' q
   -- step 3: the integer part of the exponent, truncated toward zero
   | abs q > 1 =
-      let k = truncate q :: Integer
-       in Radical (fromInteger n ^^ k) [(n, q - fromInteger k)]
+      let (k, r) = properFraction q :: (Integer, Rational)
+       in Radical (fromInteger n ^^ k) [(n, r)]
   | otherwise = Radical 1 [(n, q)]
   where
     b = denominator q
@@ -140,10 +140,11 @@ mergeCoefficient = \case
           isSmallPrime p ->
             let v = valuation p c
                 total = fromInteger v + e
-                k = truncate total :: Integer
-                r = total - fromInteger k
+                (k, r) = properFraction total :: (Integer, Rational)
                 c' = c / fromInteger p ^^ v * fromInteger p ^^ k
-             in (c', [apply sPower [Int_ p, Num (fromRational' r)] | r /= 0] <> acc)
+                -- an unchanged exponent keeps its node
+                f' = if r == e then f else apply sPower [Int_ p, Num (fromRational' r)]
+             in (c', [f' | r /= 0] <> acc)
       _ -> (c, f : acc)
     isPrimeRadical = \case
       Call pw [Int_ p, Num (NRat _)] -> pw == sPower && isSmallPrime p

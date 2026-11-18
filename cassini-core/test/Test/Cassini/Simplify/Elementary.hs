@@ -18,7 +18,7 @@ import Test.Gen (genElementary, rat, shrinkExpr, subterms)
 import Test.Kernel (eval, evalStd, ff, std)
 import Test.Numeric (approxEqual, evalAt, genPoint)
 import Test.QuickCheck (Gen, Property, checkCoverage, chooseInteger, counterexample, cover, elements, forAll, forAllShrink, listOf1, sized, (.&&.), (===))
-import Test.Tasty (TestTree, testGroup)
+import Test.Tasty (TestName, TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Test.Tasty.QuickCheck (testProperty)
 
@@ -74,8 +74,6 @@ fig79 =
       row "cos(x + 2π), every column" "Cos[Plus[x, Times[2, Pi]]]" "Cos[x]",
       row "sin(x)/cos(x), MPL's: no function transformations (D16)" "Times[Sin[x], Power[Cos[x], -1]]" "Times[Power[Cos[x], -1], Sin[x]]"
     ]
-  where
-    row name i o = testCase name (evalStd [i] @?= o)
 
 -- | The two-argument @Log@ (§4.11): a definition, and its exact cases.
 logTwo :: TestTree
@@ -109,8 +107,6 @@ logTwo =
       -- leaving it is the one answer that is not wrong for some x
       row "Log[b, 0] for a base of unknown sign stays" "Log[x, 0]" "Log[x, 0]"
     ]
-  where
-    row name i o = testCase name (evalStd [i] @?= o)
 
 -- | §4.15's worked examples of radical normalization.
 radicals :: TestTree
@@ -135,8 +131,10 @@ radicals =
       row "ArcSin reaches its table through Sqrt[2]/2" "ArcSin[Times[Rational[1, 2], Power[2, Rational[1, 2]]]]" "Times[Rational[1, 4], Pi]",
       row "E^(c Log[z]) is z^c" "Power[E, Times[3, Log[z]]]" "Power[z, 3]"
     ]
-  where
-    row name i o = testCase name (evalStd [i] @?= o)
+
+-- | One input evaluated, against its FullForm.
+row :: TestName -> Text -> Text -> TestTree
+row name i o = testCase name (evalStd [i] @?= o)
 
 valuePreserved :: Property
 valuePreserved =

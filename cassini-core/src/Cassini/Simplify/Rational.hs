@@ -62,8 +62,9 @@ algebraicExpandFrom known = go
       | otherwise = case u of
           Call p ts | p == sPlus -> traverse go ts >>= plus
           Call t (f : fs) | t == sTimes -> do
-            fs' <- traverse go (f : fs)
-            foldlM expandProduct (Int_ 1) fs'
+            f' <- go f
+            fs' <- traverse go fs
+            foldlM expandProduct f' fs'
           Call p [b, Int_ n] | p == sPower, n >= 2 -> go b >>= (`expandPower` n)
           _ -> Right u
 

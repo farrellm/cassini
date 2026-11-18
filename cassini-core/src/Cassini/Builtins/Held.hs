@@ -19,9 +19,11 @@ import Cassini.Core.Symbol (Symbol, sList, sPlus, sTimes, symbol)
 import Cassini.Eval.Kernel (Kernel, lookupAttributes)
 import Cassini.Number (Number (NInt))
 import Cassini.Simplify.Automatic (Undefined)
+import Cassini.Structure (rebuildChanged)
 import Data.HashMap.Strict qualified as HashMap
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
+import Effectful.State.Static.Local (State, get, put, runState)
 
 -- | A one-argument builtin over a procedure on normal forms. The argument
 -- is already evaluated, so in the evaluator's normal form, which is
@@ -44,10 +46,10 @@ overList f e = case e of
 -- attribute lookup per compound node.
 outsideHeld :: (Kernel :> es) => (Expr -> Either Undefined Expr) -> Expr -> Eff es (Either Undefined Expr)
 outsideHeld f u = do
-  (held, u') <- runShield (shield u) HashMap.empty
+  (u', held) <- runState (HashMap.empty :: HashMap Expr Int) (shield u)
   pure $
     case u' of
-      Just v -> snd . restore (table held) <$> f v
+      Just v -> fromMaybe v . restore (table held) <$> f v
       Nothing -> f u
   where
     table held = V.fromList (map fst (sortOn snd (HashMap.toList held)))
@@ -59,59 +61,45 @@ sHeld = symbol "Cassini`Private`" "Held"
 placeholder :: Int -> Expr
 placeholder k = apply sHeld [mkNumber (NInt (toInteger k))]
 
--- | A state of the held arguments seen so far, each with its index; equal
--- arguments share one, so the procedure still sees that they are equal.
-newtype Shield es a = Shield {runShield :: HashMap Expr Int -> Eff es (HashMap Expr Int, a)}
-
 -- | Replace each held argument by its placeholder. 'Nothing' when the
--- expression holds nothing, so that it is passed on unrebuilt.
-shield :: (Kernel :> es) => Expr -> Shield es (Maybe Expr)
-shield u = Shield $ \m -> case u of
+-- expression holds nothing, so that it is passed on unrebuilt. The state is
+-- the held arguments seen so far, each with its index; equal arguments share
+-- one, so the procedure still sees that they are equal.
+shield :: (Kernel :> es, State (HashMap Expr Int) :> es) => Expr -> Eff es (Maybe Expr)
+shield = \case
   App h as -> do
     attrs <- case h of
       Sym s -> lookupAttributes s
       _ -> pure (attributeSet [])
-    (m1, h') <- case h of
-      App _ _ -> runShield (shield h) m
-      _ -> pure (m, Nothing)
+    h' <- case h of
+      App _ _ -> shield h
+      _ -> pure Nothing
     let n = V.length as
-        go mm i = \case
-          [] -> pure (mm, [])
-          a : rest -> do
-            (mm', a') <-
-              if holdsArgument attrs i n
-                then pure (hold mm a)
-                else runShield (shield a) mm
-            (mm'', rest') <- go mm' (i + 1) rest
-            pure (mm'', a' : rest')
-    (m2, as') <- go m1 1 (V.toList as)
-    pure $
-      if isNothing h' && all isNothing as'
-        then (m2, Nothing)
-        else (m2, Just (mkApp (fromMaybe h h') (V.fromList (zipWith fromMaybe (V.toList as) as'))))
-  _ -> pure (m, Nothing)
+    as' <- V.imapM (\i a -> if holdsArgument attrs (i + 1) n then Just <$> hold a else shield a) as
+    pure (rebuildChanged h as h' as')
+  _ -> pure Nothing
   where
-    hold mm a = case HashMap.lookup a mm of
-      Just k -> (mm, Just (placeholder k))
-      Nothing -> let k = HashMap.size mm in (HashMap.insert a k mm, Just (placeholder k))
+    hold a = do
+      m <- get
+      k <- case HashMap.lookup a m of
+        Just k -> pure k
+        Nothing -> let k = HashMap.size m in k <$ put (HashMap.insert a k m)
+      pure (placeholder k)
 
 -- | Put the held arguments back. A sum or product a placeholder sat in is
 -- sorted again, since the arguments and their placeholders need not sort
 -- alike; nothing else depends on it, because equal arguments had equal
--- placeholders and so combined as they would have. The flag says whether
--- anything changed below.
-restore :: V.Vector Expr -> Expr -> (Bool, Expr)
+-- placeholders and so combined as they would have. 'Nothing' when nothing
+-- changed below.
+restore :: V.Vector Expr -> Expr -> Maybe Expr
 restore held u = case u of
-  Call g [Int_ k] | g == sHeld, Just v <- held V.!? fromInteger k -> (True, v)
-  App h as ->
-    let (ch, h') = restore held h
-        rs = V.map (restore held) as
-        as' = V.map snd rs
-     in if ch || V.any fst rs
-          then (True, mkApp h' (if sorted h' then V.fromList (sortBy compareCanonical (V.toList as')) else as'))
-          else (False, u)
-  _ -> (False, u)
+  Call g [Int_ k] | g == sHeld, Just v <- held V.!? fromInteger k -> Just v
+  App h as -> resort <$> rebuildChanged h as (restore held h) (V.map (restore held) as)
+  _ -> Nothing
   where
+    resort = \case
+      App h' as' | sorted h' -> mkApp h' (V.fromList (sortBy compareCanonical (V.toList as')))
+      v -> v
     sorted = \case
       Sym s -> s == sPlus || s == sTimes
       _ -> False
