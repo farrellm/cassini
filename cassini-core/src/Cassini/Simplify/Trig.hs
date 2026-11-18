@@ -32,12 +32,13 @@ module Cassini.Simplify.Trig
   )
 where
 
-import Cassini.Core.Expr (Expr, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
+import Cassini.Core.Expr (Expr, exprArgs, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
 import Cassini.Core.Symbol (sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt), fromRational')
 import Cassini.Simplify.Automatic (Undefined (..))
 import Cassini.Simplify.Elementary (Fn (..), fnOf, fnSymbol, nodeE)
-import Cassini.Simplify.Rational (algebraicExpand, choose, denominator', expandMainOp, isAlgebraicExpanded, numerator', rationalizeExpression)
+import Cassini.Simplify.Rational (algebraicExpand, algebraicExpandFrom, choose, denominator', expandMainOp, isAlgebraicExpanded, numerator', rationalizeExpression)
+import Data.HashSet qualified as HashSet
 import Data.Vector qualified as V
 
 -- $setup
@@ -71,12 +72,14 @@ sinCos = \case
   _ -> Nothing
 
 -- | Cohen's @Trig_substitute@ and its hyperbolic counterpart: @Tan@, @Cot@,
--- @Sec@ and @Csc@ in terms of @Sin@ and @Cos@, at every node.
+-- @Sec@ and @Csc@ in terms of @Sin@ and @Cos@, at every node. Each node is
+-- normalized as it is rebuilt, so a denominator that becomes 0 on the way
+-- is 'Undefined', as in the procedures that call it.
 --
 -- >>> trigSubstitute (apply (fnSymbol Tan) [x])
--- Times[Power[Cos[x], -1], Sin[x]]
-trigSubstitute :: Expr -> Expr
-trigSubstitute u = fromRight u (go u)
+-- Right Times[Power[Cos[x], -1], Sin[x]]
+trigSubstitute :: Expr -> Either Undefined Expr
+trigSubstitute = go
   where
     go v = case v of
       App h as -> do
@@ -113,7 +116,7 @@ trigSubstitute u = fromRight u (go u)
 -- >>> expandTrig (apply (fnSymbol Sin) [apply sPlus [x, y]])
 -- Right Plus[Times[Cos[y], Sin[x]], Times[Cos[x], Sin[y]]]
 expandTrig :: Expr -> Either Undefined Expr
-expandTrig = go . trigSubstitute
+expandTrig = trigSubstitute >=> go
   where
     go u = case u of
       App h as -> do
@@ -125,9 +128,12 @@ expandTrig = go . trigSubstitute
         w <- case sinCos v of
           Just (fam, isSin, a) -> pick isSin <$> rulesFor fam a
           Nothing -> Right v
-        algebraicExpand w
+        algebraicExpandFrom (expanded as') w
       _ -> Right u
     pick isSin (s, c) = if isSin then s else c
+    -- The operands, and theirs: each is a result of go, so expanded, and a
+    -- rebuilt node reuses them, a sum's terms spliced in a level down.
+    expanded as' = HashSet.fromList (concatMap (\a -> a : V.toList (exprArgs a)) (V.toList as'))
 
 -- | Cohen's @Expand_trig_rules@: the pair @(sin A, cos A)@, so that a sum of
 -- @n@ terms costs @2 (n - 1)@ rule applications (§7.1 Exercise 6). Not
@@ -315,7 +321,7 @@ contractProduct u = case u of
 -- distributed over the numerator.
 simplifyTrig :: Expr -> Either Undefined Expr
 simplifyTrig u = do
-  w <- rationalizeExpression (trigSubstitute u)
+  w <- trigSubstitute u >>= rationalizeExpression
   n <- numerator' w >>= expandTrig >>= contractTrig
   d <- denominator' w >>= expandTrig >>= contractTrig
   case d of

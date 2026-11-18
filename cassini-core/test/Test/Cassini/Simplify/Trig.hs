@@ -6,10 +6,11 @@
 -- (DESIGN.md §4.12).
 module Test.Cassini.Simplify.Trig (tests) where
 
-import Cassini.Core.Expr (Expr, pattern Call)
+import Cassini.Core.Expr (Expr, apply, mkNumber, mkSymbol, pattern Call)
 import Cassini.Core.Symbol (sPlus, sTimes)
-import Cassini.Simplify.Elementary (simplifyE)
-import Cassini.Simplify.Trig (contractTrig, expandTrig, isTrigContracted, isTrigExpanded, simplifyTrig)
+import Cassini.Number (fromRational')
+import Cassini.Simplify.Elementary (Fn (Sec), fnSymbol, sPi, simplifyE)
+import Cassini.Simplify.Trig (contractTrig, expandTrig, isTrigContracted, isTrigExpanded, simplifyTrig, trigSubstitute)
 import Data.Text qualified as T
 import Test.Gen (genTrig, genTrigQuotient, shrinkExpr)
 import Test.Kernel (evalStd, ff)
@@ -54,7 +55,11 @@ tests =
           row "D39: two spellings of one value are one" "Plus[Sin[Plus[x, Times[Rational[2, 3], Pi]]], Times[-1, Cos[Plus[x, Times[Rational[1, 6], Pi]]]]]" "0",
           row "Expand: (x + 1)²" "Expand[Power[Plus[1, x], 2]]" "Plus[1, Times[2, x], Power[x, 2]]",
           row "Expand: radicals merge" "Expand[Power[Plus[1, Power[2, Rational[1, 2]]], 2]]" "Plus[3, Times[2, Power[2, Rational[1, 2]]]]",
-          row "Expand leaves function arguments alone" "Expand[Sin[Power[Plus[1, x], 2]]]" "Sin[Power[Plus[1, x], 2]]"
+          row "Expand leaves function arguments alone" "Expand[Sin[Power[Plus[1, x], 2]]]" "Sin[Power[Plus[1, x], 2]]",
+          -- Sec[π/2] built raw, as a procedure's intermediate can be: the
+          -- pole is passed on, not dropped with the substitution.
+          testCase "trigSubstitute passes an Undefined on" $
+            isLeft (trigSubstitute (apply (fnSymbol Sec) [apply sTimes [mkNumber (fromRational' (1 / 2)), mkSymbol sPi]])) @?= True
         ],
       testGroup
         "laws (§7.3)"

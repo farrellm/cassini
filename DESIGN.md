@@ -2325,7 +2325,7 @@ Three builtins in `Cassini.Builtins.Simplify`, each a thin wrapper over one pure
 expandTrig       :: Expr -> Either Undefined Expr
 contractTrig     :: Expr -> Either Undefined Expr
 expandTrigRules  :: Expr -> Either Undefined (Expr, Expr)  -- (sin A, cos A), Fig. 7.3; exported for §8.4
-trigSubstitute   :: Expr -> Expr     -- TRIGSUB-1..4 and their hyperbolic counterparts
+trigSubstitute   :: Expr -> Either Undefined Expr  -- TRIGSUB-1..4 and their hyperbolic counterparts
 simplifyTrig     :: Expr -> Either Undefined Expr
 isTrigExpanded   :: Expr -> Bool
 isTrigContracted :: Expr -> Bool
@@ -2333,9 +2333,16 @@ isTrigContracted :: Expr -> Bool
 
 `Either`, because expansion or contraction can turn a denominator into 0
 (`1/(Sin[2x] - 2 Sin[x] Cos[x])`), and Cohen's §7.1 Exercise 7 and §7.2 Exercise 8 have the
-procedures return `Undefined` when it does; the builtins map it as §4.7 does. Every intermediate expression is built with
+procedures return `Undefined` when it does; the builtins map it as §4.7 does. `trigSubstitute`
+normalizes each node it rebuilds, so it can meet one too, and passes it on: falling back to its
+input would hand the next procedure a `Tan` it has no rule for, and drop the message. Every intermediate expression is built with
 `simplifyE` (§4.11), which is how Example 7.17's `Cos[x + π/6]` expands into terms whose `Cos[π/6]`
-becomes a number mid-algorithm.
+becomes a number mid-algorithm. The builtins pass the procedures their evaluated argument as it
+is: the evaluator's normal form is `simplifyE`'s (§4.11), so normalizing it again would only
+rebuild it. `Expand_trig` runs bottom up and algebraically expands each node it rebuilds; the
+operands below are expanded already, so the expansion takes them, and their operands, as they are
+(`algebraicExpandFrom`) instead of walking them again. On a nested product that is the difference
+between each level costing its own terms and costing every level below it too (§8.4).
 
 **What a head holds stays held.** The procedures are pure and cannot read attributes, so on their
 own they descend into every argument: `Expand[Hold[1 + 1]]` would be `Hold[2]`, where WL 15.0.1
@@ -3942,6 +3949,12 @@ generates.
   `n = 64` could not finish, and this is far from that. The end-to-end workload allocates 1.0% and
   0.8% less than at the fidelity track's baselines, with `Times` and `Power` now running §4.15's
   passes; it does not grow with this track, as §8.6 plans growth at 2a.
+- **`TrigExpand` of a nested product**, `(…((x + a₁ + Sin[b₁ + c]) y₁ + a₂ + …) y₂ …) yₙ`, is the
+  bottom-up pass's own cost (§4.12): each level's sum is multiplied out one level up, so a pass that
+  re-expanded each node's operands from scratch pays for every level below again. Baselined at
+  `n = 10, 20, 40`. Measured when it was added (2026-11-18, hash interning): 1.4 ms, 6.0 ms and
+  30 ms, allocating 2.4, 11 and 59 MB; re-expanding from scratch it had been 4.9 ms, 40 ms and
+  432 ms, allocating 10 MB, 91 MB and 1.0 GB.
 
 ### 8.5 Polynomial
 

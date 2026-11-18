@@ -11,7 +11,6 @@ import Cassini.Builtins.Define (Definition, args, define, down)
 import Cassini.Builtins.Held (outsideHeld)
 import Cassini.Core.Expr (apply, pattern Call)
 import Cassini.Core.Symbol (Symbol, sList, systemSymbol)
-import Cassini.Simplify.Elementary (simplifyE)
 import Cassini.Simplify.Rational (algebraicExpand)
 
 -- | @Expand@. It threads over a list, as WL's does without being
@@ -23,7 +22,8 @@ definitions =
   where
     expand e = case args e of
       [Call l xs] | l == sList -> pure (Just (apply sList [apply sExpand [x] | x <- xs]))
-      [x] -> outsideHeld (simplifyE >=> algebraicExpand) x >>= fromSimplified e
+      -- Evaluated, so in normal form already (§4.11).
+      [x] -> outsideHeld algebraicExpand x >>= fromSimplified e
       _ -> pure Nothing
 
 sExpand :: Symbol

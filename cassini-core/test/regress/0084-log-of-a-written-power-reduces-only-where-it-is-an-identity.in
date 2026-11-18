@@ -1,0 +1,5 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List. Log[b^r] = r Log[b] needs r Arg[b] in (-π, π], so Log[x, x^2] stays a quotient: at x = -1 it is Log[1]/Log[-1] = 0, not 2. A base known positive reduces for any r. *)
+Log[x, Power[x, 2]]
+Log[x, Power[x, -1]]
+Log[x, x]
+Log[Pi, Power[Pi, 3]]

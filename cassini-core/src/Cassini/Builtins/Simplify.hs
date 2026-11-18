@@ -14,7 +14,6 @@ import Cassini.Builtins.Held (outsideHeld)
 import Cassini.Core.Expr (Expr)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Simplify.Automatic (Undefined)
-import Cassini.Simplify.Elementary (simplifyE)
 import Cassini.Simplify.Trig (contractTrig, expandTrig, simplifyTrig, trigSubstitute)
 import Effectful (Eff, (:>))
 
@@ -22,14 +21,15 @@ import Effectful (Eff, (:>))
 definitions :: [Definition]
 definitions =
   [ define "TrigExpand" [Listable, Protected] [down (unary expandTrig)],
-    define "TrigReduce" [Listable, Protected] [down (unary (contractTrig . trigSubstitute))],
+    define "TrigReduce" [Listable, Protected] [down (unary (trigSubstitute >=> contractTrig))],
     define "Simplify" [Protected] [down (unary simplifyTrig)]
   ]
 
 -- | A one-argument builtin over a procedure on normal forms. The argument
--- is already evaluated, so 'simplifyE' only confirms its normal form; what
--- it holds stays out of the procedure's reach ('outsideHeld').
+-- is already evaluated, so in the evaluator's normal form, which is
+-- 'Cassini.Simplify.Elementary.simplifyE''s (§4.11); what it holds stays out
+-- of the procedure's reach ('outsideHeld').
 unary :: (Kernel :> es) => (Expr -> Either Undefined Expr) -> Expr -> Eff es (Maybe Expr)
 unary f e = case args e of
-  [x] -> outsideHeld (simplifyE >=> f) x >>= fromSimplified e
+  [x] -> outsideHeld f x >>= fromSimplified e
   _ -> pure Nothing

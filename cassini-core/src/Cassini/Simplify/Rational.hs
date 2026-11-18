@@ -16,6 +16,7 @@
 -- (his (6.43)), as @(1 + x)^(1/2) (1 + x)^(3/2)@ does here.
 module Cassini.Simplify.Rational
   ( algebraicExpand,
+    algebraicExpandFrom,
     expandMainOp,
     expandProduct,
     expandPower,
@@ -32,6 +33,7 @@ import Cassini.Core.Symbol (sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt, NRat), toRational')
 import Cassini.Simplify.Automatic (Undefined)
 import Cassini.Simplify.Elementary (nodeE)
+import Data.HashSet qualified as HashSet
 import Data.Vector qualified as V
 
 -- $setup
@@ -47,13 +49,24 @@ import Data.Vector qualified as V
 -- >>> algebraicExpand (apply sPower [apply sPlus [Int_ 1, x], Int_ 2])
 -- Right Plus[1, Times[2, x], Power[x, 2]]
 algebraicExpand :: Expr -> Either Undefined Expr
-algebraicExpand u = case u of
-  Call p ts | p == sPlus -> traverse algebraicExpand ts >>= plus
-  Call t (f : fs) | t == sTimes -> do
-    fs' <- traverse algebraicExpand (f : fs)
-    foldlM expandProduct (Int_ 1) fs'
-  Call p [b, Int_ n] | p == sPower, n >= 2 -> algebraicExpand b >>= (`expandPower` n)
-  _ -> Right u
+algebraicExpand = algebraicExpandFrom HashSet.empty
+
+-- | 'algebraicExpand', taking the subterms in the set as expanded already
+-- and returning them as they are. A procedure that expands bottom up passes
+-- the expanded operands of the node it has just rebuilt, so that each node
+-- costs what the rebuilding made new, not the whole subtree again.
+algebraicExpandFrom :: HashSet Expr -> Expr -> Either Undefined Expr
+algebraicExpandFrom known = go
+  where
+    go u
+      | HashSet.member u known = Right u
+      | otherwise = case u of
+          Call p ts | p == sPlus -> traverse go ts >>= plus
+          Call t (f : fs) | t == sTimes -> do
+            fs' <- traverse go (f : fs)
+            foldlM expandProduct (Int_ 1) fs'
+          Call p [b, Int_ n] | p == sPower, n >= 2 -> go b >>= (`expandPower` n)
+          _ -> Right u
 
 -- | Cohen's @Expand_main_op@: distribute with respect to the main operator
 -- only, without expanding the operands first.

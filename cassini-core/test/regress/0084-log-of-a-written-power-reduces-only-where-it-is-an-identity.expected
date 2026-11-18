@@ -1,0 +1,4 @@
+Out[1]: Times[Power[Log[x], -1], Log[Power[x, 2]]]
+Out[2]: Times[Log[Power[x, -1]], Power[Log[x], -1]]
+Out[3]: 1
+Out[4]: 3
