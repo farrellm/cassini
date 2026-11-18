@@ -86,13 +86,16 @@ integral n q
   where
     b = denominator q
     a = numerator q
-    extract = foldl' pull (1, n) (primesBelow trialBound)
-    pull (c, m) p
-      | m < p = (c, m)
-      | otherwise =
-          let (e, _) = multiplicity p m
-              t = e `div` b
-           in if t == 0 then (c, m) else (c * fromInteger p ^^ (a * t), m `div` (p ^ (b * t)))
+    -- Stops at the first prime above the cofactor, which no later prime
+    -- divides either, rather than walking every prime below the bound.
+    extract = pull (1, n) (primesBelow trialBound)
+    pull (c, m) = \case
+      p : ps
+        | m >= p ->
+            let (e, _) = multiplicity p m
+                t = e `div` b
+             in pull (if t == 0 then (c, m) else (c * fromInteger p ^^ (a * t), m `div` (p ^ (b * t)))) ps
+      _ -> (c, m)
 
 times :: Radical -> Radical -> Radical
 times (Radical c xs) (Radical d ys) = Radical (c * d) (xs <> ys)

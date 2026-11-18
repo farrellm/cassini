@@ -1,0 +1,1 @@
+Out[1]: List[Plus[1, Times[2, x], Power[x, 2]], Plus[Times[a, c], Times[b, c]]]

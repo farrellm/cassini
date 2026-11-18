@@ -37,7 +37,7 @@ import Cassini.Core.Symbol (sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt), fromRational')
 import Cassini.Simplify.Automatic (Undefined (..))
 import Cassini.Simplify.Elementary (Fn (..), fnOf, fnSymbol, nodeE)
-import Cassini.Simplify.Rational (algebraicExpand, denominator', expandMainOp, isAlgebraicExpanded, numerator', rationalizeExpression)
+import Cassini.Simplify.Rational (algebraicExpand, choose, denominator', expandMainOp, isAlgebraicExpanded, numerator', rationalizeExpression)
 import Data.Vector qualified as V
 
 -- $setup
@@ -368,10 +368,6 @@ everyNode p u =
   p u && case u of
     App h as -> everyNode p h && all (everyNode p) (V.toList as)
     _ -> True
-
--- | The binomial coefficient.
-choose :: Integer -> Integer -> Integer
-choose n k = product [n - k + 1 .. n] `div` product [1 .. k]
 
 -- Construction, each node to normal form.
 

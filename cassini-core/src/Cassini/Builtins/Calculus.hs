@@ -22,6 +22,7 @@ import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, pattern App, pattern Cal
 import Cassini.Core.Symbol (Symbol, sDerivative, sFunction, sList, sPlus, sPower, sSlot, sTimes, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupSymbol)
 import Cassini.Rules (Origin (..), Rule (..), ValueKind (..), ruleSetToList, rulesOf)
+import Cassini.Simplify.Elementary (Fn (Log), fnSymbol)
 import Cassini.Structure (Binding (..), Parameters (..), Scoping (Shielding), Slots (..), freeOf, functionForm, substituteAll, substituteFree)
 import Data.Map.Strict qualified as Map
 import Data.Vector qualified as V
@@ -158,10 +159,7 @@ powerRule e = do
   Just $
     if freeOf n x
       then baseTerm
-      else apply sPlus [baseTerm, apply sTimes [f, apply sLog [u], dOf n x]]
-
-sLog :: Symbol
-sLog = systemSymbol "Log"
+      else apply sPlus [baseTerm, apply sTimes [f, apply (fnSymbol Log) [u], dOf n x]]
 
 -- | The chain rule, for any other head @h@:
 -- @D[h[g1, …, gn], x]@ is the sum, over each @gi@ that depends on the

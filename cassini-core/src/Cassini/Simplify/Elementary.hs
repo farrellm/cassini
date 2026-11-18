@@ -78,9 +78,15 @@ data Fn
   | Log
   deriving stock (Eq, Show, Enum, Bounded)
 
--- | The head's @System`@ symbol.
+-- | The head's @System`@ symbol, from a table built once: every rule and
+-- every node the procedures build asks for one, and 'systemSymbol' is a
+-- lookup in the global symbol table.
 fnSymbol :: Fn -> Symbol
-fnSymbol fn = systemSymbol (show fn)
+fnSymbol fn = fromMaybe (systemSymbol (show fn)) (fnSymbols V.!? fromEnum fn)
+
+fnSymbols :: V.Vector Symbol
+fnSymbols = V.fromList [systemSymbol (show fn) | fn <- universe @Fn]
+{-# NOINLINE fnSymbols #-}
 
 -- | The elementary head a symbol names, if any.
 fnOf :: Symbol -> Maybe Fn

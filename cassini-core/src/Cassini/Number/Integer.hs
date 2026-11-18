@@ -15,6 +15,8 @@ module Cassini.Number.Integer
   )
 where
 
+import GHC.Num.Integer qualified as Integer
+
 -- | The exact @b@-th root of a non-negative @n@, if @n@ is a perfect @b@-th
 -- power. Newton's iteration on @x ↦ ((b-1)·x + n div x^(b-1)) div b@,
 -- started above the root, decreases to @⌊n^(1/b)⌋@ (vzGG §9.5).
@@ -39,13 +41,11 @@ floorRoot n b = go start
       let y = ((b - 1) * x + n `div` (x ^ (b - 1))) `div` b
        in if y >= x then x else go y
 
--- | @⌊log2 n⌋@ for @n ≥ 1@.
+-- | @⌊log2 n⌋@ for @n ≥ 1@, read off the representation's size rather than
+-- by repeated halving, which is quadratic in the bit length and, called once
+-- per candidate exponent, made @Sqrt@ of a 30,000-bit integer take minutes.
 integerLog2' :: Integer -> Integer
-integerLog2' = go 0
-  where
-    go acc m
-      | m < 2 = acc
-      | otherwise = go (acc + 1) (m `div` 2)
+integerLog2' n = toInteger (Integer.integerLog2 n)
 
 -- | A perfect-power decomposition @n = m^j@ with @j@ prime, trying each
 -- prime @j ≤ log2 n@ in increasing order and taking the first hit (§4.15

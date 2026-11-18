@@ -19,6 +19,7 @@ module Cassini.Simplify.Rational
     expandMainOp,
     expandProduct,
     expandPower,
+    choose,
     numerator',
     denominator',
     rationalizeExpression,
