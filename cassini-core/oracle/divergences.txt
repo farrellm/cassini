@@ -189,3 +189,10 @@ elementary 35 Mathics3
 elementary 36 Mathics3
 elementary 37 Mathics3
 elementary 38 Mathics3
+# Mathics3: TrigExpand and TrigReduce have no definitions there, so no
+# attributes either. WL 15.0.1 gives these answers, through the Wolfram Cloud
+# MCP, as the case says.
+0089-trig-expand-and-reduce-thread-over-a-list-without-being-listable 1 Mathics3
+0089-trig-expand-and-reduce-thread-over-a-list-without-being-listable 2 Mathics3
+0089-trig-expand-and-reduce-thread-over-a-list-without-being-listable 3 Mathics3
+0089-trig-expand-and-reduce-thread-over-a-list-without-being-listable 4 Mathics3

@@ -12,13 +12,13 @@ import Cassini.Builtins.Define (Definition, define, down)
 import Cassini.Builtins.Held (overList, unary)
 import Cassini.Simplify.Trig (contractTrig, expandTrig, simplifyTrig, trigSubstitute)
 
--- | The three builtins. @Simplify@ threads over a list, as WL's does without
--- being @Listable@: @Simplify[{1/(1 - Sin[x]) + 1/(1 + Sin[x])}]@ simplifies
--- the element as it would alone, where Cohen's rationalization would stop at
--- the list (WL 15.0.1).
+-- | The three builtins. Each threads over a list, as WL's do without being
+-- @Listable@ (their attributes are @{Protected}@ in WL 15.0.1):
+-- @Simplify[{1/(1 - Sin[x]) + 1/(1 + Sin[x])}]@ simplifies the element as it
+-- would alone, where Cohen's rationalization would stop at the list.
 definitions :: [Definition]
 definitions =
-  [ define "TrigExpand" [Listable, Protected] [down (unary expandTrig)],
-    define "TrigReduce" [Listable, Protected] [down (unary (trigSubstitute >=> contractTrig))],
+  [ define "TrigExpand" [Protected] [down (overList (unary expandTrig))],
+    define "TrigReduce" [Protected] [down (overList (unary (trigSubstitute >=> contractTrig)))],
     define "Simplify" [Protected] [down (overList (unary simplifyTrig))]
   ]
