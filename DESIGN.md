@@ -2427,7 +2427,10 @@ splits a product's operands three ways, not two: circular factors, hyperbolic fa
 `Rationalize_expression`, then expand and contract the numerator and denominator separately. A
 denominator that contracts to 0 is `Left ZeroDenominator`, or `Left ZeroOverZero` if the
 numerator contracted to 0 as well. Cohen's line 7 returns `Undefined` without looking at the
-numerator, and the split is ours, so that §4.7 can map each as `1/0` and `0/0` are mapped. Cohen's appraisal is the specification of its limits, stated here
+numerator, and the split is ours, so that §4.7 can map each as `1/0` and `0/0` are mapped. Like
+`Expand`, and like WL 15.0.1's, `Simplify` threads over a list without being `Listable`:
+`Rationalize_expression` stops at a `List`, so `Simplify[{(1 - Cos[x]^2)/Sin[x]^2}]` would
+otherwise not be `{1}` (regression case 0086). Cohen's appraisal is the specification of its limits, stated here
 so that they are read as the contract and not reported as bugs. It proves identities well when asked
 about a difference — Example 7.18's left side minus `Tan[4x]` gives 0 — but leaves a larger form
 than necessary otherwise: the same left side alone is unchanged. And it cannot see that two
