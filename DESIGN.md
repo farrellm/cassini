@@ -2258,11 +2258,15 @@ MuPAD disagreeing, so each rule names the column it reproduces, and those rows a
   `r`, with `Log[E] → 1` the case `r = 1`; `Log[0]` is `Left LogOfZero`. `Log[E^x]` for symbolic
   `x` is left alone. **The two-argument form** is a definition, as in WL, which rewrites it on
   evaluation (`wolfram/HoldPattern/BasicExamples/3`): `Log[b, z] → Log[z]/Log[b]`, except that
-  `Log[b, b^r] → r` for rational `r`, with `b^r` written as a power of `b` or both integer powers of
-  one integer (`Log[10, 1000] → 3`, `Log[Pi, Sqrt[Pi]] → 1/2`, `Log[8, 1/2] → -1/3`, as in
-  WL 15.0.1). Base 1 divides by `Log[1] = 0`, so `Log[1, z]` is `Left ZeroDenominator`, and
-  `Log[1, 1]` `Left ZeroOverZero`; base 0 is left alone until §4.15's infinity pass exists. Added
-  with the track, from the corpus.
+  `Log[b, b^r] → r` for rational `r` where that is an identity. Both integer powers of one integer
+  qualify (`Log[10, 1000] → 3`, `Log[8, 1/2] → -1/3`, as in WL 15.0.1). A power written as `b^r`
+  qualifies only for a base known positive, a positive rational, `Pi` or `E`
+  (`Log[Pi, Sqrt[Pi]] → 1/2`), or for `-1 < r ≤ 1`, because `Log[b^r] = r·Log[b]` needs `r·Arg[b]`
+  in `(-π, π]`: `Log[x, x^2]` stays a quotient, being 0, not 2, at `x = -1`. Base 1 divides by
+  `Log[1] = 0`, so `Log[1, z]` is `Left ZeroDenominator` and `Log[1, 1]` `Left ZeroOverZero`,
+  which §4.7 maps to `Power::infy` and `Power::indet`; WL 15.0.1 gives the same results, but its
+  message for `Log[1, 1]` is `Divide::indet`. Base 0 is left alone until §4.15's infinity pass
+  exists, where WL gives `Log[0, 0]` as `Indeterminate`. Added with the track, from the corpus.
 
 **Every rule is an identity over ℂ.** The kernel works in ℂ, as WL does, so a transformation that
 holds only for real arguments is applied neither automatically nor by any builtin in §4.12.
@@ -2721,9 +2725,9 @@ downvalue therefore tries a radical rule after `simplifyPower`, as it tries `sim
 **Built with the elementary-functions track** (§10), which needs them: steps 1–6, with `B = 1024`
 (D24), and `integerRoot`, `isPerfectPower` and trial division in `Cassini.Number.Integer`. The
 infinity pass and the integer builtins below stay with their own track. One answer differs from WL
-15.0.1, which keeps `Sqrt[2/3]` as `(2/3)^(1/2)` where step 2 gives `2^(1/2)·3^(-1/2)`: step 2 is
-kept, because the canonical form below depends on prime radicands; the oracle case
-`oracle/cases/elementary.in` holds the input.
+15.0.1, which keeps `Sqrt[2/3]` as `(2/3)^(1/2)` where step 2 gives `2^(1/2)·3^(-1/2)`. Step 2 is
+kept for now, because the canonical form below depends on prime radicands; D49 holds the question,
+and `oracle/cases/elementary.in` the input.
 
 Each step is valid over ℂ for the principal branch, which §4.11 requires. The result is canonical
 for radicals whose radicand is a prime below `B`, or a power of one: the total exponent of each
@@ -4344,7 +4348,10 @@ appraisal says. Fig. 7.9's rows reproduce as §4.11 specifies, and `Sin`, `Cos` 
 `x + kπ/12` agree with WL 15.0.1 for every `k` (D39). `isZero` does not exist before 2a, so its
 clause is open; `Simplify[Sin[x]^2 + Cos[x]^2 - 1]` is already 0. Both suites pass under both
 `intern` settings with `-Werror`, `hlint`, `ormolu`, the layering fixtures, the Haddock floor and
-the doctests, and the new laws pass on three random seeds at the nightly's count.
+the doctests. The whole fast suite passes at the nightly's count of 1,000 tests a law on four
+random seeds under both settings, and on CI's fixed seed. One `-f intern` run during development
+failed without its output being kept; it did not recur in any later run, which the
+nightly will keep watching.
 
 - **Tests.** The `Simplify.Elementary` row, with coverage that most inputs are defined and each
   family of rules fires; the `Simplify.Trig` rows; the radical half of the `Simplify.Numeric` row;
@@ -4356,14 +4363,15 @@ the doctests, and the new laws pass on three random seeds at the nightly's count
 - **Benchmarks.** §8.4's `Expand` swell and both trigonometric expansions are baselined, and D2
   closes on the swell: interning stays off.
 - **Corpus.** The Wolfram corpus has 1,096 cases in scope (882 at the fidelity track), 950
-  passing and 146 listed; Expreduce 436, 416 and 20; Mathics3 116, 99 and 17. 193 newly passing
-  cases were read and added, and five `pending` entries pass and are gone. The new entries: D16
-  21, D17 4, D19 2, D20 3, §4.12 2, D36 2, Mathics3's normalizer 6 (it spells `1/Sqrt[3]` as
-  `Sqrt[3]/3`), D27 50 (extractor artifacts, mostly inputs naming a symbol Mathics3 does not know,
-  which came into scope with `Pi` and `E`), and D48 39, the WL features on these pages no track
-  builds. D18 explained none: no case needed a real-only identity. The oracle: 495 inputs, 373
-  agree with Mathics3 10.0.1, 89 listed and 33 inconclusive, none disagreeing; the 40 new inputs
-  are `oracle/cases/elementary.in`.
+  passing, 94 listed and 52 failing, all 52 from before the track (53 at the fidelity track);
+  Expreduce 436, 416 and 20; Mathics3 116, 99 and 17. 193 newly passing cases were read and added,
+  and five `pending` entries pass and are gone. Every failure the track brought into scope is
+  listed: D16 21, D17 4, D19 2, D20 2, D27 2, §4.12 2, Mathics3's normalizer 6 (it spells
+  `1/Sqrt[3]` as `Sqrt[3]/3`), and D48 38, the WL features on these pages no track builds. D18
+  explained none: no case needed a real-only identity. The oracle: 495 inputs, 373 agree with
+  Mathics3 10.0.1, 97 listed and 25 inconclusive, as before, with none disagreeing; the 40 new
+  inputs are `oracle/cases/elementary.in`, and its eight that Mathics3 cannot settle are listed with
+  WL's answers.
 
 The departures it found are recorded in their sections:
 
@@ -4371,7 +4379,8 @@ The departures it found are recorded in their sections:
 - `simplifyE` built a node at a time, without revisiting reused subterms (§4.11);
 - a numeric denominator distributed by `Simplify`, `Expand_trig_rules` on a list of terms, and
   `Simplify`'s cost stated as its contract (§4.12);
-- §4.15's radicals built here, with `B = 1024`, and WL keeping `Sqrt[2/3]` whole (§4.15, D24);
+- §4.15's radicals built here, with `B = 1024` (§4.15, D24), and WL keeping `Sqrt[2/3]` whole,
+  which step 2 does not (D49, open);
 - `expandTrigRules`' allocation near `n^1.5`, not linear (§8.4).
 
 #### Track: control flow, logic, numbers and lists (§4.13–§4.15)
@@ -4590,6 +4599,7 @@ answer, not a deletion.
 | D46 | Renovate updates the CI's GitHub Actions only (digest-pinned, grouped, minor/patch/digest automerged); toolchain versions and Hackage bounds move by hand (§2.8) | a Hackage major or toolchain release going unnoticed long enough to matter, which would make a dashboard-only Hackage manager worth its noise |
 | D47 | **Opened 2026-11-17, from the PR #27 review.** The depth `$RecursionLimit` bounds counts every evaluation `Evaluate`'s handler runs (§4.3), argument descent included, so a deep but finite expression with no runaway can reach the limit: `Length` of 1022 nested `g[…]` around `f[]` is `TerminatedEvaluation["RecursionLimit"]` at the default 1024. WL 15.0.1 does not count that descent: under `Block[{$RecursionLimit = 20}, …]`, `ToExpression` of 100 nested `k[1 + …]`, of 100 nested `h[…]` with `h[x_] := {x}` firing at every level, and of 200 nested `g[…]` around `1 + 1` all evaluate with no message. What WL does count is not established; nesting of evaluations off the standard chain (§4.3) is the hypothesis to probe first, since the D30 rule already tracks it. A raw atom cannot be the first to reach the limit here: a node evaluates its head (step 2) at the depth its arguments would be, so the head trips first, except under a raw head such as `1[2]`. Not changed with the fidelity track, because a new depth rule moves which evaluation D30 replaces and would re-open regression cases 0010, 0011, 0077 and 0079 | a deep but finite input, from a corpus or a user, hitting `$RecursionLimit` where WL does not; or probes that settle what WL counts |
 | D48 | **Opened 2026-11-18, in the elementary-functions track's corpus triage.** WL features on the elementary pages that no track builds: an elementary function of an infinity (`ArcTan[Infinity] → π/2`, `Exp[-Infinity] → 0`), `ArcTan[x, y]`, `D` to a symbolic order (`D[Sin[x], {x, n}]`) or of a function of a list argument, `Expand`'s second argument, and `b^Log[b, x] → x`. The corpus lists each such case as D48 | a corpus measurement (§7.9) putting one of them among the most-wanted missing behaviours, or §4.15's infinity pass landing, which makes the first cheap |
+| D49 | **Opened 2026-11-18, in the elementary-functions track.** §4.15 step 2 splits a fraction's radical, `(2/3)^(1/2) → 2^(1/2)·3^(-1/2)`, and WL 15.0.1 does not: it keeps `Sqrt[2/3]` whole. D39 settled a like question for WL; this one is kept as designed for now, because the canonical form for prime radicands, and the inverse tables' one spelling per value, rest on the split, and nothing yet shows what WL's own rule for a fraction under a radical is | WL's rule read off its answers for a table of fractions under radicals (`Sqrt[2]/Sqrt[3]`, `Sqrt[3/8]`, `(2/3)^(3/2)`), as D39's was; or a corpus or oracle case that the split makes fail |
 
 ### 11.3 Provenance
 

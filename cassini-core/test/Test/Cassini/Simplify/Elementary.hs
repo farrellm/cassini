@@ -30,6 +30,7 @@ tests =
       testGroup "WL 15.0.1: values, parity, inverses" (wl values),
       fig79,
       radicals,
+      logTwo,
       testGroup
         "laws (§7.3)"
         [ testProperty "simplifyE u is elementary-normal, or undefined" $
@@ -76,6 +77,26 @@ fig79 =
   where
     row name i o = testCase name (evalStd [i] @?= o)
 
+-- | The two-argument @Log@ (§4.11): a definition, and its exact cases.
+logTwo :: TestTree
+logTwo =
+  testGroup
+    "Log[b, z] (§4.11)"
+    [ row "is Log[z]/Log[b] (wolfram/Log/PossibleIssues/1)" "Log[b, z]" "Times[Power[Log[b], -1], Log[z]]",
+      row "an exact integer power (WL 15.0.1)" "Log[10, 1000]" "3",
+      row "a power of a common root (WL 15.0.1)" "Log[4, 8]" "Rational[3, 2]",
+      row "a written power of a positive base (wolfram/Log/Scope/SpecificValues/1)" "Log[Pi, Power[Pi, Rational[1, 2]]]" "Rational[1, 2]",
+      row "a reciprocal power" "Log[8, Rational[1, 2]]" "Rational[-1, 3]",
+      row "base E is the one-argument Log (wolfram/Log/Scope/FunctionProperties/1)" "Log[E, z]" "Log[z]",
+      -- Log[x^2] is not 2 Log[x] at x = -1, so x^2 is not read as a power of x
+      row "a symbolic base with an exponent outside (-1, 1] stays a quotient" "Log[x, Power[x, 2]]" "Times[Power[Log[x], -1], Log[Power[x, 2]]]",
+      row "a symbolic base with an exponent inside (-1, 1] reduces" "Log[x, Power[x, Rational[1, 2]]]" "Rational[1, 2]",
+      row "base 1 divides by zero (WL 15.0.1: ComplexInfinity)" "Log[1, 2]" "DirectedInfinity[]",
+      row "Log[1, 1] is 0/0 (WL 15.0.1: Indeterminate)" "Log[1, 1]" "Indeterminate"
+    ]
+  where
+    row name i o = testCase name (evalStd [i] @?= o)
+
 -- | §4.15's worked examples of radical normalization.
 radicals :: TestTree
 radicals =
@@ -89,6 +110,7 @@ radicals =
       row "truncated toward zero" "Power[2, Rational[-3, 2]]" "Times[Rational[1, 2], Power[2, Rational[-1, 2]]]",
       row "a negative base" "Power[Rational[-1, 2], Rational[1, 2]]" "Times[Power[-1, Rational[1, 2]], Power[2, Rational[-1, 2]]]",
       row "-1 alone" "Power[-1, Rational[3, 2]]" "Times[-1, Power[-1, Rational[1, 2]]]",
+      -- The design's answer, step 2; WL 15.0.1 keeps Sqrt[2/3] whole (D49).
       row "a fraction" "Power[Rational[2, 3], Rational[1, 2]]" "Times[Power[2, Rational[1, 2]], Power[3, Rational[-1, 2]]]",
       row "the coefficient merges: Sqrt[2]/2" "Times[Rational[1, 2], Power[2, Rational[1, 2]]]" "Power[2, Rational[-1, 2]]",
       row "Sqrt[3]/3" "Times[Rational[1, 3], Power[3, Rational[1, 2]]]" "Power[3, Rational[-1, 2]]",

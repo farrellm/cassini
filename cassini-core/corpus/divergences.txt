@@ -187,7 +187,6 @@ wolfram/TrigReduce/PossibleIssues/3 D19
 # D20: no complex numbers.
 wolfram/Cosh/Scope/Differentiation/3 D20
 wolfram/Sinh/Scope/Differentiation/3 D20
-wolfram/Sqrt/PossibleIssues/3 D20
 
 # §4.12: Cohen's trig-expanded form is not unique, by (7.17), and TrigExpand
 # does not apply sin² + cos² = 1; and Expand of (x + y + z)^1000, 501,501
@@ -222,7 +221,6 @@ wolfram/Coth/Scope/SpecificValues/2 D48
 wolfram/Csch/Scope/SpecificValues/2 D48
 wolfram/D/BasicExamples/3 D48
 wolfram/Derivative/Scope/3 D48
-wolfram/DirectedInfinity/Scope/4 D48
 wolfram/D/Scope/BasicUses/11 D48
 wolfram/D/Scope/SymbolicFunctions/6 D48
 wolfram/Expand/Scope/AdvancedUses/5 D48
@@ -239,62 +237,8 @@ wolfram/Sinh/Scope/SpecificValues/2 D48
 wolfram/Sin/Scope/Differentiation/3 D48
 wolfram/Tanh/Scope/SpecificValues/2 D48
 
-# D27: the expected outputs are numbered out of the inputs' order
-# (TrigExpand), are graphics ("-"), or come from inputs naming WL symbols
-# Mathics3 does not know (ChartElementData, RawArray, the OrdinalScale
-# sessions), which the index therefore does not list, so the case came
-# into scope with Pi or E.
-wolfram/AngularGauge/Options/Gaugefaceelementfunction/1 D27
-wolfram/AngularGauge/Options/Gaugeframeelementfunction/1 D27
-wolfram/BarChart3D/Options/Chartelementfunction/1 D27
-wolfram/BarChart/Options/Chartelementfunction/1 D27
-wolfram/BoxWhiskerChart/Options/Chartelementfunction/1 D27
-wolfram/BubbleChart3D/Options/Chartelementfunction/1 D27
-wolfram/BubbleChart/Options/Chartelementfunction/1 D27
-wolfram/CandlestickChart/Options/Chartelementfunction/1 D27
-wolfram/ClockGauge/Options/Gaugefaceelementfunction/1 D27
-wolfram/ClockGauge/Options/Gaugeframeelementfunction/1 D27
-wolfram/DateHistogram/Options/Chartelementfunction/1 D27
-wolfram/DensityHistogram/Options/Chartelementfunction/1 D27
-wolfram/DiscretePlot3D/Options/Extentelementfunction/1 D27
-wolfram/DiscretePlot/Options/Extentelementfunction/1 D27
-wolfram/DistributionChart/Options/Chartelementfunction/1 D27
-wolfram/FlatShading/PropertiesAndRelations/1 D27
-wolfram/GouraudShading/PropertiesAndRelations/1 D27
-wolfram/Histogram3D/Options/Chartelementfunction/1 D27
-wolfram/Histogram/Options/Chartelementfunction/1 D27
-wolfram/HorizontalGauge/Options/Gaugefaceelementfunction/1 D27
-wolfram/HorizontalGauge/Options/Gaugeframeelementfunction/1 D27
-wolfram/LineBreakChart/Options/Chartelementfunction/1 D27
-wolfram/NumericArrayQ/Scope/6 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/1 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/10 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/11 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/2 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/3 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/6 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/8 D27
-wolfram/OrdinalScale/Scope/ExtractingProperties/9 D27
-wolfram/PairedBarChart/Options/Chartelementfunction/1 D27
-wolfram/PairedHistogram/Options/Chartelementfunction/1 D27
-wolfram/PhongShading/PropertiesAndRelations/1 D27
-wolfram/PieChart3D/Options/Chartelementfunction/1 D27
-wolfram/PieChart/Options/Chartelementfunction/1 D27
-wolfram/PointFigureChart/Options/Chartelementfunction/1 D27
-wolfram/RadialAxisPlot/Options/Plotmarkers/1 D27
-wolfram/RectangleChart3D/Options/Chartelementfunction/1 D27
-wolfram/RectangleChart/Options/Chartelementfunction/1 D27
-wolfram/RenkoChart/Options/Chartelementfunction/1 D27
-wolfram/SectorChart3D/Options/Chartelementfunction/1 D27
-wolfram/SectorChart/Options/Chartelementfunction/1 D27
-wolfram/ThermometerGauge/Options/Gaugefaceelementfunction/1 D27
-wolfram/ThermometerGauge/Options/Gaugeframeelementfunction/1 D27
-wolfram/TradingChart/Options/Chartelementfunction/1 D27
+# D27: the expected outputs are numbered out of the inputs' order: Out[1]
+# holds the second input's answer, or Out[3] appears twice.
 wolfram/TrigExpand/BasicExamples/1 D27
 wolfram/TrigExpand/PossibleIssues/1 D27
-wolfram/VerticalGauge/Options/Gaugefaceelementfunction/1 D27
-wolfram/VerticalGauge/Options/Gaugeframeelementfunction/1 D27
 
-# D36: syntax outside the Stage 1 subset: a named character in a name.
-wolfram/CombinatorI/PropertiesAndRelations/1 D36
-wolfram/CombinatorK/PropertiesAndRelations/1 D36

@@ -362,11 +362,19 @@ logRule x = case x of
   _ -> Right (call' Log x)
 
 -- | @r@ when @z@ is @b^r@ exactly, @r@ rational: @z@ written as a power of
--- @b@, or both integer powers of one integer.
+-- @b@, or both integer powers of one integer. @Log[b^r] = r Log[b]@ needs
+-- @r·Arg[b]@ in @(-π, π]@, so a written power counts only for a base known
+-- positive (a positive rational, @Pi@ or @E@) or for @-1 < r ≤ 1@:
+-- @Log[x, x^2]@ is not 2 at @x = -1@, where @Log[1]/Log[-1]@ is 0.
 logBase' :: Expr -> Expr -> Maybe Rational
 logBase' b z
   | b == z, b /= Int_ 1, b /= Int_ 0 = Just 1
-  | Call p [b', Num r] <- z, p == sPower, b' == b = Just (toRational' r)
+  | Call p [b', Num r] <- z,
+    p == sPower,
+    b' == b,
+    let q = toRational' r,
+    positive b || (q > -1 && q <= 1) =
+      Just q
   | Int_ n <- b,
     n > 1,
     Num q <- z,
@@ -379,6 +387,10 @@ logBase' b z
       Just (sign * fromInteger j / fromInteger i)
   | otherwise = Nothing
   where
+    positive = \case
+      Num n -> n > NInt 0
+      Sym c -> c == sPi || c == sE
+      _ -> False
     -- n = m^i with m not a perfect power
     rootOf n = case isPerfectPower n of
       Just (m, j) -> let (m', i) = rootOf m in (m', i * j)

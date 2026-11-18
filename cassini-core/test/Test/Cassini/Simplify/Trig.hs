@@ -47,6 +47,7 @@ tests =
           row "§7.2 Exercise 11(b): sin²(15π/16) + cos²(π/16) − 1" "Simplify[Plus[Power[Sin[Times[Rational[15, 16], Pi]], 2], Power[Cos[Times[Rational[1, 16], Pi]], 2], -1]]" "0",
           row "§7.1: 1/(sin 2x − 2 sin x cos x) is a zero denominator" "Simplify[Power[Plus[Sin[Times[2, x]], Times[-2, Sin[x], Cos[x]]], -1]]" "DirectedInfinity[]",
           row "§7.1: a zero over a zero is Indeterminate" "Simplify[Times[Plus[Sin[Times[2, x]], Times[-2, Sin[x], Cos[x]]], Power[Plus[Power[Sin[x], 2], Power[Cos[x], 2], -1], -1]]]" "Indeterminate",
+          row "a numeric denominator is distributed (wolfram/Cos/PropertiesAndRelations/2)" "Simplify[Plus[Times[Cos[Times[Rational[1, 2], Plus[x, y]]], Cos[Times[Rational[1, 2], Plus[x, Times[-1, y]]]]], Times[Rational[1, 2], Power[Cos[Times[Rational[1, 2], x]], 2]], Times[Rational[1, 2], Power[Cos[Times[Rational[1, 2], y]], 2]], Times[Rational[-1, 2], Power[Sin[Times[Rational[1, 2], x]], 2]], Times[Rational[-1, 2], Power[Sin[Times[Rational[1, 2], y]], 2]]]]" "Plus[Cos[x], Cos[y]]",
           row "the hyperbolic pair contracts" "Simplify[Plus[Power[Cosh[x], 2], Times[-1, Power[Sinh[x], 2]]]]" "1",
           row "the hyperbolic addition formula" "TrigExpand[Sinh[Plus[x, y]]]" "Plus[Times[Cosh[y], Sinh[x]], Times[Cosh[x], Sinh[y]]]",
           row "nothing contracts a circular with a hyperbolic factor" "TrigReduce[Times[Sin[x], Sinh[y]]]" "Times[Sin[x], Sinh[y]]",
