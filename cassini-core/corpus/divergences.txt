@@ -195,49 +195,49 @@ wolfram/Sqrt/PossibleIssues/3 D20
 wolfram/Expand/Scope/AdvancedUses/4 §4.12
 wolfram/TrigExpand/Scope/1 §4.12
 
-# D47: WL's features on these pages that no track builds: elementary
+# D48: WL's features on these pages that no track builds: elementary
 # functions of an infinity, ArcTan's two-argument form, D to a symbolic or
 # list-shaped order or of a pure function, Expand's second argument, and
 # b^Log[b, x] → x.
-mathics/builtin/numbers/test_trig/test_trig/1 D47
-mathics/builtin/numbers/test_trig/test_trig/2 D47
-mathics/builtin/numbers/test_trig/test_trig/3 D47
-mathics/builtin/numbers/test_trig/test_trig/4 D47
-mathics/builtin/numbers/test_trig/test_trig/5 D47
-mathics/builtin/numbers/test_trig/test_trig/6 D47
-mathics/builtin/numbers/test_trig/test_trig/7 D47
-mathics/builtin/numbers/test_trig/test_trig/8 D47
-wolfram/ArcCos/Scope/SpecificValues/2 D47
-wolfram/ArcCot/Scope/SpecificValues/2 D47
-wolfram/ArcCsc/Scope/SpecificValues/2 D47
-wolfram/ArcSec/Scope/SpecificValues/3 D47
-wolfram/ArcSin/Scope/SpecificValues/2 D47
-wolfram/ArcTan/Applications/4 D47
-wolfram/ArcTan/BasicExamples/2 D47
-wolfram/ArcTan/Scope/SpecificValues/3 D47
-wolfram/ArcTan/Scope/SpecificValues/4 D47
-wolfram/Cosh/Scope/SpecificValues/2 D47
-wolfram/Cos/Scope/Differentiation/3 D47
-wolfram/Coth/Scope/SpecificValues/2 D47
-wolfram/Csch/Scope/SpecificValues/2 D47
-wolfram/D/BasicExamples/3 D47
-wolfram/Derivative/Scope/3 D47
-wolfram/DirectedInfinity/Scope/4 D47
-wolfram/D/Scope/BasicUses/11 D47
-wolfram/D/Scope/SymbolicFunctions/6 D47
-wolfram/Expand/Scope/AdvancedUses/5 D47
-wolfram/Expand/Scope/AdvancedUses/6 D47
-wolfram/Expand/Scope/AdvancedUses/7 D47
-wolfram/Exp/Scope/Differentiation/2 D47
-wolfram/Exp/Scope/SpecificValues/3 D47
-wolfram/Log/Scope/FunctionIdentitiesAndSimplifications/1 D47
-wolfram/Log/Scope/SpecificValues/2 D47
-wolfram/MapApply/Applications/1 D47
-wolfram/Power/Scope/Differentiation/4 D47
-wolfram/Sech/Scope/SpecificValues/2 D47
-wolfram/Sinh/Scope/SpecificValues/2 D47
-wolfram/Sin/Scope/Differentiation/3 D47
-wolfram/Tanh/Scope/SpecificValues/2 D47
+mathics/builtin/numbers/test_trig/test_trig/1 D48
+mathics/builtin/numbers/test_trig/test_trig/2 D48
+mathics/builtin/numbers/test_trig/test_trig/3 D48
+mathics/builtin/numbers/test_trig/test_trig/4 D48
+mathics/builtin/numbers/test_trig/test_trig/5 D48
+mathics/builtin/numbers/test_trig/test_trig/6 D48
+mathics/builtin/numbers/test_trig/test_trig/7 D48
+mathics/builtin/numbers/test_trig/test_trig/8 D48
+wolfram/ArcCos/Scope/SpecificValues/2 D48
+wolfram/ArcCot/Scope/SpecificValues/2 D48
+wolfram/ArcCsc/Scope/SpecificValues/2 D48
+wolfram/ArcSec/Scope/SpecificValues/3 D48
+wolfram/ArcSin/Scope/SpecificValues/2 D48
+wolfram/ArcTan/Applications/4 D48
+wolfram/ArcTan/BasicExamples/2 D48
+wolfram/ArcTan/Scope/SpecificValues/3 D48
+wolfram/ArcTan/Scope/SpecificValues/4 D48
+wolfram/Cosh/Scope/SpecificValues/2 D48
+wolfram/Cos/Scope/Differentiation/3 D48
+wolfram/Coth/Scope/SpecificValues/2 D48
+wolfram/Csch/Scope/SpecificValues/2 D48
+wolfram/D/BasicExamples/3 D48
+wolfram/Derivative/Scope/3 D48
+wolfram/DirectedInfinity/Scope/4 D48
+wolfram/D/Scope/BasicUses/11 D48
+wolfram/D/Scope/SymbolicFunctions/6 D48
+wolfram/Expand/Scope/AdvancedUses/5 D48
+wolfram/Expand/Scope/AdvancedUses/6 D48
+wolfram/Expand/Scope/AdvancedUses/7 D48
+wolfram/Exp/Scope/Differentiation/2 D48
+wolfram/Exp/Scope/SpecificValues/3 D48
+wolfram/Log/Scope/FunctionIdentitiesAndSimplifications/1 D48
+wolfram/Log/Scope/SpecificValues/2 D48
+wolfram/MapApply/Applications/1 D48
+wolfram/Power/Scope/Differentiation/4 D48
+wolfram/Sech/Scope/SpecificValues/2 D48
+wolfram/Sinh/Scope/SpecificValues/2 D48
+wolfram/Sin/Scope/Differentiation/3 D48
+wolfram/Tanh/Scope/SpecificValues/2 D48
 
 # D27: the expected outputs are numbered out of the inputs' order
 # (TrigExpand), are graphics ("-"), or come from inputs naming WL symbols

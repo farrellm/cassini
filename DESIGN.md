@@ -180,7 +180,7 @@ expose the API (the `containers`/`vector` convention).
 | :--- | :--- |
 | **L0** | |
 | `Cassini.Number` | Exact rationals over `Integer`: normalization, arithmetic, numeric order. |
-| `Cassini.Number.Integer` | Integer roots, trial division, strong pseudoprimality, `factorInteger` (§4.15). No `Expr`. |
+| `Cassini.Number.Integer` | Integer roots, trial division, strong pseudoprimality, `factorInteger` (§4.15). No `Expr`. The elementary-functions track built the first two, which §4.15's radicals need. |
 | **L1** | |
 | `Cassini.Core.Symbol` | Interned symbol names with contexts. `Text`-backed, `Int`-compared. |
 | `Cassini.Core.Expr` | The `Expr` API: smart constructors, pattern synonyms, accessors. **No representation.** |
@@ -223,7 +223,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Logic` | `Equal` and the orderings, `SameQ`, `TrueQ`, `And`/`Or`/`Not` (§4.14). |
 | `Cassini.Builtins.Integer` | `Abs`, `Sign`, `Floor`, `Ceiling`, `Round`, `Mod`, `Quotient`, `GCD`, `LCM`, `Binomial`, `Factorial`, `Max`, `Min`, `PrimeQ`, `FactorInteger`, `Numerator`, `Denominator` (§4.15). |
 | `Cassini.Builtins.Calculus` | `D`, `Derivative`, `Integrate`, `Series`, `Normal`, `Limit`, `Sum`, `Product`; `RootSum` (§6.5). 1c built `D` and `Derivative` (§4.9). |
-| `Cassini.Builtins.Polynomial` | `Expand`, `ExpandAll`, `Collect`, `Cancel`, `Factor`, `Together`, `Apart`, `PolynomialGCD`, `Coefficient`, `Exponent`, `Variables`, `Resultant`, `Discriminant`, `GroebnerBasis`, `PolynomialReduce`, `Solve` (§6.5). |
+| `Cassini.Builtins.Polynomial` | `Expand` (built with the elementary-functions track, as `Cassini.Simplify.Rational`'s `algebraicExpand`), `ExpandAll`, `Collect`, `Cancel`, `Factor`, `Together`, `Apart`, `PolynomialGCD`, `Coefficient`, `Exponent`, `Variables`, `Resultant`, `Discriminant`, `GroebnerBasis`, `PolynomialReduce`, `Solve` (§6.5). |
 | `Cassini.Integrate.Rules` | The tier-1 integration rule set and its loader (§6.2). **L4 despite its namespace**: it names `Expr`, `Cassini.Rules` and the surface syntax exactly as `Cassini.Builtins.*` does. |
 | **L5** | |
 | `Cassini.Syntax.Lexer` | Tokens. |
@@ -849,7 +849,8 @@ Also:
 - **The gate is a number.** §8.2 runs the same workload with the flag on and off. At Stage 0 the
   workload is a constructor-built expression-swell proxy; the decision closes when §8.4's real
   `Expand` workload exists, with the elementary-functions track (§10). Interning ships if it wins
-  there on both time and allocation; either way the result is recorded as D2.
+  there on both time and allocation; either way the result is recorded as D2. **Closed 2026-11-18:
+  it loses on both, and stays off** (D2, §8.4).
 
 ### 3.5 Canonical order
 
@@ -2173,7 +2174,19 @@ isElementaryNormal :: Expr -> Bool
 ```
 
 It attaches to the evaluator as §4.6 does: each head's built-in downvalue (step 13) calls
-`simplifyElementary`, and `Power`'s calls `simplifyExpPower` after `simplifyPower`. `Plus`,
+`simplifyElementary`, and `Power`'s calls `simplifyExpPower` after `simplifyPower`.
+
+**As built, `simplifyE` is one node at a time.** `nodeE h args` normalizes a node whose arguments
+are normal, which is what §4.12's algorithms need when they build an intermediate: Cohen's
+operator for the head, then this section's and §4.15's rules. When a rule rewrites the node, the
+parts of the result that are new are normalized in turn, and the parts it took from the arguments
+(the arguments and their operands two levels down) are not revisited. That is what makes a sum
+of two shared subterms cost what its new nodes cost, not what the subterms do: `expandTrigRules`
+returns a DAG whose tree is exponential (§8.4). `Plus` and `Times` operands are spliced and sorted
+in ◁ order first, as steps 8–9 do before the evaluator calls the builtin: Cohen's merges accept
+any order, but are quadratic on unsorted operands (§8.4). §4.15's infinity pass is not in
+`simplifyE` yet: it arrives with the track for control flow, logic and numbers (§10), and
+`simplifyE` gains it then. `Plus`,
 `Times` and `Power` also run §4.15's passes, and `simplifyE` runs the same ones at the same nodes.
 Without them, Cohen's sum merge inside a §4.12 algorithm would build `2·2^(-1/2)`, which the
 evaluator rewrites to `2^(1/2)`, and like terms spelled the two ways would not cancel. The evaluator
@@ -2236,11 +2249,20 @@ MuPAD disagreeing, so each rule names the column it reproduces, and those rows a
   leaves `(1/2)·2^(1/2)` a different expression from `2^(-1/2)`; §4.15's radical normalization
   makes the two one spelling for prime radicands, and the tables rely on that and on nothing
   stronger, since pretending to a canonical form that does not exist is how a table becomes
-  wrong. `ArcSin[Sin[x]] → x` is not a rule: it is false off the principal branch.
+  wrong. `ArcSin[Sin[x]] → x` is not a rule: it is false off the principal branch. `ArcSec[0]` and
+  `ArcCsc[0]` are poles, `Left Pole`, as WL 15.0.1 gives `ComplexInfinity` for both: they are
+  `ArcCos[1/x]` and `ArcSin[1/x]` at `x = 0`. The table above did not have them; the track's unit
+  tests, which compare 270 inputs with WL 15.0.1's answers, found them.
 - **Exponential and logarithm.** `E^(c·Log[z]) → z^c` for numeric `c`: the principal `z^c` is
   *defined* as `E^(c·Log[z])`, so this is an identity. `Log[1] → 0`; `Log[E^r] → r` for rational
   `r`, with `Log[E] → 1` the case `r = 1`; `Log[0]` is `Left LogOfZero`. `Log[E^x]` for symbolic
-  `x` is left alone.
+  `x` is left alone. **The two-argument form** is a definition, as in WL, which rewrites it on
+  evaluation (`wolfram/HoldPattern/BasicExamples/3`): `Log[b, z] → Log[z]/Log[b]`, except that
+  `Log[b, b^r] → r` for rational `r`, with `b^r` written as a power of `b` or both integer powers of
+  one integer (`Log[10, 1000] → 3`, `Log[Pi, Sqrt[Pi]] → 1/2`, `Log[8, 1/2] → -1/3`, as in
+  WL 15.0.1). Base 1 divides by `Log[1] = 0`, so `Log[1, z]` is `Left ZeroDenominator`, and
+  `Log[1, 1]` `Left ZeroOverZero`; base 0 is left alone until §4.15's infinity pass exists. Added
+  with the track, from the corpus.
 
 **Every rule is an identity over ℂ.** The kernel works in ℂ, as WL does, so a transformation that
 holds only for real arguments is applied neither automatically nor by any builtin in §4.12.
@@ -2387,6 +2409,23 @@ differently spelled arguments are equal, so `Sin[(x+1)/(x+2)]^2 + Cos[(1+1/x)/(1
 WL's `Simplify` searches over transformations scored by a complexity measure; with one strategy
 there is nothing to search. The name is bound anyway, because it is the one users type; D17 records
 when that changes.
+
+Two departures from Fig. 7.10, both small. A denominator that contracts to a number is distributed
+over the numerator: rationalization gives the numerator integer coefficients, and a number does
+not distribute over a sum on its own (D29), so `n/16` would otherwise stay `(1/16)·(16a + 16b)`
+where WL gives `a + b` (`wolfram/Cos/PropertiesAndRelations/2`). And `Expand_trig_rules` recurses
+on the list of a sum's terms, not on the sum `A − Operand(A, 1)` of Cohen's line 3, which builds
+the rest of the sum at every level and makes the construction quadratic in the number of terms;
+the pairs are the same.
+
+**`Simplify`'s cost is the contract too.** It grows steeply with the degree of the rationalized
+numerator in sines and cosines, since expansion multiplies out every multiple angle and
+contraction then works through each term: `Rationalize_sum` takes no least common multiple, so
+each quotient's denominator multiplies every other term. On one developer machine, a product of
+four functions of arguments like `x - y - π/6` takes about 0.4 s, and with a fifth,
+`Sinh[-3x - y + π/6]`, 6 s, about a million node constructions. A slow `Simplify` on such an input
+is the algorithm working, not a regression; §7.3's law for it draws from a generator with a degree
+budget for that reason.
 
 **The support it needs, and where it lives.** `Contract_trig` and `Simplify_trig` call
 `Algebraic_expand`, `Expand_main_op`, `Rationalize_expression`, `Numerator` and `Denominator`
@@ -2678,6 +2717,13 @@ downvalue therefore tries a radical rule after `simplifyPower`, as it tries `sim
    `(1/3)·3^(1/2) → 3^(-1/2)`, while `(1/2)·3^(1/2)` and `2·2^(1/2)` are already fixed points.
    This is WL's own convention, from memory rather than the corpus (`Sqrt[2]/2` evaluates to
    `1/Sqrt[2]`); an oracle case pins it.
+
+**Built with the elementary-functions track** (§10), which needs them: steps 1–6, with `B = 1024`
+(D24), and `integerRoot`, `isPerfectPower` and trial division in `Cassini.Number.Integer`. The
+infinity pass and the integer builtins below stay with their own track. One answer differs from WL
+15.0.1, which keeps `Sqrt[2/3]` as `(2/3)^(1/2)` where step 2 gives `2^(1/2)·3^(-1/2)`: step 2 is
+kept, because the canonical form below depends on prime radicands; the oracle case
+`oracle/cases/elementary.in` holds the input.
 
 Each step is valid over ℂ for the principal branch, which §4.11 requires. The result is canonical
 for radicals whose radicand is a prime below `B`, or a power of one: the total exponent of each
@@ -3795,7 +3841,7 @@ The suite that decides interning (§3.4), and so the first written:
 **The gate** (D2): interning ships if it wins on expression swell on both time and allocation. The
 Stage 0 run uses the proxy and is provisional; the decision closes against §8.4's real `Expand`
 workload, which arrives with the elementary-functions track (§10), and the numbers are recorded in
-§11.2 either way.
+§11.2 either way. It closed there, off (D2).
 
 ### 8.3 Matcher
 
@@ -3869,6 +3915,18 @@ generates.
   level builds a constant number of new nodes over shared subterms, so allocation is linear in `n`;
   the naive recursion's 2ⁿ⁻¹−1 rule applications make it exponential, and that curve is what the
   gate catches.
+- **Results at the elementary-functions track** (2026-11-18; GHC 9.12.4, one developer machine),
+  hash interning first and the weak table second. `Expand[(a+b+c+d)^n]`: 4.5 and 8.4 ms at
+  `n = 10`, 33 and 63 ms at 20, 108 ms and 194 MiB against 230 ms and 339 MiB at 30 (D2).
+  `TrigExpand[Sin[a₁ + … + aₙ]]`: 0.16 ms, 1.0 ms and 6.1 ms at `n = 4, 6, 8`, hash only, growing
+  with the 2ⁿ⁻¹ terms. `expandTrigRules` alone: 132 KB, 333 KB, 903 KB and 2.7 MB at
+  `n = 8, 16, 32, 64`, which is about `n^1.5`, not the linear allocation predicted above. The
+  difference is Cohen's order: O-3 compares the nested sums at each level operand by operand, so
+  each comparison costs the level's depth. Before the recursion took the sum's terms as a list
+  (§4.12), it was 151 KB to 3.8 MB. The gate is against the exponential naive recursion, which at
+  `n = 64` could not finish, and this is far from that. The end-to-end workload allocates 1.0% and
+  0.8% less than at the fidelity track's baselines, with `Times` and `Power` now running §4.15's
+  passes; it does not grow with this track, as §8.6 plans growth at 2a.
 
 ### 8.5 Polynomial
 
@@ -4279,6 +4337,43 @@ Waits for 1c. **Done when** Cohen's Examples 7.15–7.18 simplify to 0, Fig. 7.9
   Expect D16, D18, D19 and D20 to account for most divergence entries here; one that none of them
   explains is a finding.
 
+**Done 2026-11-18, but for the clause that waits for 2a.** Cohen's Examples 7.15 and 7.16 contract
+to 0, 7.17 simplifies to 0 by expansion then contraction while contraction alone leaves Cohen's
+three terms, and 7.18's difference simplifies to 0 while its left side alone is unchanged, as the
+appraisal says. Fig. 7.9's rows reproduce as §4.11 specifies, and `Sin`, `Cos` and `Tan` of
+`x + kπ/12` agree with WL 15.0.1 for every `k` (D39). `isZero` does not exist before 2a, so its
+clause is open; `Simplify[Sin[x]^2 + Cos[x]^2 - 1]` is already 0. Both suites pass under both
+`intern` settings with `-Werror`, `hlint`, `ormolu`, the layering fixtures, the Haddock floor and
+the doctests, and the new laws pass on three random seeds at the nightly's count.
+
+- **Tests.** The `Simplify.Elementary` row, with coverage that most inputs are defined and each
+  family of rules fires; the `Simplify.Trig` rows; the radical half of the `Simplify.Numeric` row;
+  the `Calculus` row over elementary expressions; and a law that the evaluator and `simplifyE`
+  agree. 282 unit tests hold 306 of WL 15.0.1's answers, through the Wolfram Cloud MCP: the circular
+  functions at every tabled multiple of π, the inverses at every value their tables emit, the
+  hyperbolic values at 0, the logarithm, parity, Fig. 7.9's rows, and the `x + kπ/12` table.
+  Cohen's chapter 6 and 7 examples are unit tests, cited.
+- **Benchmarks.** §8.4's `Expand` swell and both trigonometric expansions are baselined, and D2
+  closes on the swell: interning stays off.
+- **Corpus.** The Wolfram corpus has 1,096 cases in scope (882 at the fidelity track), 950
+  passing and 146 listed; Expreduce 436, 416 and 20; Mathics3 116, 99 and 17. 193 newly passing
+  cases were read and added, and five `pending` entries pass and are gone. The new entries: D16
+  21, D17 4, D19 2, D20 3, §4.12 2, D36 2, Mathics3's normalizer 6 (it spells `1/Sqrt[3]` as
+  `Sqrt[3]/3`), D27 50 (extractor artifacts, mostly inputs naming a symbol Mathics3 does not know,
+  which came into scope with `Pi` and `E`), and D48 39, the WL features on these pages no track
+  builds. D18 explained none: no case needed a real-only identity. The oracle: 495 inputs, 373
+  agree with Mathics3 10.0.1, 89 listed and 33 inconclusive, none disagreeing; the 40 new inputs
+  are `oracle/cases/elementary.in`.
+
+The departures it found are recorded in their sections:
+
+- the two-argument `Log`, and the poles of `ArcSec` and `ArcCsc` at 0 (§4.11);
+- `simplifyE` built a node at a time, without revisiting reused subterms (§4.11);
+- a numeric denominator distributed by `Simplify`, `Expand_trig_rules` on a list of terms, and
+  `Simplify`'s cost stated as its contract (§4.12);
+- §4.15's radicals built here, with `B = 1024`, and WL keeping `Sqrt[2/3]` whole (§4.15, D24);
+- `expandTrigRules`' allocation near `n^1.5`, not linear (§8.4).
+
 #### Track: control flow, logic, numbers and lists (§4.13–§4.15)
 
 Waits for 1c. **Done when** its §7.3 rows pass and the regression corpus pins the behaviours §4.13
@@ -4448,7 +4543,7 @@ answer, not a deletion.
 | # | Decision | Trigger to revisit |
 | :--- | :--- | :--- |
 | D1 | `Integer` over a custom bignum (§3.1) | milestone 2a's polynomial benchmarks (§10) showing `Integer` overhead dominating |
-| D2 | Interning on or off (§3.4). **Provisionally off, 2026-10-04**, on §8.2's proxy (GHC 9.12.4, plain `cabal bench` as §8.1 requires, one developer machine; figures from `bench/baseline/ghc-9.12.4-{hash,intern}.csv` as regenerated 2026-10-06). The weak table loses the gate on both counts. For the `(a+b+c+d)^30` swell, hash-only takes 26 ms and allocates 31 MiB, and the table takes 36 ms and allocates 70 MiB. The table wins residency, with peak memory of 16 MiB against 82 MiB over the whole run, and it wins equality of equal terms built apart, 2.5 ns against 784 µs on a depth-14 tree. It also builds that tree in about the same time and deep-`substitute`s it in under 60% of the time, but it allocates about twice as much doing either. Most of the table's allocation is one `IORef`, one `Weak` and one `HashMap` path copy per new node. | decided when the elementary-functions track (§10) brings §8.4's `Expand`, with the numbers recorded here |
+| D2 | Interning on or off (§3.4). **Answered 2026-11-18: off.** On §8.4's real `Expand` workload, `(a+b+c+d)^30`, hash-only takes 108 ms and allocates 194 MiB, and the weak table takes 230 ms and 339 MiB: the table loses the gate on both counts, by more than on the proxy. It still wins residency (60 MiB peak over the whole run, against 105 MiB). The row as it stood: **Provisionally off, 2026-10-04**, on §8.2's proxy (GHC 9.12.4, plain `cabal bench` as §8.1 requires, one developer machine; figures from `bench/baseline/ghc-9.12.4-{hash,intern}.csv` as regenerated 2026-10-06). The weak table loses the gate on both counts. For the `(a+b+c+d)^30` swell, hash-only takes 26 ms and allocates 31 MiB, and the table takes 36 ms and allocates 70 MiB. The table wins residency, with peak memory of 16 MiB against 82 MiB over the whole run, and it wins equality of equal terms built apart, 2.5 ns against 784 µs on a depth-14 tree. It also builds that tree in about the same time and deep-`substitute`s it in under 60% of the time, but it allocates about twice as much doing either. Most of the table's allocation is one `IORef`, one `Weak` and one `HashMap` path copy per new node. | a workload where residency, not time or allocation, is the limit, or a GHC release that changes the table's per-node cost |
 | D3 | `recursion-schemes` over `uniplate` (§3.6) | traversal showing up in the §8.4 profile |
 | D4 | QuickCheck over Hedgehog (§7.3) | shrinking quality becoming the reason counterexamples go uninvestigated |
 | D5 | `poly` over Kmett's `algebra` (§5.3) | Gröbner work at Stage 3 needing the `Numeric.Domain.*` chain |
@@ -4470,7 +4565,7 @@ answer, not a deletion.
 | D21 | No special functions beyond §4.11: `Gamma`, `Pochhammer`, `Erf`, `Ei`, `PolyLog` absent. The inverse hyperbolic functions (`ArcSinh` … `ArcCsch`) are elementary but absent too; they would join §4.11 by its pattern | Gosper (§6.3) landing — its closed forms need `Pochhammer`/`Gamma` first; transcendental Risch (§6.2) proving a result non-elementary, where `Erf`/`Ei` would be the answer |
 | D22 | No conditional results (`ConditionalExpression`, `Piecewise`): a generic answer is returned, e.g. `∫xⁿ` assumes `n ≠ -1` | tier-1 integration rules (§6.2) or `Solve` (§6.5) needing to report a case split rather than drop it |
 | D23 | **Confirmed 2026-11-11** against WL 15.0.1: `f[x_] := (If[True, Return[1]]; 2)` gives `f[0]` as `1`, and a `Return` in a `Do` inside `g` exits the loop and not `g`, as §4.13 reads the page. **Answered 2026-09-25:** `Return` is `UReturn`, caught by the innermost loop or user-rule application, per `wolfram_ref_return.html` (§4.13) | the regression case for `Return` inside `If` in a compound body disagreeing with §4.13 |
-| D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
+| D24 | Radical normalization extracts prime-power factors, and merges coefficients, only for primes below a bound `B`, **set at 1024 with the elementary-functions track**, which built §4.15's steps 1–6, and does not split radicands with two or more distinct prime factors (§4.15), so it is canonical only for radicands that are a prime below `B` or a power of one | an oracle (§7.5) or zero-test case failing because two spellings of one radical survived |
 | D25 | Infinities absorb only numbers: `x + Infinity` stays a sum, where WL gives `Infinity` (`wolfram_ref_directedinfinity.html`), because `x` may itself be infinite (§4.15, §4.8). The unabsorbed terms are guarded against Cohen's cancellations, which would otherwise assume them finite; one case, an infinity-bearing base under non-numeric exponents, is left unmerged (§4.15) | an assumptions mechanism that can state "`x` is finite" (with D18's), or oracle comparisons (§7.5) where the whitelist entry dominates |
 | D26 | Imported corpora are vendored only when permissively licensed and small enough to commit; any other corpus is fetched at a pinned commit, and the repository holds only its case IDs (§7.8) | a corpus's licence changing; or the test suites being shipped in a package, where fetched corpora must stay optional |
 | D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and those examples hold 85,555 usable outputs (the unusable examples hold about 19,800 more, which nothing can run); most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway. **Fired again 2026-10-09 (1a triage, after the attribute names became `System`` symbols):** the normalizer evaluated arithmetic held by an attribute the example set on its own symbol, so `SetAttributes[h, HoldFirst]; h[1+1, 2+2, 3+3]` was expected as `h[2, 4, 6]`. Fixed in the extractor (§7.9 step 6) and re-run over the same 14.1 notebooks, under Mathics3 10.0.1 and CPython 3.14: 38,160 examples ok and 85,558 usable outputs (from 38,157 and 85,555). Of the 29 changed files, 13 are that fix (the `Hold*`, `NHold*`, `SetAttributes`, `MapApply`, `ComapApply`, `Complex` and `Rational` pages), and 16 are run-to-run variation: three outputs that timed out before, memory addresses or a version string in eleven garbage outputs, and two `Plus` terms ordered differently by the new Python |
@@ -4485,7 +4580,7 @@ answer, not a deletion.
 | D36 | The infix syntax is §4.10's Stage 1 subset: named characters (`\[Alpha]`), character escapes in names (`\.78`, `\:0078`), a string's box escapes (`\<`, `\>`, `\!`, `\&`), `Span`, `Dot`, associations and string patterns are parse errors (three Mathics3 cases, 2026-10-11) | a corpus's in-scope cases needing one, or a builtin whose usual spelling is one (`Dot` with matrices, `Span` with `Part`) |
 | D37 | **Built 2026-11-17, in the fidelity track (§10):** regression cases 0066 and 0072; Mathics3 keeps the atom reading, so the oracle lists both. **Answered 2026-11-11: follow WL, in the fidelity track (§10).** To every compound pattern a rational subject is `Rational[n, d]` (§4.5.1). The atom reading had no source behind it; it was an assumption, and `undocumented` answers stand only until WL's is known (§7.8). `Complex` takes the same answer when D20 brings it. The row as it stood: A rational number is an atom to every compound pattern but one whose head is literally `Rational` (§4.5.1). WL 15.0.1 matches it as `Rational[n, d]` against any two-argument compound pattern: `MatchQ[22/7, _[_, _]]` is `True`, although `Length[22/7]` is 0 and `_[_]` does not match. Following WL would make a number's parts visible to every `f_[x_, y_]` rule, and `Complex` would need the same answer (D20). Found 2026-11-11 in the design review | none; D20 applies the same reading to `Complex` |
 | D38 | Equal subjects under an `Orderless` head are one mapping, as Krebber's algorithm enumerates them (§4.5.4). WL 15.0.1 repeats them: `ReplaceList[h[a, a], h[x_, y_] -> {x, y}]` with `h` `Orderless` is `{{a, a}, {a, a}}`. Only `ReplaceList`'s length and `Cases`-style counts can see the difference; `Replace` and the rule tables take the first match either way. Found 2026-11-11 in the design review; until then the divergence was filed as undocumented | a corpus case whose expected value counts the repeats; or a user's rule with side effects in its condition observing how often it runs |
-| D39 | **Answered 2026-11-11: follow WL, in the elementary-functions track (§10).** A π multiple, alone or in a sum, is reduced to at most π/4 in magnitude, with the cofunction (§4.11). Nothing was built on the earlier rule, the new one is read off WL 15.0.1's answers, and it makes `Sin[x + 2π/3]` and `Cos[x + π/6]` one spelling, which the earlier rule did not. The row as it stood: A rational multiple of π inside a sum is reduced by periodicity only: `Sin[x + 2π/3]` stays, and `Sin[x + 7π/3]` is `Sin[x + π/3]` (§4.11). That is Cohen's Fig. 7.9 Mathematica column, from 2002. WL 15.0.1 moves the multiple to the first quadrant as it does for a constant argument: `Cos[π/6 + x]` and `Cos[π/6 - x]`. Equal in value, and `Simplify_trig` on the difference should give 0, so `isZero`'s layer 3′ should equate them; a unit test with the track confirms it. Found 2026-11-11 in the design review | a corpus case in the track's triage that the rule as read does not reproduce |
+| D39 | **Answered 2026-11-11: follow WL, in the elementary-functions track (§10). Built 2026-11-18:** `Sin`, `Cos` and `Tan` of `x + kπ/12` agree with WL 15.0.1 for every `k`, and `Sin[x + 2π/3] - Cos[x + π/6]` evaluates to 0 with no `Simplify`, since the two are one spelling. A π multiple, alone or in a sum, is reduced to at most π/4 in magnitude, with the cofunction (§4.11). Nothing was built on the earlier rule, the new one is read off WL 15.0.1's answers, and it makes `Sin[x + 2π/3]` and `Cos[x + π/6]` one spelling, which the earlier rule did not. The row as it stood: A rational multiple of π inside a sum is reduced by periodicity only: `Sin[x + 2π/3]` stays, and `Sin[x + 7π/3]` is `Sin[x + π/3]` (§4.11). That is Cohen's Fig. 7.9 Mathematica column, from 2002. WL 15.0.1 moves the multiple to the first quadrant as it does for a constant argument: `Cos[π/6 + x]` and `Cos[π/6 - x]`. Equal in value, and `Simplify_trig` on the difference should give 0, so `isZero`'s layer 3′ should equate them; a unit test with the track confirms it. Found 2026-11-11 in the design review | a corpus case in the track's triage that the rule as read does not reproduce |
 | D40 | **Answered 2026-11-11, for the control-flow track (§10):** `Print` queues its evaluated arguments through a `Kernel` operation, `EmitOutput`, on the queue the messages use, and the front ends format them (§4.7). The row as it stood: No output channel. `Print` belongs to no module, and the `Kernel` effect has no operation for output, so the pure interpreter has nowhere to put it. The likely shape follows messages: an operation that appends to a queue in `KernelState`, drained by the front end (§4.7) | a second kind of output (`Echo`, `Write`, streams) that the one queue does not fit |
 | D41 | **Answered in part 2026-11-11, for the control-flow track (§10):** `Clear` and `ClearAll`, with WL 15.0.1's messages (§4.13). `Remove` and the string-pattern forms stay deferred. The row as it stood: `Clear`, `ClearAll` and `Remove` are absent; `Unset` and `ClearAttributes` are the only ways to take a definition back. `Remove` would also need the symbol table to forget a name, which §3.2's append-only table cannot | for `Remove`, a need to forget a name, which means revisiting §3.2's append-only table; for the string forms, D34 |
 | D42 | **Answered 2026-11-11, for the control-flow track (§10):** `Message`, `MessageName` and user message text, `Quiet`, `Check`, `Off`/`On` and `General::stop`, each as WL 15.0.1 answered a probe (§4.7). Scoping is two `Kernel` operations, `Quietly` and `Checking`. Left out, and unevaluated: `Quiet`'s third argument, `Off[]`/`On[]` without a message name, message groups, `$MessageList`, `Messages` and message languages. The row as it stood: Messages can be emitted by builtins and read by the front end, and that is all: `Message`, `Quiet`, `Off`/`On`, `Check` and user-defined message text (`f::tag = "…"`) are absent | a corpus's in-scope cases needing one of the forms left out |
@@ -4494,6 +4589,7 @@ answer, not a deletion.
 | D45 | **Built 2026-11-17:** `.github/workflows/nightly.yml`, daily and on demand, and on a pull request that changes it (§2.8). Running the suite locally at its count found the `Calculus` row's finite-difference law failing about one run in a thousand on the difference's own truncation error, fixed in the test. **Scheduled 2026-11-11:** built in the fidelity track (§10): a scheduled workflow for the random-seed run, `cassini-corpus` and `cassini-oracle`, with Mathics3 at 10.0.1; `cassini-slow` joins at 2b. The row as it stood: The nightly CI job of §2.8 is not built: no scheduled workflow, no `cassini-slow` stanza, and the oracle and corpus suites run only on a developer machine. A runner would need Mathics3 for the oracle and `corpus/fetch.sh` for the fetched corpora | the scheduled run proving too slow or too flaky to leave on, which makes it a decision again |
 | D46 | Renovate updates the CI's GitHub Actions only (digest-pinned, grouped, minor/patch/digest automerged); toolchain versions and Hackage bounds move by hand (§2.8) | a Hackage major or toolchain release going unnoticed long enough to matter, which would make a dashboard-only Hackage manager worth its noise |
 | D47 | **Opened 2026-11-17, from the PR #27 review.** The depth `$RecursionLimit` bounds counts every evaluation `Evaluate`'s handler runs (§4.3), argument descent included, so a deep but finite expression with no runaway can reach the limit: `Length` of 1022 nested `g[…]` around `f[]` is `TerminatedEvaluation["RecursionLimit"]` at the default 1024. WL 15.0.1 does not count that descent: under `Block[{$RecursionLimit = 20}, …]`, `ToExpression` of 100 nested `k[1 + …]`, of 100 nested `h[…]` with `h[x_] := {x}` firing at every level, and of 200 nested `g[…]` around `1 + 1` all evaluate with no message. What WL does count is not established; nesting of evaluations off the standard chain (§4.3) is the hypothesis to probe first, since the D30 rule already tracks it. A raw atom cannot be the first to reach the limit here: a node evaluates its head (step 2) at the depth its arguments would be, so the head trips first, except under a raw head such as `1[2]`. Not changed with the fidelity track, because a new depth rule moves which evaluation D30 replaces and would re-open regression cases 0010, 0011, 0077 and 0079 | a deep but finite input, from a corpus or a user, hitting `$RecursionLimit` where WL does not; or probes that settle what WL counts |
+| D48 | **Opened 2026-11-18, in the elementary-functions track's corpus triage.** WL features on the elementary pages that no track builds: an elementary function of an infinity (`ArcTan[Infinity] → π/2`, `Exp[-Infinity] → 0`), `ArcTan[x, y]`, `D` to a symbolic order (`D[Sin[x], {x, n}]`) or of a function of a list argument, `Expand`'s second argument, and `b^Log[b, x] → x`. The corpus lists each such case as D48 | a corpus measurement (§7.9) putting one of them among the most-wanted missing behaviours, or §4.15's infinity pass landing, which makes the first cheap |
 
 ### 11.3 Provenance
 

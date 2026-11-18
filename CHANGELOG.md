@@ -4,6 +4,24 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* The elementary functions (DESIGN.md §4.11): `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` …
+  `ArcCsc`, `Exp` and `Log`, with `Pi` and `E`. Special values at multiples of π reduced to the
+  first octant, parity, periodicity with a symbolic remainder as WL 15.0.1 does it (D39), inverses,
+  `E^(c Log[z]) → z^c`, `Log[b, z]` as `Log[z]/Log[b]`, and every derivative. 306 answers agree with
+  WL 15.0.1; `ArcSec[0]` and `ArcCsc[0]` are poles, which the design's table had missed. `D[x^x, x]`
+  now evaluates.
+
+* Radicals of rationals (§4.15 steps 1–6): `Sqrt[8]` is `2 Sqrt[2]`, `64^(1/3)` is 4, and
+  `Sqrt[2]/2` is `1/Sqrt[2]`, one spelling per value for prime radicands below 1024 (D24).
+
+* `Expand`, `TrigExpand`, `TrigReduce` and `Simplify` (§4.12): Cohen's algebraic expansion,
+  trigonometric expansion and contraction, and `Simplify_trig`, circular and hyperbolic. Cohen's
+  Examples 7.15–7.18 simplify to 0. `Simplify` is that one strategy (D17); its cost grows steeply
+  with the degree of the rationalized numerator.
+
+* Interning stays off (D2): on `Expand[(a+b+c+d)^30]` the weak table takes 230 ms and 339 MiB
+  against 108 ms and 194 MiB. Both benchmark baselines are regenerated with §8.4's new groups.
+
 * The limits leave `TerminatedEvaluation[…]`, as WL does (DESIGN.md §4.3, §4.4, D30). The
   iteration limit cuts in place: `p := q; q := p; p + 1` is
   `1 + TerminatedEvaluation["IterationLimit"]`. The recursion limit emits
