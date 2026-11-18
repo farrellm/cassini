@@ -44,8 +44,11 @@ library
     Cassini.Builtins.Calculus
     Cassini.Builtins.Control
     Cassini.Builtins.Define
+    Cassini.Builtins.Elementary
     Cassini.Builtins.Pattern
+    Cassini.Builtins.Polynomial
     Cassini.Builtins.Session
+    Cassini.Builtins.Simplify
     Cassini.Builtins.Structural
     Cassini.Core.Expr
     Cassini.Core.Expr.Internal
@@ -56,6 +59,7 @@ library
     Cassini.Eval.Kernel
     Cassini.Eval.Message
     Cassini.Number
+    Cassini.Number.Integer
     Cassini.Pattern
     Cassini.Pattern.Commutative
     Cassini.Pattern.Match
@@ -65,6 +69,10 @@ library
     Cassini.Rules
     Cassini.Script
     Cassini.Simplify.Automatic
+    Cassini.Simplify.Elementary
+    Cassini.Simplify.Numeric
+    Cassini.Simplify.Rational
+    Cassini.Simplify.Trig
     Cassini.Structure
     Cassini.Syntax.FullForm
     Cassini.Syntax.Lexer

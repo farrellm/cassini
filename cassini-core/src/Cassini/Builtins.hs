@@ -26,9 +26,12 @@ import Cassini.Builtins.Arithmetic qualified as Arithmetic
 import Cassini.Builtins.Assign qualified as Assign
 import Cassini.Builtins.Calculus qualified as Calculus
 import Cassini.Builtins.Control qualified as Control
+import Cassini.Builtins.Elementary qualified as Elementary
 import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down, message)
 import Cassini.Builtins.Pattern qualified as Pattern
+import Cassini.Builtins.Polynomial qualified as Polynomial
 import Cassini.Builtins.Session qualified as Session
+import Cassini.Builtins.Simplify qualified as Simplify
 import Cassini.Builtins.Structural qualified as Structural
 import Cassini.Core.Expr (apply, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, globalSymbol, parseName, sBlankNullSequence, sSequence, symName, systemSymbol)
@@ -54,6 +57,9 @@ definitions =
     <> Assign.definitions
     <> Control.definitions
     <> Calculus.definitions
+    <> Elementary.definitions
+    <> Simplify.definitions
+    <> Polynomial.definitions
     <> Session.definitions
 
 -- | The attribute names as @System`@ symbols, so that the @Flat@ a user

@@ -10,13 +10,10 @@
 -- product and chain rules recurse through the evaluator and not through
 -- Haskell. The chain rule's result is @Derivative[…][f][…]@, whose value
 -- comes from @Derivative@'s subvalues: a user's (@Derivative[1][f] = …@ or
--- @f'[x_] := …@), the elementary functions' when that track lands (§4.11),
+-- @f'[x_] := …@), the elementary functions' ("Cassini.Builtins.Elementary", §4.11),
 -- or the one built-in subvalue below that differentiates a function given by
 -- a user's definitions or a pure function. @Derivative@ is not @Protected@,
 -- as in WL, so a user's derivative is an ordinary subvalue.
---
--- Not yet: an exponent that depends on the variable needs @Log@ (§4.11), so
--- @D[x^x, x]@ stays unevaluated until the elementary-functions track.
 module Cassini.Builtins.Calculus (definitions) where
 
 import Cassini.Attributes (Attribute (..))
@@ -146,18 +143,25 @@ productRule e = do
   guard (t == sTimes)
   Just (apply sPlus [apply sTimes (before <> [dOf u x] <> after) | (before, u, after) <- splits factors, not (freeOf u x)])
 
--- | The power rule, for an exponent free of the variable:
--- @D[u^n, x]@ is @n u^(n-1) D[u, x]@. An exponent that depends on the
--- variable needs @Log@, which arrives with §4.11; until then 'chainRule'
--- leaves it alone too, and @D@ stays unevaluated.
+-- | The power rule. For an exponent free of the variable,
+-- @D[u^n, x]@ is @n u^(n-1) D[u, x]@; otherwise
+-- @D[u^v, x]@ is @v u^(v-1) D[u, x] + u^v Log[u] D[v, x]@, whose first term
+-- vanishes when the base is free of the variable. So @D[E^u, x]@ is
+-- @E^u D[u, x]@ only because @Log[E]@ is 1 (§4.11).
 powerRule :: Expr -> Maybe Expr
 powerRule e = do
   (f, x) <- single e
   Call p us <- Just f
   guard (p == sPower)
   [u, n] <- Just us
-  guard (freeOf n x)
-  Just (apply sTimes [n, apply sPower [u, apply sPlus [n, Int_ (-1)]], dOf u x])
+  let baseTerm = apply sTimes [n, apply sPower [u, apply sPlus [n, Int_ (-1)]], dOf u x]
+  Just $
+    if freeOf n x
+      then baseTerm
+      else apply sPlus [baseTerm, apply sTimes [f, apply sLog [u], dOf n x]]
+
+sLog :: Symbol
+sLog = systemSymbol "Log"
 
 -- | The chain rule, for any other head @h@:
 -- @D[h[g1, …, gn], x]@ is the sum, over each @gi@ that depends on the
