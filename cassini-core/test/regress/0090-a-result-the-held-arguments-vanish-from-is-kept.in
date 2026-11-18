@@ -1,0 +1,4 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List. A held argument the procedure cancels away leaves the procedure's result, where its placeholder had leaked out with the unsimplified input. *)
+Simplify[Times[Hold[a], Plus[Power[Sin[x], 2], Power[Cos[x], 2], -1]]]
+Expand[Times[Hold[a], Plus[Power[Plus[1, x], 2], -1, Times[-2, x], Times[-1, Power[x, 2]]]]]
+TrigReduce[Plus[Times[Hold[a], Sin[Plus[x, Times[-1, y]]]], Times[-1, Hold[a], Sin[x], Cos[y]], Times[Hold[a], Cos[x], Sin[y]]]]

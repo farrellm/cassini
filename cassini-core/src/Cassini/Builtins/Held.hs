@@ -49,7 +49,8 @@ outsideHeld f u = do
   (u', held) <- runState (HashMap.empty :: HashMap Expr Int) (shield u)
   pure $
     case u' of
-      Just v -> fromMaybe v . restore (table held) <$> f v
+      -- a result the held arguments vanished from is returned as it is
+      Just v -> (\r -> fromMaybe r (restore (table held) r)) <$> f v
       Nothing -> f u
   where
     table held = V.fromList (map fst (sortOn snd (HashMap.toList held)))

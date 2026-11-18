@@ -1,0 +1,4 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List. A positive radical base whose factors are all above 1 gives -Infinity, all below 1 Infinity; a mixed one is left alone here, where WL also gives -Infinity for Log[3/Sqrt[2], 0]. *)
+Log[Power[2, Rational[1, 2]], 0]
+Log[Power[2, Rational[-1, 2]], 0]
+Log[Times[2, Power[2, Rational[1, 2]]], 0]

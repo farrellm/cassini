@@ -133,7 +133,7 @@ elementaryNode fn f vs = case (fn, V.toList vs) of
     | b == Int_ 0 -> unchanged
     | b == Int_ 1 -> Left (if z == Int_ 1 then ZeroOverZero else ZeroDenominator)
     -- Log[0]/Log[b] is -∞/Log[b], whose direction is Log[b]'s sign: -∞ for a
-    -- base known above 1, ∞ for a rational base in (0, 1), and left alone
+    -- base known above 1, ∞ for one known in (0, 1), and left alone
     -- where that sign is not known (WL 15.0.1: Log[x, 0] is -∞/Log[x])
     | z == Int_ 0 -> fromMaybe unchanged (logOfZeroOver b)
     | Just r <- logBase' b z -> Right (Num (fromRational' r))
@@ -423,6 +423,14 @@ logOfZeroOver = \case
     | n > NInt 1 -> Just (Left LogOfZero)
     | n > NInt 0 -> Just (Right Infinity)
   x | positiveConstant x -> Just (Left LogOfZero)
+  -- a positive radical whose factors are all above 1, or all below
+  x
+    | Just fs@(_ : _) <- positiveRadical x,
+      all ((> 0) . snd) fs ->
+        Just (Left LogOfZero)
+    | Just fs@(_ : _) <- positiveRadical x,
+      all ((< 0) . snd) fs ->
+        Just (Right Infinity)
   _ -> Nothing
 
 -- | @Pi@ and @E@, the constants known positive.
