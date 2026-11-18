@@ -32,17 +32,18 @@ module Cassini.Simplify.Trig
   )
 where
 
-import Cassini.Core.Expr (Expr, exprArgs, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
+import Cassini.Core.Expr (Expr, exprArgs, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num)
 import Cassini.Core.Symbol (sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt), fromRational')
 import Cassini.Simplify.Automatic (Undefined (..))
-import Cassini.Simplify.Elementary (Fn (..), fnOf, fnSymbol, nodeE)
+import Cassini.Simplify.Elementary (Fn (..), call, fnOf, nodeE, plus, power, times)
 import Cassini.Simplify.Rational (algebraicExpand, algebraicExpandFrom, choose, denominator', expandMainOp, isAlgebraicExpanded, numerator', rationalizeExpression)
 import Data.HashSet qualified as HashSet
 import Data.Vector qualified as V
 
 -- $setup
 -- >>> import Cassini.Core.Expr (apply, mkSymbol)
+-- >>> import Cassini.Simplify.Elementary (fnSymbol)
 -- >>> import Cassini.Core.Symbol (globalSymbol)
 -- >>> let x = mkSymbol (globalSymbol "x"); y = mkSymbol (globalSymbol "y")
 
@@ -374,15 +375,3 @@ everyNode p u =
   p u && case u of
     App h as -> everyNode p h && all (everyNode p) (V.toList as)
     _ -> True
-
--- Construction, each node to normal form.
-
-call :: Fn -> Expr -> Either Undefined Expr
-call fn a = nodeE (Sym (fnSymbol fn)) (V.singleton a)
-
-times, plus :: [Expr] -> Either Undefined Expr
-times = nodeE (Sym sTimes) . V.fromList
-plus = nodeE (Sym sPlus) . V.fromList
-
-power :: Expr -> Expr -> Either Undefined Expr
-power v w = nodeE (Sym sPower) (V.fromList [v, w])

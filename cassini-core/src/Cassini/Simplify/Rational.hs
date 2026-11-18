@@ -28,11 +28,11 @@ module Cassini.Simplify.Rational
   )
 where
 
-import Cassini.Core.Expr (Expr, exprArgs, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
+import Cassini.Core.Expr (Expr, exprArgs, pattern App, pattern Call, pattern Int_, pattern Num)
 import Cassini.Core.Symbol (sPlus, sPower, sTimes)
 import Cassini.Number (Number (NInt, NRat), toRational')
 import Cassini.Simplify.Automatic (Undefined)
-import Cassini.Simplify.Elementary (nodeE)
+import Cassini.Simplify.Elementary (plus, power, times)
 import Data.HashSet qualified as HashSet
 import Data.Vector qualified as V
 
@@ -180,12 +180,3 @@ isAlgebraicExpanded u = here && all isAlgebraicExpanded (V.toList (exprArgs u)) 
     isSum = \case
       Call p _ -> p == sPlus
       _ -> False
-
--- Construction, each node to normal form.
-
-times, plus :: [Expr] -> Either Undefined Expr
-times = nodeE (Sym sTimes) . V.fromList
-plus = nodeE (Sym sPlus) . V.fromList
-
-power :: Expr -> Expr -> Either Undefined Expr
-power v w = nodeE (Sym sPower) (V.fromList [v, w])

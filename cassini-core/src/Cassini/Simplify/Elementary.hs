@@ -35,6 +35,12 @@ module Cassini.Simplify.Elementary
     -- * The procedure
     simplifyE,
     isElementaryNormal,
+
+    -- * Construction, each node to normal form
+    call,
+    times,
+    plus,
+    power,
   )
 where
 
@@ -483,6 +489,7 @@ inverseOf = \case
 
 -- Construction, each node to normal form.
 
+-- | @fn[y]@, normalized.
 call :: Fn -> Expr -> Either Undefined Expr
 call fn y = nodeE (Sym (fnSymbol fn)) (V.singleton y)
 
@@ -490,10 +497,12 @@ call fn y = nodeE (Sym (fnSymbol fn)) (V.singleton y)
 call' :: Fn -> Expr -> Expr
 call' fn y = apply (fnSymbol fn) [y]
 
+-- | The product and the sum, normalized.
 times, plus :: [Expr] -> Either Undefined Expr
 times = nodeE (Sym sTimes) . V.fromList
 plus = nodeE (Sym sPlus) . V.fromList
 
+-- | @v^w@, normalized.
 power :: Expr -> Expr -> Either Undefined Expr
 power v w = nodeE (Sym sPower) (V.fromList [v, w])
 
