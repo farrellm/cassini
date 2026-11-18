@@ -1,0 +1,2 @@
+(* wolfram/$RecursionLimit/BasicExamples/1, and WL 15.0.1: Set's result 1 + x is the first evaluation off the chain, x's own value the second, which is replaced. *)
+Set[x, Plus[x, 1]]

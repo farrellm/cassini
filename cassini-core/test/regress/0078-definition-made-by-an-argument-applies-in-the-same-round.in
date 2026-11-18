@@ -1,0 +1,3 @@
+(* WL 15.0.1: a rule defined while an argument is evaluated applies to the expression that argument belongs to, in the same round. The rungs look their symbols up after steps 2–9 (D32), not with the head's attributes at step 2. *)
+f[CompoundExpression[SetDelayed[f[Pattern[x, Blank[]]], 7], 1]]
+h[CompoundExpression[UpSetDelayed[h[k[Pattern[y, Blank[]]]], 9], k[0]]]

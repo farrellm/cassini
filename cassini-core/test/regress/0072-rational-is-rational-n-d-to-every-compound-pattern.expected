@@ -1,0 +1,8 @@
+Out[1]: True
+Out[2]: True
+Out[3]: List[List[Rational, 1, 2], List[g, 1, 2]]
+Out[4]: List[Rational, 22, 7]
+Out[5]: True
+Out[6]: True
+Out[7]: List[]
+Out[8]: Rational[1, 2]

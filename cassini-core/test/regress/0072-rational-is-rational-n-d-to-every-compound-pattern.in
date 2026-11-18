@@ -1,0 +1,9 @@
+(* D37, WL 15.0.1: to every compound pattern a fraction is Rational[n, d], but only to matching: Cases and ReplaceAll do not descend into it. *)
+MatchQ[Rational[1, 2], Rational[Blank[], Blank[]]]
+MatchQ[Rational[1, 2], Blank[][Blank[], Blank[]]]
+Cases[List[Rational[1, 2], g[1, 2]], RuleDelayed[Pattern[h, Blank[]][Pattern[a, Blank[]], Pattern[b, Blank[]]], List[h, a, b]]]
+Replace[Rational[22, 7], RuleDelayed[Pattern[h, Blank[]][Pattern[a, Blank[]], Pattern[b, Blank[]]], List[h, a, b]]]
+MatchQ[Rational[1, 2], Verbatim[Rational][Blank[], Blank[]]]
+MatchQ[Rational[1, 2], Pattern[f, Blank[]][1, 2]]
+Cases[List[Rational[1, 2]], Blank[Integer], Infinity]
+ReplaceAll[Rational[1, 2], Rule[2, 3]]

@@ -1,0 +1,18 @@
+Out[1]: -
+Out[2]: -
+Out[3]: f2[Plus[1, 1]]
+Out[4]: f2[Plus[1, 1], Plus[2, 2]]
+Out[5]: f2[2, Plus[2, 2]]
+Out[6]: f2[Plus[1, 1]]
+Out[7]: f2[1, 2, Plus[3, 3]]
+Out[8]: f1[Plus[1, 1], 4, 6]
+Out[9]: f1[2]
+Out[10]: f1[Plus[1, 1]]
+Out[11]: f1[Plus[1, 1]]
+Out[12]: f1[Unevaluated[Plus[1, 1]]]
+Out[13]: f1[Unevaluated[Sequence[Plus[1, 1], Plus[2, 2]]]]
+Out[14]: -
+Out[15]: Hold[Plus[1, 1], 4]
+Out[16]: -
+Out[17]: Hold[Plus[1, 1]]
+Out[18]: Hold[Plus[1, 1]]

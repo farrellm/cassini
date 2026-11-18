@@ -44,7 +44,6 @@ module Cassini.Eval
     evalStep13BuiltinDown,
     restoreUneval,
     Round (..),
-    fixpoint,
     firstJustM,
   )
 where
@@ -85,6 +84,8 @@ import Cassini.Eval.Kernel
     catchUnwind,
     emitMessage,
     evaluate,
+    evaluatePart,
+    evaluateRhs,
     iterations,
     kernelConfig,
     lookupBuiltin,
@@ -93,6 +94,7 @@ import Cassini.Eval.Kernel
     runKernelInterruptible,
     runKernelPure,
     spendIteration,
+    terminated,
     traceStep,
     unwind,
     withFuel,
@@ -106,15 +108,18 @@ import Effectful (Eff, IOE, (:>))
 -- arguments as the steps leave them, the head's attributes, the 0-based
 -- positions of the held arguments step 3 evaluated anyway because they were
 -- wrapped in @Evaluate@ (read by step 5 only), the values step 6 stripped of
--- their @Unevaluated@ wrappers, with their 0-based positions, and whether
--- step 5 moved an unevaluated argument into an unheld position.
+-- their @Unevaluated@ wrappers, with their 0-based positions, whether
+-- the steps record a trace, read once per fixed point rather than asked of
+-- the kernel at every step (D31), and whether the evaluation has left the
+-- standard chain, which decides how steps 2 and 3 evaluate (§4.3).
 data Node = Node
   { nodeHead :: !Expr,
     nodeArgs :: !(V.Vector Expr),
     nodeAttrs :: !AttributeSet,
     nodeForced :: ![Int],
     nodeStripped :: ![(Int, Expr)],
-    nodeUnheld :: !Bool
+    nodeTrace :: !Bool,
+    nodeLeft :: !Bool
   }
 
 -- | The expression the node stands for now.
@@ -124,42 +129,49 @@ nodeExpr n = mkApp n.nodeHead n.nodeArgs
 -- | The evaluation sequence, to a fixed point: every time the expression
 -- changes, start over, unless the round's result is known to be a fixed point
 -- already (see 'Round').
+--
+-- The recursion limit replaces the second evaluation on the path to the cut
+-- that leaves the standard chain (§4.3). An evaluation leaves it when it
+-- asks for an evaluation other than of its head or an unheld argument (a
+-- rule's condition or right-hand side, a builtin evaluating a held
+-- argument), and when it goes round again after a rewrite. The first round
+-- evaluates the head and arguments with 'evaluatePart', and the later ones
+-- with 'evaluate'; the kernel does the rest.
 evalSequence :: (Kernel :> es) => Expr -> Eff es Expr
-evalSequence = fixpoint step
+evalSequence e0 = kernelConfig >>= \cfg -> fixpoint cfg (step cfg.trace) e0
   where
     -- Steps 1 and 0 are guards on the other twelve, not stages before them.
-    step e
+    -- The flags: whether to trace, and whether this is a round after a
+    -- rewrite, which has left the standard chain.
+    step tr left e
       | evalStep1Raw e = pure (Round e True)
       | Sym s <- e = (`Round` False) <$> evalStep0Own s
-      | App h as <- e = do
-          n <-
-            evalStep2Head h as
-              >>= evalStep34ArgsHold
-              >>= evalStep5Seq
-              >>= evalStep6Uneval
-              >>= evalStep7Flat
-          evalStep8List n >>= \case
-            Left threaded -> pure (Round threaded False)
-            Right n' ->
-              evalStep9Order n' >>= evalStepIndet >>= \case
-                Left indeterminate -> pure (Round indeterminate False)
-                Right n'' -> do
-                  -- Built once for the four rungs, not once per rung.
-                  let e' = nodeExpr n''
-                  fired <- firstJustM (\r -> r n'' e') [userUp, builtinUp, userDown, builtinDown]
-                  pure (fromMaybe (Round (if null n''.nodeStripped then e' else restoreUneval n'') (not n''.nodeUnheld)) fired)
+      | App h as <- e =
+          evalStep2Head tr left h as >>= evalStep34ArgsHold >>= evalStep5Seq >>= \case
+            Left respliced -> pure (Round respliced False)
+            Right n5 -> do
+              n <- evalStep6Uneval n5 >>= evalStep7Flat
+              evalStep8List n >>= \case
+                Left threaded -> pure (Round threaded False)
+                Right n' ->
+                  evalStep9Order n' >>= evalStepIndet >>= \case
+                    Left indeterminate -> pure (Round indeterminate False)
+                    Right n'' -> do
+                      -- Built once for the four rungs, not once per rung.
+                      let e' = nodeExpr n''
+                      lk <- rungLookups n'' e'
+                      fired <- firstJustM (\r -> r lk e') [userUp, builtinUp, userDown, builtinDown]
+                      pure (fromMaybe (Round (if null n''.nodeStripped then e' else restoreUneval n'') True) fired)
       | otherwise = pure (Round e True)
 
 -- | One round's result, and whether it is already a fixed point of the
 -- sequence. It is when no rule fired: steps 2–9 only evaluated the parts and
 -- rearranged them, and another round would evaluate the same parts and try
--- the same rules on the same expression. Unless step 5 moved a held argument
--- into an unheld position, as splicing a @Sequence@ under @HoldFirst@ or
--- @HoldRest@ can: the next round evaluates it there, so @f[Sequence[1+1,
--- 2+2], 3+3]@ with @HoldFirst@ is @f[1+1, 4, 6]@. It is when a user rule fired: its
+-- the same rules on the same expression. It is when a user rule fired: its
 -- rung evaluated the right-hand side to a fixed point itself (§4.4). A
--- built-in's result, an own value, a threaded list and @Indeterminate@ are
--- new expressions, and go round again.
+-- built-in's result, an own value, a threaded list, @Indeterminate@ and an
+-- expression step 5 spliced a held @Sequence@ into are new expressions, and
+-- go round again.
 --
 -- Skipping the round that can change nothing is not D14's marker. It keeps
 -- an unevaluated subterm that emits a message, such as @Part[{1, 2}, 3]@,
@@ -170,23 +182,26 @@ data Round = Round
   }
 
 -- | The fixed point, fuelled: one iteration per round, from a fresh budget
--- restored on exit. On exhaustion, @$IterationLimit::itlim@ and the
--- expression in @Hold@: non-termination is a user error, so it gets a
--- message, not an exception (§4.4).
-fixpoint :: (Kernel :> es) => (Expr -> Eff es Round) -> Expr -> Eff es Expr
-fixpoint f e0 = do
-  cfg <- kernelConfig
-  let go e = do
-        left <- iterations
-        if left <= 0
-          then do
-            emitMessage (systemSymbol "$IterationLimit") "itlim" [Int_ (toInteger cfg.iterationLimit)]
-            pure (apply sHold [e])
-          else do
-            spendIteration
-            Round e' settled <- f e
-            if settled || e' == e then pure e' else go e'
-  withFuel cfg.iterationLimit (go e0)
+-- restored on exit. On exhaustion, @$IterationLimit::itlim@ and
+-- @TerminatedEvaluation["IterationLimit"]@ in place of the expression:
+-- non-termination is a user error, so it gets a message, not an exception
+-- (§4.4).
+--
+-- The configuration comes in already read, and each round is told whether
+-- it follows a rewrite, which has left the standard chain (§4.3).
+fixpoint :: (Kernel :> es) => EvalConfig -> (Bool -> Expr -> Eff es Round) -> Expr -> Eff es Expr
+fixpoint cfg f e0 = withFuel cfg.iterationLimit (go False e0)
+  where
+    go left e = do
+      fuel <- iterations
+      if fuel <= 0
+        then do
+          emitMessage (systemSymbol "$IterationLimit") "itlim" [Int_ (toInteger cfg.iterationLimit)]
+          pure (terminated "IterationLimit")
+        else do
+          spendIteration
+          Round e' settled <- f left e
+          if settled || e' == e then pure e' else go True e'
 
 -- | Step 1: a raw object (number, string) is left unchanged.
 evalStep1Raw :: Expr -> Bool
@@ -211,13 +226,20 @@ evalStep0Own s = do
       Native bid -> runNative bid e
       _ -> instantiate r e
 
--- | Step 2: evaluate the head, and read its attributes.
-evalStep2Head :: (Kernel :> es) => Expr -> V.Vector Expr -> Eff es Node
-evalStep2Head h as = do
-  h' <- evaluate h
-  when (h' /= h) $ traceStep "2 Head" (mkApp h' as)
+-- | Step 2: evaluate the head, and read its attributes. The flags are whether
+-- the steps record a trace, and whether the evaluation has left the
+-- standard chain in a round after a rewrite (§4.3).
+evalStep2Head :: (Kernel :> es) => Bool -> Bool -> Expr -> V.Vector Expr -> Eff es Node
+evalStep2Head tr left h as = do
+  h' <- evaluateAt left h
+  when (tr && h' /= h) $ traceStep "2 Head" (mkApp h' as)
   attrs <- headAttributes h'
-  pure Node {nodeHead = h', nodeArgs = as, nodeAttrs = attrs, nodeForced = [], nodeStripped = [], nodeUnheld = False}
+  pure Node {nodeHead = h', nodeArgs = as, nodeAttrs = attrs, nodeForced = [], nodeStripped = [], nodeTrace = tr, nodeLeft = left}
+
+-- | How steps 2 and 3 evaluate a part: on the standard chain in the first
+-- round, and as having left it in a round after a rewrite (§4.3).
+evaluateAt :: (Kernel :> es) => Bool -> Expr -> Eff es Expr
+evaluateAt left = if left then evaluate else evaluatePart
 
 -- | "The attributes of @h@" for steps 4–9: a symbol's own; for
 -- @Function[_, _, attrs]@, @attrs@, one attribute or a list (§4.13); none
@@ -247,18 +269,19 @@ evalStep3Args :: (Kernel :> es) => V.Vector Bool -> Node -> Eff es Node
 evalStep3Args held n = do
   as' <- V.zipWithM arg held n.nodeArgs
   let n' = n {nodeArgs = as', nodeForced = forcedAt}
-  when (as' /= n.nodeArgs) $ traceStep "3 Arguments" (nodeExpr n')
+  when (as' /= n.nodeArgs) $ traceIf n' "3 Arguments" (nodeExpr n')
   pure n'
   where
     -- Evaluate[x] in a held position is x evaluated, not Evaluate[x]
     -- evaluated: step 6 would strip an Unevaluated inside it otherwise.
     -- Several arguments become their Sequence, which step 5 splices.
     arg h a
-      | not h = evaluate a
+      | not h = sub a
       | forced a = case V.toList (exprArgs a) of
-          [x] -> evaluate x
-          ys -> evaluate (apply sSequence ys)
+          [x] -> sub x
+          ys -> sub (apply sSequence ys)
       | otherwise = pure a
+    sub = evaluateAt n.nodeLeft
     forced = \case
       App (Sym s) _ -> s == sEvaluate && not (holdAllComplete n.nodeAttrs)
       _ -> False
@@ -272,29 +295,36 @@ evalStep3Args held n = do
 evalStep34ArgsHold :: (Kernel :> es) => Node -> Eff es Node
 evalStep34ArgsHold n = do
   let held = evalStep4Hold n
-  when (V.or held) $ traceStep "4 Hold" (nodeExpr n)
+  when (V.or held) $ traceIf n "4 Hold" (nodeExpr n)
   evalStep3Args held n
 
 -- | Step 5: unless @SequenceHold@ or @HoldAllComplete@, splice @Sequence@
--- arguments. Splicing shifts positions, so it records whether an argument
--- step 3 left unevaluated now sits where step 4 would not hold it ('Round').
--- One that @Evaluate@ forced was evaluated, and does not count.
-evalStep5Seq :: (Kernel :> es) => Node -> Eff es Node
+-- arguments. A held argument that is a @Sequence@, and that @Evaluate@ did
+-- not force, is spliced, flattened through any @Sequence@ inside it, and
+-- the evaluation starts over on the result, with no rule tried ('Left'):
+-- its parts are held or not by where they now sit, so with @HoldFirst@,
+-- @f[Sequence[1+1, 2+2], 3+3]@ is @f[1+1, 4, 6]@. An unheld argument step 3
+-- left a @Sequence@ is spliced in this round, and what it shifts stays as
+-- step 3 left it: with @HoldRest@, @f[Sequence[], 1+1]@ is @f[1+1]@. So
+-- in WL 15.0.1 (§4.4).
+evalStep5Seq :: (Kernel :> es) => Node -> Eff es (Either Expr Node)
 evalStep5Seq n
-  | sequenceHold n.nodeAttrs || not (V.any isSequence n.nodeArgs) = pure n
-  | otherwise = changed "5 Sequence" n {nodeArgs = V.map fst spliced, nodeForced = [], nodeUnheld = unheld}
+  | sequenceHold n.nodeAttrs || not (V.any isSequence n.nodeArgs) = pure (Right n)
+  | or (V.imap heldSequence n.nodeArgs) = do
+      let e' = mkApp n.nodeHead (V.concat (V.toList (V.imap respliced n.nodeArgs)))
+      Left e' <$ traceIf n "5 Sequence" e'
+  | otherwise = Right <$> changed "5 Sequence" n {nodeArgs = V.concatMap splice n.nodeArgs, nodeForced = []}
   where
     isSequence = \case
       App (Sym s) _ -> s == sSequence
       _ -> False
     k = V.length n.nodeArgs
-    -- Each spliced argument, with whether step 3 left it unevaluated: its
-    -- position held it, and no Evaluate forced it.
-    spliced = V.concat [V.map (,unevaluated i) (splice a) | (i, a) <- zip [0 ..] (V.toList n.nodeArgs)]
-    unevaluated i = holdsArgument n.nodeAttrs (i + 1) k && i `notElem` n.nodeForced
+    -- Its position held it, and no Evaluate forced it: step 3 left it as it
+    -- was written.
+    heldSequence i a = isSequence a && holdsArgument n.nodeAttrs (i + 1) k && i `notElem` n.nodeForced
+    respliced i a = if heldSequence i a then flatten a else V.singleton a
+    flatten a = if isSequence a then V.concatMap flatten (exprArgs a) else V.singleton a
     splice a = if isSequence a then exprArgs a else V.singleton a
-    k' = V.length spliced
-    unheld = V.or (V.imap (\j (_, wasHeld) -> wasHeld && not (holdsArgument n.nodeAttrs (j + 1) k')) spliced)
 
 -- | Step 6: unless @HoldAllComplete@, strip the outermost @Unevaluated@ from
 -- each argument, recording the value. If no rule fires, 'restoreUneval' puts
@@ -334,7 +364,7 @@ evalStep8List n
       [] -> pure (Right n)
       [k] -> do
         let threaded = apply sList [mkApp n.nodeHead (V.map (nth i) n.nodeArgs) | i <- [0 .. k - 1]]
-        Left threaded <$ traceStep "8 Listable" threaded
+        Left threaded <$ traceIf n "8 Listable" threaded
       _ -> Right n <$ emitMessage (systemSymbol "Thread") "tdlen" [nodeExpr n]
   where
     listLength = \case
@@ -360,30 +390,54 @@ evalStep9Order n
 evalStepIndet :: (Kernel :> es) => Node -> Eff es (Either Expr Node)
 evalStepIndet n
   | isNumericFunction n.nodeAttrs && V.elem indeterminate n.nodeArgs =
-      Left indeterminate <$ traceStep "Indeterminate" indeterminate
+      Left indeterminate <$ traceIf n "Indeterminate" indeterminate
   | otherwise = pure (Right n)
   where
     indeterminate = Sym sIndeterminate
 
 -- | Step 10: unless @HoldAllComplete@, user upvalues.
 evalStep10UserUp :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep10UserUp n = userUp n (nodeExpr n)
+evalStep10UserUp = alone userUp
 
 -- | Step 11: unless @HoldAllComplete@, built-in upvalues.
 evalStep11BuiltinUp :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep11BuiltinUp n = builtinUp n (nodeExpr n)
+evalStep11BuiltinUp = alone builtinUp
 
 -- | Step 12: user downvalues, or subvalues for @h[…][…]@.
 evalStep12UserDown :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep12UserDown n = userDown n (nodeExpr n)
+evalStep12UserDown = alone userDown
 
 -- | Step 13: built-in downvalues, or subvalues for @h[…][…]@.
 evalStep13BuiltinDown :: (Kernel :> es) => Node -> Eff es (Maybe Round)
-evalStep13BuiltinDown n = builtinDown n (nodeExpr n)
+evalStep13BuiltinDown = alone builtinDown
 
--- | Steps 10–13 on a node and the expression it stands for, which the
+-- | One rung run by itself, with its own lookups.
+alone :: (Kernel :> es) => (RungLookups -> Expr -> Eff es (Maybe Round)) -> Node -> Eff es (Maybe Round)
+alone r n = let e = nodeExpr n in rungLookups n e >>= \lk -> r lk e
+
+-- | The symbols the four rungs look up, looked up once a round rather than
+-- once a rung (D32): each upvalue tag among the arguments, for rungs 10 and
+-- 11, and the symbol the expression's own rules are keyed on, for 12 and
+-- 13. After steps 2–9, so that a definition made while evaluating the
+-- arguments is seen.
+data RungLookups = RungLookups
+  { rlUp :: ![SymbolInfo],
+    rlDown :: !(Maybe SymbolInfo)
+  }
+
+-- | Look up what the rungs need.
+rungLookups :: (Kernel :> es) => Node -> Expr -> Eff es RungLookups
+rungLookups n e = do
+  ups <-
+    if holdAllComplete n.nodeAttrs
+      then pure []
+      else traverse lookupSymbol (ordNub (mapMaybe tagSymbol (V.toList n.nodeArgs)))
+  down <- traverse lookupSymbol (tagSymbol e)
+  pure (RungLookups ups down)
+
+-- | Steps 10–13 on the expression a node stands for, which the
 -- sequence builds once for all four.
-userUp, builtinUp, userDown, builtinDown :: (Kernel :> es) => Node -> Expr -> Eff es (Maybe Round)
+userUp, builtinUp, userDown, builtinDown :: (Kernel :> es) => RungLookups -> Expr -> Eff es (Maybe Round)
 userUp = rung 0 "10 UserUpValue"
 builtinUp = rung 1 "11 BuiltinUpValue"
 userDown = rung 2 "12 UserDownValue"
@@ -391,16 +445,14 @@ builtinDown = rung 3 "13 BuiltinDownValue"
 
 -- | The @i@th rung of 'ladder', which is the only list of rungs: each named
 -- step reads its rung from it rather than restating it (§4.2).
-rung :: (Kernel :> es) => Int -> Text -> Node -> Expr -> Eff es (Maybe Round)
-rung i name n e = case drop i (ladder e) of
-  (UpValue, _) : _ | holdAllComplete n.nodeAttrs -> pure Nothing
-  (UpValue, o) : _ -> firstJustM (\s -> fromTable s (UpValue, o)) (ordNub (mapMaybe tagSymbol (V.toList n.nodeArgs)))
-  (k, o) : _ -> maybe (pure Nothing) (\s -> fromTable s (k, o)) (tagSymbol e)
+rung :: (Kernel :> es) => Int -> Text -> RungLookups -> Expr -> Eff es (Maybe Round)
+rung i name lk e = case drop i (ladder e) of
+  -- Under HoldAllComplete, 'rungLookups' gives no upvalue tags.
+  (UpValue, o) : _ -> firstJustM (fromTable (UpValue, o)) lk.rlUp
+  (k, o) : _ -> maybe (pure Nothing) (fromTable (k, o)) lk.rlDown
   [] -> pure Nothing
   where
-    fromTable s r = do
-      info <- lookupSymbol s
-      firstJustM (\rule -> applyRule name rule e) (applicableRules info r e)
+    fromTable r info = firstJustM (\rule -> applyRule name rule e) (applicableRules info r e)
 
 -- | The symbol an expression's rules are keyed on: the symbol itself, or the
 -- innermost head symbol of an application (@f@ for @f[x][y]@).
@@ -422,7 +474,7 @@ applyRule name r e = case r.ruleBody of
   where
     fire rhs = do
       traceStep name rhs
-      catchUnwind (evaluate rhs) >>= \case
+      catchUnwind (evaluateRhs rhs) >>= \case
         Right v -> pure (Round v True)
         Left (UReturn v) -> pure (Round v True)
         Left u -> unwind u
@@ -463,7 +515,12 @@ restoreUneval n
 
 -- | Trace a step that applied, with the node it left.
 changed :: (Kernel :> es) => Text -> Node -> Eff es Node
-changed name n = n <$ traceStep name (nodeExpr n)
+changed name n = n <$ traceIf n name (nodeExpr n)
+
+-- | Trace a step, if the node's evaluation records a trace: steps 3–9 trace
+-- through here, so none asks the kernel when it does not (D31).
+traceIf :: (Kernel :> es) => Node -> Text -> Expr -> Eff es ()
+traceIf n name e = when n.nodeTrace (traceStep name e)
 
 -- | The first 'Just' of an effectful search, trying no more than it needs.
 firstJustM :: (Monad m) => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
@@ -475,10 +532,12 @@ firstJustM f = \case
 -- converted here, where there is an expression to build: an uncaught @Throw@
 -- becomes @Hold[Throw[…]]@ with @Throw::nocatch@, and a stray @Break[]@,
 -- @Continue[]@ or @Return[…]@ comes back @Hold@-wrapped, so evaluating the
--- result again does not unwind again (§4.13). An abort passes through.
+-- result again does not unwind again (§4.13). A limit that no evaluation
+-- on the way out was replaced for leaves @TerminatedEvaluation[…]@ for the
+-- whole input (§4.3). An abort passes through.
 evaluateTop :: (Kernel :> es) => Expr -> Eff es Expr
 evaluateTop e =
-  catchUnwind (evaluate e) >>= \case
+  catchUnwind (evaluatePart e) >>= \case
     Right v -> pure v
     Left u -> case u of
       UThrow v tag f -> do
@@ -490,6 +549,7 @@ evaluateTop e =
       UBreak -> pure (apply sHold [apply (systemSymbol "Break") []])
       UContinue -> pure (apply sHold [apply (systemSymbol "Continue") []])
       UReturn v -> pure (apply sHold [apply (systemSymbol "Return") [v]])
+      UTerminated reason _ -> pure (terminated reason)
       UAbort a -> unwind (UAbort a)
   where
     sThrow = systemSymbol "Throw"

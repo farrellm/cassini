@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -29,6 +30,8 @@ module Cassini.Eval.Kernel
     modifySymbol,
     emitMessage,
     evaluate,
+    evaluateRhs,
+    evaluatePart,
     iterations,
     spendIteration,
     withFuel,
@@ -37,6 +40,7 @@ module Cassini.Eval.Kernel
     lookupBuiltin,
     traceStep,
     kernelConfig,
+    terminated,
 
     -- * State and configuration
     KernelState (..),
@@ -54,15 +58,15 @@ module Cassini.Eval.Kernel
 where
 
 import Cassini.Attributes (AttributeSet)
-import Cassini.Core.Expr (Expr, apply, pattern App, pattern Int_, pattern Num, pattern Str, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sHold, systemSymbol)
+import Cassini.Core.Expr (Expr, apply, pattern Int_, pattern Str)
+import Cassini.Core.Symbol (Symbol, systemSymbol)
 import Cassini.Eval.Message (Message (..), MessageTag)
-import Cassini.Rules (BuiltinId (..), SymbolInfo (..), ValueKind (OwnValue), emptyInfo, ruleSetToList, rulesOf)
+import Cassini.Rules (BuiltinId (..), SymbolInfo (..), emptyInfo)
 import Data.IntMap.Strict qualified as IntMap
 import Data.Map.Strict qualified as Map
 import Data.Sequence ((|>))
 import Effectful (Eff, Effect, IOE, (:>))
-import Effectful.Dispatch.Dynamic (EffectHandler, localSeqUnlift, reinterpret)
+import Effectful.Dispatch.Dynamic (EffectHandler, LocalEnv, localSeqUnlift, reinterpret)
 import Effectful.Error.Static (Error, runErrorNoCallStack, throwError_, tryError)
 import Effectful.Reader.Static (Reader, ask, asks, local, runReader)
 import Effectful.State.Static.Local (State, evalState, get, modify, put, runState)
@@ -79,9 +83,20 @@ data Kernel :: Effect where
   EmitMessage :: Symbol -> MessageTag -> [Expr] -> Kernel m ()
   -- | Evaluate a subterm. This is the knot: the interpreter runs the
   -- evaluation sequence, counting depth. All subterm evaluation goes
-  -- through here, never straight into the sequence, so the depth count
-  -- cannot be bypassed.
+  -- through here or its two variants below, never straight into the
+  -- sequence, so the depth count cannot be bypassed. To the recursion
+  -- limit's unwinding, an evaluation that asks for another by this
+  -- operation has left the standard chain (§4.3).
   Evaluate :: Expr -> Kernel m Expr
+  -- | Evaluate the head or an unheld argument of an evaluation that is still
+  -- on the standard chain (steps 2 and 3, and the top-level input). It
+  -- does not count as leaving it, as 'Evaluate' does (§4.3).
+  EvaluatePart :: Expr -> Kernel m Expr
+  -- | Evaluate a user rule's instantiated right-hand side, as the
+  -- continuation of the evaluation whose rule fired rather than as a new
+  -- one: it counts depth as 'Evaluate' does, but to the recursion limit's
+  -- unwinding it is the same evaluation, which has left the chain (§4.3).
+  EvaluateRhs :: Expr -> Kernel m Expr
   -- | Remaining fuel in this fixed point.
   Iterations :: Kernel m Int
   -- | Spend one iteration.
@@ -118,6 +133,10 @@ data Unwind
   | UContinue
   | -- | caught by the innermost loop or user-rule application (D23)
     UReturn !Expr
+  | -- | a limit, by name, and how many evaluations enclosing the one it
+    -- was thrown from had left the standard chain: caught where the recursion
+    -- limit's unwinding rule says, and at the top (§4.3, D30)
+    UTerminated !Text !Int
   | -- | nothing handles it; it stops evaluation
     UAbort !Abort
   deriving stock (Show)
@@ -179,6 +198,10 @@ defaultConfig = EvalConfig {recursionLimit = 1024, iterationLimit = 4096, trace 
 -- comment.
 makeEffect ''Kernel
 
+-- | @TerminatedEvaluation[reason]@: what a limit leaves where it cut (§4.3).
+terminated :: Text -> Expr
+terminated reason = apply (systemSymbol "TerminatedEvaluation") [Str reason]
+
 -- | A symbol's attributes; none for an unknown symbol.
 lookupAttributes :: (Kernel :> es) => Symbol -> Eff es AttributeSet
 lookupAttributes s = (.siAttributes) <$> lookupSymbol s
@@ -186,10 +209,22 @@ lookupAttributes s = (.siAttributes) <$> lookupSymbol s
 
 -- The interpreters.
 
--- | The handler's own environment: the configuration, and the evaluation
--- depth. Depth is a 'Reader' changed with 'local', which restores it however
--- the inner evaluation exits, a caught unwind included (§4.13).
-data Env = Env {envConfig :: !EvalConfig, envDepth :: !Int}
+-- | The handler's own environment: the configuration, the evaluation depth,
+-- and where the evaluation stands on the standard chain. All are a 'Reader'
+-- changed with 'local', which restores them however the inner evaluation
+-- exits, a caught unwind included (§4.13).
+--
+-- Where the evaluation stands on the standard chain (§4.3) is two fields:
+-- how many of the evaluations enclosing it have left the chain, up to 2, and
+-- whether it has itself, which only a rule's right-hand side starts out
+-- having done. The recursion limit replaces the evaluation that leaves the
+-- chain with 'envOff' 1: the second on the path to the cut to leave it.
+data Env = Env
+  { envConfig :: !EvalConfig,
+    envDepth :: !Int,
+    envOff :: !Int,
+    envLeft :: !Bool
+  }
 
 -- | Fuel is the handler's own state, not 'KernelState': it belongs to the
 -- fixed point being run, not to the session.
@@ -213,23 +248,14 @@ handler (Sequence sq) st env = \case
   LookupSymbol s -> symbolInfo st s
   ModifySymbol s f ->
     st.store (symbolEntry s %~ f)
-  EmitMessage s t as -> message s t as
-  Evaluate e -> do
-    interrupted <- st.poll
-    when interrupted $ throwError_ (UAbort Interrupt)
-    Env cfg d <- ask @Env
-    if d >= cfg.recursionLimit
-      then
-        -- The cut is idempotent: what is already a cut, and what evaluates
-        -- to itself (a raw atom, a symbol with no own value), comes back as
-        -- it is. Otherwise every fixed point near the limit re-wraps its own
-        -- result, heads included, each round, and the cuts compound.
-        settled e >>= \case
-          True -> pure e
-          False -> do
-            message (systemSymbol "$RecursionLimit") "reclim" [Int_ (toInteger cfg.recursionLimit)]
-            pure (apply sHold [e])
-      else local (\en -> en {envDepth = d + 1}) (localSeqUnlift env $ \unlift -> unlift (sq e))
+  EmitMessage s t as -> message st s t as
+  -- A new evaluation, from one that has left the chain by asking for it.
+  Evaluate e -> ask @Env >>= \en -> descend sq st env e en (offChain en) False
+  -- A new evaluation, from one still on the chain; or, from one that has
+  -- left it, as 'Evaluate'.
+  EvaluatePart e -> ask @Env >>= \en -> descend sq st env e en (if en.envLeft then offChain en else en.envOff) False
+  -- The same evaluation, continued.
+  EvaluateRhs e -> ask @Env >>= \en -> descend sq st env e en en.envOff True
   Iterations -> coerce <$> get @Fuel
   SpendIteration -> modify @Fuel (\(Fuel n) -> Fuel (n - 1))
   WithFuel n m -> do
@@ -242,17 +268,62 @@ handler (Sequence sq) st env = \case
   CatchUnwind m -> first snd <$> tryError @Unwind (localSeqUnlift env $ \unlift -> unlift m)
   LookupBuiltin (BuiltinId i) -> IntMap.lookup i . (.ksBuiltins) <$> st.load
   TraceStep name e -> do
-    Env cfg d <- ask @Env
-    when cfg.trace $ st.store (#ksTrace %~ (|> TraceEntry d name e))
+    en <- ask @Env
+    when en.envConfig.trace $ st.store (#ksTrace %~ (|> TraceEntry en.envDepth name e))
   KernelConfig -> asks @Env (.envConfig)
+
+-- | Evaluate, a step deeper, entered where the chain is as given. At the
+-- limit, the message once, and an unwind that an enclosing evaluation or
+-- the top-level entry turns into TerminatedEvaluation.
+--
+-- The evaluation that catches it is the second on the path to leave the
+-- chain (§4.3): one entered with one enclosing evaluation off the chain,
+-- which has since left it itself. It has left it if the unwind comes out of
+-- an evaluation it asked for with two off the chain, since what it asks for
+-- before it leaves has one. So only an evaluation entered with one installs
+-- a catch, and the unwind carries the count it was thrown with. Nothing
+-- rewrites that count on the way out: it never falls going inward, so
+-- under a catch it is 1 or 2, and a catch that does not take it rethrows
+-- it as it came, with the 1 that is its own.
+--
+-- Top-level, as 'message' is: a helper in the handler's @where@ is a
+-- closure allocated on every operation the handler runs, which cost 7% of
+-- the end-to-end workload's allocation.
+descend ::
+  (Kernel :> localEs) =>
+  (forall es. (Kernel :> es) => Expr -> Eff es Expr) ->
+  Store (HandlerEs base) ->
+  LocalEnv localEs (HandlerEs base) ->
+  Expr ->
+  Env ->
+  Int ->
+  Bool ->
+  Eff (HandlerEs base) Expr
+descend sq st env e en off left = do
+  interrupted <- st.poll
+  when interrupted $ throwError_ (UAbort Interrupt)
+  if
+    | en.envDepth >= en.envConfig.recursionLimit -> do
+        message st (systemSymbol "$RecursionLimit") "reclim" [Int_ (toInteger en.envConfig.recursionLimit)]
+        throwError_ (UTerminated "RecursionLimit" off)
+    | off == 1 && not left ->
+        tryError @Unwind run >>= \case
+          Right v -> pure v
+          Left (_, UTerminated reason from) | from >= 2 -> pure (terminated reason)
+          Left (_, u) -> throwError_ u
+    | otherwise -> run
   where
-    settled = \case
-      Num _ -> pure True
-      Str _ -> pure True
-      Sym s -> null . ruleSetToList . rulesOf OwnValue <$> symbolInfo st s
-      App (Sym h) _ -> pure (h == sHold)
-      App _ _ -> pure False
-    message s t as = st.store (#ksMessages %~ (|> Message s t as))
+    run = local (const en {envDepth = en.envDepth + 1, envOff = off, envLeft = left}) (localSeqUnlift env $ \unlift -> unlift (sq e))
+
+-- | How many evaluations enclosing a new one have left the standard chain,
+-- when the one asking for it has: one more, capped at 2, which is all
+-- 'descend' tells apart (§4.3).
+offChain :: Env -> Int
+offChain en = min 2 (en.envOff + 1)
+
+-- | Queue a message for the front end.
+message :: Store es -> Symbol -> MessageTag -> [Expr] -> Eff es ()
+message st s t as = st.store (#ksMessages %~ (|> Message s t as))
 
 -- | A symbol's entry in the stored state; 'emptyInfo' for an unknown one.
 --
@@ -266,7 +337,7 @@ symbolInfo st s = view (symbolEntry s) <$> st.load
 -- | Discharge the handler's own effects: depth from 0, a fresh fuel budget,
 -- and the unwind channel, which every interpreter returns.
 runHandlerEs :: EvalConfig -> Eff (HandlerEs base) a -> Eff base (Either Unwind a)
-runHandlerEs cfg = runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0)
+runHandlerEs cfg = runErrorNoCallStack . evalState (Fuel cfg.iterationLimit) . runReader (Env cfg 0 0 False)
 {-# INLINE runHandlerEs #-}
 
 -- | The pure interpreter: introduces and discharges 'Reader', 'State' and

@@ -1,0 +1,34 @@
+Out[1]: -
+Out[2]: Plus[1, TerminatedEvaluation["RecursionLimit"]]
+Message[2]: $RecursionLimit::reclim
+Out[3]: List[1, f[g[Plus[1, TerminatedEvaluation["RecursionLimit"]]]], 3]
+Message[3]: $RecursionLimit::reclim
+Out[4]: Plus[1, TerminatedEvaluation["RecursionLimit"]][y]
+Message[4]: $RecursionLimit::reclim
+Out[5]: 7
+Message[5]: $RecursionLimit::reclim
+Out[6]: -
+Out[7]: List[a, TerminatedEvaluation["RecursionLimit"]]
+Message[7]: $RecursionLimit::reclim
+Out[8]: -
+Out[9]: g[h[TerminatedEvaluation["RecursionLimit"]]]
+Message[9]: $RecursionLimit::reclim
+Out[10]: -
+Out[11]: List[List[1, TerminatedEvaluation["RecursionLimit"]]]
+Message[11]: $RecursionLimit::reclim
+Out[12]: -
+Out[13]: TerminatedEvaluation["RecursionLimit"][y]
+Message[13]: $RecursionLimit::reclim
+Out[14]: List[Plus[1, TerminatedEvaluation["RecursionLimit"]]]
+Message[14]: $RecursionLimit::reclim
+Out[15]: -
+Out[16]: Plus[1, TerminatedEvaluation["RecursionLimit"]]
+Message[16]: $RecursionLimit::reclim
+Out[17]: -
+Out[18]: List[TerminatedEvaluation["RecursionLimit"]]
+Message[18]: $RecursionLimit::reclim
+Out[19]: List[1, TerminatedEvaluation["RecursionLimit"]]
+Message[19]: $RecursionLimit::reclim
+Out[20]: 1
+Message[20]: $RecursionLimit::reclim
+Out[21]: Hold[r[1]]

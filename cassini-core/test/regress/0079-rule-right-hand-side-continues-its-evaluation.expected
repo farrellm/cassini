@@ -1,0 +1,6 @@
+Out[1]: -
+Out[2]: Plus[1, TerminatedEvaluation["RecursionLimit"]]
+Message[2]: $RecursionLimit::reclim
+Out[3]: -
+Out[4]: List[List[TerminatedEvaluation["RecursionLimit"]]]
+Message[4]: $RecursionLimit::reclim

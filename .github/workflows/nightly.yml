@@ -1,0 +1,130 @@
+# DESIGN.md §2.8, D45: the suites too slow or too dependent for every commit.
+# The random-seed property run, cassini-corpus over the vendored Expreduce
+# corpus and the fetched Mathics3 one, and cassini-oracle against Mathics3 at
+# the version its manifests were read against. cassini-slow joins at 2b. The
+# Wolfram documentation corpus is never on a runner (§7.9).
+name: Nightly
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  # A change to this file runs it, so a pull request shows it working.
+  pull_request:
+    paths:
+      - .github/workflows/nightly.yml
+
+permissions:
+  contents: read
+
+# Only a pull request's run is superseded by a newer push; a manual run does
+# not cancel the scheduled one on the same branch, or the night is lost.
+concurrency:
+  group: nightly-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  GHC_VERSION: "9.12.4"
+  CABAL_VERSION: "3.16.1.0"
+  DOCTEST_VERSION: "0.25.0"
+  PYTHON_VERSION: "3.14"
+  MATHICS_VERSION: "10.0.1"
+  # Ten times the per-commit count (§7.3).
+  QUICKCHECK_TESTS: "1000"
+  CABAL_FLAGS: --enable-tests --enable-benchmarks --ghc-options=-Werror
+
+jobs:
+  properties:
+    name: Properties on a random seed (${{ matrix.intern }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - intern: hash
+            flag: ""
+          - intern: intern
+            flag: -f intern
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
+          cabal-update: true
+
+      - name: Resolve the build plan
+        run: cabal build all $CABAL_FLAGS --dry-run
+
+      # The per-commit workflow's cache, read only: it saves the store.
+      - name: Restore the cabal store
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          restore-keys: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-
+
+      # The seed is chosen here and printed first, so a failure is reproduced
+      # with --quickcheck-replay=SEED whatever the log shows after it.
+      - name: Test on a random seed
+        run: |
+          seed=$(od -An -N4 -tu4 /dev/urandom | tr -d ' ')
+          echo "QuickCheck seed: $seed"
+          echo "QuickCheck seed: \`$seed\` (${{ matrix.intern }})" >> "$GITHUB_STEP_SUMMARY"
+          cabal test cassini-test $CABAL_FLAGS ${{ matrix.flag }} --test-show-details=direct \
+            --test-options="--quickcheck-replay=$seed --quickcheck-tests=$QUICKCHECK_TESTS"
+
+  oracle-and-corpus:
+    name: Oracle and corpus, against Mathics3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
+          cabal-update: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Mathics3
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --quiet "Mathics3==$MATHICS_VERSION"
+          .venv/bin/python -c "import mathics; print('Mathics3', mathics.__version__)"
+
+      - name: Resolve the build plan
+        run: cabal build all $CABAL_FLAGS --dry-run
+
+      - name: Restore the cabal store
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          restore-keys: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-
+
+      - name: Build
+        run: cabal build cassini-corpus cassini-oracle $CABAL_FLAGS
+
+      # fetch.sh clones Mathics3's suite at its pinned commit and extracts it,
+      # from cassini-core/ (§7.8).
+      - name: Fetch the Mathics3 corpus
+        working-directory: cassini-core
+        run: corpus/fetch.sh "$GITHUB_WORKSPACE/.venv/bin/python"
+
+      # The Expreduce corpus is vendored; the Wolfram one is absent, and skipped.
+      - name: Corpus ratchet
+        run: cabal test cassini-corpus $CABAL_FLAGS --test-show-details=direct
+
+      - name: Oracle
+        run: CASSINI_MATHICS_PYTHON="$GITHUB_WORKSPACE/.venv/bin/python" cabal test cassini-oracle $CABAL_FLAGS --test-show-details=direct

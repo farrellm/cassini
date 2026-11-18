@@ -73,8 +73,12 @@ tests =
     ]
 
 -- | For an arithmetic expression @e@ in @x@, @D[e, x]@ at a point agrees with
--- the central difference of @e@ there. Points where either side is
--- undefined, or where @D@ stays unevaluated, are discarded.
+-- the central difference of @e@ there, Richardson-extrapolated from steps
+-- @h@ and @h/2@. A central difference is off by about @h²f‴/6@, which for a
+-- term like @g[(c x)^27]@ exceeded the tolerance about one run in a
+-- thousand, so a point where the two steps' differences disagree by more
+-- than the tolerance is not one the difference can judge, and is discarded,
+-- as are points where either side is undefined or @D@ stays unevaluated.
 finiteDifferences :: Property
 finiteDifferences =
   forAllShrink (sized (genBAE . min 24)) shrinkExpr $ \e ->
@@ -82,11 +86,17 @@ finiteDifferences =
       let d = fst (eval std (apply (systemSymbol "D") [e, sym "x"]))
           at x0 = evalAt (Map.insert "x" x0 p)
           x = p Map.! "x"
-          h = 1.0e-5
-       in case (at (x + h) e, at (x - h) e, evalAt p d) of
-            (Just up, Just down, Just slope)
-              | all (\v -> abs v < 1.0e6) [up, down, slope] ->
-                  let fd = (up - down) / (2 * h)
+          h = 1.0e-4
+          central k = do
+            up <- at (x + k) e
+            down <- at (x - k) e
+            guard (abs up < 1.0e6 && abs down < 1.0e6)
+            pure ((up - down) / (2 * k))
+       in case (central h, central (h / 2), evalAt p d) of
+            (Just fd1, Just fd2, Just slope)
+              | abs slope < 1.0e6,
+                abs (fd1 - fd2) <= 1.0e-4 * max 1 (abs fd1 + abs fd2) ->
+                  let fd = (4 * fd2 - fd1) / 3
                    in counterexample (T.unpack (ff d) <> " at " <> show p <> ": " <> show slope <> " vs " <> show fd) $
                         abs (slope - fd) <= 1.0e-4 * max 1 (abs slope + abs fd)
             _ -> discard

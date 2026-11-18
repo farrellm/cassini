@@ -4,6 +4,46 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* The limits leave `TerminatedEvaluation[…]`, as WL does (DESIGN.md §4.3, §4.4, D30). The
+  iteration limit cuts in place: `p := q; q := p; p + 1` is
+  `1 + TerminatedEvaluation["IterationLimit"]`. The recursion limit emits
+  `$RecursionLimit::reclim` once and unwinds to the second evaluation on the path to the cut that
+  left the standard chain, which it replaces: `x = x + 1` is
+  `1 + TerminatedEvaluation["RecursionLimit"]` and `(r[1]; 7)` is 7, as in WL 15.0.1. Both were
+  `Hold[…]` in place, and a runaway could emit its message twice. The `Kernel` effect gains
+  `EvaluatePart` and `EvaluateRhs`, and `Unwind` gains `UTerminated`. §4.3's rule,
+  stated on 2026-11-11 from probes run through a wrapper that moved every answer out by one
+  evaluation, is corrected from forty probes run without it. Regression cases 0010 and 0011
+  re-accepted and renamed, 0077 and 0079 new.
+
+* A `Sequence` spliced out of a held position follows WL 15.0.1 (DESIGN.md §4.4). Only a held
+  argument that is itself a `Sequence` makes the evaluation start over, flattened, and before any
+  rule is tried: with `HoldFirst` and `f[a_, b_] := Hold[a, b]`, `f[Sequence[1+1, 2+2]]` is
+  `Hold[1+1, 4]`, not `Hold[1+1, 2+2]`. A held argument shifted by what an unheld one evaluated
+  to stays unevaluated: with `HoldRest`, `f[Sequence[], 1+1]` is `f[1+1]`, not `f[2]`. Regression
+  case 0036 re-accepted for that row, 0080 new; 0081 pins that the round after such a splice has
+  left the standard chain (§4.3), which the PR #27 review had questioned.
+
+* A rational number is `Rational[n, d]` to every compound pattern, as in WL 15.0.1 (§4.5.1, D37):
+  `MatchQ[22/7, _[_, _]]` is `True`, and `_[_]` still does not match. Regression case 0072, which
+  pinned the atom reading, is renamed and re-accepted; 0066 gains the two `MatchQ`s.
+
+* Less allocation on the evaluator's hot path: the trace flag is read once per evaluation and the
+  steps do not call `traceStep` while it is off (D31), and the rungs' symbol lookups are made once a
+  round instead of once a rung (D32). The handler's helpers are top-level, since one in its `where`
+  was a closure on every kernel operation. With D30, the end-to-end workload allocates about 4% less
+  than before; both allocation baselines are regenerated. Regression case 0078 pins that a rule
+  defined while an argument is evaluated applies in the same round.
+
+* A nightly workflow (`.github/workflows/nightly.yml`, §2.8, D45) runs `cassini-test` on a random,
+  logged QuickCheck seed at ten times the per-commit count under both `intern` settings, and
+  `cassini-corpus` and `cassini-oracle` against Mathics3 10.0.1, with the Mathics3 corpus fetched.
+
+* Fix: the `Calculus` law comparing `D` with finite differences failed about one run in a
+  thousand, on terms like `g[(c x)^27]` where a central difference's truncation error exceeds the
+  tolerance. It now extrapolates from two steps and discards points where the two disagree. The
+  evaluator was right; no regression case, since the fix is to a test.
+
 * Renovate keeps the CI's GitHub Actions current (`.github/renovate.json`, DESIGN.md §2.8, D46):
   digest-pinned, one grouped PR a week, minor, patch and digest updates merged once CI passes.
   Toolchain versions and Hackage bounds stay manual.

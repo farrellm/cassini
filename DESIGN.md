@@ -557,12 +557,17 @@ so that no step reconfigures the build and the `intern` build is held to `-Werro
 command-line `-f intern` reaches `cassini-core` whichever target is named, because cabal applies it
 to every local package that declares the flag (checked in `plan.json`, cabal 3.16.1.0). The
 dependencies carry `^>=` bounds at the versions CI first resolved. Step 2 names
-its suite rather than `all`, which would pull the slow suite into every commit. A nightly job is to
-run `cassini-oracle`, `cassini-slow`, `cassini-corpus` and the random-seed property run (§7.1, §7.3,
-§7.8). **It does not exist yet**: `ci.yml` has no scheduled workflow, `cassini-slow` has no stanza,
-and the oracle and corpus suites run on a developer machine (D45). When it exists, its
-`cassini-corpus` covers the vendored and fetched corpora only: the Wolfram documentation
-corpus is never on a CI runner (§7.9), so its ratchet stays a developer-machine check.
+its suite rather than `all`, which would pull the slow suite into every commit. A nightly job runs
+`cassini-oracle`, `cassini-corpus` and the random-seed property run, and will run `cassini-slow`
+(§7.1, §7.3, §7.8). It is `.github/workflows/nightly.yml` (D45), built in the fidelity track: daily, on
+demand, and on a pull request that changes the file, so a change to it is seen working. One job
+runs `cassini-test` under each `intern` setting at ten times the per-commit QuickCheck count, on a
+seed it draws and prints before the run and in the step summary, so a failure is reproduced with
+`--quickcheck-replay=SEED` whatever the log shows after it. The other installs Mathics3 at the
+oracle's pinned 10.0.1, runs `corpus/fetch.sh`, then `cassini-corpus` and `cassini-oracle`.
+`cassini-slow` has no stanza yet and joins at 2b. Its `cassini-corpus` covers the vendored and
+fetched corpora only: the Wolfram documentation corpus is never on a CI runner (§7.9), so its
+ratchet stays a developer-machine check.
 
 **One compiler, because the version bound says so.** `base ^>=4.21.2.0` admits only GHC 9.12, so a
 wider matrix would be jobs failing at dependency resolution, read as flaky and then ignored.
@@ -1151,8 +1156,9 @@ data Kernel :: Effect where
   LookupBuiltin  :: BuiltinId -> Kernel m (Maybe BuiltinFn)  -- ^ resolve a Native rule
   TraceStep      :: Text -> Expr -> Kernel m ()              -- ^ a golden-trace entry
   KernelConfig   :: Kernel m EvalConfig                      -- ^ the limits, for fixpoint
+  EvaluatePart   :: Expr -> Kernel m Expr     -- ^ steps 2-3's evaluate, on the chain (below)
+  EvaluateRhs    :: Expr -> Kernel m Expr     -- ^ a rule's right-hand side, continuing (below)
   -- designed, not yet built:
-  EvaluatePart   :: Expr -> Kernel m Expr     -- ^ steps 2-3's evaluate; catches a limit (below)
   EmitOutput     :: [Expr] -> Kernel m ()     -- ^ Print's arguments, queued (§4.7)
   Quietly        :: MessageFilter -> m a -> Kernel m a       -- ^ Quiet (§4.7)
   Checking       :: m a -> Kernel m (a, [(Symbol, MessageTag)])  -- ^ Check: what was generated
@@ -1176,8 +1182,14 @@ Kernel code is constraint-polymorphic over what it needs, e.g.
 rule's id. `KernelState` holds the implementations (§4.2), and the rung that finds the rule has
 only the effect to reach them through. A dangling id answers `Nothing`, and no rule fires.
 `TraceStep` is the recording point for §7.4's golden traces. It is a no-op unless
-`EvalConfig.trace` is set. `KernelConfig` gives `fixpoint` the iteration limit to seed
-`WithFuel` with. An implementation is a `newtype BuiltinFn = BuiltinFn (forall es.
+`EvalConfig.trace` is set; since the fidelity track, steps 2–9 do not call it at all unless it is,
+reading the flag once per evaluation and carrying it on `Node` (D31). `KernelConfig` gives
+`fixpoint` the iteration limit to seed `WithFuel` with, and the sequence the trace flag. The
+fidelity track added two more (D30): `EvaluatePart`, as designed, and `EvaluateRhs`, which the
+design had not foreseen, because a rule's right-hand side continues an evaluation rather than
+starting one (below). The handler's helpers are top-level functions, not a `where` under it: a
+helper there is a closure allocated on every operation the handler runs, and `descend` there cost
+7% of the end-to-end workload's allocation. An implementation is a `newtype BuiltinFn = BuiltinFn (forall es.
 (Kernel :> es) => Expr -> Eff es (Maybe Expr))`, which answers `Nothing` when it does not apply.
 The interpreters also discharge the `Unwind`/`CatchUnwind` pair of §4.13 from the start, because a
 user rule's rung catches `Return` (§4.4).
@@ -1205,8 +1217,9 @@ runKernelPure :: Sequence -> EvalConfig -> KernelState
 `Cassini.Eval` ties the knot (`runKernelPure (Sequence evalSequence)`) and exports the closed
 versions; matcher tests can supply a stub. This works because an `effectful` handler receives
 `Kernel :> localEs` for the call site, so `Evaluate`'s handler runs the sequence there via
-`localSeqUnlift`. **All subterm evaluation goes through `evaluate`, never directly through
-`evalSequence`**, so the depth count cannot be bypassed.
+`localSeqUnlift`. **All subterm evaluation goes through `evaluate`, or its variants
+`evaluatePart` and `evaluateRhs` (below), never directly through `evalSequence`**, so the depth
+count cannot be bypassed.
 
 `runKernelPure` is `reinterpret (runReader cfg . runState s0 . runErrorNoCallStack) handler`,
 introducing and discharging `Reader EvalConfig`, `State KernelState` and `Error Unwind` (§4.13).
@@ -1221,37 +1234,69 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   total work instead: every subterm's fixed point spends at least one iteration, so a terminating
   `Expand[(a+b+c+d)^10]` would exhaust the default 4096 on node count alone.
 - **Depth is counted by `Evaluate`'s handler**, around the sequence. At `$RecursionLimit` it emits
-  `$RecursionLimit::reclim` once and unwinds with `UTerminated "RecursionLimit"` (§4.13), and the
-  runaway evaluation is replaced whole by `TerminatedEvaluation["RecursionLimit"]`, as in WL
+  `$RecursionLimit::reclim` once and unwinds with `UTerminated "RecursionLimit"` (§4.13), and one
+  evaluation on the way out is replaced whole by `TerminatedEvaluation["RecursionLimit"]`, as in WL
   (`wolfram/$RecursionLimit/BasicExamples/1`: `x = x + 1` gives
   `Plus[1, TerminatedEvaluation["RecursionLimit"]]`). D30, answered.
-  **Which evaluation is replaced: the outermost one off the standard chain.** From the input, follow
-  the path to the cut through positions the standard sequence itself evaluates, which are the head
-  (step 2) and the unheld arguments (step 3). The first expression on that path whose own
-  evaluation goes on by any other route is the one replaced: a rule's right-hand side, an own
-  value, or a builtin evaluating a held argument (`Block`, `Module`, `CompoundExpression`, `Catch`,
-  `Quiet`). So with `r[n_] := 1 + r[n + 1]`, `{1, f[g[r[1]]], 3}` is
-  `{1, f[g[TerminatedEvaluation[…]]], 3}` and `r[1][y]` is `TerminatedEvaluation[…][y]`, but
-  `(r[1]; 7)` is `TerminatedEvaluation[…]` and so is a `w[]` defined as `{a, r[1]}`, list and all.
-  The rule is inferred, not documented: it fits every one of some thirty inputs run against
-  WL 15.0.1 on 2026-11-11 through the Wolfram Cloud MCP, which become regression cases.
-  **How.** The standard chain is a flag in the handler's `Reader`, beside the depth, true at the
-  top-level entry. Steps 2 and 3 evaluate their subterms through a second operation,
-  `EvaluatePart`, which keeps the flag and, when it is true, catches `UTerminated` and answers
-  `TerminatedEvaluation[reason]`. Plain `Evaluate`, which is what a rung, an own value and every
-  builtin call, clears the flag for what it runs. The top-level entry catches what reaches it.
-  Nothing else catches `UTerminated`: `Block` and the depth and fuel brackets observe it only to
-  restore and rethrow, as they do `UAbort`.
-  **Until the fidelity track lands (§10) the code does what this bullet said before:** it cuts in
-  place with `Hold[e]`, idempotently (a raw atom, a symbol with no own value or a `Hold` the cut
-  built comes back as it is, or the cuts compound: regression case 0010), and emits the message
-  once per cut, so twice for some runaways. The older tutorial describes that behaviour:
-  "Computations limited by $IterationLimit do not normally build up large intermediate structures.
-  But those limited by $RecursionLimit often do."
+  **Which evaluation is replaced: the second on the path to the cut that leaves the standard
+  chain.** An evaluation is on the chain while it only evaluates its head (step 2) and its unheld
+  arguments (step 3) and rearranges them. It leaves the chain when it goes on by any other route: a
+  rule fires (its right-hand side continues the same evaluation), an own value fires, a builtin's
+  result goes round again, a builtin evaluates a held argument (`Block`, `CompoundExpression`), or
+  step 5 splices a held `Sequence` and the evaluation starts over (§4.4): with `HoldFirst`,
+  `f[Sequence[1, r[1]]]` is `f[1, TerminatedEvaluation[…]]`, where `f[1, r[1]]` keeps its `1 +`
+  (regression case 0081, probed 2026-11-17 after the PR #27 review read that splice as a
+  rearrangement on the chain). Splicing what an unheld argument evaluated to is a rearrangement.
+  Follow the path from the input to the cut; the first evaluation on it to leave the chain is kept,
+  and the second is replaced. So with `r[n_] := 1 + r[n + 1]`, `r[1]` is
+  `1 + TerminatedEvaluation[…]` (`r[1]` leaves first, `r[2]` second);
+  `{1, f[g[r[1]]], 3}` is `{1, f[g[1 + TerminatedEvaluation[…]]], 3}`; `r[1][y]` is
+  `(1 + TerminatedEvaluation[…])[y]`; `(r[1]; 7)` is `7` (`CompoundExpression` leaves first,
+  `r[1]` second); a `w[]` defined as `{a, r[1]}` is `{a, TerminatedEvaluation[…]}`; with
+  `q[n_] := g[h[q[n + 1]]]`, `q[1]` is `g[h[TerminatedEvaluation[…]]]`, since `h[…]` never leaves
+  the chain; and `x = x + 1` is `1 + TerminatedEvaluation[…]`, because `Set`'s result is the first
+  and `x`'s own value the second. With no second, nothing on the way out is replaced and the
+  top-level entry answers `TerminatedEvaluation[…]` for the whole input.
+  **What the depth counts differs from WL, D47.** Here every evaluation the handler runs is one
+  level, argument descent included, so 1022 nested `g[…]` around `f[]` reach the default limit;
+  WL 15.0.1 evaluates 100 nested `k[1 + …]`, or `h[…]` with `h[x_] := {x}` firing at every level,
+  under a limit of 20.
+  The rule is inferred, not documented: it fits every one of some forty inputs run against
+  WL 15.0.1 on 2026-11-16 through the Wolfram Cloud MCP, each alone or as an element of an unheld
+  `List`, which leaves an input on the chain; regression cases 0010, 0011, 0077 and 0079 pin
+  them, 0079 the probes that tell a right-hand side continuing its evaluation from a new one.
+  **It replaces a rule this bullet stated on 2026-11-11**, "the outermost evaluation off the
+  chain", from thirty inputs run through the same endpoint with several lines to a call. That
+  endpoint evaluates a multi-line call inside an evaluation of its own that has already left the
+  chain, which moves every answer out by one: the old examples (`(r[1]; 7)` whole,
+  `{1, f[g[TerminatedEvaluation[…]]], 3}`) reproduce that way and no other, and a single-line
+  `x = x + 1` there is `1 + TerminatedEvaluation[…]`, as in the corpus, where the multi-line form
+  gives `TerminatedEvaluation[…]`.
+  **How.** The handler's `Reader` carries, beside the depth, how many enclosing evaluations have
+  left the chain (0, 1, or 2 for "two or more") and whether the current one has. Which operation
+  asks for an evaluation says which: steps 2 and 3 of a first round, and the top-level entry, use
+  `EvaluatePart`, which does not leave the chain; everything else, a builtin, a rule's condition,
+  and steps 2 and 3 of a round after a rewrite, uses `Evaluate`, which has left it, so what it
+  asks for has one more enclosing evaluation off the chain. A user rule's right-hand side
+  continues the evaluation whose rule fired, so the rung evaluates it with `EvaluateRhs`, which
+  counts depth as `Evaluate` does but is the same evaluation to the chain, already left. Only an
+  evaluation entered with exactly one enclosing evaluation off the chain, and not a continuation,
+  can be the one replaced, so only its handler installs a catch. It catches if it has itself left
+  the chain by the time the unwind arrives, which is so exactly when the unwind comes out of an
+  evaluation it asked for with two off the chain: so `UTerminated` carries that count from where
+  it was thrown, and a catch that does not take it rethrows it unchanged. Nothing rewrites the
+  count on the way out, and nothing needs to: it never falls going inward, so under a catch it is 1
+  or 2, and when it is not 2 it is the catch's own 1. The sequence needs
+  no operation of its own for any of this, and the cost is a `tryError` per evaluation one off the
+  chain (§8.4's results). The top-level entry catches what reaches it. Nothing else catches
+  `UTerminated`: `Block` and the depth and fuel brackets observe it only to restore and rethrow,
+  as they do `UAbort`.
   **One divergence remains, and it is about which limit fires.** A user rule's rung evaluates its
   right-hand side by a recursive `evaluate` (§4.4), so `f[x_] := f[x + 1]` deepens the stack here
-  and ends at `$RecursionLimit`, where WL runs it as one chain to `$IterationLimit`. D30's row
-  keeps that.
+  and ends at `$RecursionLimit`, where WL runs it as one chain to `$IterationLimit`. Every step of
+  that chain is a continuation, so nothing on the way out is replaced, and `f[1] + 1` is
+  `TerminatedEvaluation["RecursionLimit"]` where WL's is `1 + TerminatedEvaluation["IterationLimit"]`.
+  D30's row keeps that.
 - **Interrupts arrived with the loop (1c).** `runKernelInterruptible` is `runKernelIO` with an
 `IORef Bool` that `Evaluate`'s handler polls on entry, clearing it and raising `UAbort Interrupt`
 (§4.13); the other two interpreters' poll is `pure False`. `Cassini.Eval` exports it as
@@ -1362,7 +1407,8 @@ become structurally impossible once the steps are separate values in a fixed ord
 - **A user rule evaluates its own right-hand side** (steps 10 and 12). Read literally, a rung
   returns the instantiated right-hand side and the fixed point evaluates it next round, so no
   computation corresponds to "applying the rule" and there is nothing for `Return` to exit. Here,
-  when a user rule fires, the rung calls `evaluate` on the right-hand side inside `CatchUnwind`,
+  when a user rule fires, the rung calls `evaluateRhs` on the right-hand side inside `CatchUnwind`
+  (`evaluate`, but the same evaluation to the recursion limit's unwinding, §4.3),
   turns a caught `UReturn v` into `v`, rethrows every other unwind, and hands the result to the fixed
   point, whose next round finds it settled. This is the catch point of §4.13's `Return`. Built-in
   rungs (11, 13) are Haskell and return as the list says; a pure function applies at step 13 and
@@ -1386,8 +1432,8 @@ plus ordinary definitions, and a patch adding such a branch is a bug. Two things
   position, and restores by position while every value is still where it was, so
   `f[a, Unevaluated[a]]` keeps its wrapper on the second argument. Once steps 7–9 have moved
   arguments, it restores by value, on the first equal argument.
-- **The two limits *construct* a wrapper** (§4.3): `TerminatedEvaluation`, and `Hold` until the
-  fidelity track lands. Building the wrapper is not branching on it.
+- **The two limits *construct* a wrapper** (§4.3): `TerminatedEvaluation`. Building the wrapper is
+  not branching on it.
 
 **Two more things the list leaves implicit:**
 
@@ -1418,9 +1464,11 @@ round, and on exhaustion emits `$IterationLimit::itlim` and returns
 `TerminatedEvaluation["IterationLimit"]` in place of the expression. Non-termination is a user
 error, so it gets a message, not an exception. Unlike the recursion limit this cut is in place,
 with no unwinding: in WL 15.0.1, `f[n_] := f[n + 1]; f[1] + 1` gives
-`1 + TerminatedEvaluation["IterationLimit"]` even inside a `Block` (through the Wolfram Cloud MCP).
-Until the fidelity track lands (§10) the code returns the expression in `Hold`, the older
-language's behaviour. D30.
+`1 + TerminatedEvaluation["IterationLimit"]` even inside a `Block` (through the Wolfram Cloud MCP),
+and here `p := q; q := p; p + 1` gives the same (regression case 0011). Until the fidelity track
+(§10) the code returned the expression in `Hold`, the older language's behaviour. The rounds after
+the first that did not settle have left the standard chain, so `fixpoint` tells them so, and
+their steps 2 and 3 evaluate with `Evaluate`, not `EvaluatePart` (§4.3). D30.
 
 **Re-evaluation cost.** Read literally, "start over" re-evaluates already-settled subterms on every
 round, walking whole subtrees. WL avoids this by marking expressions evaluated against a global
@@ -1428,11 +1476,17 @@ definitions epoch. Stage 1 ships the literal version; the marker is D14.
 
 **One round is skipped, because it cannot change anything.** A round reports whether its result is
 already a fixed point. It is one in two cases. If no rule fired, steps 2–9 only evaluated the parts
-and rearranged them, and another round would try the same rules on the same expression, unless
-step 5 moved a held argument into an unheld position. A `Sequence` spliced under `HoldFirst` or
-`HoldRest` shifts positions, and the next round evaluates what now sits unheld: WL answers
+and rearranged them, and another round would try the same rules on the same expression. One
+rearrangement is not settled. **A held argument that is a `Sequence`**, not forced by `Evaluate`,
+is spliced, flattened through any `Sequence` inside it, and the evaluation starts over on the
+result before any rule is tried; its parts are held or not by where they now sit. WL answers
 `f[1+1, 4, 6]` for `f[Sequence[1+1, 2+2], 3+3]` with `HoldFirst`
-(`wolfram/HoldFirst/PropertiesAndRelations/5`, regression case 0036). If a user
+(`wolfram/HoldFirst/PropertiesAndRelations/5`), and `Hold[1+1, 4]` for `f[Sequence[1+1, 2+2]]`
+once `f[a_, b_] := Hold[a, b]` is defined. **What an unheld argument evaluated to is spliced in the
+same round**, and an argument it shifts out of a held position stays as step 3 left it: with
+`HoldRest`, `f[Sequence[], 1+1]` is `f[1+1]`. Both are WL 15.0.1, probed 2026-11-17 (regression
+cases 0036 and 0080). Until then any held argument step 5 moved into an unheld position went
+round again, which gave `f[2]` there, and tried the rules before the restart. If a user
 rule fired, its rung evaluated the right-hand side to a fixed point itself. A built-in's result, an
 own value, a threaded list and `Indeterminate` still go round again. This is not D14's marker. It
 was forced by a visible bug, not by cost. An unevaluated subterm that emits a message, such as
@@ -1524,8 +1578,10 @@ answered): WL 15.0.1 gives `True` for `MatchQ[22/7, _[_, _]]` and `{Rational, 22
 So to *every* compound pattern a rational subject is `Rational[n, d]`: its head is matched against
 the symbol `Rational` and its argument patterns against the numerator and denominator. Only
 matching sees this. The number is still an atom to `Length`, `Part`, `Map` and to the traversal
-of `ReplaceAll` and `Cases`, which do not descend into it. The code has the atom reading until
-the fidelity track lands (§10). And a `Verbatim[h]` head matches its
+of `ReplaceAll` and `Cases`, which do not descend into it: `Cases[{1/2}, _Integer, Infinity]` is
+`{}` and `1/2 /. 2 -> 3` is `1/2`. The matcher builds `Rational[n, d]` for a rational subject of
+any compound pattern; the fidelity track (§10) brought this, and regression cases 0066 and 0072
+pin it, the latter renamed from the atom reading it used to pin. And a `Verbatim[h]` head matches its
 arguments in order without `h`'s `Flat` and `Orderless`, since `Verbatim` matches "with no
 substitutions for blanks or other transformations" (`wolfram_ref_verbatim.html`); Expreduce and
 Mathics3 agree. Regression cases 0066–0068.
@@ -2478,7 +2534,7 @@ unwind in order to restore state and rethrow:
 data Unwind = UThrow !Expr !(Maybe Expr) !(Maybe Expr)  -- ^ value, tag, Throw's third argument
             | UBreak | UContinue
             | UReturn !Expr                                 -- ^ D23, answered below
-            | UTerminated !Text                             -- ^ a limit; §4.3, D30
+            | UTerminated !Text !Int                        -- ^ a limit; §4.3, D30
             | UAbort !Abort
 ```
 
@@ -3308,8 +3364,9 @@ an antidifference, and the S-test for a Gröbner basis each check an expensive a
 one, so those tests can be generated rather than hand-written.
 
 **Determinism.** CI passes a fixed `--quickcheck-replay` seed and prints it on failure. The nightly
-job (§2.8, D45) is to run a random seed at a much larger count; a failure there becomes a regression
-case (§7.4) with the seed recorded.
+job (§2.8, D45) runs a random seed, drawn and printed first, at ten times the count; a failure
+there becomes a regression case (§7.4) with the seed recorded, or, when the law itself was wrong, a
+fix to the law.
 
 ### 7.4 Regression tests
 
@@ -3795,6 +3852,14 @@ generates.
   collecting keeps polynomial. `//.` over 40 parts: 0.5 ms at 10 rules, 3.9 ms at 100, 28 ms and
   102 MB at 1000, linear in the rules, since a replacement rule list is tried in order on every part
   and is not indexed as a definition's rules are (§4.5.5).
+- **Results at the fidelity track** (2026-11-16; GHC 9.12.4, one developer machine), against 1c's
+  baselines, hash interning first and the weak table second. The end-to-end workload: −4.0% and
+  −3.2% allocation. Deep `D`: −4.2 to −4.6% and −3.6 to −4.0%. Fixed point: −1.2 to −3.4% and −1.1
+  to −3.1%. `//.`: +0.1 to +1.1% and +0.2 to +1.2%. The parts, measured in turn on hash interning:
+  D31 alone −0.7%; D30 then +1.8% net of D31 (about +2.5% alone) once the handler's helpers left its
+  `where`, and +8 to 9% before (+14% for a first version that wrapped every node's rungs in a
+  higher-order operation); D32 then −5.6%. D30's remaining cost is mostly the `tryError` an
+  evaluation one off the chain installs (about 1%), and the larger `Env`.
 - **Trigonometric expansion**, in two parts, because the obvious one cannot see what it is meant
   to guard. `TrigExpand[Sin[a₁ + … + aₙ]]` for growing `n` is the end-to-end cost, baselined; but
   its output has 2ⁿ⁻¹ terms, so its allocation is exponential under either recursion, and the naive
@@ -4170,6 +4235,34 @@ it. **Done when**:
 Not in it: D38's equal `Orderless` subjects, which trades WL's counts against Krebber's
 enumeration and is still open.
 
+**Done 2026-11-17.** Both limits leave `TerminatedEvaluation[…]` (regression cases 0010, 0011,
+0077 and 0079), and a fraction is `Rational[n, d]` to every compound pattern (0066, 0072). Both suites pass
+under both `intern` settings with `-Werror`, `hlint`, `ormolu`, the layering fixtures, the Haddock
+floor and the doctests, and on four random seeds at the nightly's count.
+
+- **D30's rule was wrong, and is corrected** (§4.3): the evaluation replaced is the second on the
+  path to the cut that leaves the standard chain, not the first. The answer of 2026-11-11 was read
+  from probes sent through the Wolfram Cloud MCP several lines to a call, which evaluates them
+  inside an evaluation of its own; some forty probes sent one input per call fit the corrected
+  rule, and the old answers reproduce only the other way.
+- **Corpus and oracle:** the corpus counts do not move (882 in scope, 797 passing, 32 listed, 53
+  failing out of this milestone's pages; Expreduce and Mathics3 as at 1c). Of D30's two entries,
+  one stays D30 and one, an older-language output, is now `§4.3`. The oracle: 320 of 430 inputs
+  agree with Mathics3 10.0.1, 85 are listed and 25 inconclusive, none new. Mathics3 aborts an input
+  at `$RecursionLimit` and keeps the atom reading of a fraction, so the new cases are listed as its
+  departures, with WL 15.0.1's answers in the cases.
+- **The baselines moved once**, with D31 and D32 taken: the end-to-end workload allocates 4.0% less
+  under hash interning and 3.2% less under the weak table than at 1c's baselines (§8.4).
+- **The nightly job** is `.github/workflows/nightly.yml` (§2.8). Running the suite at its count
+  first found the `Calculus` row's finite-difference law failing about one run in a thousand on
+  its own truncation error; the law now extrapolates and discards points it cannot judge.
+
+The departures it found are recorded in their sections:
+
+- `EvaluateRhs`, the chain carried in the handler's `Reader`, and the catch only one off the chain
+  (§4.3); the handler's helpers at top level (§4.3);
+- the rungs' lookups after step 9, not at step 2 (D32, regression case 0078).
+
 #### Track: elementary functions (§4.11–§4.12)
 
 Waits for 1c. **Done when** Cohen's Examples 7.15–7.18 simplify to 0, Fig. 7.9's rows reproduce as
@@ -4367,7 +4460,7 @@ answer, not a deletion.
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2). **Measured 2026-10-10 (1b), trigger not fired:** on §8.3's sequence-variable grid allocation per match is flat at 5.0–5.5 KB from 31 to 4495 matches, and does not grow with the number of variables (§8.3's results). Most of it is the substitution map and the bindings, which any monad would build. `logict` stays | §8.3's allocation per match growing with the number of matches or the depth of backtracking on the grid, or a profile putting `LogicT`'s binds ahead of the matchers' own work |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
-| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 moved a held argument into an unheld position. That is §4.4's bug fix for repeated messages, not the marker. The fix is partial: a built-in's result goes round again with its unevaluated siblings, so `Plus[Part[{1, 2}, 3], x, x]` emits `Part::partw` twice, where WL emits it once (found 2026-10-09 in the PR #12 review) | §8.4's fixed-point benchmark showing re-evaluation dominating; or a message repeated by a built-in's round becoming an oracle or corpus divergence |
+| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 spliced a held `Sequence`, which starts over. That is §4.4's bug fix for repeated messages, not the marker. The fix is partial: a built-in's result goes round again with its unevaluated siblings, so `Plus[Part[{1, 2}, 3], x, x]` emits `Part::partw` twice, where WL emits it once (found 2026-10-09 in the PR #12 review) | §8.4's fixed-point benchmark showing re-evaluation dominating; or a message repeated by a built-in's round becoming an oracle or corpus divergence |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
 | D16 | No `Sin[x]/Cos[x] → Tan[x]` in automatic evaluation, unlike WL: it would undo `Trig_substitute` inside `Simplify` (§4.11) | wanting WL's `Tan` spelling in output — answered first by a rewrite in `Cassini.Syntax.Pretty`, not by an evaluation rule |
 | D17 | `Simplify` is Cohen's `Simplify_trig`, one fixed strategy, not WL's search under a complexity measure (§4.12) | a second strategy existing — Gröbner side relations (§6.1), or Cohen's `Simplify_exp` (`cohen2002_*.pdf` §7.2 Exercise 4) — so that choosing between them needs a measure |
@@ -4383,14 +4476,14 @@ answer, not a deletion.
 | D27 | **First run 2026-09-28.** The corpus comes from the documentation notebooks that come with a Mathematica licence (here the 14.1 offline documentation installer), read by `corpus/tools/extract_wolfram_docs.py` with no Wolfram kernel; Mathics3 10.0.1 parses and normalizes in its place (§7.9). It is never scraped from `reference.wolfram.com` and never committed. The run confirmed §7.9's reading of the notebooks and recorded, from Mathematica 14.1's documentation: 6,552 built-in symbol pages, 111,806 examples, 240,983 inputs and 199,497 outputs. Of these, 90,137 examples have every input usable, and those examples hold 85,555 usable outputs (the unusable examples hold about 19,800 more, which nothing can run); most of the loss is graphics, which is out of scope anyway. The five-second limit makes the output count vary by a few between runs | written permission from Wolfram, which would allow a shared copy; a change to either held terms page; a normalizer defect found in triage (§7.9); a new documentation version, which re-runs the extractor and records its counts here. **Trigger fired 2026-10-09 (1a triage):** the extractor writes a message symbol as the notebook displays it (`\[Infinity]::indet`). `cassini-corpus`'s adapter translates it, and the extractor is fixed at the next documentation run, which re-runs it anyway. **Fired again 2026-10-09 (1a triage, after the attribute names became `System`` symbols):** the normalizer evaluated arithmetic held by an attribute the example set on its own symbol, so `SetAttributes[h, HoldFirst]; h[1+1, 2+2, 3+3]` was expected as `h[2, 4, 6]`. Fixed in the extractor (§7.9 step 6) and re-run over the same 14.1 notebooks, under Mathics3 10.0.1 and CPython 3.14: 38,160 examples ok and 85,558 usable outputs (from 38,157 and 85,555). Of the 29 changed files, 13 are that fix (the `Hold*`, `NHold*`, `SetAttributes`, `MapApply`, `ComapApply`, `Complex` and `Rational` pages), and 16 are run-to-run variation: three outputs that timed out before, memory addresses or a version string in eleven garbage outputs, and two `Plus` terms ordered differently by the new Python |
 | D28 | `structural` (O-T) recurs through `compareCanonical`, so each level re-runs `cohen` over a child its parent's `cohen` has just walked (§3.5). Two distinct terms that Cohen's rules call equal, differing d levels down, cost O(n·d), not O(n). Only unsimplified terms reach O-T. The likely fix keeps the relation: O-T has already checked equal kind and arity, and for those every kind's rule compares all child pairs, so a parent's `EQ` means every child pair is Cohen-equal and O-T can recur into `structural` directly. That needs the invariant stated in `Cassini.Core.Order` and a property checking the two versions agree | `compareCanonical` prominent in a §8.4 profile, or deep unsimplified terms in matching or `Orderless` sorting |
 | D29 | `-1` does not distribute over a sum. `-(c + d)` stays a product, as Cohen's ASAE has it (ASAE-4 admits a sum among the factors). WL distributes `-1`: `-(c + d)` evaluates to `-c - d`, and `a + b - (c + d)` to `a + b - c - d`. **Narrowed 2026-11-11:** this row said any rational number; WL 15.0.1 leaves `2·(a + b)` and `2·(a + b) + c` as they are, so only `-1` diverges. Distributing would put an expansion rule into automatic simplification, which §4.6 keeps to exactly Cohen's operators. Expansion is `Expand`'s job (§4.12) | `Expand` arriving with the elementary-functions track, when the two normal forms can be compared on real workloads; or this entry's corpus and oracle divergences becoming the dominant kind |
-| D30 | **Answered 2026-11-11: follow WL, in the fidelity track (§10).** Both limits leave `TerminatedEvaluation[…]`. The iteration limit's is in place. The recursion limit's replaces the outermost evaluation off the standard chain, a rule inferred from some thirty inputs run against WL 15.0.1, which is the evidence this row was waiting for (§4.3). The message is then emitted once. **What stays a divergence:** a user rule's right-hand side is evaluated recursively here (§4.4), so `f[x_] := f[x + 1]` ends at `$RecursionLimit` where WL's ends at `$IterationLimit`. The row as it stood, for the record: Both limits cut in place, as `Hold[e]`, and evaluation continues outward (§4.3, §4.4). **Widened 2026-11-11 to the iteration limit:** WL 15.0.1 puts `TerminatedEvaluation["IterationLimit"]` where the chain ran out and carries on around it (`f[n_] := f[n + 1]; f[1] + 1` is `1 + TerminatedEvaluation["IterationLimit"]`), so there the cut is in the same place and only its spelling differs. For the recursion limit, WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input. The in-place cut also emits `$RecursionLimit::reclim` twice for one runaway evaluation: `r[n_] := r[n + 1]; Length[{r[1]}]` gives `1` with the message once where step 3 cuts the argument and again where the rule's right-hand side is cut. WL emits it once. How many messages there are follows from which evaluation is replaced, so it is fixed with the unwinding rule, not before it (found 2026-10-09 in the PR #12 review) | a rule application that does not deepen the stack when its right-hand side is the whole result, which is D14's territory; or the residual divergence dominating D30's corpus entries |
-| D31 | **Scheduled 2026-11-11:** taken in the fidelity track (§10), whose D30 change regenerates both baselines anyway, which is this row's trigger. With tracing off, steps 2–9 still call `traceStep` and build the expression it would record. The handler drops it, but the effect call and the expression are paid for, on every `Flat` and `Orderless` node among others. Equality tests that guard some of these calls are not the cost: `Eq Expr` answers from the pointer, intern id or hash. Measured 2026-10-09 (GHC 9.12.4, hash interning, one developer machine): reading the flag once a round in `fixpoint` and carrying it on `Node` saves 0.7% of the end-to-end workload's allocation and 0.8–2.2% on the fixed-point benchmarks, with time inside the noise. A no-op `traceStep` bounds the saving at 1.5% and 3.6–6.4%. Gating the traces where rules fire saved nothing more. Not taken, for a change that small, because it means regenerating both allocation baselines | the evaluation sequence prominent in a §8.4 profile, or a benchmark baseline regenerated for another reason, when the change can ride along |
-| D32 | **Scheduled 2026-11-11:** measured in the fidelity track (§10), with D31, and taken there if it saves. Steps 10–13 recompute, rung by rung, what the node already has (§4.2). Both upvalue rungs (10 and 11) collect the arguments' tag symbols and look each one up, and both downvalue rungs (12 and 13) look up the head symbol that step 2 already looked up for its attributes. For k tagged arguments that is about 2k+2 extra effect calls and symbol-table lookups per node per round, on the hottest path. Collecting the tags once per round and carrying the head's `SymbolInfo` on `Node` would remove them. Not measured. Not taken in the PR #12 review (2026-10-09), for D31's reason: it changes allocation, so it means regenerating both baselines | as D31's, and taken with it |
+| D30 | **Built 2026-11-17, and the rule corrected (§4.3).** Both limits leave `TerminatedEvaluation[…]`, the iteration limit in place, the recursion limit by replacing the second evaluation on the path to the cut that leaves the standard chain, not the outermost, as the answer below said. That answer was read from probes run through an endpoint whose multi-line calls add an evaluation of their own; forty probes run without it fit the corrected rule, and regression cases 0010, 0011, 0077 and 0079 pin them. The message is emitted once. Mathics3 aborts such inputs, so the oracle lists them as its departure. Of the two corpus entries, `wolfram/SetDelayed/PossibleIssues/3` stays D30 (which limit fires), and `wolfram/Set/PossibleIssues/2` is the page's older-language output, `§4.3`. Cost: with D31 and D32 alongside it, the end-to-end workload allocates 4% less than before the track (§8.4). **Answered 2026-11-11: follow WL, in the fidelity track (§10).** Both limits leave `TerminatedEvaluation[…]`. The iteration limit's is in place. The recursion limit's replaces the outermost evaluation off the standard chain, a rule inferred from some thirty inputs run against WL 15.0.1, which is the evidence this row was waiting for (§4.3). The message is then emitted once. **What stays a divergence:** a user rule's right-hand side is evaluated recursively here (§4.4), so `f[x_] := f[x + 1]` ends at `$RecursionLimit` where WL's ends at `$IterationLimit`. The row as it stood, for the record: Both limits cut in place, as `Hold[e]`, and evaluation continues outward (§4.3, §4.4). **Widened 2026-11-11 to the iteration limit:** WL 15.0.1 puts `TerminatedEvaluation["IterationLimit"]` where the chain ran out and carries on around it (`f[n_] := f[n + 1]; f[1] + 1` is `1 + TerminatedEvaluation["IterationLimit"]`), so there the cut is in the same place and only its spelling differs. For the recursion limit, WL 14.1 replaces the runaway evaluation whole with `TerminatedEvaluation["RecursionLimit"]` (`wolfram/$RecursionLimit/BasicExamples/1`, `PropertiesAndRelations/1`). The corpus shows the result but not the rule that decides which evaluation is replaced. Mathics3 aborts the input. The in-place cut also emits `$RecursionLimit::reclim` twice for one runaway evaluation: `r[n_] := r[n + 1]; Length[{r[1]}]` gives `1` with the message once where step 3 cuts the argument and again where the rule's right-hand side is cut. WL emits it once. How many messages there are follows from which evaluation is replaced, so it is fixed with the unwinding rule, not before it (found 2026-10-09 in the PR #12 review) | a rule application that does not deepen the stack when its right-hand side is the whole result, which is D14's territory; or the residual divergence dominating D30's corpus entries |
+| D31 | **Taken 2026-11-17, in the fidelity track:** steps 2–9 read the flag from `Node`, set once per evaluation, and call `traceStep` only when it is on. Measured alone on master: 0.7% less end-to-end allocation, 0.4% on deep `D`, 0.8–2.2% on the fixed-point rows, as before. **Scheduled 2026-11-11:** taken in the fidelity track (§10), whose D30 change regenerates both baselines anyway, which is this row's trigger. With tracing off, steps 2–9 still call `traceStep` and build the expression it would record. The handler drops it, but the effect call and the expression are paid for, on every `Flat` and `Orderless` node among others. Equality tests that guard some of these calls are not the cost: `Eq Expr` answers from the pointer, intern id or hash. Measured 2026-10-09 (GHC 9.12.4, hash interning, one developer machine): reading the flag once a round in `fixpoint` and carrying it on `Node` saves 0.7% of the end-to-end workload's allocation and 0.8–2.2% on the fixed-point benchmarks, with time inside the noise. A no-op `traceStep` bounds the saving at 1.5% and 3.6–6.4%. Gating the traces where rules fire saved nothing more. Not taken, for a change that small, because it means regenerating both allocation baselines | the evaluation sequence prominent in a §8.4 profile, or a benchmark baseline regenerated for another reason, when the change can ride along |
+| D32 | **Taken 2026-11-17, in the fidelity track:** the sequence looks up the arguments' tag symbols and the expression's own tag once a round, after step 9, and hands them to the four rungs. Measured on top of D30 and D31: 5.6% less end-to-end allocation, 6.6–7.0% on deep `D`, 1.4–4.1% on the fixed-point rows. The head's `SymbolInfo` from step 2 is not reused, as this row proposed: step 3 can define rules for the head (`f[f[x_] := 7; 1]`), and a lookup made before it would miss them; regression case 0078 pins that, as WL 15.0.1 answers. The lookups are one snapshot for the round, so a definition made while rungs 10–12 run, by the side effect of a rule's condition, is seen by the later rungs only in the next round; kept, since only a condition that defines rules for the expression being rewritten and then fails can tell (found in the PR #27 review). **Scheduled 2026-11-11:** measured in the fidelity track (§10), with D31, and taken there if it saves. Steps 10–13 recompute, rung by rung, what the node already has (§4.2). Both upvalue rungs (10 and 11) collect the arguments' tag symbols and look each one up, and both downvalue rungs (12 and 13) look up the head symbol that step 2 already looked up for its attributes. For k tagged arguments that is about 2k+2 extra effect calls and symbol-table lookups per node per round, on the hottest path. Collecting the tags once per round and carrying the head's `SymbolInfo` on `Node` would remove them. Not measured. Not taken in the PR #12 review (2026-10-09), for D31's reason: it changes allocation, so it means regenerating both baselines | as D31's, and taken with it |
 | D33 | Exact arithmetic has no size limit: `Power[3, 1220703125]` and `Factorial[10^10]` are computed in full, however long that takes and however much memory it needs. WL stops at a limit with `Overflow[]` and `General::ovfl`, but the corpus documents that only for machine reals (`wolfram/Power/PossibleIssues/7`, `2^(2^100.0)`), not where the limit lies for exact integers, so none is set. The test generators stay inside the limit instead (§7.3). **Trigger fired 2026-10-11 (1c), answered: still no limit.** In the interactive loop a mistyped exponent costs the input, not the session: a second Ctrl-C is thrown at the computation and the loop carries on (§4.10). The cost is that GHC delivers it only between foreign calls, so one GMP multiplication runs to its end: `2^(3^19)` stopped about a second after the second Ctrl-C, and `2^(3^21)`'s last multiplications take longer than that | a corpus or oracle case that pins down WL's limit on exact integers; or a user's input whose single multiplication outlasts their patience |
 | D34 | String patterns are absent (§4.10's deferred list), so `Protect["x*"]` and `Unprotect["x*"]` name the symbol `x*` rather than every symbol matching. Matching names would also need a `Kernel` operation listing the symbols the kernel has seen, which WL's `Names` is (six Wolfram corpus cases, found 2026-10-11 in 1c's triage) | `Names`, `StringMatchQ` or another string-pattern builtin arriving |
 | D35 | `D`'s results are in the form its rule table builds, simplified, which is not always WL's: for `D[g[x]^3/4, {x, 2}]` WL keeps `1/4` outside a sum (`wolfram/D/Scope/FunctionsDefinedByDerivatives/3`). Equal in value, different in structure, and the corpus compares structure. WL's rule for where a constant factor stays cannot be read off one example (§4.9) | 2a's zero test, when corpus cases of `D` can be compared semantically; or such entries becoming `D`'s dominant divergence |
 | D36 | The infix syntax is §4.10's Stage 1 subset: named characters (`\[Alpha]`), character escapes in names (`\.78`, `\:0078`), a string's box escapes (`\<`, `\>`, `\!`, `\&`), `Span`, `Dot`, associations and string patterns are parse errors (three Mathics3 cases, 2026-10-11) | a corpus's in-scope cases needing one, or a builtin whose usual spelling is one (`Dot` with matrices, `Span` with `Part`) |
-| D37 | **Answered 2026-11-11: follow WL, in the fidelity track (§10).** To every compound pattern a rational subject is `Rational[n, d]` (§4.5.1). The atom reading had no source behind it; it was an assumption, and `undocumented` answers stand only until WL's is known (§7.8). `Complex` takes the same answer when D20 brings it. The row as it stood: A rational number is an atom to every compound pattern but one whose head is literally `Rational` (§4.5.1). WL 15.0.1 matches it as `Rational[n, d]` against any two-argument compound pattern: `MatchQ[22/7, _[_, _]]` is `True`, although `Length[22/7]` is 0 and `_[_]` does not match. Following WL would make a number's parts visible to every `f_[x_, y_]` rule, and `Complex` would need the same answer (D20). Found 2026-11-11 in the design review | none; D20 applies the same reading to `Complex` |
+| D37 | **Built 2026-11-17, in the fidelity track (§10):** regression cases 0066 and 0072; Mathics3 keeps the atom reading, so the oracle lists both. **Answered 2026-11-11: follow WL, in the fidelity track (§10).** To every compound pattern a rational subject is `Rational[n, d]` (§4.5.1). The atom reading had no source behind it; it was an assumption, and `undocumented` answers stand only until WL's is known (§7.8). `Complex` takes the same answer when D20 brings it. The row as it stood: A rational number is an atom to every compound pattern but one whose head is literally `Rational` (§4.5.1). WL 15.0.1 matches it as `Rational[n, d]` against any two-argument compound pattern: `MatchQ[22/7, _[_, _]]` is `True`, although `Length[22/7]` is 0 and `_[_]` does not match. Following WL would make a number's parts visible to every `f_[x_, y_]` rule, and `Complex` would need the same answer (D20). Found 2026-11-11 in the design review | none; D20 applies the same reading to `Complex` |
 | D38 | Equal subjects under an `Orderless` head are one mapping, as Krebber's algorithm enumerates them (§4.5.4). WL 15.0.1 repeats them: `ReplaceList[h[a, a], h[x_, y_] -> {x, y}]` with `h` `Orderless` is `{{a, a}, {a, a}}`. Only `ReplaceList`'s length and `Cases`-style counts can see the difference; `Replace` and the rule tables take the first match either way. Found 2026-11-11 in the design review; until then the divergence was filed as undocumented | a corpus case whose expected value counts the repeats; or a user's rule with side effects in its condition observing how often it runs |
 | D39 | **Answered 2026-11-11: follow WL, in the elementary-functions track (§10).** A π multiple, alone or in a sum, is reduced to at most π/4 in magnitude, with the cofunction (§4.11). Nothing was built on the earlier rule, the new one is read off WL 15.0.1's answers, and it makes `Sin[x + 2π/3]` and `Cos[x + π/6]` one spelling, which the earlier rule did not. The row as it stood: A rational multiple of π inside a sum is reduced by periodicity only: `Sin[x + 2π/3]` stays, and `Sin[x + 7π/3]` is `Sin[x + π/3]` (§4.11). That is Cohen's Fig. 7.9 Mathematica column, from 2002. WL 15.0.1 moves the multiple to the first quadrant as it does for a constant argument: `Cos[π/6 + x]` and `Cos[π/6 - x]`. Equal in value, and `Simplify_trig` on the difference should give 0, so `isZero`'s layer 3′ should equate them; a unit test with the track confirms it. Found 2026-11-11 in the design review | a corpus case in the track's triage that the rule as read does not reproduce |
 | D40 | **Answered 2026-11-11, for the control-flow track (§10):** `Print` queues its evaluated arguments through a `Kernel` operation, `EmitOutput`, on the queue the messages use, and the front ends format them (§4.7). The row as it stood: No output channel. `Print` belongs to no module, and the `Kernel` effect has no operation for output, so the pure interpreter has nowhere to put it. The likely shape follows messages: an operation that appends to a queue in `KernelState`, drained by the front end (§4.7) | a second kind of output (`Echo`, `Write`, streams) that the one queue does not fit |
@@ -4398,8 +4491,9 @@ answer, not a deletion.
 | D42 | **Answered 2026-11-11, for the control-flow track (§10):** `Message`, `MessageName` and user message text, `Quiet`, `Check`, `Off`/`On` and `General::stop`, each as WL 15.0.1 answered a probe (§4.7). Scoping is two `Kernel` operations, `Quietly` and `Checking`. Left out, and unevaluated: `Quiet`'s third argument, `Off[]`/`On[]` without a message name, message groups, `$MessageList`, `Messages` and message languages. The row as it stood: Messages can be emitted by builtins and read by the front end, and that is all: `Message`, `Quiet`, `Off`/`On`, `Check` and user-defined message text (`f::tag = "…"`) are absent | a corpus's in-scope cases needing one of the forms left out |
 | D43 | **Answered 2026-11-11, for 2b (§10):** polynomial part by division, the denominator factored over ℚ, then `cohen2003_*.pdf` §4.4's partial-fraction procedures over the coprime factors (§5.5). The row as it stood: `Apart` is scheduled with 2b (§10) and has no algorithm section. Partial fractions over ℚ follow from §5.5's factorization and §5.4's extended Euclid, and §6.2's Hermite reduction does part of the same work; which of them `Apart` is built on is not decided | `Apart` needing parameters in its coefficients, which needs a coefficient field of rational functions |
 | D44 | **Answered 2026-11-11, for the control-flow track (§10):** the first builtins are chosen by measured corpus scope and listed in §2.2. Over the Wolfram corpus, with the track's control, logic and integer builtins counted first (882 cases in scope become 1,357), each list builtin was ranked by the cases it then adds: `Flatten` 27, `Array`, `ReplacePart` and `Range` 23 each, `Partition` 22, `MapAt` 17, `Extract` and `Thread` 15, `MapThread` 14, `Take`, `Position` and `MapIndexed` 12, `Drop`, `Riffle`, `Join` and `Select` 11, `Sort` 10, and the basics (`First`, `Last`, `Rest`, `Most`, `Append`, `Prepend`, `Reverse`) 4–9 each; together they reach 1,676. Next in line, and not in the first set: `Subsets`, `Inner`, `Outer`, `Delete`, `Insert`. The row as it stood: `Cassini.Builtins.List` has a charter and no list of builtins (§2.2). `Table` is specified with the iterators (§4.13); `Range`, `Join`, `Append`, `First`, `Rest`, `Take`, `Sort`, `Select` and the rest are not | the track's triage showing a list builtin outside the first set blocking more cases than one inside it |
-| D45 | **Scheduled 2026-11-11:** built in the fidelity track (§10): a scheduled workflow for the random-seed run, `cassini-corpus` and `cassini-oracle`, with Mathics3 at 10.0.1; `cassini-slow` joins at 2b. The row as it stood: The nightly CI job of §2.8 is not built: no scheduled workflow, no `cassini-slow` stanza, and the oracle and corpus suites run only on a developer machine. A runner would need Mathics3 for the oracle and `corpus/fetch.sh` for the fetched corpora | the scheduled run proving too slow or too flaky to leave on, which makes it a decision again |
+| D45 | **Built 2026-11-17:** `.github/workflows/nightly.yml`, daily and on demand, and on a pull request that changes it (§2.8). Running the suite locally at its count found the `Calculus` row's finite-difference law failing about one run in a thousand on the difference's own truncation error, fixed in the test. **Scheduled 2026-11-11:** built in the fidelity track (§10): a scheduled workflow for the random-seed run, `cassini-corpus` and `cassini-oracle`, with Mathics3 at 10.0.1; `cassini-slow` joins at 2b. The row as it stood: The nightly CI job of §2.8 is not built: no scheduled workflow, no `cassini-slow` stanza, and the oracle and corpus suites run only on a developer machine. A runner would need Mathics3 for the oracle and `corpus/fetch.sh` for the fetched corpora | the scheduled run proving too slow or too flaky to leave on, which makes it a decision again |
 | D46 | Renovate updates the CI's GitHub Actions only (digest-pinned, grouped, minor/patch/digest automerged); toolchain versions and Hackage bounds move by hand (§2.8) | a Hackage major or toolchain release going unnoticed long enough to matter, which would make a dashboard-only Hackage manager worth its noise |
+| D47 | **Opened 2026-11-17, from the PR #27 review.** The depth `$RecursionLimit` bounds counts every evaluation `Evaluate`'s handler runs (§4.3), argument descent included, so a deep but finite expression with no runaway can reach the limit: `Length` of 1022 nested `g[…]` around `f[]` is `TerminatedEvaluation["RecursionLimit"]` at the default 1024. WL 15.0.1 does not count that descent: under `Block[{$RecursionLimit = 20}, …]`, `ToExpression` of 100 nested `k[1 + …]`, of 100 nested `h[…]` with `h[x_] := {x}` firing at every level, and of 200 nested `g[…]` around `1 + 1` all evaluate with no message. What WL does count is not established; nesting of evaluations off the standard chain (§4.3) is the hypothesis to probe first, since the D30 rule already tracks it. A raw atom cannot be the first to reach the limit here: a node evaluates its head (step 2) at the depth its arguments would be, so the head trips first, except under a raw head such as `1[2]`. Not changed with the fidelity track, because a new depth rule moves which evaluation D30 replaces and would re-open regression cases 0010, 0011, 0077 and 0079 | a deep but finite input, from a corpus or a user, hitting `$RecursionLimit` where WL does not; or probes that settle what WL counts |
 
 ### 11.3 Provenance
 

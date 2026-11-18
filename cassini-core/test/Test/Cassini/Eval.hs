@@ -3,7 +3,6 @@
 module Test.Cassini.Eval (tests) where
 
 import Cassini.Eval.Kernel (EvalConfig (..), defaultConfig)
-import Data.Text qualified as T
 import Test.Gen (genExpr, shrinkExpr)
 import Test.Kernel (eval, evalStd, evalWith, ff, messageNames, parse, std)
 import Test.Tasty (TestTree, testGroup)
@@ -57,14 +56,18 @@ tests =
         ],
       testGroup
         "limits"
-        [ testCase "$RecursionLimit: a cut is held, with reclim" $
+        [ testCase "$RecursionLimit: the second evaluation off the chain is replaced, with reclim once" $
             let (r, st) = evalWith defaultConfig {recursionLimit = 20} std (parse "f[1]")
-                (r', st') = evalWith defaultConfig {recursionLimit = 20} (snd (eval std (parse "SetDelayed[f[Pattern[n, Blank[]]], f[Plus[n, 1]]]"))) (parse "f[1]")
-             in ((ff r, messageNames st), take 1 (messageNames st'), "Hold[" `isInfix` ff r') @?= (("f[1]", []), ["$RecursionLimit::reclim"], True),
-          testCase "$IterationLimit: an endless chain is held, with itlim" $
+                (r', st') = evalWith defaultConfig {recursionLimit = 20} (snd (eval std (parse "SetDelayed[r[Pattern[n, Blank[]]], Plus[1, r[Plus[n, 1]]]]"))) (parse "List[r[1]]")
+             in ((ff r, messageNames st), (ff r', messageNames st'))
+                  @?= (("f[1]", []), ("List[Plus[1, TerminatedEvaluation[\"RecursionLimit\"]]]", ["$RecursionLimit::reclim"])),
+          testCase "$RecursionLimit: with no second evaluation off the chain, the whole input" $
+            let (r, st) = evalWith defaultConfig {recursionLimit = 20} (snd (eval std (parse "SetDelayed[f[Pattern[n, Blank[]]], f[Plus[n, 1]]]"))) (parse "List[f[1]]")
+             in (ff r, messageNames st) @?= ("TerminatedEvaluation[\"RecursionLimit\"]", ["$RecursionLimit::reclim"]),
+          testCase "$IterationLimit: an endless chain is cut in place, with itlim" $
             let st0 = snd (eval (snd (eval std (parse "SetDelayed[p, q]"))) (parse "SetDelayed[q, p]"))
-                (r, st) = evalWith defaultConfig {iterationLimit = 50} st0 (parse "p")
-             in (ff r, messageNames st) @?= ("Hold[p]", ["$IterationLimit::itlim"])
+                (r, st) = evalWith defaultConfig {iterationLimit = 50} st0 (parse "List[p]")
+             in (ff r, messageNames st) @?= ("List[TerminatedEvaluation[\"IterationLimit\"]]", ["$IterationLimit::itlim"])
         ],
       testGroup
         "messages"
@@ -88,5 +91,3 @@ tests =
                in (ff r1, messageNames s1) === (ff r2, messageNames s2)
         ]
     ]
-  where
-    isInfix = T.isInfixOf
