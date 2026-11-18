@@ -90,10 +90,11 @@ finiteDifferences =
           central k = do
             up <- at (x + k) e
             down <- at (x - k) e
-            pure ((up, down), (up - down) / (2 * k))
+            guard (abs up < 1.0e6 && abs down < 1.0e6)
+            pure ((up - down) / (2 * k))
        in case (central h, central (h / 2), evalAt p d) of
-            (Just ((up, down), fd1), Just ((up', down'), fd2), Just slope)
-              | all (\v -> abs v < 1.0e6) [up, down, up', down', slope],
+            (Just fd1, Just fd2, Just slope)
+              | abs slope < 1.0e6,
                 abs (fd1 - fd2) <= 1.0e-4 * max 1 (abs fd1 + abs fd2) ->
                   let fd = (4 * fd2 - fd1) / 3
                    in counterexample (T.unpack (ff d) <> " at " <> show p <> ": " <> show slope <> " vs " <> show fd) $

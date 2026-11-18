@@ -42,7 +42,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        intern: [hash, intern]
+        include:
+          - intern: hash
+            flag: ""
+          - intern: intern
+            flag: -f intern
     steps:
       - uses: actions/checkout@v4
 
@@ -71,9 +75,7 @@ jobs:
           seed=$(od -An -N4 -tu4 /dev/urandom | tr -d ' ')
           echo "QuickCheck seed: $seed"
           echo "QuickCheck seed: \`$seed\` (${{ matrix.intern }})" >> "$GITHUB_STEP_SUMMARY"
-          flag=""
-          if [ "${{ matrix.intern }}" = intern ]; then flag="-f intern"; fi
-          cabal test cassini-test $CABAL_FLAGS $flag --test-show-details=direct \
+          cabal test cassini-test $CABAL_FLAGS ${{ matrix.flag }} --test-show-details=direct \
             --test-options="--quickcheck-replay=$seed --quickcheck-tests=$QUICKCHECK_TESTS"
 
   oracle-and-corpus:

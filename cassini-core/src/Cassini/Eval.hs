@@ -270,7 +270,7 @@ evalStep3Args :: (Kernel :> es) => V.Vector Bool -> Node -> Eff es Node
 evalStep3Args held n = do
   as' <- V.zipWithM arg held n.nodeArgs
   let n' = n {nodeArgs = as', nodeForced = forcedAt}
-  when (n.nodeTrace && as' /= n.nodeArgs) $ traceStep "3 Arguments" (nodeExpr n')
+  when (as' /= n.nodeArgs) $ traceIf n' "3 Arguments" (nodeExpr n')
   pure n'
   where
     -- Evaluate[x] in a held position is x evaluated, not Evaluate[x]
@@ -296,7 +296,7 @@ evalStep3Args held n = do
 evalStep34ArgsHold :: (Kernel :> es) => Node -> Eff es Node
 evalStep34ArgsHold n = do
   let held = evalStep4Hold n
-  when (n.nodeTrace && V.or held) $ traceStep "4 Hold" (nodeExpr n)
+  when (V.or held) $ traceIf n "4 Hold" (nodeExpr n)
   evalStep3Args held n
 
 -- | Step 5: unless @SequenceHold@ or @HoldAllComplete@, splice @Sequence@
@@ -358,7 +358,7 @@ evalStep8List n
       [] -> pure (Right n)
       [k] -> do
         let threaded = apply sList [mkApp n.nodeHead (V.map (nth i) n.nodeArgs) | i <- [0 .. k - 1]]
-        Left threaded <$ when n.nodeTrace (traceStep "8 Listable" threaded)
+        Left threaded <$ traceIf n "8 Listable" threaded
       _ -> Right n <$ emitMessage (systemSymbol "Thread") "tdlen" [nodeExpr n]
   where
     listLength = \case
@@ -384,7 +384,7 @@ evalStep9Order n
 evalStepIndet :: (Kernel :> es) => Node -> Eff es (Either Expr Node)
 evalStepIndet n
   | isNumericFunction n.nodeAttrs && V.elem indeterminate n.nodeArgs =
-      Left indeterminate <$ when n.nodeTrace (traceStep "Indeterminate" indeterminate)
+      Left indeterminate <$ traceIf n "Indeterminate" indeterminate
   | otherwise = pure (Right n)
   where
     indeterminate = Sym sIndeterminate
@@ -509,7 +509,12 @@ restoreUneval n
 
 -- | Trace a step that applied, with the node it left.
 changed :: (Kernel :> es) => Text -> Node -> Eff es Node
-changed name n = n <$ when n.nodeTrace (traceStep name (nodeExpr n))
+changed name n = n <$ traceIf n name (nodeExpr n)
+
+-- | Trace a step, if the node's evaluation records a trace: steps 3–9 trace
+-- through here, so none asks the kernel when it does not (D31).
+traceIf :: (Kernel :> es) => Node -> Text -> Expr -> Eff es ()
+traceIf n name e = when n.nodeTrace (traceStep name e)
 
 -- | The first 'Just' of an effectful search, trying no more than it needs.
 firstJustM :: (Monad m) => (a -> m (Maybe b)) -> [a] -> m (Maybe b)

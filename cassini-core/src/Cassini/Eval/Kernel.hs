@@ -250,10 +250,10 @@ handler (Sequence sq) st env = \case
     st.store (symbolEntry s %~ f)
   EmitMessage s t as -> message st s t as
   -- A new evaluation, from one that has left the chain by asking for it.
-  Evaluate e -> ask @Env >>= \en -> descend sq st env e en (min 2 (en.envOff + 1)) False
+  Evaluate e -> ask @Env >>= \en -> descend sq st env e en (offChain en) False
   -- A new evaluation, from one still on the chain; or, from one that has
   -- left it, as 'Evaluate'.
-  EvaluatePart e -> ask @Env >>= \en -> descend sq st env e en (if en.envLeft then min 2 (en.envOff + 1) else en.envOff) False
+  EvaluatePart e -> ask @Env >>= \en -> descend sq st env e en (if en.envLeft then offChain en else en.envOff) False
   -- The same evaluation, continued.
   EvaluateRhs e -> ask @Env >>= \en -> descend sq st env e en en.envOff True
   Iterations -> coerce <$> get @Fuel
@@ -313,6 +313,12 @@ descend sq st env e en off left = do
     | otherwise -> run
   where
     run = local (const en {envDepth = en.envDepth + 1, envOff = off, envLeft = left}) (localSeqUnlift env $ \unlift -> unlift (sq e))
+
+-- | How many evaluations enclosing a new one have left the standard chain,
+-- when the one asking for it has: one more, capped at 2, which is all
+-- 'descend' tells apart (§4.3).
+offChain :: Env -> Int
+offChain en = min 2 (en.envOff + 1)
 
 -- | Queue a message for the front end.
 message :: Store es -> Symbol -> MessageTag -> [Expr] -> Eff es ()
