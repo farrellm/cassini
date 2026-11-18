@@ -134,7 +134,7 @@ data Unwind
   | -- | caught by the innermost loop or user-rule application (D23)
     UReturn !Expr
   | -- | a limit, by name, and how many evaluations enclosing the one it
-    -- last left had left the standard chain: caught where the recursion
+    -- was thrown from had left the standard chain: caught where the recursion
     -- limit's unwinding rule says, and at the top (§4.3, D30)
     UTerminated !Text !Int
   | -- | nothing handles it; it stops evaluation
@@ -281,7 +281,10 @@ handler (Sequence sq) st env = \case
 -- which has since left it itself. It has left it if the unwind comes out of
 -- an evaluation it asked for with two off the chain, since what it asks for
 -- before it leaves has one. So only an evaluation entered with one installs
--- a catch, and the unwind carries the count it came out of.
+-- a catch, and the unwind carries the count it was thrown with. Nothing
+-- rewrites that count on the way out: it never falls going inward, so
+-- under a catch it is 1 or 2, and a catch that does not take it rethrows
+-- it as it came, with the 1 that is its own.
 --
 -- Top-level, as 'message' is: a helper in the handler's @where@ is a
 -- closure allocated on every operation the handler runs, which cost 7% of
@@ -306,9 +309,7 @@ descend sq st env e en off left = do
     | off == 1 && not left ->
         tryError @Unwind run >>= \case
           Right v -> pure v
-          Left (_, UTerminated reason from)
-            | from >= 2 -> pure (terminated reason)
-            | otherwise -> throwError_ (UTerminated reason 1)
+          Left (_, UTerminated reason from) | from >= 2 -> pure (terminated reason)
           Left (_, u) -> throwError_ u
     | otherwise -> run
   where

@@ -1280,7 +1280,9 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   can be the one replaced, so only its handler installs a catch. It catches if it has itself left
   the chain by the time the unwind arrives, which is so exactly when the unwind comes out of an
   evaluation it asked for with two off the chain: so `UTerminated` carries that count from where
-  it was thrown, and a catch that does not take it rethrows with its own count. The sequence needs
+  it was thrown, and a catch that does not take it rethrows it unchanged. Nothing rewrites the
+  count on the way out, and nothing needs to: it never falls going inward, so under a catch it is 1
+  or 2, and when it is not 2 it is the catch's own 1. The sequence needs
   no operation of its own for any of this, and the cost is a `tryError` per evaluation one off the
   chain (§8.4's results). The top-level entry catches what reaches it. Nothing else catches
   `UTerminated`: `Block` and the depth and fuel brackets observe it only to restore and rethrow,
