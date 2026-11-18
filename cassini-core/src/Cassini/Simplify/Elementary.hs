@@ -39,6 +39,7 @@ module Cassini.Simplify.Elementary
 where
 
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
+import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol (Symbol, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
 import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplify, simplifyPower, simplifyProduct, simplifySum)
@@ -147,8 +148,8 @@ step :: Expr -> V.Vector Expr -> Either Undefined Expr
 step h vs = case h of
   Sym f
     | numericHead f, V.elem (Sym sIndeterminate) vs -> Right (Sym sIndeterminate)
-    | f == sPlus -> simplifySum vs
-    | f == sTimes -> simplifyProductE vs
+    | f == sPlus -> simplifySum (orderless f vs)
+    | f == sTimes -> simplifyProductE (orderless f vs)
     | f == sPower, [v, w] <- V.toList vs -> simplifyPowerE v w
     | Just _ <- fnOf f -> fromMaybe (Right (mkApp h vs)) (simplifyElementary f vs)
     | f `elem` cohenOperators -> simplify (mkApp h vs)
@@ -156,6 +157,20 @@ step h vs = case h of
   where
     numericHead f = f == sPlus || f == sTimes || f == sPower || isJust (fnOf f)
     cohenOperators = map systemSymbol ["Divide", "Subtract", "Minus", "Factorial"]
+
+-- | A @Flat@ and @Orderless@ node's operands as the evaluator hands them to
+-- the built-in (§4.4 steps 8–9): nested operands of the same head spliced
+-- in, then sorted in ◁ order. Cohen's merges accept any order, but on
+-- unsorted operands they are quadratic (§8.4), and the result agrees with
+-- the evaluator's either way.
+orderless :: Symbol -> V.Vector Expr -> V.Vector Expr
+orderless f vs
+  | V.length vs < 2 = vs
+  | otherwise = V.fromList (sortBy compareCanonical (concatMap splice (V.toList vs)))
+  where
+    splice v = case v of
+      Call g ws | g == f -> ws
+      _ -> [v]
 
 -- | The arguments, and their arguments two levels down: the subterms a rule's
 -- result is likely to reuse, which are already in normal form.
@@ -289,10 +304,12 @@ hyperbolic fn x
   | otherwise = Right (call' fn x)
 
 -- | Inverse circular functions: the forward tables read backwards onto the
--- principal ranges, then parity.
+-- principal ranges, the poles of @ArcSec@ and @ArcCsc@ at 0, then parity.
 inverse :: Fn -> Expr -> Either Undefined Expr
 inverse fn x
   | Just v <- HashMap.lookup (fromEnum fn, x) inverseTable = v
+  -- ArcSec[x] is ArcCos[1/x], and ArcCsc[x] ArcSin[1/x]: poles at 0, as WL's
+  | Int_ 0 <- x, fn == ArcSec || fn == ArcCsc = Left Pole
   | leadingNegative x = parity fn x
   | otherwise = Right (call' fn x)
 

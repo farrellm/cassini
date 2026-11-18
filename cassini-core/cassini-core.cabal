@@ -129,6 +129,9 @@ test-suite cassini-test
     Test.Cassini.Pattern.Syntactic
     Test.Cassini.Rules
     Test.Cassini.Simplify.Automatic
+    Test.Cassini.Simplify.Elementary
+    Test.Cassini.Simplify.ElementaryWL
+    Test.Cassini.Simplify.Trig
     Test.Cassini.Structure
     Test.Cassini.Syntax
     Test.Gen
