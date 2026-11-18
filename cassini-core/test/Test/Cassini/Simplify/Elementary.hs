@@ -8,8 +8,8 @@ module Test.Cassini.Simplify.Elementary (tests) where
 
 import Cassini.Core.Expr (Expr, apply, pattern Call, pattern Int_, pattern Num, pattern Sym)
 import Cassini.Core.Symbol (sPower, sTimes)
-import Cassini.Number.Integer (integerRoot)
 import Cassini.Number (Number (NInt, NRat))
+import Cassini.Number.Integer (integerRoot)
 import Cassini.Simplify.Elementary (Fn (..), fnOf, isElementaryNormal, sPi, simplifyE)
 import Data.Ratio ((%))
 import Data.Text qualified as T

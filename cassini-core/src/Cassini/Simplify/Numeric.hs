@@ -33,7 +33,8 @@ import Data.Vector qualified as V
 
 -- $setup
 -- >>> import Cassini.Number (Number (..))
--- >>> 
+-- >>> import Data.Ratio ((%))
+
 -- | A product of a rational coefficient and radicals @n^q@, each @n > 1@
 -- (or @n = -1@) and @q@ a non-integer rational.
 data Radical = Radical !Rational ![(Integer, Rational)]

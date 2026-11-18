@@ -14,7 +14,7 @@ import Data.Text qualified as T
 import Test.Gen (genTrig, genTrigQuotient, shrinkExpr)
 import Test.Kernel (evalStd, ff)
 import Test.Numeric (evalAt, genPoint)
-import Test.QuickCheck (Property, counterexample, (.&&.), forAll, forAllShrink, sized, (===))
+import Test.QuickCheck (Property, counterexample, forAll, forAllShrink, sized, (.&&.), (===))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Test.Tasty.QuickCheck (testProperty)

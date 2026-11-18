@@ -252,20 +252,23 @@ separate = foldr place ([], [], [])
 -- power reductions, unfolded, one formula per parity; anything else as it is.
 contractPower :: Expr -> Either Undefined Expr
 contractPower v = case v of
-  Call p [b, Int_ n] | p == sPower, n > 0, Just (fam, isSin, theta) <- sinCos b -> do
-    let half = n `div` 2
-        signOf j = case (fam, isSin) of
-          (_, False) -> 1
-          (Circular, True) -> (-1) ^ half * (-1) ^ j
-          (Hyperbolic, True) -> (-1) ^ j
-        fn
-          | isSin && odd n = sinOf fam
-          | otherwise = cosOf fam
-    terms <- forM [0 .. n] $ \j -> do
-      arg <- times [Int_ (n - 2 * j), theta] >>= algebraicExpand
-      f <- call fn arg
-      times [mkNumber (fromRational' (fromInteger (signOf j * choose n j) / 2 ^ n)), f]
-    plus terms
+  Call p [b, Int_ n]
+    | p == sPower,
+      n > 0,
+      Just (fam, isSin, theta) <- sinCos b -> do
+        let half = n `div` 2
+            signOf j = case (fam, isSin) of
+              (_, False) -> 1
+              (Circular, True) -> (-1) ^ half * (-1) ^ j
+              (Hyperbolic, True) -> (-1) ^ j
+            fn
+              | isSin && odd n = sinOf fam
+              | otherwise = cosOf fam
+        terms <- forM [0 .. n] $ \j -> do
+          arg <- times [Int_ (n - 2 * j), theta] >>= algebraicExpand
+          f <- call fn arg
+          times [mkNumber (fromRational' (fromInteger (signOf j * choose n j) / 2 ^ n)), f]
+        plus terms
   _ -> Right v
 
 -- | Cohen's @Contract_trig_product@ (Fig. 7.8): a product of sines and
@@ -279,22 +282,24 @@ contractProduct u = case u of
     (_, Call p _) | p == sPower -> do
       b' <- contractPower b
       times [a, b'] >>= contractRules
-    _ | Just (fam, sinA, theta) <- sinCos a, Just (_, sinB, phi) <- sinCos b -> do
-      sumArg <- plus [theta, phi] >>= algebraicExpand
-      diffArg <- difference theta phi
-      revArg <- difference phi theta
-      let half f x = call f x >>= \y -> times [mkNumber (fromRational' (1 / 2)), y]
-          neg x = x >>= \y -> times [Int_ (-1), y]
-      terms <- case (fam, sinA, sinB) of
-        (Circular, True, True) -> sequence [half Cos diffArg, neg (half Cos sumArg)]
-        (Circular, False, False) -> sequence [half Cos sumArg, half Cos diffArg]
-        (Circular, True, False) -> sequence [half Sin sumArg, half Sin diffArg]
-        (Circular, False, True) -> sequence [half Sin sumArg, half Sin revArg]
-        (Hyperbolic, True, True) -> sequence [half Cosh sumArg, neg (half Cosh diffArg)]
-        (Hyperbolic, False, False) -> sequence [half Cosh sumArg, half Cosh diffArg]
-        (Hyperbolic, True, False) -> sequence [half Sinh sumArg, half Sinh diffArg]
-        (Hyperbolic, False, True) -> sequence [half Sinh sumArg, half Sinh revArg]
-      plus terms
+    _
+      | Just (fam, sinA, theta) <- sinCos a,
+        Just (_, sinB, phi) <- sinCos b -> do
+          sumArg <- plus [theta, phi] >>= algebraicExpand
+          diffArg <- difference theta phi
+          revArg <- difference phi theta
+          let half f x = call f x >>= \y -> times [mkNumber (fromRational' (1 / 2)), y]
+              neg x = x >>= \y -> times [Int_ (-1), y]
+          terms <- case (fam, sinA, sinB) of
+            (Circular, True, True) -> sequence [half Cos diffArg, neg (half Cos sumArg)]
+            (Circular, False, False) -> sequence [half Cos sumArg, half Cos diffArg]
+            (Circular, True, False) -> sequence [half Sin sumArg, half Sin diffArg]
+            (Circular, False, True) -> sequence [half Sin sumArg, half Sin revArg]
+            (Hyperbolic, True, True) -> sequence [half Cosh sumArg, neg (half Cosh diffArg)]
+            (Hyperbolic, False, False) -> sequence [half Cosh sumArg, half Cosh diffArg]
+            (Hyperbolic, True, False) -> sequence [half Sinh sumArg, half Sinh diffArg]
+            (Hyperbolic, False, True) -> sequence [half Sinh sumArg, half Sinh revArg]
+          plus terms
     _ -> Right u
   Call t (a : rest@(_ : _ : _)) | t == sTimes -> do
     b <- times rest >>= contractProduct

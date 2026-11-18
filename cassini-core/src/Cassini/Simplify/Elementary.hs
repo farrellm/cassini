@@ -42,8 +42,8 @@ import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, p
 import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol (Symbol, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
-import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplify, simplifyPower, simplifyProduct, simplifySum)
 import Cassini.Number.Integer (isPerfectPower)
+import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplify, simplifyPower, simplifyProduct, simplifySum)
 import Cassini.Simplify.Numeric (mergeCoefficient, simplifyRadical)
 import Data.HashMap.Strict qualified as HashMap
 import Data.HashSet qualified as HashSet
@@ -288,13 +288,13 @@ valueAt0 = \case
 valueAtSixth = \case
   Sin -> rad (1 / 2) 1 0
   Cos -> rad (1 / 2) 3 (1 / 2)
-  Tan -> rad 1 3 (-1 / 2)
+  Tan -> rad 1 3 (-(1 / 2))
   Cot -> rad 1 3 (1 / 2)
-  Sec -> rad 2 3 (-1 / 2)
+  Sec -> rad 2 3 (-(1 / 2))
   _ -> rad 2 1 0
 valueAtQuarter = \case
-  Sin -> rad 1 2 (-1 / 2)
-  Cos -> rad 1 2 (-1 / 2)
+  Sin -> rad 1 2 (-(1 / 2))
+  Cos -> rad 1 2 (-(1 / 2))
   Sec -> rad 1 2 (1 / 2)
   Csc -> rad 1 2 (1 / 2)
   _ -> Right (Int_ 1)
@@ -334,13 +334,13 @@ inverseTable =
       (Right key, r) <- entries
     ]
   where
-    sinValues = [(rad 0 1 0, 0), (rad (1 / 2) 1 0, 1 / 6), (rad 1 2 (-1 / 2), 1 / 4), (rad (1 / 2) 3 (1 / 2), 1 / 3), (rad 1 1 0, 1 / 2)]
-    tanValues = [(rad 0 1 0, 0), (rad 1 3 (-1 / 2), 1 / 6), (rad 1 1 0, 1 / 4), (rad 1 3 (1 / 2), 1 / 3)]
-    cscValues = [(rad 1 1 0, 1 / 2), (rad 2 1 0, 1 / 6), (rad 1 2 (1 / 2), 1 / 4), (rad 2 3 (-1 / 2), 1 / 3)]
+    sinValues = [(rad 0 1 0, 0), (rad (1 / 2) 1 0, 1 / 6), (rad 1 2 (-(1 / 2)), 1 / 4), (rad (1 / 2) 3 (1 / 2), 1 / 3), (rad 1 1 0, 1 / 2)]
+    tanValues = [(rad 0 1 0, 0), (rad 1 3 (-(1 / 2)), 1 / 6), (rad 1 1 0, 1 / 4), (rad 1 3 (1 / 2), 1 / 3)]
+    cscValues = [(rad 1 1 0, 1 / 2), (rad 2 1 0, 1 / 6), (rad 1 2 (1 / 2), 1 / 4), (rad 2 3 (-(1 / 2)), 1 / 3)]
     -- ArcCos[y] = π/2 - ArcSin[y], over [-1, 1]
     cosValues = [(v, 1 / 2 - r) | (v, r) <- sinValues] <> [(neg v, 1 / 2 + r) | (v, r) <- sinValues, r /= 0]
     secValues = [(v, 1 / 2 - r) | (v, r) <- cscValues] <> [(neg v, 1 / 2 + r) | (v, r) <- cscValues]
-    cotValues = [(rad 0 1 0, 1 / 2), (rad 1 3 (1 / 2), 1 / 6), (rad 1 1 0, 1 / 4), (rad 1 3 (-1 / 2), 1 / 3)]
+    cotValues = [(rad 0 1 0, 1 / 2), (rad 1 3 (1 / 2), 1 / 6), (rad 1 1 0, 1 / 4), (rad 1 3 (-(1 / 2)), 1 / 3)]
     neg v = v >>= \e -> times [Int_ (-1), e]
     tables =
       [ (ArcSin, sinValues),
@@ -367,7 +367,10 @@ logBase' :: Expr -> Expr -> Maybe Rational
 logBase' b z
   | b == z, b /= Int_ 1, b /= Int_ 0 = Just 1
   | Call p [b', Num r] <- z, p == sPower, b' == b = Just (toRational' r)
-  | Int_ n <- b, n > 1, Num q <- z, q > NInt 0 = do
+  | Int_ n <- b,
+    n > 1,
+    Num q <- z,
+    q > NInt 0 = do
       let (m, i) = rootOf n
           r = toRational' q
           (k, sign) = if numerator r == 1 then (denominator r, -1) else (numerator r, 1)

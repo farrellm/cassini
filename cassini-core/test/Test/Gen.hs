@@ -34,7 +34,7 @@ module Test.Gen
 where
 
 import Cassini.Core.Expr
-import Cassini.Core.Symbol (globalSymbol, systemSymbol, sBlank, sBlankNullSequence, sBlankSequence, sFactorial, sPattern, sPlus, sPower, sTimes)
+import Cassini.Core.Symbol (globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sFactorial, sPattern, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt, NRat), fromRational')
 import Data.Ratio ((%))
 import Data.Vector qualified as V
@@ -317,13 +317,31 @@ genElementary n
           (2, plus <$> args 2 3),
           (2, times <$> args 2 3),
           (2, power <$> genElementary (n `div` 2) <*> exponentE),
-          (2, power <$> (rat <$> elements [2, 3, 8, 12, 1 % 2, -2, -1]) <*> (rat <$> elements [1 % 2, -(1 % 2), 3 % 2, 1 % 3])),
+          (2, power . rat <$> elements [2, 3, 8, 12, 1 % 2, -2, -1] <*> (rat <$> elements [1 % 2, -(1 % 2), 3 % 2, 1 % 3])),
           (4, elementaryFn <$> elements heads <*> argument)
         ]
   where
     heads =
-      [ "Sin", "Cos", "Tan", "Cot", "Sec", "Csc", "Sinh", "Cosh", "Tanh", "Coth", "Sech", "Csch",
-        "ArcSin", "ArcCos", "ArcTan", "ArcCot", "ArcSec", "ArcCsc", "Exp", "Log"
+      [ "Sin",
+        "Cos",
+        "Tan",
+        "Cot",
+        "Sec",
+        "Csc",
+        "Sinh",
+        "Cosh",
+        "Tanh",
+        "Coth",
+        "Sech",
+        "Csch",
+        "ArcSin",
+        "ArcCos",
+        "ArcTan",
+        "ArcCot",
+        "ArcSec",
+        "ArcCsc",
+        "Exp",
+        "Log"
       ]
     argument =
       oneof

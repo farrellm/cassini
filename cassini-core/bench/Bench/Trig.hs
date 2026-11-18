@@ -42,7 +42,7 @@ expandSwell n =
 
 -- | @a1 + … + an@, simplified.
 sumOf :: Int -> Expr
-sumOf n = either (const (var "a1")) id (simplifyE (apply sPlus [var ("a" <> show k) | k <- [1 .. n]]))
+sumOf n = fromRight (var "a1") (simplifyE (apply sPlus [var ("a" <> show k) | k <- [1 .. n]]))
 
 sinOfSum :: Int -> Expr
 sinOfSum n = apply (systemSymbol "Sin") [sumOf n]
