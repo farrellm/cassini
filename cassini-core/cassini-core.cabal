@@ -231,6 +231,7 @@ benchmark cassini-bench
     Bench.Eval
     Bench.Pattern
     Bench.Simplify
+    Bench.Trig
 
   ghc-options:      -O2 -with-rtsopts=-T
   build-depends:

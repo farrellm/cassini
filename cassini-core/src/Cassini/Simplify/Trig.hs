@@ -138,14 +138,7 @@ expandTrigRules = rulesFor Circular
 -- | @Expand_trig_rules@ for either family.
 rulesFor :: Family -> Expr -> Either Undefined (Expr, Expr)
 rulesFor fam a = case a of
-  Call p (t : rest@(_ : _)) | p == sPlus -> do
-    (sf, cf) <- rulesFor fam t
-    (sr, cr) <- plus rest >>= rulesFor fam
-    s <- sequence [times [sf, cr], times [cf, sr]] >>= plus
-    c <- case fam of
-      Circular -> sequence [times [cf, cr], times [Int_ (-1), sf, sr]] >>= plus
-      Hyperbolic -> sequence [times [cf, cr], times [sf, sr]] >>= plus
-    pure (s, c)
+  Call p ts@(_ : _ : _) | p == sPlus -> sumRules fam ts
   Call t (Int_ n : _ : _) | t == sTimes -> do
     theta <- times [mkNumber (fromRational' (1 / fromInteger n)), a]
     (s1, c1) <- rulesFor fam theta
@@ -156,6 +149,25 @@ rulesFor fam a = case a of
     sinN' <- if n < 0 then times [Int_ (-1), sinN] else Right sinN
     pure (sinN', cosN)
   _ -> (,) <$> call (sinOf fam) a <*> call (cosOf fam) a
+
+-- | Lines 1–6 of @Expand_trig_rules@, on the terms of the sum: the first
+-- term's pair, and the pair of the rest by recursion. Cohen's line 3 forms
+-- the rest as the sum @A - Operand(A, 1)@; recursing on the list of terms
+-- instead gives the same pairs without building a sum of the remaining terms
+-- at every level, which would make the construction quadratic in the
+-- number of terms (§8.4).
+sumRules :: Family -> [Expr] -> Either Undefined (Expr, Expr)
+sumRules fam = \case
+  [t] -> rulesFor fam t
+  t : rest -> do
+    (sf, cf) <- rulesFor fam t
+    (sr, cr) <- sumRules fam rest
+    s <- sequence [times [sf, cr], times [cf, sr]] >>= plus
+    c <- case fam of
+      Circular -> sequence [times [cf, cr], times [Int_ (-1), sf, sr]] >>= plus
+      Hyperbolic -> sequence [times [cf, cr], times [sf, sr]] >>= plus
+    pure (s, c)
+  [] -> (,) <$> call (sinOf fam) (Int_ 0) <*> call (cosOf fam) (Int_ 0)
 
 -- | The multiple-angle formulas (7.20)–(7.21), and their hyperbolic
 -- counterparts from §7.1 Exercise 9: @sin(nθ)@ or @cos(nθ)@ for @n ≥ 1@ in
