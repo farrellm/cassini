@@ -16,6 +16,14 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
   evaluation, is corrected from forty probes run without it. Regression cases 0010 and 0011
   re-accepted and renamed, 0077 and 0079 new.
 
+* A `Sequence` spliced out of a held position follows WL 15.0.1 (DESIGN.md §4.4). Only a held
+  argument that is itself a `Sequence` makes the evaluation start over, flattened, and before any
+  rule is tried: with `HoldFirst` and `f[a_, b_] := Hold[a, b]`, `f[Sequence[1+1, 2+2]]` is
+  `Hold[1+1, 4]`, not `Hold[1+1, 2+2]`. A held argument shifted by what an unheld one evaluated
+  to stays unevaluated: with `HoldRest`, `f[Sequence[], 1+1]` is `f[1+1]`, not `f[2]`. Regression
+  case 0036 re-accepted for that row, 0080 new; 0081 pins that the round after such a splice has
+  left the standard chain (§4.3), which the PR #27 review had questioned.
+
 * A rational number is `Rational[n, d]` to every compound pattern, as in WL 15.0.1 (§4.5.1, D37):
   `MatchQ[22/7, _[_, _]]` is `True`, and `_[_]` still does not match. Regression case 0072, which
   pinned the atom reading, is renamed and re-accepted; 0066 gains the two `MatchQ`s.

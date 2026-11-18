@@ -1242,7 +1242,11 @@ stack […] `$IterationLimit` limits the maximum length of any particular evalua
   chain.** An evaluation is on the chain while it only evaluates its head (step 2) and its unheld
   arguments (step 3) and rearranges them. It leaves the chain when it goes on by any other route: a
   rule fires (its right-hand side continues the same evaluation), an own value fires, a builtin's
-  result goes round again, or a builtin evaluates a held argument (`Block`, `CompoundExpression`).
+  result goes round again, a builtin evaluates a held argument (`Block`, `CompoundExpression`), or
+  step 5 splices a held `Sequence` and the evaluation starts over (§4.4): with `HoldFirst`,
+  `f[Sequence[1, r[1]]]` is `f[1, TerminatedEvaluation[…]]`, where `f[1, r[1]]` keeps its `1 +`
+  (regression case 0081, probed 2026-11-17 after the PR #27 review read that splice as a
+  rearrangement on the chain). Splicing what an unheld argument evaluated to is a rearrangement.
   Follow the path from the input to the cut; the first evaluation on it to leave the chain is kept,
   and the second is replaced. So with `r[n_] := 1 + r[n + 1]`, `r[1]` is
   `1 + TerminatedEvaluation[…]` (`r[1]` leaves first, `r[2]` second);
@@ -1472,11 +1476,17 @@ definitions epoch. Stage 1 ships the literal version; the marker is D14.
 
 **One round is skipped, because it cannot change anything.** A round reports whether its result is
 already a fixed point. It is one in two cases. If no rule fired, steps 2–9 only evaluated the parts
-and rearranged them, and another round would try the same rules on the same expression, unless
-step 5 moved a held argument into an unheld position. A `Sequence` spliced under `HoldFirst` or
-`HoldRest` shifts positions, and the next round evaluates what now sits unheld: WL answers
+and rearranged them, and another round would try the same rules on the same expression. One
+rearrangement is not settled. **A held argument that is a `Sequence`**, not forced by `Evaluate`,
+is spliced, flattened through any `Sequence` inside it, and the evaluation starts over on the
+result before any rule is tried; its parts are held or not by where they now sit. WL answers
 `f[1+1, 4, 6]` for `f[Sequence[1+1, 2+2], 3+3]` with `HoldFirst`
-(`wolfram/HoldFirst/PropertiesAndRelations/5`, regression case 0036). If a user
+(`wolfram/HoldFirst/PropertiesAndRelations/5`), and `Hold[1+1, 4]` for `f[Sequence[1+1, 2+2]]`
+once `f[a_, b_] := Hold[a, b]` is defined. **What an unheld argument evaluated to is spliced in the
+same round**, and an argument it shifts out of a held position stays as step 3 left it: with
+`HoldRest`, `f[Sequence[], 1+1]` is `f[1+1]`. Both are WL 15.0.1, probed 2026-11-17 (regression
+cases 0036 and 0080). Until then any held argument step 5 moved into an unheld position went
+round again, which gave `f[2]` there, and tried the rules before the restart. If a user
 rule fired, its rung evaluated the right-hand side to a fixed point itself. A built-in's result, an
 own value, a threaded list and `Indeterminate` still go round again. This is not D14's marker. It
 was forced by a visible bug, not by cost. An unevaluated subterm that emits a message, such as
@@ -4450,7 +4460,7 @@ answer, not a deletion.
 | D11 | `logict` inside `MatchT` over a hand-rolled continuation type (§4.5.2, §9.2). **Measured 2026-10-10 (1b), trigger not fired:** on §8.3's sequence-variable grid allocation per match is flat at 5.0–5.5 KB from 31 to 4495 matches, and does not grow with the number of variables (§8.3's results). Most of it is the substitution map and the bindings, which any monad would build. `logict` stays | §8.3's allocation per match growing with the number of matches or the depth of backtracking on the grid, or a profile putting `LogicT`'s binds ahead of the matchers' own work |
 | D12 | Single-GHC CI, pinned to `base ^>=4.21.2.0` (§2.8) | GHC 9.14 reaching a Stackage LTS, or a Hackage upload needing a wider bound; widening the bound and the matrix is one change |
 | D13 | **Decided 2026-09-23:** polynomials carry their variables at runtime and every operation aligns them (§1.1, §5.2). Type-level arity is not adopted — it cannot catch same-arity mixing (ℚ[x,y] with ℚ[y,z]) — and type-level labels cannot name generalized variables | §8.5 profiles showing alignment or reindexing cost dominating |
-| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 moved a held argument into an unheld position. That is §4.4's bug fix for repeated messages, not the marker. The fix is partial: a built-in's result goes round again with its unevaluated siblings, so `Plus[Part[{1, 2}, 3], x, x]` emits `Part::partw` twice, where WL emits it once (found 2026-10-09 in the PR #12 review) | §8.4's fixed-point benchmark showing re-evaluation dominating; or a message repeated by a built-in's round becoming an oracle or corpus divergence |
+| D14 | No evaluated-expression marker; the fixed point re-evaluates settled subterms (§4.4). A round that fires no rule, or fires a user rule, is already known to be a fixed point and is not repeated, unless step 5 spliced a held `Sequence`, which starts over. That is §4.4's bug fix for repeated messages, not the marker. The fix is partial: a built-in's result goes round again with its unevaluated siblings, so `Plus[Part[{1, 2}, 3], x, x]` emits `Part::partw` twice, where WL emits it once (found 2026-10-09 in the PR #12 review) | §8.4's fixed-point benchmark showing re-evaluation dominating; or a message repeated by a built-in's round becoming an oracle or corpus divergence |
 | D15 | No numerical layer in `isZero` (§5.6) | D9 delivering interval arithmetic with certified bounds |
 | D16 | No `Sin[x]/Cos[x] → Tan[x]` in automatic evaluation, unlike WL: it would undo `Trig_substitute` inside `Simplify` (§4.11) | wanting WL's `Tan` spelling in output — answered first by a rewrite in `Cassini.Syntax.Pretty`, not by an evaluation rule |
 | D17 | `Simplify` is Cohen's `Simplify_trig`, one fixed strategy, not WL's search under a complexity measure (§4.12) | a second strategy existing — Gröbner side relations (§6.1), or Cohen's `Simplify_exp` (`cohen2002_*.pdf` §7.2 Exercise 4) — so that choosing between them needs a measure |

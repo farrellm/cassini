@@ -1,0 +1,8 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", each input as an element of one unheld List. The round after step 5 splices a held Sequence has left the standard chain, as one after a rewrite has (§4.3): r[1], released by the splice, is the second evaluation to leave it and is replaced whole, where unheld from the start it is the first and keeps its 1 +. Under HoldRest, r[1] shifted out of the held position is not evaluated at all. *)
+SetDelayed[r[Pattern[n, Blank[]]], Plus[1, r[Plus[n, 1]]]]
+SetAttributes[f1, HoldFirst]
+SetAttributes[f2, HoldRest]
+f1[Sequence[1, r[1]]]
+f1[1, r[1]]
+f2[Sequence[], r[1]]
+List[f1[Sequence[1, r[1]]]]
