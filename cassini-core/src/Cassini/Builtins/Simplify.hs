@@ -10,6 +10,7 @@ module Cassini.Builtins.Simplify (definitions) where
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Arithmetic (fromSimplified)
 import Cassini.Builtins.Define (Definition, args, define, down)
+import Cassini.Builtins.Held (outsideHeld)
 import Cassini.Core.Expr (Expr)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Simplify.Automatic (Undefined)
@@ -26,8 +27,9 @@ definitions =
   ]
 
 -- | A one-argument builtin over a procedure on normal forms. The argument
--- is already evaluated, so 'simplifyE' only confirms its normal form.
+-- is already evaluated, so 'simplifyE' only confirms its normal form; what
+-- it holds stays out of the procedure's reach ('outsideHeld').
 unary :: (Kernel :> es) => (Expr -> Either Undefined Expr) -> Expr -> Eff es (Maybe Expr)
 unary f e = case args e of
-  [x] -> fromSimplified e (simplifyE x >>= f)
+  [x] -> outsideHeld (simplifyE >=> f) x >>= fromSimplified e
   _ -> pure Nothing

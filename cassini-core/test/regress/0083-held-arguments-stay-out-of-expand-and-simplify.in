@@ -1,0 +1,10 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List: Expand, Simplify, TrigExpand and TrigReduce leave what a head holds as it is. A held argument still takes part as a whole, and the sum it lands in sorts by what it holds. *)
+Expand[Hold[Plus[1, 1]]]
+Simplify[Hold[Plus[1, 1]]]
+TrigExpand[Hold[Sin[Plus[a, b]]]]
+TrigReduce[Hold[Power[Sin[x], 2]]]
+Expand[Function[x, Power[Plus[1, x], 2]]]
+Expand[RuleDelayed[x, Plus[1, 1]]]
+Expand[Power[Plus[a, Hold[Plus[1, 1]]], 2]]
+Expand[Power[Plus[z, Hold[b], Hold[a]], 2]]
+Simplify[Plus[Hold[Plus[1, 1]], Power[Sin[x], 2], Power[Cos[x], 2]]]

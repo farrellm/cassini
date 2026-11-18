@@ -17,7 +17,8 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 * `Expand`, `TrigExpand`, `TrigReduce` and `Simplify` (§4.12): Cohen's algebraic expansion,
   trigonometric expansion and contraction, and `Simplify_trig`, circular and hyperbolic. Cohen's
   Examples 7.15–7.18 simplify to 0. `Simplify` is that one strategy (D17); its cost grows steeply
-  with the degree of the rationalized numerator. `Expand` threads over a list, as WL's does.
+  with the degree of the rationalized numerator. `Expand` threads over a list, as WL's does. None of the four rewrites inside a held
+  argument: `Expand[Hold[1 + 1]]` had been `Hold[2]`.
 
 * Interning stays off (D2): on `Expand[(a+b+c+d)^30]` the weak table takes 230 ms and 339 MiB
   against 108 ms and 194 MiB. Both benchmark baselines are regenerated with §8.4's new groups.

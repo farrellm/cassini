@@ -45,6 +45,7 @@ library
     Cassini.Builtins.Control
     Cassini.Builtins.Define
     Cassini.Builtins.Elementary
+    Cassini.Builtins.Held
     Cassini.Builtins.Pattern
     Cassini.Builtins.Polynomial
     Cassini.Builtins.Session

@@ -8,6 +8,7 @@ module Cassini.Builtins.Polynomial (definitions) where
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Arithmetic (fromSimplified)
 import Cassini.Builtins.Define (Definition, args, define, down)
+import Cassini.Builtins.Held (outsideHeld)
 import Cassini.Core.Expr (apply, pattern Call)
 import Cassini.Core.Symbol (Symbol, sList, systemSymbol)
 import Cassini.Simplify.Elementary (simplifyE)
@@ -22,7 +23,7 @@ definitions =
   where
     expand e = case args e of
       [Call l xs] | l == sList -> pure (Just (apply sList [apply sExpand [x] | x <- xs]))
-      [x] -> fromSimplified e (simplifyE x >>= algebraicExpand)
+      [x] -> outsideHeld (simplifyE >=> algebraicExpand) x >>= fromSimplified e
       _ -> pure Nothing
 
 sExpand :: Symbol

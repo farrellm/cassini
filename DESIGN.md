@@ -2337,6 +2337,17 @@ procedures return `Undefined` when it does; the builtins map it as §4.7 does. E
 `simplifyE` (§4.11), which is how Example 7.17's `Cos[x + π/6]` expands into terms whose `Cos[π/6]`
 becomes a number mid-algorithm.
 
+**What a head holds stays held.** The procedures are pure and cannot read attributes, so on their
+own they descend into every argument: `Expand[Hold[1 + 1]]` would be `Hold[2]`, where WL 15.0.1
+leaves it, and leaves `Function[x, (1 + x)^2]` and `TrigExpand[Hold[Sin[a + b]]]` alone too. So the
+builtins, `Expand` with them, run each procedure through `Cassini.Builtins.Held.outsideHeld`: every
+argument a head's `HoldAll`, `HoldFirst`, `HoldRest` or `HoldAllComplete` holds is swapped for an
+opaque `Cassini`Private`Held[k]`, equal arguments for the same `k`, and swapped back afterwards. The
+procedure sees a held argument as an atom, as WL does (`Expand[(a + Hold[1 + 1])^2]` multiplies it
+out), and each sum or product a placeholder sat in is sorted again, since the arguments and their
+placeholders need not sort alike. Passing the attributes into the procedures instead would change
+every signature above for the sake of the builtins.
+
 **The normal forms, transcribed** from Definitions 7.4 and 7.11, each extended to the hyperbolic
 pair as Cohen's §7.1 Exercise 9 and §7.2 Exercise 9 do:
 
