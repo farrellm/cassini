@@ -2258,10 +2258,17 @@ MuPAD disagreeing, so each rule names the column it reproduces, and those rows a
   `r`, with `Log[E] → 1` the case `r = 1`; `Log[0]` is `Left LogOfZero`. `Log[E^x]` for symbolic
   `x` is left alone. **The two-argument form** is a definition, as in WL, which rewrites it on
   evaluation (`wolfram/HoldPattern/BasicExamples/3`): `Log[b, z] → Log[z]/Log[b]`, except that
-  `Log[b, b^r] → r` for rational `r` where that is an identity. Both integer powers of one integer
-  qualify (`Log[10, 1000] → 3`, `Log[8, 1/2] → -1/3`, as in WL 15.0.1). A power written as `b^r`
-  qualifies only for a base known positive, a positive rational, `Pi` or `E`
-  (`Log[Pi, Sqrt[Pi]] → 1/2`), or for `-1 < r ≤ 1`, because `Log[b^r] = r·Log[b]` needs `r·Arg[b]`
+  `Log[b, b^r] → r` for rational `r` where that is an identity. Every power of a positive radical
+  qualifies: `b` and `z` positive rationals times positive integers to rational powers, whose
+  exponent vectors over a coprime basis of their integers are proportional (`Log[10, 1000] → 3`,
+  `Log[1/2, 1/8] → 3`, `Log[Sqrt[2], 1/2] → -2`, as in WL 15.0.1). WL 15.0.1 reduces a radical
+  case only where `Log[z]` and `Log[b]` cancel after its one-argument rules, leaving
+  `Log[2, Sqrt[8]]` as `Log[2 Sqrt[2]]/Log[2]` and `Log[Sqrt[2], 8]` as `2 Log[8]/Log[2]`; ours
+  gives `3/2` and `6`, equal values in a simpler form, so that which pairs reduce does not depend
+  on spelling. Only an integer base above 1 and an integer or unit-fraction `z` had qualified,
+  which left `Log[1/2, 1/8]` a quotient beside `Log[4, 8] → 3/2` (regression case 0088). A power
+  written as `b^r` with `b` symbolic qualifies only for `Pi` or `E` (`Log[Pi, Sqrt[Pi]] → 1/2`),
+  or for `-1 < r ≤ 1`, because `Log[b^r] = r·Log[b]` needs `r·Arg[b]`
   in `(-π, π]`: `Log[x, x^2]` stays a quotient, being 0, not 2, at `x = -1`. Base 1 divides by
   `Log[1] = 0`, so `Log[1, z]` is `Left ZeroDenominator` and `Log[1, 1]` `Left ZeroOverZero`,
   which §4.7 maps to `Power::infy` and `Power::indet`; WL 15.0.1 gives the same results, but its

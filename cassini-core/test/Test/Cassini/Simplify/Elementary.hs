@@ -87,6 +87,16 @@ logTwo =
       row "a power of a common root (WL 15.0.1)" "Log[4, 8]" "Rational[3, 2]",
       row "a written power of a positive base (wolfram/Log/Scope/SpecificValues/1)" "Log[Pi, Power[Pi, Rational[1, 2]]]" "Rational[1, 2]",
       row "a reciprocal power" "Log[8, Rational[1, 2]]" "Rational[-1, 3]",
+      row "a rational base below 1 (WL 15.0.1)" "Log[Rational[1, 2], Rational[1, 8]]" "3",
+      row "a radical base (WL 15.0.1)" "Log[Power[2, Rational[1, 2]], Rational[1, 2]]" "-2",
+      row "a product of radicals over a coprime basis" "Log[Times[3, Power[2, Rational[1, 2]]], 18]" "2",
+      -- WL 15.0.1 gives these as equal quotients, Log[2 Sqrt[2]]/Log[2] and
+      -- 2 Log[8]/Log[2]: it reduces a radical case only where the two
+      -- logarithms cancel, and §4.11 reduces every one
+      row "a radical argument, where WL leaves a quotient" "Log[2, Power[8, Rational[1, 2]]]" "Rational[3, 2]",
+      row "a radical base, where WL leaves a quotient" "Log[Power[2, Rational[1, 2]], 8]" "6",
+      row "no rational power stays a quotient (WL 15.0.1)" "Log[6, Times[2, Power[3, Rational[1, 2]]]]" "Times[Power[Log[6], -1], Log[Times[2, Power[3, Rational[1, 2]]]]]",
+      row "a negative base stays a quotient (WL 15.0.1)" "Log[-2, 4]" "Times[Power[Log[-2], -1], Log[4]]",
       row "base E is the one-argument Log (wolfram/Log/Scope/FunctionProperties/1)" "Log[E, z]" "Log[z]",
       -- Log[x^2] is not 2 Log[x] at x = -1, so x^2 is not read as a power of x
       row "a symbolic base with an exponent outside (-1, 1] stays a quotient" "Log[x, Power[x, 2]]" "Times[Power[Log[x], -1], Log[Power[x, 2]]]",

@@ -48,7 +48,7 @@ import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkNumber, pattern App, p
 import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol (Symbol, sIndeterminate, sPlus, sPower, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
-import Cassini.Number.Integer (isPerfectPower)
+import Cassini.Number.Integer (multiplicity)
 import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplify, simplifyPower, simplifyProduct, simplifySum)
 import Cassini.Simplify.Numeric (mergeCoefficient, simplifyRadical)
 import Data.HashMap.Strict qualified as HashMap
@@ -58,6 +58,8 @@ import Data.Vector qualified as V
 -- $setup
 -- >>> import Cassini.Core.Expr (mkSymbol)
 -- >>> import Cassini.Core.Symbol (globalSymbol)
+-- >>> import Cassini.Number (Number (..))
+-- >>> import Data.Ratio ((%))
 -- >>> let x = mkSymbol (globalSymbol "x")
 
 -- | The elementary heads of §4.11.
@@ -386,45 +388,76 @@ logOfZeroOver = \case
   Sym c | c == sPi || c == sE -> Just (Left LogOfZero)
   _ -> Nothing
 
--- | @r@ when @z@ is @b^r@ exactly, @r@ rational: @z@ written as a power of
--- @b@, or both integer powers of one integer. @Log[b^r] = r Log[b]@ needs
--- @r·Arg[b]@ in @(-π, π]@, so a written power counts only for a base known
--- positive (a positive rational, @Pi@ or @E@) or for @-1 < r ≤ 1@:
--- @Log[x, x^2]@ is not 2 at @x = -1@, where @Log[1]/Log[-1]@ is 0.
+-- | @r@ when @z@ is @b^r@ exactly, @r@ rational. @Log[b^r] = r Log[b]@ needs
+-- @r·Arg[b]@ in @(-π, π]@, so there are two cases:
+--
+-- * @b@ and @z@ positive radicals, rationals times positive integers to
+--   rational powers, whose exponents over a coprime basis are proportional:
+--   @Log[1/2, 1/8]@ is 3 and @Log[Sqrt[2], 8]@ is 6;
+-- * @z@ written as a power of @b@, for a base known positive (@Pi@ or @E@)
+--   or for @-1 < r ≤ 1@: @Log[x, x^2]@ is not 2 at @x = -1@, where
+--   @Log[1]/Log[-1]@ is 0.
+--
+-- >>> logBase' (apply sPower [mkNumber (NInt 2), mkNumber (NRat (1 % 2))]) (mkNumber (NInt 8))
+-- Just (6 % 1)
+-- >>> logBase' (mkNumber (NInt 12)) (mkNumber (NInt 18))
+-- Nothing
 logBase' :: Expr -> Expr -> Maybe Rational
 logBase' b z
   | b == z, b /= Int_ 1, b /= Int_ 0 = Just 1
+  | Just fb <- positiveRadical b, Just fz <- positiveRadical z = proportion fb fz
   | Call p [b', Num r] <- z,
     p == sPower,
     b' == b,
     let q = toRational' r,
     positive b || (q > -1 && q <= 1) =
       Just q
-  | Int_ n <- b,
-    n > 1,
-    Num q <- z,
-    q > NInt 0 = do
-      let (m, i) = rootOf n
-          r = toRational' q
-          (k, sign) = if numerator r == 1 then (denominator r, -1) else (numerator r, 1)
-      guard (denominator r == 1 || numerator r == 1)
-      j <- powerOf m k
-      Just (sign * fromInteger j / fromInteger i)
   | otherwise = Nothing
   where
     positive = \case
-      Num n -> n > NInt 0
       Sym c -> c == sPi || c == sE
       _ -> False
-    -- n = m^i with m not a perfect power
-    rootOf n = case isPerfectPower n of
-      Just (m, j) -> let (m', i) = rootOf m in (m', i * j)
-      Nothing -> (n, 1)
-    -- k = m^j
-    powerOf m k
-      | k == 1 = Just 0
-      | k `mod` m == 0 = (+ 1) <$> powerOf m (k `div` m)
-      | otherwise = Nothing
+
+-- | A positive radical as integers above 1 with rational exponents: a
+-- positive rational, a positive integer to a rational power, or a product of
+-- those, which is every positive real number §4.15 normalizes.
+positiveRadical :: Expr -> Maybe [(Integer, Rational)]
+positiveRadical = \case
+  Call t xs | t == sTimes -> concat <$> traverse factor xs
+  x -> factor x
+  where
+    factor = \case
+      Num n
+        | let q = toRational' n,
+          q > 0 ->
+            Just ([(numerator q, 1) | numerator q > 1] <> [(denominator q, -1) | denominator q > 1])
+      Call p [Int_ n, Num e] | p == sPower, n > 1 -> Just [(n, toRational' e)]
+      _ -> Nothing
+
+-- | @r@ with @z = b^r@, for @b@ and @z@ as 'positiveRadical' gives them:
+-- over a basis of pairwise coprime integers each has one exponent vector,
+-- and @r@ exists when @z@'s is @r@ times @b@'s, @b@'s not being zero.
+proportion :: [(Integer, Rational)] -> [(Integer, Rational)] -> Maybe Rational
+proportion fb fz = do
+  let basis = coprimeBasis (map fst (fb <> fz))
+      vb = vector basis fb
+      vz = vector basis fz
+  (eb, ez) <- find ((/= 0) . fst) (zip vb vz)
+  let r = ez / eb
+  guard (vz == map (r *) vb)
+  Just r
+  where
+    vector basis fs = [sum [e * fromInteger (fst (multiplicity m n)) | (n, e) <- fs] | m <- basis]
+
+-- | A basis of pairwise coprime integers above 1 over which each of the
+-- given integers factors: two members with a common factor @g@ are replaced
+-- by their cofactors and @g@ until none has one.
+coprimeBasis :: [Integer] -> [Integer]
+coprimeBasis = go . ordNub . filter (> 1)
+  where
+    go ns = case [(a, c, g) | (a : rest) <- tails ns, c <- rest, let g = gcd a c, g > 1] of
+      [] -> ns
+      (a, c, g) : _ -> go (ordNub (filter (> 1) ([a `div` g, c `div` g, g] <> filter (\n -> n /= a && n /= c) ns)))
 
 -- | Parity, on an argument whose leading operand has a negative
 -- coefficient: odd heads pull the sign out, even heads drop it, and the
