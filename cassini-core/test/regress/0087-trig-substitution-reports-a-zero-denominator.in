@@ -1,0 +1,4 @@
+(* WL 15.0.1, $Version "15.0.1 for Linux x86 (64-bit) (July 2, 2026)", the inputs as the elements of one unheld List. Cot[x] Tan[x] is 1 once Tan and Cot are substituted, which leaves Tan[Pi/2], a pole; trigSubstitute had dropped the substitution there and passed the Tan on. *)
+Simplify[Tan[Times[Rational[1, 2], Pi, Cot[x], Tan[x]]]]
+TrigReduce[Tan[Times[Rational[1, 2], Pi, Cot[x], Tan[x]]]]
+TrigExpand[Tan[Times[Rational[1, 2], Pi, Cot[x], Tan[x]]]]
