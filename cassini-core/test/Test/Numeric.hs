@@ -21,10 +21,11 @@ import Test.QuickCheck (Gen, choose)
 -- | The value at a point, or 'Nothing' where the expression is undefined
 -- there, complex, or too large to compare: a negative base under a
 -- non-integer power, a non-positive power of zero, a factorial of anything
--- but a small natural number, @f@ or @g@ of arguments too large for a
--- periodic function to keep the tolerance, or any head this evaluator does
--- not know. The functions @f@ and @g@ are fixed real functions of their
--- arguments, and @Derivative[n1, …][f]@ and @[g]@ their partial derivatives.
+-- but a small natural number, @f@, @g@ or a circular function of arguments
+-- too large for a periodic function to keep the tolerance, or any head this
+-- evaluator does not know. The functions @f@ and @g@ are fixed real
+-- functions of their arguments, and @Derivative[n1, …][f]@ and @[g]@ their
+-- partial derivatives.
 evalAt :: Map Text Double -> Expr -> Maybe Double
 evalAt point = go
   where
@@ -96,12 +97,12 @@ evalAt point = go
 -- non-positive number, and for an inverse outside its real domain.
 elementary :: Text -> Maybe (Double -> Maybe Double)
 elementary = \case
-  "Sin" -> total sin
-  "Cos" -> total cos
-  "Tan" -> Just (\x -> sin x `over` cos x)
-  "Cot" -> Just (\x -> cos x `over` sin x)
-  "Sec" -> Just (\x -> 1 `over` cos x)
-  "Csc" -> Just (\x -> 1 `over` sin x)
+  "Sin" -> circular (Just . sin)
+  "Cos" -> circular (Just . cos)
+  "Tan" -> circular (\x -> sin x `over` cos x)
+  "Cot" -> circular (\x -> cos x `over` sin x)
+  "Sec" -> circular (\x -> 1 `over` cos x)
+  "Csc" -> circular (\x -> 1 `over` sin x)
   "Sinh" -> total sinh
   "Cosh" -> total cosh
   "Tanh" -> total tanh
@@ -119,6 +120,10 @@ elementary = \case
   _ -> Nothing
   where
     total f = Just (Just . f)
+    -- As for 'periodic' in 'evalAt': beyond 1e6, rounding the argument
+    -- alone can move the value by more than 'approxEqual' allows, so
+    -- Sin[Exp[9 E]] and Sin[E^(9 E)] would disagree.
+    circular f = Just (\x -> if abs x > 1e6 then Nothing else f x)
     over a b = if abs b < 1e-8 then Nothing else Just (a / b)
 
 -- | Whether two values agree to a relative tolerance; values that are not
