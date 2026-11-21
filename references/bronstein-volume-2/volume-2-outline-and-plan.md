@@ -14,7 +14,8 @@ the same day. The project owner then waived the reading gate, and phase 2 (chs. 
 drafted on 2026-11-14, phases 3 (chs. 1–5) and 4 (chs. 10–11) after it the same day, and phase 5
 (chs. 13–16) and phase 6 on 2026-11-15. The book is complete in first draft, 148 pages after the consistency passes (150 when first complete), and has not
 been read by the owner. A review against the sources followed on 2026-11-16 (§5, the fifth pass); it
-left the page count at 148.
+left the page count at 148. A further line-by-line review against the sources and SymPy verification
+followed on 2026-11-20 (§5, the sixth pass), leaving the page count at 148.
 
 ## 1. What this book is, and is not
 
@@ -310,6 +311,38 @@ lazy Hermite report, and every number in the worked examples other than `e_w`.
   form with `v₀, cᵢ, vᵢ`), one incomplete (the tutorial's residue polynomial is `R(t)` in §2.5
   and `R(z)` in §3), and Risch's `σᵢ` are a basis for the multiples of a divisor, which is now
   said.
+
+**A sixth pass, 2026-11-20,** re-read this plan and the entire book line by line, verified all
+worked examples, resultants, trace matrices, idealizers and closed forms of Appendix A in SymPy,
+and re-checked all 256 located citations and verbatim quotations against Volume I, Stichtenoth,
+Trager (Raab & Singer), Risch (Raab & Singer), Bronstein 1990 (page images of pp. 160–163,
+171–172), Bronstein's tutorial, RR-3562, Chen–Kauers–Koutschan, Chen–Du–Kauers, Cantor, Axiom's
+pamphlets and the remaining held sources. It found and fixed:
+
+- *Wrong in the mathematics or algorithms.* In §1.4 and §3.1, row reduction for `Mu ∈ k[t]^r` was
+  applied without clearing common denominators for matrices over `k(t)` (the idealizer) or keeping
+  the scaling factor `q` (the `q`-radical: columns of `q M̃⁻¹`, not `M̃⁻¹`). Corollary 4.1.1(ii)
+  omitted the hypothesis that `F` is primitive in `y` (irreducible in `K[x, y]`), without which
+  `[K₀ : K] ∣ deg_x(F)` fails; the `deg_x(F) = 0` case is now handled in the proof. In §5.4,
+  Cantor's reduction step `-((b − y) − D) = D − (b − y)` was glossed as the divisor of the other
+  zeros of `y − b` rather than equivalent to the divisor of their conjugates. In §9.2, Trager's
+  parameter-case `ℚ`-basis construction was misstated as writing the roots directly as polynomials
+  in the parameters; it scales the splitting-field basis elements by common denominators of each
+  coordinate so the coordinates become polynomials (§5.2 of Trager). In `LogarithmicPart` (§9.4),
+  the step removing nonzero residues at ramified places was ordered after computing `d` and `R`,
+  which would leave `R` in the old model with roots `residue/r_P` instead of residues; it now runs
+  first. In Theorem 13.4.1, `R₀` lies in `C[Z]` with `c₀ ∈ k*` (not merely `C̄[Z]`, `c₀ ∈ k`).
+- *Incomplete.* `MakeSuitable` had no worked example exercising its extension loop, against §4;
+  Example 7.7.1 (`y³ + xy² − x⁴ = 0`) is added and verified in SymPy. `AlgebraicPart` (§8.4) used
+  `τ_i` without binding `τ` from the normal integral basis step. `FiniteOrder` (§10.3) omitted the
+  characteristic condition `p, q > [E : K(x)]` stated in §10.1.
+- *Unclear or imprecise.* A variable clash (`l` used for both `b₁, …, b_l` and `[L : K']`) in the
+  proof of Theorem 6.3.2; a missing inline formula for `ν_P(f dt)` in §2.4 ahead of Exercise 2.3;
+  the reason `AbsoluteFactor` takes a factor of least degree (when `K₀/K` is not Galois); the
+  missing `(y³/x)·x = y³` check in Example 3.1.2; the link from `P̃` to `δ̃ ∼ 2(P̃ − ∞)` in
+  Example 10.4.2; the subtracted derivative `D(Bφ/(W^k y))` and coprimality of `B` with `φ` in
+  §12.6; the page number (`p. 206`) for Risch's Theorem 1(b) in Raab & Singer (§16.1); and a note
+  that Axiom's `INTPAF` declares `palglimint` (§16.2).
 
 **Still not done:** a reading of the sources cited only in abstract beyond the abstract or
 introduction, and of Bronstein 1990 beyond the pages named here and in phase 5. The book is still

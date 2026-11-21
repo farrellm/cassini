@@ -69,18 +69,20 @@ Both parts are effective.
 \emph{The radical.} Let $T = (\operatorname{Tr}(v_i v_j))$ be the trace
 matrix of $v$. By~(ii), $u = \sum_i u_i v_i$ with $u_i \in k[t]$ lies in
 $J_q(V)$ if and only if $T u \in q\, k[t]^n$. So $J_q(V)$ is the set of $u \in
-k(t)^n$ such that $\binom{T}{q I_n} u \in q\, k[t]^{2n}$, and a basis of it is
-obtained by row reduction as described at the end of
-Section~\ref{sec:prelim-hermite}.
+k(t)^n$ such that $\binom{T}{q I_n} u \in q\, k[t]^{2n}$; reducing
+$\binom{T}{q I_n}$ to $\binom{\tilde M}{0}$ gives a basis as the columns of
+$q \tilde M^{-1}$ (Section~\ref{sec:prelim-hermite}).
 
 \emph{The idealizer.} Let $m = (m_1, \dots, m_n)$ be a $k[t]$-basis of
 $\mathfrak m$, and for each $i$ let $M_i$ be the matrix over $k(t)$ of the
 map $u \mapsto u\, m_i$, taking coordinates with respect to $v$ to
 coordinates with respect to $m$. Then $u \in \operatorname{Id}(\mathfrak m)$
 if and only if $M_i u \in k[t]^n$ for every $i$. Stacking the $M_i$ gives an
-$n^2 \times n$ matrix; row reduction leaves a square matrix $\tilde M$, and
-the columns of $\tilde M^{-1}$ are the coordinates with respect to $v$ of a
-basis of $\operatorname{Id}(\mathfrak m)$~\cite[\S2.2]{trager1984}. With
+$n^2 \times n$ matrix $M$ over $k(t)$ whose denominators divide $q$ (since
+$q V \subseteq \mathfrak m$); clearing a common denominator $c$ (for instance
+$c = q$), row-reducing $c M$ to $\binom{\tilde M}{0}$ leaves a square matrix
+$\tilde M$, and the columns of $c \tilde M^{-1}$ are the coordinates with
+respect to $v$ of a basis of $\operatorname{Id}(\mathfrak m)$~\cite[\S2.2]{trager1984}. With
 coordinates of the output taken with respect to $v$ instead of $m$, the same
 procedure computes the inverse ideal $\mathfrak m^{-1} = \{ u : u\, \mathfrak
 m \subseteq V \}$, which Chapter~\ref{ch:divisors} uses.
@@ -136,7 +138,7 @@ trace matrix of $v = (1, y, y^2, y^3)$ is
 with determinant $d = -x^4 (27x^4 + 108x^3 + 418x^2 + 108x + 27)$, so $q = x$.
 Modulo $x$ only the entry $4$ survives: the $x$-radical consists of the $u$
 with $x \mid u_1$, and has basis $m = (x, y, y^2, y^3)$. Its idealizer
-contains $y^3/x$, because
+contains $y^3/x$, because $(y^3/x) \cdot x = y^3$ and
 \[
   \frac{y^3}{x} \cdot y = x - (x + 1)\, y, \qquad
   \frac{y^3}{x} \cdot y^2 = x\,y - (x + 1)\, y^2, \qquad

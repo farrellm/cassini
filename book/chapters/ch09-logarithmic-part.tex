@@ -228,9 +228,14 @@ logarithms, as for rational functions.
 field of $R$ is a vector space of finite dimension over $\Q$, the roots of
 $R$ are vectors in it, and a basis of their span together with the
 coordinates $\rho_{Pj}$ is found by Gaussian elimination. If $K$ contains
-parameters, the roots are first written as polynomials in the parameters
-with coefficients in a number field, and the monomials in the parameters
-are then treated as further basis vectors~\cite[\S5.2]{trager1984}. The splitting field
+parameters, let $(b_i)$ be a basis of the splitting field of $R$ over $K$ and
+write each root as $\sum_i c_i b_i$ with $c_i \in K$. Taking a common
+denominator $d_i$ of the $i$-th coordinates across all the roots and
+replacing $b_i$ by $b_i / d_i$ turns the coordinates into polynomials in the
+parameters over a number field; the monomials in the parameters appearing in
+them, tensored with this basis and a $\Q$-basis of the number field, then
+give a finite-dimensional $\Q$-vector space in which Gaussian elimination
+applies~\cite[\S5.2]{trager1984}. The splitting field
 can have degree as large as the factorial of the degree of $R$. As Trager
 remarks, there is no escaping this, since the answer cannot be written over a
 smaller field.
@@ -302,9 +307,9 @@ no nonzero root. We do not reproduce the argument.
 finite places and no pole at infinity, return either ``not elementary'', when
 $h$ is not of the form~\eqref{eq:log-sum}; or constants $c_1, \dots, c_k$ and
 functions $u_1, \dots, u_k$ such that $h = \sum_j c_j\, Du_j / u_j$.}
+\State ensure that no nonzero residue is taken at a ramified place \Comment{Section~\ref{sec:log-ideals}}
 \State $d \gets$ the denominator of $h$ with respect to an integral basis
 \State $R \gets$ the residue polynomial~\eqref{eq:trager-resultant}
-\State ensure that no nonzero residue is taken at a ramified place \Comment{Section~\ref{sec:log-ideals}}
 \State $\alpha_1, \dots, \alpha_s \gets$ the distinct nonzero roots of $R$ \Comment{the nonzero residues}
 \State $(q_1, \dots, q_k) \gets$ a basis over $\Q$ of the span of the residues
 \State $m \gets$ a positive integer such that the residues are in $\frac1m (\Z q_1 + \dots + \Z q_k)$

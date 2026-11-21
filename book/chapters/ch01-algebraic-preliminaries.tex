@@ -179,9 +179,14 @@ clears the other.
 Two uses recur. To find a basis of a module given by more than $n$
 generators in $\OO_w$, reduce the matrix of their coordinates and keep the
 nonzero rows; this is \seealg{ExtendBasis}. And to find all $u \in k(t)^n$
-with $M u \in k[t]^r$ for a given $r \times n$ matrix $M$ of rank $n$, reduce
-$M$ to $\binom{\tilde M}{0}$ with $\tilde M$ square: the solutions are the
-combinations with coefficients in $k[t]$ of the columns of $\tilde M^{-1}$.
+with $M u \in k[t]^r$ for a given $r \times n$ matrix $M$ over $k[t]$ of rank
+$n$, reduce $M$ to $\binom{\tilde M}{0}$ with $\tilde M$ square: elementary
+row operations over $k[t]$ preserve $k[t]^r$, so $M u \in k[t]^r$ if and only
+if $\tilde M u \in k[t]^n$, and the solutions are the combinations with
+coefficients in $k[t]$ of the columns of $\tilde M^{-1}$. If $M$ has entries
+in $k(t)$ with common denominator $c \in k[t] \setminus \{0\}$ (or if the
+condition is $M u \in c\, k[t]^r$ for $M$ over $k[t]$), applying the same
+reduction to $c M$ (respectively $M$) gives the columns of $c \tilde M^{-1}$.
 
 \section{Norms and resultants}\label{sec:prelim-resultants}
 

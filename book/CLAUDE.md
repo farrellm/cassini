@@ -13,7 +13,13 @@ chapters and four appendices are written, 148 pages. The project owner waived th
 gate on 2026-11-13 and has not yet read any of it; nothing here has had a second reader. A review
 against the sources on 2026-11-16 (the plan's §5, fifth pass) corrected nine claims about sources
 and three errors in the mathematics (two of them in what chapter 14 reports of Bronstein 1990),
-and says what it read each claim against. What
+and says what it read each claim against. A further line-by-line review against the sources and
+SymPy verification on 2026-11-20 (sixth pass) fixed six mathematical/algorithmic issues (row
+reduction denominator clearing in §§1.4 and 3.1, the primitivity hypothesis of Corollary 4.1.1(ii),
+Cantor's reduction gloss in §5.4, Trager's parameter `ℚ`-basis construction in §9.2, the step order
+in `LogarithmicPart` in §9.4, and `R₀ ∈ C[Z]` in Theorem 13.4.1), added a worked example exercising
+`MakeSuitable` (Example 7.7.1), and fixed several pseudocode and notation slips, leaving the page
+count at 148. What
 the book leaves undone is listed in its own §17.4, and that list is the agenda for a revision.
 
 **Part III is not on the footing of Part II.** Chapters 13–16 prove what follows from Lemma 7.2.1
