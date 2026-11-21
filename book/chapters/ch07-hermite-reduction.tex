@@ -736,6 +736,35 @@ suitable basis $\bar w$ with $\bar w_i \in \OO$ and $\OO_w \subseteq
 \EndLoop
 \end{algo}
 
+\begin{example}\label{ex:make-suitable}
+Let $E = K(x)[y]/(y^3 + x y^2 - x^4)$ with $D = d/dx$ and $w = (1, y, y^2)$.
+Differentiating the defining equation gives
+\[
+  Dy = \frac{3x}{27x - 4} + \frac{6\,(6x - 1)}{x\,(27x - 4)}\, y
+       - \frac{2}{x^2 (27x - 4)}\, y^2 ,
+\]
+so $e_2 = x^2 (27x - 4)$, which is not squarefree, and $w$ is not suitable.
+Its normal part is $e_2^* = x\,(27x - 4)$, and \seealg{MakeSuitable} forms
+\[
+  w_0 = e_2^*\, Dy = 3x^2 + 6\,(6x - 1)\, y - \frac{2}{x}\, y^2
+      \in \OO \setminus \OO_w .
+\]
+With respect to $w$, $w_0$ has denominator $x$ and numerator $(3x^3,\,
+36x^2 - 6x,\, -2)$, so \seealg{ExtendBasis}$(w, w_0)$ returns $\bar w = (1, y,
+y^2/x)$. In this basis,
+\begin{align*}
+  D\bar w_2 &= \frac{3x}{27x - 4}\,\bar w_1
+               + \frac{6\,(6x - 1)}{x\,(27x - 4)}\,\bar w_2
+               - \frac{2}{27x - 4}\,\bar w_3 , \\
+  D\bar w_3 &= \frac{-4x}{27x - 4}\,\bar w_1
+               + \frac{6}{27x - 4}\,\bar w_2
+               + \frac{45x - 4}{x\,(27x - 4)}\,\bar w_3 ,
+\end{align*}
+so $e_{\bar w} = x\,(27x - 4)$ is squarefree, and \seealg{MakeSuitable}
+returns $\bar w$. Note that $\bar w$ is still not an integral basis: $y/x$ is
+also integral, being a root of $Z^3 + Z^2 - x$.
+\end{example}
+
 \begin{algo}{LazyHermiteReduce}{f, w}{lazy Hermite reduction}
 \Spec{Given $f \in E$ and a basis $w$ of $E$ over $k(t)$ with $w_i \in \OO$,
 return $g, h \in E$ and a suitable basis $\bar w$ with $\bar w_i \in \OO$ and
