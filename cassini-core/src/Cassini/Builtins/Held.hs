@@ -15,7 +15,7 @@ import Cassini.Builtins.Arithmetic (fromSimplified)
 import Cassini.Builtins.Define (args)
 import Cassini.Core.Expr (Expr, apply, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
-import Cassini.Core.Symbol (Symbol, sList, sPlus, sPower, sTimes, symbol)
+import Cassini.Core.Symbol (Symbol, sList, sPlus, sPower, sTimes, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, lookupAttributes)
 import Cassini.Number (Number (NInt))
 import Cassini.Simplify.Automatic (Undefined (..))
@@ -39,15 +39,23 @@ unary f e = case args e of
     met = \case
       ZeroToZero -> apply sPower [Int_ 0, Int_ 0]
       ZeroOverZero -> apply sTimes [Int_ 0, divZero]
+      InfinityIndeterminate -> e
       _ -> divZero
     divZero = apply sPower [Int_ 0, Int_ (-1)]
 
--- | A builtin that threads over a single list argument, as WL's @Expand@ and
--- @Simplify@ do without being @Listable@, and is the given rule otherwise.
+-- | A builtin that threads over a single argument that is a list, an
+-- equation, an inequality, a rule or a logic connective, as WL's @Expand@,
+-- @TrigExpand@, @TrigReduce@ and @Simplify@ do without being @Listable@
+-- (D50), and is the given rule otherwise.
 overList :: (Expr -> Eff es (Maybe Expr)) -> Expr -> Eff es (Maybe Expr)
 overList f e = case e of
-  Call self [Call l xs] | l == sList -> pure (Just (apply sList [apply self [x] | x <- xs]))
+  Call self [Call l xs] | l `elem` threaded -> pure (Just (apply l [apply self [x] | x <- xs]))
   _ -> f e
+
+-- | The heads 'overList' threads over (D50).
+threaded :: [Symbol]
+threaded = sList : map systemSymbol ["Equal", "Unequal", "Less", "Greater", "LessEqual", "GreaterEqual", "Rule", "And", "Or", "Not"]
+{-# NOINLINE threaded #-}
 
 -- | Run a procedure with every held argument of the expression out of its
 -- reach. An expression with none is passed as it is, at the cost of one

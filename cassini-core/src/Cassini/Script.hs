@@ -10,7 +10,8 @@
 -- inputs and are not numbered: a case can cite its source. For each input @k@ the output is a line
 -- @Out[k]: <FullForm>@, or @Out[k]: -@ when the result is @Null@ (WL prints
 -- nothing), followed by one @Message[k]: symbol::tag@ line per message, in
--- the order emitted. This is the Wolfram documentation corpus's format
+-- the order emitted, then one @Print[k]: List[…]@ line per @Print@, its
+-- arguments as a list (§4.7). This is the Wolfram documentation corpus's format
 -- (§7.9), so its cases and the regression corpus run through the same
 -- function, and messages compare by name, never by text. Each input is
 -- recorded in the session's history as it would be interactively, so @%@
@@ -27,10 +28,10 @@ where
 import Cassini.Builtins (resolveName, standardState)
 import Cassini.Builtins.Session (recordLine)
 import Cassini.Core.Expr (Expr, apply, pattern Call, pattern Sym)
-import Cassini.Core.Symbol (sCompoundExpression, sNull)
+import Cassini.Core.Symbol (sCompoundExpression, sList, sNull)
 import Cassini.Eval (evaluateTop, runEvalIO)
 import Cassini.Eval.Kernel (EvalConfig (..), Kernel, KernelState (..), TraceEntry (..), Unwind (..), defaultConfig)
-import Cassini.Eval.Message (messageName)
+import Cassini.Eval.Message (Emitted (..), emittedMessage, messageName)
 import Cassini.Syntax.FullForm (fullForm, parseFullForm)
 import Data.List (unsnoc)
 import Data.Text qualified as T
@@ -59,8 +60,9 @@ runScriptWith cfg st src = do
         writeIORef ref after {ksMessages = mempty, ksTrace = mempty}
         let traced = [label "Trace" k <> T.replicate (2 * (t.teDepth - 1)) " " <> t.teStep <> ": " <> fullForm t.teExpr | t <- toList after.ksTrace]
             out = label "Out" k <> either (const "$Aborted") showResult (unwound r)
-            msgs = [label "Message" k <> messageName m | m <- toList after.ksMessages]
-        pure (traced <> [out] <> msgs)
+            msgs = [label "Message" k <> messageName m | m <- mapMaybe emittedMessage (toList after.ksMessages)]
+            printed = [label "Print" k <> fullForm (apply sList xs) | EmittedOutput xs <- toList after.ksMessages]
+        pure (traced <> [out] <> msgs <> printed)
   pure (unlines (concat outs))
   where
     isInput line =

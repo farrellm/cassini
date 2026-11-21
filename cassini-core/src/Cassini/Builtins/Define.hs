@@ -23,6 +23,7 @@ module Cassini.Builtins.Define
     sTrueE,
     sFalseE,
     sFailedE,
+    settled,
     PartSpec (..),
     partSpec,
     Bound (..),
@@ -35,7 +36,7 @@ where
 
 import Cassini.Attributes (Attribute)
 import Cassini.Core.Expr (Expr, exprArgs, mkApp, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sFalse, sList, sNull, sTrue, systemSymbol)
+import Cassini.Core.Symbol (Symbol, sFalse, sList, sNull, sSettled, sTrue, systemSymbol)
 import Cassini.Eval.Kernel (BuiltinFn (..), Kernel, emitMessage)
 import Cassini.Eval.Message (MessageTag (..))
 import Cassini.Rules (ValueKind (..))
@@ -95,6 +96,12 @@ sNullE = Sym sNull
 sTrueE = Sym sTrue
 sFalseE = Sym sFalse
 sFailedE = sym "$Failed"
+
+-- | A result the builtin evaluated itself, and which the evaluator is not to
+-- evaluate again: inside @Quiet@, @Check@ or @Catch@, out of their effect
+-- (§4.13).
+settled :: Expr -> Expr
+settled v = mkApp (Sym sSettled) (V.singleton v)
 
 -- | One index of @Part@ or of a part assignment.
 data PartSpec = Index !Integer | Indices ![Integer] | AllParts

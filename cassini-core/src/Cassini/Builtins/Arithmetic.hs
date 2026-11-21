@@ -23,8 +23,9 @@ import Cassini.Core.Expr (Expr, apply, mkNumber, pattern Infinity, pattern Int_,
 import Cassini.Core.Symbol (sDirectedInfinity, sIndeterminate, sPlus, sPower, sTimes)
 import Cassini.Eval.Kernel (Kernel)
 import Cassini.Number (fromRational')
-import Cassini.Simplify.Automatic (Undefined (..), simplifySum)
+import Cassini.Simplify.Automatic (Undefined (..))
 import Cassini.Simplify.Elementary (simplifyPowerE, simplifyProductE)
+import Cassini.Simplify.Numeric (simplifySumE)
 import Data.Ratio ((%))
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -32,7 +33,7 @@ import Effectful (Eff, (:>))
 -- | The arithmetic builtins, with WL's attributes.
 definitions :: [Definition]
 definitions =
-  [ define "Plus" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifySum (V.fromList (args e))))],
+  [ define "Plus" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifySumE (V.fromList (args e))))],
     define "Times" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifyProductE (V.fromList (args e))))],
     define "Power" [Listable, NumericFunction, OneIdentity, Protected] [down powerRule],
     define "Divide" numeric [down (rewrite2 (\a b -> apply sTimes [a, apply sPower [b, Int_ (-1)]]))],
@@ -73,6 +74,7 @@ fromSimplified e = \case
     ZeroDenominator -> infinite
     ZeroToZero -> indeterminate
     ZeroOverZero -> indeterminate
+    InfinityIndeterminate -> Just (Sym sIndeterminate) <$ message "Infinity" "indet" [e]
     Pole -> pure (Just complexInfinity)
     LogOfZero -> pure (Just (apply sDirectedInfinity [Int_ (-1)]))
   where

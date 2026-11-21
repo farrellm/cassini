@@ -77,6 +77,7 @@ module Cassini.Core.Symbol
     sSetDelayed,
     sCompoundExpression,
     sDerivative,
+    sSettled,
   )
 where
 
@@ -382,3 +383,9 @@ sCompoundExpression = systemSymbol "CompoundExpression"
 -- | @System`Derivative@, @f'@ (§4.9).
 sDerivative :: Symbol
 sDerivative = systemSymbol "Derivative"
+
+-- | @Cassini`Settled@: the private wrapper a builtin puts round a result it
+-- evaluated itself, which the evaluator unwraps and does not evaluate again
+-- (§4.13).
+sSettled :: Symbol
+sSettled = symbol "Cassini`" "Settled"

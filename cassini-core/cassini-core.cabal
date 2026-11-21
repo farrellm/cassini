@@ -46,6 +46,10 @@ library
     Cassini.Builtins.Define
     Cassini.Builtins.Elementary
     Cassini.Builtins.Held
+    Cassini.Builtins.Integer
+    Cassini.Builtins.List
+    Cassini.Builtins.Logic
+    Cassini.Builtins.Message
     Cassini.Builtins.Pattern
     Cassini.Builtins.Polynomial
     Cassini.Builtins.Session
@@ -79,6 +83,7 @@ library
     Cassini.Syntax.Lexer
     Cassini.Syntax.Parser
     Cassini.Syntax.Pretty
+    Cassini.Zero
 
   other-modules:    Cassini.Core.Intern
   hs-source-dirs:   src

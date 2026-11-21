@@ -70,6 +70,7 @@ import Cassini.Core.Symbol
     sIndeterminate,
     sList,
     sSequence,
+    sSettled,
     sUnevaluated,
     symName,
     systemSymbol,
@@ -219,7 +220,7 @@ evalStep0Own s = do
   info <- lookupSymbol s
   fired <- firstJustM (\o -> firstJustM (ownRule e) (applicableRules info (OwnValue, o) e)) [User, Builtin]
   case fired of
-    Just v -> v <$ traceStep "0 OwnValue" v
+    Just v -> let v' = (native v).roundExpr in v' <$ traceStep "0 OwnValue" v'
     Nothing -> pure e
   where
     ownRule e r = case r.ruleBody of
@@ -469,7 +470,7 @@ tagSymbol = \case
 -- before it is evaluated.
 applyRule :: (Kernel :> es) => Text -> Rule -> Expr -> Eff es (Maybe Round)
 applyRule name r e = case r.ruleBody of
-  Native bid -> runNative bid e >>= \fired -> (`Round` False) <$> fired <$ for_ fired (traceStep name)
+  Native bid -> runNative bid e >>= \fired -> native <$> fired <$ for_ fired (traceStep name)
   _ -> instantiate r e >>= traverse fire
   where
     fire rhs = do
@@ -478,6 +479,16 @@ applyRule name r e = case r.ruleBody of
         Right v -> pure (Round v True)
         Left (UReturn v) -> pure (Round v True)
         Left u -> unwind u
+
+-- | A built-in's result as a round's: a new expression, which goes round
+-- again, unless the builtin marked it settled, having evaluated it itself
+-- inside a construct whose effect the next round would no longer be in
+-- (@Quiet@, @Check@, @Catch@): evaluating it again outside could emit its
+-- messages again, or throw again (§4.13).
+native :: Expr -> Round
+native = \case
+  App (Sym s) xs | s == sSettled, [v] <- V.toList xs -> Round v True
+  v -> Round v False
 
 -- | A user rule's right-hand side, instantiated by the first match under
 -- which it applies. @lhs :> rhs /; test@ applies only where the test, under

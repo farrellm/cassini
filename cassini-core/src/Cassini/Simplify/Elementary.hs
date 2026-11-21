@@ -52,8 +52,8 @@ import Cassini.Core.Order (compareCanonical)
 import Cassini.Core.Symbol (Symbol, sDivide, sE, sFactorial, sIndeterminate, sMinus, sPi, sPlus, sPower, sSubtract, sTimes, systemSymbol)
 import Cassini.Number (Number (NInt), fromRational', normalize, toRational')
 import Cassini.Number.Integer (multiplicity)
-import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplifyDifference, simplifyFactorial, simplifyPower, simplifyQuotient, simplifySum)
-import Cassini.Simplify.Numeric (simplifyProductE, simplifyRadical)
+import Cassini.Simplify.Automatic (Undefined (..), isASAE, simplifyDifference, simplifyFactorial, simplifyPower, simplifyQuotient)
+import Cassini.Simplify.Numeric (infinityPower, isUnmergedInfinite, simplifyProductE, simplifyRadical, simplifySumE)
 import Data.HashMap.Strict qualified as HashMap
 import Data.HashSet qualified as HashSet
 import Data.Vector qualified as V
@@ -155,10 +155,10 @@ simplifyExpPower b w = case b of
     _ -> Nothing
   _ -> Nothing
 
--- | Cohen's 'simplifyPower', then §4.15's radicals and 'simplifyExpPower':
--- what @Power@'s built-in downvalue computes.
+-- | §4.15's infinity pass, Cohen's 'simplifyPower', then §4.15's radicals
+-- and 'simplifyExpPower': what @Power@'s built-in downvalue computes.
 simplifyPowerE :: Expr -> Expr -> Either Undefined Expr
-simplifyPowerE v w = do
+simplifyPowerE v w = flip fromMaybe (infinityPower v w) $ do
   r <- simplifyPower v w
   case r of
     Call p [Num a, Num b] | p == sPower -> fromMaybe (Right r) (simplifyRadical a b)
@@ -190,7 +190,7 @@ step h vs = case h of
       | otherwise -> elementaryNode fn f vs
     Nothing
       | numeric f, V.any isIndeterminate vs -> Right (Sym sIndeterminate)
-      | f == sPlus -> simplifySum (orderless f vs)
+      | f == sPlus -> simplifySumE (orderless f vs)
       | f == sTimes -> simplifyProductE (orderless f vs)
       | f == sPower, [v, w] <- V.toList vs -> simplifyPowerE v w
       -- Cohen's operators, as 'Cassini.Simplify.Automatic.simplify' rewrites them
@@ -269,10 +269,15 @@ simplifyE u = case u of
   Sym _ -> Right u
   App h as -> rebuildE simplifyE h as
 
--- | An ASAE on which no elementary or radical rule fires, at any node.
+-- | An ASAE on which no elementary or radical rule fires, at any node; or,
+-- the one exception, a product the infinity pass left unmerged, whose other
+-- parts are (§4.15).
 isElementaryNormal :: Expr -> Bool
-isElementaryNormal u = isASAE u && everyNode nodeNormal u
+isElementaryNormal u = asae u && everyNode nodeNormal u
   where
+    asae x
+      | isUnmergedInfinite x = all asae (exprArgs x)
+      | otherwise = isASAE x
     nodeNormal = \case
       App h as -> either (const False) (isNode h as) (step h as)
       _ -> True
