@@ -36,9 +36,9 @@ jobs:
     name: Build, test, doctest, haddock
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: haskell-actions/setup@v2
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         id: setup
         with:
           ghc-version: ${{ env.GHC_VERSION }}
@@ -49,7 +49,7 @@ jobs:
         run: cabal build all $CABAL_FLAGS --dry-run
 
       - name: Restore the cabal store
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache
         with:
           path: ${{ steps.setup.outputs.cabal-store }}
@@ -67,7 +67,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Save the cabal store
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           path: ${{ steps.setup.outputs.cabal-store }}
@@ -107,9 +107,9 @@ jobs:
     name: Benchmark gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: haskell-actions/setup@v2
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         id: setup
         with:
           ghc-version: ${{ env.GHC_VERSION }}
@@ -120,7 +120,7 @@ jobs:
         run: cabal build all $CABAL_FLAGS --dry-run
 
       - name: Restore the cabal store
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ steps.setup.outputs.cabal-store }}
           key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
@@ -143,7 +143,7 @@ jobs:
       HLINT_VERSION: "3.10"
       ORMOLU_VERSION: "0.8.0.2"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install hlint and ormolu
         run: |
