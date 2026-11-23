@@ -50,7 +50,7 @@ jobs:
           - intern: intern
             flag: -f intern
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - uses: haskell-actions/setup@v2
         id: setup
@@ -64,7 +64,7 @@ jobs:
 
       # The per-commit workflow's cache, read only: it saves the store.
       - name: Restore the cabal store
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ steps.setup.outputs.cabal-store }}
           key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
@@ -84,7 +84,7 @@ jobs:
     name: Oracle and corpus, against Mathics3
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - uses: haskell-actions/setup@v2
         id: setup
@@ -93,7 +93,7 @@ jobs:
           cabal-version: ${{ env.CABAL_VERSION }}
           cabal-update: true
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -107,7 +107,7 @@ jobs:
         run: cabal build all $CABAL_FLAGS --dry-run
 
       - name: Restore the cabal store
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ steps.setup.outputs.cabal-store }}
           key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-doctest-${{ env.DOCTEST_VERSION }}-${{ hashFiles('dist-newstyle/cache/plan.json') }}
