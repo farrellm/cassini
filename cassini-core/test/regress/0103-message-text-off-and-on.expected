@@ -1,0 +1,17 @@
+Out[1]: "bad thing `1`"
+Out[2]: "bad thing `1`"
+Out[3]: MessageName[f, "other"]
+Out[4]: -
+Message[4]: f::bad
+Out[5]: Message[f, 1]
+Message[5]: Message::name
+Out[6]: "hi"
+Out[7]: -
+Out[8]: DirectedInfinity[]
+Out[9]: -
+Out[10]: DirectedInfinity[]
+Message[10]: Power::infy
+Out[11]: -
+Out[12]: "bad thing `1`"
+Out[13]: -
+Out[14]: MessageName[f, "bad"]

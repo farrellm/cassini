@@ -1,0 +1,6 @@
+(* §4.13, D23: If alone does not catch Return; the user rule does. WL 15.0.1 gives 1 (through the Wolfram Cloud MCP, 2026-11-11). *)
+SetDelayed[f[Pattern[x, Blank[]]], CompoundExpression[If[True, Return[1]], 2]]
+f[0]
+(* A Return in a Do inside g exits the loop, not g (wolfram_ref_return.html). *)
+SetDelayed[g[], CompoundExpression[Do[If[Equal[i, 2], Return[5]], List[i, 3]], 7]]
+g[]

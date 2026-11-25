@@ -3,8 +3,8 @@
 A computer algebra system for Haskell: a Wolfram-Language-style term rewriting kernel over an exact
 numeric and polynomial substrate.
 
-**Stage 0, Stage 1's milestones 1a, 1b and 1c, its fidelity track and its elementary-functions
-track are built.** Stage 0 is the
+**Stage 0 and Stage 1 are built: milestones 1a, 1b and 1c, and the fidelity, elementary-functions
+and control-flow tracks.** Stage 0 is the
 foundations: exact numbers, symbols, `Expr` with switchable interning, canonical order, traversal
 and structural operators, under the tooling that enforces the rules below. 1a is the evaluator: attributes, the rule tables, the `Kernel`
 effect, the standard evaluation sequence, the syntactic matcher, Cohen's automatic simplification,
@@ -16,7 +16,9 @@ both limits leave `TerminatedEvaluation`, a fraction is `Rational[n, d]` to ever
 two allocation savings, and a nightly workflow. The elementary-functions track brought the
 circular, hyperbolic, inverse and exponential functions with their automatic rules, radicals of
 rationals, `Expand`, and Cohen's `TrigExpand`, `TrigReduce` and `Simplify`. Its `isZero` clause
-waits for 2a. Stage 1's last track (control flow, logic and numbers) is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and
+waits for 2a. The control-flow track brought the conditionals, scoping, non-local exits, loops and
+iterators, comparison and logic, the infinity tables and integer functions, the first list
+builtins, and message control. Milestone 2a, the polynomial substrate, is next. [`DESIGN.md`](./DESIGN.md) is the architecture, and
 it is ahead of the code. Where the two disagree, the design is the intent and the code is behind.
 
 Three packages under one `cabal.project` (`DESIGN.md` §2.1, D7). Each has its own `CLAUDE.md`

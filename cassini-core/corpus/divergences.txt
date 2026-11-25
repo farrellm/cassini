@@ -5,7 +5,9 @@
 # section whose documented choice the case's source departs from.
 # "Expreduce" and "Mathics3" mean that source departs from WL, as the
 # comment's evidence shows; "undocumented", that WL's answer is documented
-# nowhere this project can read, and the evaluator's stands until it is.
+# nowhere this project can read, and the evaluator's stands until it is;
+# "stale", that the page shows an older release's answer, and WL 15.0.1, through
+# the Wolfram Cloud MCP, gives this evaluator's.
 # Only case IDs and reasons are kept here, never a case's content (D26-D27).
 
 # D14: WL emits Thread::tdlen twice for Power[{a, b, c}, {1, 2}], from a round
@@ -23,16 +25,6 @@ wolfram/DirectedInfinity/PossibleIssues/1 D25
 # D29: a number does not distribute over a sum.
 wolfram/Minus/BasicExamples/1 D29
 wolfram/Subtract/BasicExamples/2 D29
-
-# The infinity pass and DirectedInfinity's own rules (§4.15), with the same track.
-wolfram/ComplexInfinity/Scope/3 pending §4.15
-wolfram/Sqrt/Scope/SpecificValues/3 pending §4.15
-wolfram/Infinity/BasicExamples/2 pending §4.15
-wolfram/Divide/PossibleIssues/1 pending §4.15
-wolfram/Indeterminate/BasicExamples/1 pending §4.15
-wolfram/Indeterminate/Scope/3 pending §4.15
-wolfram/DirectedInfinity/PossibleIssues/3 pending §4.15
-wolfram/ComplexInfinity/BasicExamples/1 pending §4.15
 
 # WL's RepeatedNull[p, {0, Infinity}] fails on an empty run, though
 # RepeatedNull[p, {0, 2}] matches one (wolfram/RepeatedNull/PropertiesAndRelations/4)
@@ -85,16 +77,6 @@ expreduce/specialsyms/ComplexInfinity/3 D25
 
 # D29: a number does not distribute over a sum.
 expreduce/power/Sqrt/6 D29
-
-# The infinity pass (§4.15), with the track for control flow, logic and numbers.
-expreduce/specialsyms/Indeterminate/1 pending §4.15
-expreduce/specialsyms/Indeterminate/2 pending §4.15
-expreduce/specialsyms/Indeterminate/3 pending §4.15
-expreduce/specialsyms/Indeterminate/4 pending §4.15
-expreduce/specialsyms/Infinity/1 pending §4.15
-expreduce/specialsyms/Infinity/2 pending §4.15
-mathics/builtin/numbers/test_constants/test_constants_private/1 pending §4.15
-mathics/builtin/numbers/test_constants/test_constants_private/2 pending §4.15
 
 # §4.5.3: matches are enumerated in WL's documented order, which these
 # sources' orders are not: Expreduce lists the Orderless mappings of the
@@ -242,3 +224,300 @@ wolfram/Tanh/Scope/SpecificValues/2 D48
 wolfram/TrigExpand/BasicExamples/1 D27
 wolfram/TrigExpand/PossibleIssues/1 D27
 
+# --- The control-flow, logic, numbers and lists track (§4.13-§4.15) ---
+
+# D9: deciding these needs certified numerics: comparisons and Max/Min of
+# Pi, E and radicals, Floor and Round of irrationals, Sort by numeric value, and
+# the N::meprec family of messages that numerical evaluation emits.
+wolfram/Abs/PossibleIssues/2 D9
+wolfram/And/BasicExamples/1 D9
+wolfram/Ceiling/Applications/3 D9
+wolfram/Ceiling/PossibleIssues/1 D9
+wolfram/E/Applications/3 D9
+wolfram/E/BasicExamples/3 D9
+wolfram/Equal/Scope/NumericEqualities/4 D9
+wolfram/False/BasicExamples/4 D9
+wolfram/Floor/NeatExamples/1 D9
+wolfram/Floor/PossibleIssues/1 D9
+wolfram/Fold/NeatExamples/1 D9
+wolfram/Greater/Scope/NumericInequalities/5 D9
+wolfram/GreaterEqual/Scope/NumericInequalities/5 D9
+wolfram/Less/BasicExamples/1 D9
+wolfram/Less/Scope/NumericInequalities/5 D9
+wolfram/LessEqual/BasicExamples/1 D9
+wolfram/LessEqual/Scope/NumericInequalities/5 D9
+wolfram/Max/Scope/SpecificValues/1 D9
+wolfram/Min/Scope/SpecificValues/1 D9
+wolfram/Or/BasicExamples/1 D9
+wolfram/Pi/BasicExamples/3 D9
+wolfram/Quotient/PossibleIssues/1 D9
+wolfram/Quotient/Scope/NumericalEvaluation/4 D9
+wolfram/Range/Scope/3 D9
+wolfram/Round/PossibleIssues/1 D9
+wolfram/Sign/PossibleIssues/3 D9
+wolfram/Sort/Applications/2 D9
+wolfram/Sort/BasicExamples/3 D9
+wolfram/True/BasicExamples/4 D9
+wolfram/Unequal/Scope/NumericInequations/4 D9
+
+# Sum and Product with a symbolic or infinite bound wait for §6.3 (Gosper,
+# Zeilberger), which Stage 3 builds; their numeric iterators are done.
+expreduce/arithmetic/Sum/11 pending §6.3
+expreduce/arithmetic/Sum/6 pending §6.3
+expreduce/arithmetic/Sum/7 pending §6.3
+wolfram/Binomial/Applications/4 pending §6.3
+wolfram/Binomial/Scope/FunctionProperties/4 pending §6.3
+wolfram/Csch/PropertiesAndRelations/7 pending §6.3
+wolfram/Exp/Scope/FunctionRepresentations/2 pending §6.3
+wolfram/Factorial/PropertiesAndRelations/2 pending §6.3
+wolfram/Infinity/BasicExamples/1 pending §6.3
+wolfram/Log/Scope/FunctionRepresentations/2 pending §6.3
+wolfram/Mod/Scope/SymbolicManipulation/2 pending §6.3
+wolfram/Product/BasicExamples/2 pending §6.3
+wolfram/Product/BasicExamples/4 pending §6.3
+wolfram/Product/BasicExamples/5 pending §6.3
+wolfram/Product/PossibleIssues/1 pending §6.3
+wolfram/Product/Scope/BasicUses/5 pending §6.3
+wolfram/Product/Scope/SpecialIndefiniteProducts/2 pending §6.3
+wolfram/Sum/Applications/HighSchoolAlgebra/1 pending §6.3
+wolfram/Sum/BasicExamples/2 pending §6.3
+wolfram/Sum/GeneralizationsAndExtensions/1 pending §6.3
+wolfram/Sum/GeneralizationsAndExtensions/3 pending §6.3
+wolfram/Sum/Scope/BasicUses/8 pending §6.3
+wolfram/Sum/Scope/DefiniteSums/1 pending §6.3
+wolfram/Sum/Scope/IndefiniteSums/10 pending §6.3
+wolfram/Sum/Scope/IndefiniteSums/13 pending §6.3
+wolfram/Sum/Scope/IndefiniteSums/6 pending §6.3
+wolfram/Sum/Scope/IndefiniteSums/9 pending §6.3
+wolfram/Sum/Scope/MultipleSums/1 pending §6.3
+wolfram/Times/PropertiesAndRelations/3 pending §6.3
+
+# D18: Simplify with assumptions; an assumptions mechanism does not exist.
+wolfram/Abs/PropertiesAndRelations/3 D18
+wolfram/Abs/Scope/FunctionIdentitiesAndSimplifications/2 D18
+wolfram/Log/Scope/FunctionIdentitiesAndSimplifications/3 D18
+wolfram/Power/PropertiesAndRelations/5 D18
+wolfram/Sign/Scope/FunctionIdentitiesAndSimplifications/2 D18
+wolfram/Sign/Scope/FunctionIdentitiesAndSimplifications/5 D18
+wolfram/Simplify/Applications/2 D18
+wolfram/Simplify/Scope/4 D18
+wolfram/Sqrt/BasicExamples/6 D18
+wolfram/Sqrt/PropertiesAndRelations/6 D18
+
+# §4.14: no Boolean simplification. Not of a comparison, Not[Not[a]],
+# Simplify of a logic expression, and a zero test beyond the rational layer
+# (Sign[z^(1/n)] == Sign[z]^(1/n)) are not done; isZero grows at 2a (§5.6).
+expreduce/boolean/Not/4 §4.14
+expreduce/simplify/Simplify/1 §4.14
+expreduce/simplify/Simplify/10 §4.14
+expreduce/simplify/Simplify/11 §4.14
+expreduce/simplify/Simplify/12 §4.14
+expreduce/simplify/Simplify/13 §4.14
+expreduce/simplify/Simplify/14 §4.14
+expreduce/simplify/Simplify/15 §4.14
+expreduce/simplify/Simplify/16 §4.14
+expreduce/simplify/Simplify/17 §4.14
+expreduce/simplify/Simplify/18 §4.14
+expreduce/simplify/Simplify/2 §4.14
+expreduce/simplify/Simplify/20 §4.14
+expreduce/simplify/Simplify/21 §4.14
+expreduce/simplify/Simplify/22 §4.14
+expreduce/simplify/Simplify/23 §4.14
+expreduce/simplify/Simplify/24 §4.14
+expreduce/simplify/Simplify/25 §4.14
+expreduce/simplify/Simplify/26 §4.14
+expreduce/simplify/Simplify/27 §4.14
+expreduce/simplify/Simplify/28 §4.14
+expreduce/simplify/Simplify/29 §4.14
+expreduce/simplify/Simplify/3 §4.14
+expreduce/simplify/Simplify/30 §4.14
+expreduce/simplify/Simplify/31 §4.14
+expreduce/simplify/Simplify/32 §4.14
+expreduce/simplify/Simplify/4 §4.14
+expreduce/simplify/Simplify/5 §4.14
+expreduce/simplify/Simplify/6 §4.14
+expreduce/simplify/Simplify/7 §4.14
+expreduce/simplify/Simplify/8 §4.14
+expreduce/simplify/Simplify/9 §4.14
+wolfram/And/Scope/4 §4.14
+wolfram/Equal/PropertiesAndRelations/1 §4.14
+wolfram/Greater/PropertiesAndRelations/1 §4.14
+wolfram/GreaterEqual/PropertiesAndRelations/1 §4.14
+wolfram/Less/PropertiesAndRelations/1 §4.14
+wolfram/LessEqual/PropertiesAndRelations/1 §4.14
+wolfram/Not/BasicExamples/1 §4.14
+wolfram/Not/Scope/1 §4.14
+wolfram/Not/Scope/2 §4.14
+wolfram/Or/Scope/4 §4.14
+wolfram/Sign/Scope/FunctionIdentitiesAndSimplifications/4 §4.14
+wolfram/Unequal/PropertiesAndRelations/1 §4.14
+
+# D20: no complex numbers.
+wolfram/Abs/Scope/SpecificValues/5 D20
+wolfram/DirectedInfinity/Scope/4 D20
+wolfram/Sqrt/PossibleIssues/3 D20
+wolfram/Sqrt/Scope/SpecificValues/1 D20
+wolfram/Surd/Scope/SpecificValues/1 D20
+
+# D29: a number does not distribute over a sum.
+wolfram/Fold/Applications/4 D29
+wolfram/FoldList/Applications/7 D29
+
+# D34: string patterns are absent, so Clear["x*"] stays.
+wolfram/Clear/Scope/UsingPatterns/1 D34
+wolfram/Clear/Scope/UsingPatterns/2 D34
+wolfram/Clear/Scope/UsingPatterns/3 D34
+wolfram/ClearAll/Scope/UsingPatterns/1 D34
+wolfram/ClearAll/Scope/UsingPatterns/2 D34
+wolfram/ClearAll/Scope/UsingPatterns/3 D34
+
+# D36: syntax outside the Stage 1 subset: postfix =. (Unset).
+mathics/builtin/assignments/test_assignment/test_set_and_clear/10 D36
+
+# D42: On and Off without a message name, and General::newsym, are left out.
+wolfram/On/BasicExamples/1 D42
+wolfram/On/BasicExamples/2 D42
+
+# §3.5: strings compare by code point (O-S1); WL sorts "cat" before "Cat".
+wolfram/Sort/BasicExamples/2 §3.5
+
+# §4.3: the page shows the older language's cut at an older ;
+# with Floor now defined the input reaches it.
+wolfram/SetDelayed/PossibleIssues/4 §4.3
+
+# §4.10: the parser reads 1/2 as the number, so Hold[1/2] === Hold[Rational[1, 2]].
+expreduce/atoms/Rational/21 §4.10
+
+# §4.13: an uncaught Return at the top is Hold[Return[x]]; Expreduce gives x.
+expreduce/flowcontrol/Return/1 §4.13
+expreduce/flowcontrol/Return/5 §4.13
+
+# §4.15: Factorial and Binomial are exact on integers only, and FactorInteger
+# of 10^50 + 3 needs ECM-class factoring, past the corpus's five seconds by
+# Pollard's rho.
+wolfram/Binomial/Scope/NumericalEvaluation/2 §4.15
+wolfram/Factorial/Applications/1 §4.15
+wolfram/Factorial/Scope/SpecificValues/4 §4.15
+
+# D27: the expected outputs are numbered out of order, a message the
+# normalizer could not name (?message-shape), or TrigReduce's answer left
+# unnormalized.
+wolfram/Clear/PropertiesAndRelations/4 D27
+wolfram/ClearAll/Applications/1 D27
+wolfram/ClearAll/PropertiesAndRelations/3 D27
+wolfram/ClearAll/Scope/SymbolInputs/9 D27
+wolfram/General/BasicExamples/1 D27
+wolfram/Part/PossibleIssues/1 D27
+wolfram/Power/Scope/SpecificValues/1 D27
+wolfram/TrigReduce/PropertiesAndRelations/3 D27
+wolfram/TrigReduce/Scope/4 D27
+
+# Mathics3: its normalizer spells 1/Sqrt[3] as Sqrt[3]/3 (as above); and
+# after A = T, A[x_] := … is a rule for T in WL 15.0.1, so A[u] is T[u].
+mathics/builtin/assignments/test_assignment/test_assignment/20 Mathics3
+wolfram/Cot/Scope/SpecificValues/1 Mathics3
+wolfram/Sec/Scope/SpecificValues/1 Mathics3
+wolfram/Tan/Scope/SpecificValues/1 Mathics3
+
+# Expreduce: Flatten fills in its default arguments when it cannot apply.
+expreduce/expression/Flatten/1 Expreduce
+expreduce/expression/Flatten/12 Expreduce
+
+# stale: Head[expr, h] is h[Head[expr]], so Head[Sequence[a, b]] is b[Symbol];
+# Power has no ReadProtected.
+wolfram/Sequence/PossibleIssues/1 stale
+wolfram/Thread/GeneralizationsAndExtensions/1 stale
+
+# D53: forms and messages on these pages that the track does not build:
+# Partition's padding, Riffle's and Thread's sequence specifications,
+# MapIndexed's and MapThread's levels, Array's origins and heads, Join at a
+# level, All in Extract and MapAt positions, ReplacePart on heads and by
+# negative index patterns, Table over indexed variables, Max/Min dropping a
+# dominated argument, Binomial and Factorial of symbolic or infinite
+# arguments beyond the product form, Round[-x], symbolic Mod, a condition
+# inside a Module on a rule's right-hand side, the argument-count messages
+# (Sin::argx, Log::argt), built-in message text, and D of If and of a pure
+# function.
+expreduce/functional/MapIndexed/1 D53
+expreduce/list/Table/6 D53
+expreduce/numbertheory/Mod/4 D53
+expreduce/replacement/ReplacePart/1 D53
+expreduce/system/MessageName/1 D53
+wolfram/Array/BasicExamples/3 D53
+wolfram/Array/BasicExamples/4 D53
+wolfram/Array/Scope/HeadSpecification/1 D53
+wolfram/Array/Scope/HeadSpecification/2 D53
+wolfram/Array/Scope/IndexSpecification/4 D53
+wolfram/Binomial/BasicExamples/2 D53
+wolfram/Binomial/GeneralizationsAndExtensions/1 D53
+wolfram/Check/BasicExamples/2 D53
+wolfram/Check/PropertiesAndRelations/1 D53
+wolfram/Check/Scope/1 D53
+wolfram/Check/Scope/2 D53
+wolfram/Condition/Scope/1 D53
+wolfram/D/Scope/PiecewiseAndGeneralizedFunctions/8 D53
+wolfram/D/Scope/SymbolicFunctions/5 D53
+wolfram/Denominator/Scope/4 D53
+wolfram/Extract/PropertiesAndRelations/5 D53
+wolfram/Extract/Scope/FormsInvolvingAll/2 D53
+wolfram/Extract/Scope/FormsInvolvingAll/3 D53
+wolfram/Extract/Scope/FormsInvolvingAll/4 D53
+wolfram/Extract/Scope/FormsInvolvingAll/5 D53
+wolfram/Factorial/GeneralizationsAndExtensions/3 D53
+wolfram/Flatten/Applications/4 D53
+wolfram/General/BasicExamples/2 D53
+wolfram/Join/Scope/2 D53
+wolfram/Join/Scope/3 D53
+wolfram/Listable/PropertiesAndRelations/2 D53
+wolfram/MapAt/BasicExamples/4 D53
+wolfram/MapIndexed/BasicExamples/3 D53
+wolfram/MapIndexed/Scope/LevelSpecifications/1 D53
+wolfram/MapIndexed/Scope/LevelSpecifications/2 D53
+wolfram/MapIndexed/Scope/LevelSpecifications/3 D53
+wolfram/MapIndexed/Scope/LevelSpecifications/4 D53
+wolfram/MapIndexed/Scope/LevelSpecifications/5 D53
+wolfram/MapIndexed/Scope/LevelSpecifications/6 D53
+wolfram/MapThread/BasicExamples/2 D53
+wolfram/MapThread/PossibleIssues/1 D53
+wolfram/MapThread/PropertiesAndRelations/4 D53
+wolfram/MapThread/Scope/1 D53
+wolfram/Max/PropertiesAndRelations/6 D53
+wolfram/Max/Scope/FunctionProperties/5 D53
+wolfram/Min/PropertiesAndRelations/6 D53
+wolfram/Min/Scope/FunctionProperties/5 D53
+wolfram/Nest/Scope/4 D53
+wolfram/Off/BasicExamples/1 D53
+wolfram/Optional/PossibleIssues/3 D53
+wolfram/Partition/BasicExamples/3 D53
+wolfram/Partition/GeneralizationsAndExtensions/2 D53
+wolfram/Partition/Scope/Padding/3 D53
+wolfram/Partition/Scope/Padding/4 D53
+wolfram/Partition/Scope/Padding/5 D53
+wolfram/Partition/Scope/Padding/7 D53
+wolfram/Partition/Scope/PaddingAlignment/1 D53
+wolfram/Partition/Scope/PaddingAlignment/2 D53
+wolfram/Partition/Scope/PaddingAlignment/3 D53
+wolfram/Partition/Scope/PaddingAlignment/4 D53
+wolfram/Partition/Scope/PaddingAlignment/5 D53
+wolfram/Partition/Scope/PaddingAlignment/6 D53
+wolfram/Quiet/Scope/1 D53
+wolfram/Quiet/Scope/3 D53
+wolfram/ReplacePart/GeneralizationsAndExtensions/4 D53
+wolfram/ReplacePart/Scope/5 D53
+wolfram/Riffle/BasicExamples/2 D53
+wolfram/Riffle/BasicExamples/3 D53
+wolfram/Riffle/Scope/1 D53
+wolfram/Riffle/Scope/2 D53
+wolfram/Riffle/Scope/3 D53
+wolfram/Riffle/Scope/4 D53
+wolfram/Riffle/Scope/5 D53
+wolfram/Round/Scope/FunctionProperties/3 D53
+wolfram/Table/GeneralizationsAndExtensions/2 D53
+wolfram/Table/PropertiesAndRelations/ProgrammaticTableConstruction/2 D53
+wolfram/Thread/PossibleIssues/1 D53
+wolfram/Thread/Scope/SequenceSpecifications/1 D53
+wolfram/Thread/Scope/SequenceSpecifications/3 D53
+wolfram/Thread/Scope/SequenceSpecifications/4 D53
+wolfram/Thread/Scope/SequenceSpecifications/5 D53
+wolfram/Thread/Scope/SequenceSpecifications/6 D53
+wolfram/Thread/Scope/SequenceSpecifications/7 D53

@@ -9,6 +9,9 @@ import Test.Cassini.Core.Intern qualified
 import Test.Cassini.Core.Order qualified
 import Test.Cassini.Core.Traversal qualified
 import Test.Cassini.Eval qualified
+import Test.Cassini.Integer qualified
+import Test.Cassini.Logic qualified
+import Test.Cassini.Message qualified
 import Test.Cassini.Number qualified
 import Test.Cassini.Pattern qualified
 import Test.Cassini.Pattern.Commutative qualified
@@ -17,6 +20,7 @@ import Test.Cassini.Pattern.Syntactic qualified
 import Test.Cassini.Rules qualified
 import Test.Cassini.Simplify.Automatic qualified
 import Test.Cassini.Simplify.Elementary qualified
+import Test.Cassini.Simplify.Infinity qualified
 import Test.Cassini.Simplify.Trig qualified
 import Test.Cassini.Structure qualified
 import Test.Cassini.Syntax qualified
@@ -43,8 +47,12 @@ main = do
         Test.Cassini.Simplify.Automatic.tests,
         Test.Cassini.Simplify.Elementary.tests,
         Test.Cassini.Simplify.Trig.tests,
+        Test.Cassini.Simplify.Infinity.tests,
+        Test.Cassini.Integer.tests,
         Test.Cassini.Eval.tests,
         Test.Cassini.Control.tests,
+        Test.Cassini.Message.tests,
+        Test.Cassini.Logic.tests,
         Test.Cassini.Calculus.tests,
         Test.Cassini.Syntax.tests,
         golden

@@ -23,6 +23,8 @@ module Cassini.Builtins.Define
     sTrueE,
     sFalseE,
     sFailedE,
+    settled,
+    curried,
     PartSpec (..),
     partSpec,
     Bound (..),
@@ -35,7 +37,7 @@ where
 
 import Cassini.Attributes (Attribute)
 import Cassini.Core.Expr (Expr, exprArgs, mkApp, pattern App, pattern Call, pattern Infinity, pattern Int_, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sFalse, sList, sNull, sTrue, systemSymbol)
+import Cassini.Core.Symbol (Symbol, sFalse, sList, sNull, sSettled, sTrue, systemSymbol)
 import Cassini.Eval.Kernel (BuiltinFn (..), Kernel, emitMessage)
 import Cassini.Eval.Message (MessageTag (..))
 import Cassini.Rules (ValueKind (..))
@@ -95,6 +97,23 @@ sNullE = Sym sNull
 sTrueE = Sym sTrue
 sFalseE = Sym sFalse
 sFailedE = sym "$Failed"
+
+-- | A result the builtin evaluated itself, and which the evaluator is not to
+-- evaluate again: inside @Quiet@, @Check@ or @Catch@, out of their effect
+-- (§4.13).
+settled :: Expr -> Expr
+settled v = mkApp (Sym sSettled) (V.singleton v)
+
+-- | An operator form, @op[a₁, …][x₁, …]@: the call the builtin's operator
+-- form stands for, by where its own arguments go among the later ones —
+-- @Select[crit][list]@ is @Select[list, crit]@ (at 1), @Fold[f][x, list]@
+-- is @Fold[f, x, list]@ (at 0), @MapAt[f, pos][expr]@ is
+-- @MapAt[f, expr, pos]@ (split after 1). The arities say which shapes are
+-- operator forms; any other is left alone.
+curried :: ([Expr] -> [Expr] -> Maybe [Expr]) -> Expr -> Eff es (Maybe Expr)
+curried place e = pure $ case e of
+  App (App op as) xs -> mkApp op . V.fromList <$> place (V.toList as) (V.toList xs)
+  _ -> Nothing
 
 -- | One index of @Part@ or of a part assignment.
 data PartSpec = Index !Integer | Indices ![Integer] | AllParts

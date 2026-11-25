@@ -1,0 +1,4 @@
+(* §4.13: an uncaught Return comes back Hold-wrapped, so reusing the result does not unwind again. WL prints Return[3] unheld: a listed divergence (§7.5). *)
+Return[3]
+Out[]
+Return[]

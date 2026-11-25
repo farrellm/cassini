@@ -19,7 +19,7 @@ import Cassini.Builtins (standardState)
 import Cassini.Core.Expr (Expr, mkString)
 import Cassini.Eval (evaluateTop, runEvalPure)
 import Cassini.Eval.Kernel (EvalConfig, Kernel, KernelState (..), Unwind, defaultConfig)
-import Cassini.Eval.Message (Message (..), messageName)
+import Cassini.Eval.Message (Message (..), emittedMessage, messageName)
 import Cassini.Script (resolveName)
 import Cassini.Syntax.FullForm (fullForm, parseFullForm)
 import Effectful (Eff, runPureEff)
@@ -67,9 +67,9 @@ ff = fullForm
 
 -- | The names of the messages a state holds, in order.
 messageNames :: KernelState -> [Text]
-messageNames st = messageName <$> toList st.ksMessages
+messageNames st = messageName <$> mapMaybe emittedMessage (toList st.ksMessages)
 
 -- | The messages a state holds, in order, each with its arguments in
 -- FullForm: what a message's text would quote.
 messagesWithArgs :: KernelState -> [(Text, [Text])]
-messagesWithArgs st = [(messageName m, ff <$> m.msgArgs) | m <- toList st.ksMessages]
+messagesWithArgs st = [(messageName m, ff <$> m.msgArgs) | m <- mapMaybe emittedMessage (toList st.ksMessages)]

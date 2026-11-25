@@ -1,0 +1,4 @@
+(* §4.7, D40: Print queues its evaluated arguments beside the messages and is Null; script mode writes them after the messages. *)
+Print[Plus[1, 1], " and ", x]
+Do[Print[i], List[i, 2]]
+CompoundExpression[Print[a], Power[0, -1]]

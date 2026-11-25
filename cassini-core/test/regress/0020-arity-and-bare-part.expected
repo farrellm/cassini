@@ -1,5 +1,4 @@
-Out[1]: Head[a, b]
-Message[1]: Head::argx
+Out[1]: b[Symbol]
 Out[2]: Length[a, b]
 Message[2]: Length::argx
 Out[3]: f[a]

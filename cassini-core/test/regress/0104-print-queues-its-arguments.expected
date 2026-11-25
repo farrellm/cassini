@@ -1,0 +1,8 @@
+Out[1]: -
+Print[1]: List[2, " and ", x]
+Out[2]: -
+Print[2]: List[1]
+Print[2]: List[2]
+Out[3]: DirectedInfinity[]
+Message[3]: Power::infy
+Print[3]: List[a]

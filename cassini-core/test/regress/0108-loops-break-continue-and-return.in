@@ -1,0 +1,10 @@
+(* §4.13: Break[] ends the nearest loop with Null, Continue[] goes on, Return[v] ends it with v (wolfram_ref_break.html); While and For stop on a test that is not True. *)
+Set[n, 0]
+While[True, CompoundExpression[If[Greater[n, 3], Break[]], Set[n, Plus[n, 1]]]]
+n
+Set[s, 0]
+Do[CompoundExpression[If[Equal[Mod[i, 2], 0], Continue[]], Set[s, Plus[s, i]]], List[i, 10]]
+s
+Do[If[Greater[Power[k, 2], 100], Return[k]], List[k, Infinity]]
+While[x]
+For[Set[i, 0], Less[i, 3], Set[i, Plus[i, 1]], Print[i]]

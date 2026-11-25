@@ -28,7 +28,7 @@ import Effectful (Eff, (:>))
 -- | The structural builtins, with WL's attributes.
 definitions :: [Definition]
 definitions =
-  [ define "Head" [Protected] [down (arity "Head" 1 headRule)],
+  [ define "Head" [Protected] [down headRule],
     define "Length" [Protected] [down (arity "Length" 1 lengthRule)],
     define "Part" [NHoldRest, Protected, ReadProtected] [down partRule],
     define "Apply" [Protected] [down (pure . applyRule), sub (pure . operatorForm)],
@@ -45,8 +45,12 @@ arity name n f e
   | exprArity e == n = pure (f e)
   | otherwise = Nothing <$ message name "argx" [Int_ (toInteger (exprArity e))]
 
-headRule :: Expr -> Maybe Expr
-headRule e = exprHead <$> viaNonEmpty head (args e)
+-- | @Head[expr]@, and @Head[expr, h]@, which is @h@ applied to it.
+headRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
+headRule e = case args e of
+  [x] -> pure (Just (exprHead x))
+  [x, h] -> pure (Just (mkApp h (V.singleton (exprHead x))))
+  _ -> arity "Head" 1 (const Nothing) e
 
 lengthRule :: Expr -> Maybe Expr
 lengthRule e = Int_ . toInteger . exprArity <$> viaNonEmpty head (args e)

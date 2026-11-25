@@ -28,6 +28,10 @@ import Cassini.Builtins.Calculus qualified as Calculus
 import Cassini.Builtins.Control qualified as Control
 import Cassini.Builtins.Define (Definition (..), NativeRule (..), args, define, down, message)
 import Cassini.Builtins.Elementary qualified as Elementary
+import Cassini.Builtins.Integer qualified as Integer
+import Cassini.Builtins.List qualified as List
+import Cassini.Builtins.Logic qualified as Logic
+import Cassini.Builtins.Message qualified as Message
 import Cassini.Builtins.Pattern qualified as Pattern
 import Cassini.Builtins.Polynomial qualified as Polynomial
 import Cassini.Builtins.Session qualified as Session
@@ -56,6 +60,10 @@ definitions =
     <> Pattern.definitions
     <> Assign.definitions
     <> Control.definitions
+    <> Message.definitions
+    <> Logic.definitions
+    <> Integer.definitions
+    <> List.definitions
     <> Calculus.definitions
     <> Elementary.definitions
     <> Simplify.definitions

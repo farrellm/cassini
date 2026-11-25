@@ -19,12 +19,13 @@ module Cassini.Builtins.Arithmetic (definitions, fromSimplified) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, message, own)
-import Cassini.Core.Expr (Expr, apply, mkNumber, pattern Infinity, pattern Int_, pattern Sym)
+import Cassini.Core.Expr (Expr, apply, mkNumber, pattern Infinity, pattern Int_, pattern Num, pattern Sym)
 import Cassini.Core.Symbol (sDirectedInfinity, sIndeterminate, sPlus, sPower, sTimes)
 import Cassini.Eval.Kernel (Kernel)
-import Cassini.Number (fromRational')
-import Cassini.Simplify.Automatic (Undefined (..), simplifySum)
+import Cassini.Number (fromRational', toRational')
+import Cassini.Simplify.Automatic (Undefined (..))
 import Cassini.Simplify.Elementary (simplifyPowerE, simplifyProductE)
+import Cassini.Simplify.Numeric (simplifySumE)
 import Data.Ratio ((%))
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -32,7 +33,7 @@ import Effectful (Eff, (:>))
 -- | The arithmetic builtins, with WL's attributes.
 definitions :: [Definition]
 definitions =
-  [ define "Plus" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifySum (V.fromList (args e))))],
+  [ define "Plus" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifySumE (V.fromList (args e))))],
     define "Times" (OneIdentity : flatOrderless) [down (\e -> fromSimplified e (simplifyProductE (V.fromList (args e))))],
     define "Power" [Listable, NumericFunction, OneIdentity, Protected] [down powerRule],
     define "Divide" numeric [down (rewrite2 (\a b -> apply sTimes [a, apply sPower [b, Int_ (-1)]]))],
@@ -42,7 +43,7 @@ definitions =
     -- The infinities are symbols that evaluate to their FullForm (§4.15).
     define "Infinity" [Constant, Protected, ReadProtected] [own (const (pure (Just Infinity)))],
     define "ComplexInfinity" [Constant, Protected, ReadProtected] [own (const (pure (Just complexInfinity)))],
-    define "DirectedInfinity" [Listable, Protected, ReadProtected] [],
+    define "DirectedInfinity" [Listable, Protected, ReadProtected] [down directedRule],
     define "Indeterminate" [Protected, ReadProtected] []
   ]
   where
@@ -63,6 +64,19 @@ definitions =
       [a, b] -> Just (f a b)
       _ -> Nothing
 
+-- | @DirectedInfinity@'s own rules (§4.15): a rational direction is
+-- normalized to its sign, and a zero or indeterminate one is
+-- @ComplexInfinity@. Other directions wait for complex numbers (D20).
+directedRule :: Expr -> Eff es (Maybe Expr)
+directedRule e = pure $ case args e of
+  [Num n]
+    | r == 0 -> Just complexInfinity
+    | abs r /= 1 -> Just (apply sDirectedInfinity [Int_ (signum (numerator r))])
+    where
+      r = toRational' n
+  [Sym s] | s == sIndeterminate -> Just complexInfinity
+  _ -> Nothing
+
 -- | A simplifier's answer as a builtin's: an 'Undefined' becomes WL's result
 -- for the same input, with its message (§4.7).
 fromSimplified :: (Kernel :> es) => Expr -> Either Undefined Expr -> Eff es (Maybe Expr)
@@ -73,6 +87,7 @@ fromSimplified e = \case
     ZeroDenominator -> infinite
     ZeroToZero -> indeterminate
     ZeroOverZero -> indeterminate
+    InfinityIndeterminate -> Just (Sym sIndeterminate) <$ message "Infinity" "indet" [e]
     Pole -> pure (Just complexInfinity)
     LogOfZero -> pure (Just (apply sDirectedInfinity [Int_ (-1)]))
   where

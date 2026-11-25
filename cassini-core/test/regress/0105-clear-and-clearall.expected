@@ -1,0 +1,19 @@
+Out[1]: -
+Out[2]: -
+Out[3]: List[a, a[2], List[Listable]]
+Out[4]: -
+Out[5]: List[]
+Out[6]: -
+Message[6]: Clear::wrsym
+Out[7]: -
+Message[7]: ClearAll::wrsym
+Out[8]: -
+Message[8]: ClearAll::wrsym
+Out[9]: -
+Message[9]: ClearAll::locked
+Out[10]: -
+Message[10]: Clear::ssym
+Out[11]: -
+Out[12]: List["Sin"]
+Out[13]: -
+Out[14]: 0

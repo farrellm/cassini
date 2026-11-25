@@ -29,7 +29,7 @@ import Cassini.Eval.Kernel (EvalConfig (..), KernelState (..), TraceEntry (..), 
 import Cassini.Script (evaluateInput, resolveName)
 import Cassini.Syntax.FullForm (fullForm)
 import Cassini.Syntax.Parser (incomplete, parseExpr)
-import Cassini.Syntax.Pretty (pretty, prettyMessage)
+import Cassini.Syntax.Pretty (pretty, prettyEmitted)
 import Control.Concurrent (myThreadId, throwTo)
 import Control.Exception (AsyncException (UserInterrupt), throwIO, try)
 import Data.Text qualified as T
@@ -123,7 +123,7 @@ evaluateLine session flag opts n src = case parseExpr resolveName src of
     -- An aborted input is recorded too, as $Aborted.
     when (isNothing result) $ void (runEff (runEvalIO defaultConfig session (recordLine n e shown)))
     messages <- atomicModifyIORef' session (\k -> (k {ksMessages = mempty, ksTrace = mempty}, toList k.ksMessages))
-    for_ messages (putTextLn . prettyMessage)
+    for_ messages (putTextLn . prettyEmitted)
     case shown of
       Sym s | s == sNull -> pass
       v -> putTextLn ("Out[" <> show n <> "]= " <> (if opts.showFullForm then fullForm else pretty) v)
@@ -151,7 +151,7 @@ traceLine session flag src = case parseExpr resolveName src of
       Left other -> throwIO other
     (steps, messages) <- atomicModifyIORef' session (\k -> (k {ksMessages = mempty, ksTrace = mempty}, (toList k.ksTrace, toList k.ksMessages)))
     for_ steps $ \t -> putTextLn (T.replicate (2 * (t.teDepth - 1)) " " <> t.teStep <> ": " <> pretty t.teExpr)
-    for_ messages (putTextLn . prettyMessage)
+    for_ messages (putTextLn . prettyEmitted)
     putTextLn (either (const "$Aborted") showResult r)
   where
     showResult :: Expr -> Text

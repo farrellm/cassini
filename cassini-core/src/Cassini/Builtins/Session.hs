@@ -15,7 +15,7 @@ import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, own)
 import Cassini.Core.Expr (Expr, apply, pattern Int_, pattern Sym)
 import Cassini.Core.Symbol (Symbol, systemSymbol)
-import Cassini.Eval.Kernel (Kernel, evaluate, modifySymbol)
+import Cassini.Eval.Kernel (Kernel, evaluate, modifySymbol, resetMessageCounts)
 import Cassini.Rules (Origin (..), RuleBody (..), ValueKind (..), insertRule, mkRule, modifyRules)
 import Effectful (Eff, (:>))
 
@@ -45,9 +45,11 @@ relative e = case args e of
         _ -> pure Nothing
 
 -- | Record input @k@: @In[k]@ is the input, held, @Out[k]@ the result, and
--- @$Line@ becomes @k + 1@.
+-- @$Line@ becomes @k + 1@. The next input starts its own count for
+-- @General::stop@ (§4.7).
 recordLine :: (Kernel :> es) => Integer -> Expr -> Expr -> Eff es ()
 recordLine k input output = do
+  resetMessageCounts
   let lhs h = apply h [Int_ k]
   modifySymbol sIn (modifyRules DownValue (insertRule (mkRule User (lhs sIn) (Delayed input))))
   modifySymbol sOut (modifyRules DownValue (insertRule (mkRule User (lhs sOut) (Immediate output))))

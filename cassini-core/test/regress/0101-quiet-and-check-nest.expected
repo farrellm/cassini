@@ -1,0 +1,11 @@
+Out[1]: DirectedInfinity[]
+Out[2]: err
+Out[3]: outer
+Message[3]: Power::infy
+Out[4]: DirectedInfinity[]
+Out[5]: Indeterminate
+Message[5]: Power::indet
+Out[6]: Indeterminate
+Message[6]: Power::indet
+Out[7]: err
+Message[7]: Power::infy

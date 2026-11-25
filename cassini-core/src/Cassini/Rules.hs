@@ -231,13 +231,16 @@ data Values = Values
 -- | What the kernel knows about one symbol.
 data SymbolInfo = SymbolInfo
   { siAttributes :: !AttributeSet,
-    siValues :: !Values
+    siValues :: !Values,
+    -- | Message text, by tag: @f::tag = "…"@ (§4.7). Beside the values,
+    -- not among them: @Clear@ and @Block@ leave it, @ClearAll@ removes it.
+    siMessages :: !(Map Text Expr)
   }
   deriving stock (Show, Generic)
 
 -- | A symbol with no attributes and no rules.
 emptyInfo :: SymbolInfo
-emptyInfo = SymbolInfo mempty (Values none none none none)
+emptyInfo = SymbolInfo mempty (Values none none none none) Map.empty
   where
     none = emptyRuleSet
 

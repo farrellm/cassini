@@ -217,7 +217,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Builtins.Assign` | `Set`, `SetDelayed`, `UpSet`, `UpSetDelayed`, `TagSet`, `TagSetDelayed`, `Unset`, `Attributes`, `SetAttributes`, `ClearAttributes`, `Protect`, `Unprotect`; with the control-flow track, `Clear` and `ClearAll` (§4.13, D41). |
 | `Cassini.Builtins.Elementary` | `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` … `ArcCsc`, `Exp`, `Log`: downvalues and `Derivative` subvalues (§4.11). |
 | `Cassini.Builtins.Simplify` | `TrigExpand`, `TrigReduce`, `Simplify` (§4.12), and the internal ``Cassini`TrigZero`` that `isZero` evaluates (§5.6). |
-| `Cassini.Builtins.Control` | `Print` (§4.7), `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators, `Nest`/`Fold`/`FixedPoint` (§4.13). 1c built `Function`, `Slot`, `SlotSequence` and `CompoundExpression`. |
+| `Cassini.Builtins.Control` | `Print` (§4.7), `Function`, `CompoundExpression`, `If`/`Which`/`Switch`, `Module`/`Block`/`With`, `Catch`/`Throw`, `Do`/`While`/`For`/`Until`, `Scan`, iterators (`Table`, `Do`, `Sum`, `Product`), `Nest`/`Fold`/`FixedPoint` (§4.13). 1c built `Function`, `Slot`, `SlotSequence` and `CompoundExpression`, and the control-flow track the rest. |
 | `Cassini.Builtins.Message` | `Message`, `MessageName`, `Quiet`, `Check`, `Off`, `On`, and `General` as the symbol that holds shared message text (§4.7, D42). With the control-flow track. |
 | `Cassini.Builtins.Session` | `In`, `Out` and `$Line`, and `recordLine`, which the front ends call after each input (§4.10). |
 | `Cassini.Builtins.Logic` | `Equal` and the orderings, `SameQ`, `TrueQ`, `And`/`Or`/`Not` (§4.14). |
@@ -240,7 +240,7 @@ expose the API (the `containers`/`vector` convention).
 | `Cassini.Poly.GCD` | The GCD ladder (§5.4). |
 | `Cassini.Poly.Factor` | Squarefree, finite-field, Hensel, recombination (§5.5). |
 | `Cassini.Poly.Resultant` | Resultants and subresultant PRS. |
-| `Cassini.Zero` | The layered zero test (§5.6). The other bridge. |
+| `Cassini.Zero` | The layered zero test (§5.6). The other bridge. Layers 1–2, rational only (§4.8), from the control-flow track, for `Equal`. |
 | `Cassini.Groebner` | Buchberger, then F4 (§6.1). |
 | `Cassini.Integrate.Rational`, `.Risch` | Rational and transcendental integration (§6.2). |
 | `Cassini.Summation.*` | Gosper, Zeilberger (§6.3). |
@@ -1977,6 +1977,25 @@ stays unevaluated.
 `Error Unwind` (§4.13) is reserved for control transfer — `Throw`, `Break`, `Continue`, `Return` — and for
 what genuinely stops evaluation: `Abort[]` and interrupts.
 
+**Built with the control-flow track** (§10), as above, with these departures in how:
+
+- The queue holds `Emitted`, a message or one `Print`'s arguments, so the two stay in order (D40).
+  `Message` gained the resolved text as a fourth field, `Maybe Expr`: the symbol's, else
+  `General`'s, else `Nothing`, and the front end's template. Text with no template and none set
+  prints "-- Message text not found --" and the arguments.
+- The frames are a list in the handler's `Reader`, innermost first, as planned; a `Check` frame is
+  numbered, and what it has seen is a set of numbers in a `State` of the handler's own, so the
+  frame's mark is dropped however its body exits. The kernel's own messages (`$RecursionLimit::reclim`)
+  go through the same handler. `SwitchMessage` and `ResetMessageCounts` are the two operations
+  `Off`/`On` and `recordLine` need; nothing else writes the switched-off set or the counts.
+- `General::stop` is queued after the third message and carries `MessageName[f, "tag"]`; a
+  `Quiet` that covers the message covers it too.
+- A result a builtin evaluated inside its own scope is **settled**: `Quiet`, `Check` and `Catch`
+  return `` Cassini`Settled[v] ``, which the rung unwraps and does not send round the fixed point
+  again (§4.4). Evaluated again outside the `Quiet`, `Quiet[Part[{1}, 2]]`'s value would emit
+  `Part::partw` after all, and a caught `Throw`'s value could throw again. `Block` is not settled:
+  its value is evaluated again after the restore, as WL's is (`x = 5; Block[{x}, x]` is 5).
+
 Cohen's `Undefined` and the language's result-plus-message meet at one point: `simplify` returns
 `Either Undefined Expr`, and `Cassini.Builtins.Arithmetic` turns a `Left` into `ComplexInfinity` or
 `Indeterminate` plus the matching message, according to its cause (§4.6).
@@ -1997,7 +2016,9 @@ symbolic expression is zero** (`references/papers/foundations/richardson1968_*.p
 simplification must never *need* a zero test it cannot perform. Cohen's algorithm is written to that
 constraint — it decides zero only for rational numbers and structurally identical operands — and the
 design's job is not to add a rule that quietly requires more. Until milestone 2a (§5.6, §10),
-`Cassini.Zero` exports only the rational case.
+`Cassini.Zero` exports only the rational case: built with the control-flow track for `Equal`, it
+decides exact numbers (layer 1) and the evaluated difference (layer 2's structural identity, which is
+a number or nothing until 2a).
 
 ### 4.9 Differentiation
 
@@ -2187,9 +2208,8 @@ parts of the result that are new are normalized in turn, and the parts it took f
 of two shared subterms cost what its new nodes cost, not what the subterms do: `expandTrigRules`
 returns a DAG whose tree is exponential (§8.4). `Plus` and `Times` operands are spliced and sorted
 in ◁ order first, as steps 8–9 do before the evaluator calls the builtin: Cohen's merges accept
-any order, but are quadratic on unsorted operands (§8.4). §4.15's infinity pass is not in
-`simplifyE` yet: it arrives with the track for control flow, logic and numbers (§10), and
-`simplifyE` gains it then. `Plus`,
+any order, but are quadratic on unsorted operands (§8.4). §4.15's infinity pass runs in
+`simplifyE` too, at the same three nodes, since the control-flow track built it. `Plus`,
 `Times` and `Power` also run §4.15's passes, and `simplifyE` runs the same ones at the same nodes.
 Without them, Cohen's sum merge inside a §4.12 algorithm would build `2·2^(-1/2)`, which the
 evaluator rewrites to `2^(1/2)`, and like terms spelled the two ways would not cancel. The evaluator
@@ -2445,7 +2465,9 @@ numerator, and the split is ours, so that §4.7 can map each as `1/0` and `0/0` 
 otherwise not be `{1}` (regression case 0086). `TrigExpand` and `TrigReduce` thread the same way,
 through the same `Cassini.Builtins.Held.overList`, and are not `Listable` either: all four are
 only `Protected` in WL 15.0.1 (regression case 0089). One mechanism matters because WL threads
-all four over equations, inequalities and logic heads too (D50). Cohen's appraisal is the specification of its limits, stated here
+all four over equations, inequalities and logic heads too (D50, answered with the control-flow
+track: `overList` threads over `List`, `Equal`, `Unequal`, the four orderings, `Rule`, `And`, `Or`
+and `Not`, so `Expand[(1 + x)^2 == a]` is `1 + 2 x + x^2 == a`). Cohen's appraisal is the specification of its limits, stated here
 so that they are read as the contract and not reported as bugs. It proves identities well when asked
 about a difference — Example 7.18's left side minus `Tan[4x]` gives 0 — but leaves a larger form
 than necessary otherwise: the same left side alone is unchanged. And it cannot see that two
@@ -2600,8 +2622,8 @@ per the source ("As soon as the loop test fails to be True, While and For termin
 **Taking definitions back.** `Clear[s₁, …]` removes each symbol's own, down, up and sub values and
 leaves its attributes and message text; `ClearAll[s₁, …]` removes those too. Both have `HoldAll`, return
 `Null`, and skip a symbol they may not touch with a message while clearing the rest:
-`Clear::wrsym` or `ClearAll::wrsym` for a `Protected` symbol, `ClearAll::locked` for a `Locked`
-one, and `Clear::ssym` for an argument that is not a symbol. These are WL 15.0.1's answers
+`Clear::wrsym` or `ClearAll::wrsym` for a `Protected` symbol, else `ClearAll::locked` for a
+`Locked` one, and `Clear::ssym` for an argument that is not a symbol. These are WL 15.0.1's answers
 (through the Wolfram Cloud MCP). They live in `Cassini.Builtins.Assign`, beside `Unset`. A string
 argument is a name pattern in WL, which waits on D34, and `Remove` stays deferred (D41).
 
@@ -2692,6 +2714,37 @@ no captured output, so what `If` alone does with a `Return` inside a compound bo
 the prose; WL 15.0.1 agrees with the reading here (`f[x_] := (If[True, Return[1]]; 2)` gives `f[0]`
 as `1`), and a regression case pins it.
 
+**Built with the control-flow track** (§10): everything above, in `Cassini.Builtins.Control`, with
+`Clear` and `ClearAll` in `.Assign`. Regression cases 0092–0097 and 0105–0108 pin the behaviours
+taken from prose. The departures, each WL 15.0.1's answer through the Wolfram Cloud MCP unless it
+says otherwise:
+
+- **Results evaluated in a scope are settled** (§4.7): `Catch`'s value, like `Quiet`'s and
+  `Check`'s, does not go round the fixed point again. The other constructs return their chosen
+  branch or substituted body unevaluated, for the fixed point to evaluate once, as
+  `CompoundExpression` does.
+- **An iterator localizes its variable once per loop**, not once per value: `Block`'s save, clear
+  and restore around the whole loop, and an own value set per step. The values are computed from
+  `(imax - imin)/di` evaluated, so symbolic bounds a whole number of steps apart iterate
+  (`Table[i, {i, x, x + 2}]`). `Table[expr, n]` takes a bare count, as WL's does; any other
+  non-list iterator stays, with `Table::nliter` (`wolfram/Table/PossibleIssues/2`). An iterator to
+  `Infinity` has an endless list of values, which only `Do` takes, to be ended by `Break[]` or
+  `Return[v]` (`wolfram/Do/Scope/8`). A `Break[]` or `Return[v]` ends every level of a nested `Do`.
+- **A scoping construct's malformed locals** leave it unevaluated, with `Module::lvset` for an
+  assignment to something that is not a symbol and `Module::lvsym` otherwise (`With` and `Block`
+  likewise).
+- **`Clear` and `ClearAll`** take lists of symbols and names, as WL's do (`Clear[{x, "y"}]`); a name
+  with a metacharacter is a string pattern and leaves the call (D34). `Protected` is checked before
+  `Locked`: `ClearAll[List]` is `ClearAll::wrsym`. Built-in rules are not the session's to clear,
+  and stay.
+- **An assignment evaluates the head of its left-hand side** (§4.2, `Cassini.Builtins.Assign`),
+  inside a `Condition` too, and its arguments unless the head holds them; a bare symbol is not
+  evaluated. After `A = T`, `A[x_] = x^2` is a rule for `T`. 1a had left the head alone, a bug
+  the Mathics3 corpus found (regression case 0106).
+- `$ModuleNumber` is an own value in the symbol table, so it starts at 1 in every fresh kernel.
+- `Sum` and `Product` take numeric iterators only, and leave anything else for §6.3; `FixedPoint`
+  past `$IterationLimit` emits `$IterationLimit::itlim` and gives its last value.
+
 ### 4.14 Logic and comparison
 
 `Cassini.Builtins.Logic`. The language's comparisons are three-valued, and a symbolic system must
@@ -2722,6 +2775,21 @@ have specific values" (`wolfram_ref_evaluation_of_expressions.html`, "Conditiona
   Arguments that evaluate to the identity element are dropped; if non-Boolean arguments remain, the
   result is `And`/`Or` of those. **`Not`** evaluates `True` and `False` and leaves anything else.
   No further Boolean simplification: normal forms for Boolean expressions are not in scope.
+
+**Built with the control-flow track** (§10), in `Cassini.Builtins.Logic`, over `Cassini.Zero`'s
+rational layer (§4.8). The departures:
+
+- `Equal` evaluates the difference under a `Quiet` of its own: the difference is the comparison's
+  working, and `Infinity == -Infinity` must not report `Infinity::indet`. `Indeterminate` equals
+  nothing, itself included: `Indeterminate == Indeterminate` stays, as in WL
+  (`wolfram/Indeterminate/PossibleIssues/4`). A string and a number are unequal.
+- A chain decides pairwise: `a == b == c` is `False` if one adjacent pair is, `True` if every one
+  is; `1 < 2 < x` stays whole, where WL reduces it to `2 < x`, and `3 < 1 < x` is `False`, since
+  a numeric adjacent pair fails.
+- The orderings decide on `±Infinity` with the rationals: `Infinity > 5` is `True`.
+- `And` and `Or` keep repeated arguments, as WL does (`And[z, y, y, x]`,
+  `wolfram/And/Scope/4`), and `Not` leaves `Not[a == b]` and `Not[Not[a]]` alone: WL rewrites
+  them, and they are §4.14's Boolean simplification, listed in the corpus.
 
 ### 4.15 Numbers beyond arithmetic
 
@@ -2764,7 +2832,8 @@ downvalue therefore tries a radical rule after `simplifyPower`, as it tries `sim
 
 **Built with the elementary-functions track** (§10), which needs them: steps 1–6, with `B = 1024`
 (D24), and `integerRoot`, `isPerfectPower` and trial division in `Cassini.Number.Integer`. The
-infinity pass and the integer builtins below stay with their own track. One answer differs from WL
+infinity pass and the integer builtins below were built with the control-flow track, as recorded at
+the end of this section. One answer differs from WL
 15.0.1, which keeps `Sqrt[2/3]` as `(2/3)^(1/2)` where step 2 gives `2^(1/2)·3^(-1/2)`. Step 2 is
 kept for now, because the canonical form below depends on prime radicands; D49 holds the question,
 and `oracle/cases/elementary.in` the input.
@@ -2890,6 +2959,38 @@ leaving symbolic arguments alone:
 `factorInteger`), each citing its section in the module header (§2.7). Randomized algorithms run
 with fixed seeds throughout: the evaluator under test is a pure function (§4.3), and a
 nondeterministic `FactorInteger` would make that false.
+
+**Built with the control-flow track** (§10): the infinity pass in `Cassini.Simplify.Numeric`,
+which `Plus`, `Times`, `Power` and `simplifyE` run first, and the table's builtins in
+`Cassini.Builtins.Integer`. Every row of both tables is a regression case (0098–0100). The
+departures:
+
+- **Cancellation is looked for through numeric multiples of sums.** The `Plus` guard spreads a term
+  `c·(t₁ + t₂ + …)` over its terms before comparing, so `x + Infinity - (x + Infinity)`, whose
+  second term is `-1·(x + Infinity)` (D29 keeps it a product), is `Indeterminate`; the spreading is
+  for finding the cancellation only, never the result. Two infinity-bearing terms with a
+  `ComplexInfinity` in one term part are `Indeterminate` whatever their signs, since it has none.
+- An `Undefined` cause, `InfinityIndeterminate`, carries the pass's answer to the builtin, which
+  emits `Infinity::indet` with the node.
+- **`DirectedInfinity` normalizes its direction**: a rational to its sign, and `0` or
+  `Indeterminate` to `ComplexInfinity`.
+- **The integer table grew where an identity needs no assumption.** `Abs` and `Sign` are exact on
+  products of rationals, `Pi`, `E` and positive bases to rational powers, whose sign is known
+  (`Abs[Sqrt[3]]` is `Sqrt[3]`), and use `Abs[Abs[z]] = Abs[z]`, `Abs[c·z] = |c|·Abs[z]` and their
+  `Sign` counterparts, as WL 15.0.1 does (`Sign[-2 x]` is `-Sign[x]`). `Floor`, `Ceiling`,
+  `Round`, `Abs` and `Sign` of `±Infinity` are as WL gives them. `Quotient[m, 0]` is
+  `ComplexInfinity` with `Quotient::infy`, and `Quotient[0, 0]` and `Quotient[m, 0, d]` are
+  `Indeterminate` with `Quotient::indet`. `GCD` and `LCM` combine their numeric arguments and leave
+  the rest (`LCM[5, 6, c]` is `LCM[30, c]`). `Binomial[n, k]` with a symbolic `n` and a
+  non-negative integer `k` is the product `n(n-1)…(n-k+1)/k!`, as WL expands it. `Max` and `Min`
+  drop repeated arguments.
+- **`Numerator` and `Denominator` read signs as WL does**, not as Cohen's operators: a power whose
+  exponent is a negative number *or a product with a negative coefficient* is in the denominator,
+  and a sum in an exponent splits by its terms' signs (`Numerator[E^(x - 1/y)]` is `E^x`,
+  `wolfram/Exp/PropertiesAndRelations/5`). Cohen's operators stay what §4.12's procedures use.
+- **`FactorInteger`'s rho batches its gcds**, Brent's improvement, one gcd per 64 steps. A
+  14-digit prime factor still needs ten million steps, so `FactorInteger[10^50 + 3]` takes longer
+  than the corpus's five seconds, as the table's note expects.
 
 ---
 
@@ -3723,7 +3824,13 @@ of every input up to its own, since a session's state carries.
 - **Divergence reasons grew** at 1c: `§N` for a section's documented choice the source departs
   from (an enumeration order), `Expreduce` or `Mathics3` for a source departing from WL with the
   evidence beside the entry, and `undocumented` for an answer neither the corpus nor Stack Exchange
-  shows, where the evaluator's stands.
+  shows, where the evaluator's stands. The control-flow track added `stale`: the page shows an
+  older release's answer, and WL 15.0.1 gives the evaluator's (`Head[Sequence[a, b]]` is
+  `b[Symbol]` since `Head` took a second argument).
+- **A session runs only to its last input in scope** (control-flow track). An input past it cannot
+  change an output compared, and one that needs a builtin Cassini lacks can loop forever: Mathics3's
+  `While[True, If[…, Return[…], i++]]` did, with `Increment` absent, and timed out the session's
+  passing cases.
 
 **Imported cases do not replace regression cases.** When one catches a bug, the fix still adds a
 numbered `test/regress/` case (§7.4): a corpus can be re-pinned, and the regression corpus must not
@@ -4455,6 +4562,47 @@ pure function catches `Return`) and §4.15's infinity rows. Each was checked aga
   where a page documents it, and a regression case that disagrees with a documented output is
   corrected, not whitelisted.
 
+**Done 2026-11-25.** The §7.3 rows pass: the `Control` row in full, `Message`, `Logic`,
+`Number.Integer`, and the infinity half of `Simplify.Numeric`, each at the nightly's count of 1,000
+tests a law as well as CI's. Regression cases 0092–0108 pin the behaviours §4.13 takes from prose
+(a `Return` inside `If` in a compound body, an uncaught `Return` and `Throw` at the top, `Block`
+localizing attributes, a pure function not catching `Return`), §4.15's infinity rows, and §4.7's
+message control, each with the answer WL 15.0.1 gave on 2026-11-11; none disagreed with a
+documented output. `Equal` stands on the rational layer, and `(x + 1)^2 == x^2 + 2 x + 1` stays.
+Both suites pass under both `intern` settings with `-Werror`, `hlint`, `ormolu`, the layering
+fixtures, the Haddock floor and the doctests, and the end-to-end workload's allocation is within
+the gate (+1.0% under hash interning and +0.7% under the weak table, against the
+elementary-functions track's baselines, which stand).
+
+- **Corpus.** With the track's builtins defined, 2,047 Wolfram cases are in scope, where D44's
+  measurement predicted 1,699: the list builtins' pages bring their own examples in, beyond the
+  cases D44 counted. 1,719 pass (950 at the elementary-functions track), 276 are listed and 52
+  fail, all 52 from before the track. Expreduce: 830 in scope, 771 passing, 59 listed; Mathics3:
+  222, 205 and 17. 1,231 newly passing cases were added after a person read a sample of them;
+  sixteen `pending §4.15` entries pass and are gone, as is `wolfram/Sequence/PossibleIssues/1` from
+  the ratchet (it shows an older release's `Head::argx`; WL 15.0.1 has `Head[expr, h]`). The track's
+  listings: D53 83 (the forms it does not build, below), §4.14 44 (Boolean simplification, chiefly
+  Expreduce's `Simplify` of logic), D9 30, `pending §6.3` 29 (symbolic and infinite `Sum` and
+  `Product`), D18 10, D27 9, D34 6, D20 5, Mathics3 4, §4.15 3, and one or two each of `stale`,
+  Expreduce, D42, D29, §4.13, D36, §4.3, §4.10 and §3.5.
+- **Oracle.** 745 inputs: 573 agree with Mathics3 10.0.1, 131 are listed and 41 inconclusive, as
+  many as before the track; none disagree. The new inputs are `oracle/cases/control.in` and the
+  regression cases; every new listing is a D-number, §4.13's held `Return`, or a Mathics3
+  departure with WL's answer beside it.
+
+The departures it found are recorded in their sections:
+
+- message text resolved at emission, `Print` on the message queue, and results settled inside a
+  scope (§4.7);
+- iterators localizing once per loop, `Do` to `Infinity`, `Table`'s bare count, malformed locals,
+  `Clear` over lists and names, `Protected` before `Locked`, and the head of a left-hand side
+  evaluated, a 1a bug (§4.13, regression case 0106);
+- `Equal`'s quiet difference and `Indeterminate`, chains, and `And`/`Or` keeping repeats (§4.14);
+- cancellation through numeric multiples of sums, `DirectedInfinity`'s normalization, the integer
+  identities that need no assumption, and WL's `Numerator` and `Denominator` (§4.15);
+- D50 answered; D53 opened;
+- the corpus runner stopping at a session's last input in scope, and the `stale` reason (§7.8).
+
 ### Stage 2
 
 #### 2a — the substrate
@@ -4646,9 +4794,10 @@ answer, not a deletion.
 | D47 | **Opened 2026-11-17, from the PR #27 review.** The depth `$RecursionLimit` bounds counts every evaluation `Evaluate`'s handler runs (§4.3), argument descent included, so a deep but finite expression with no runaway can reach the limit: `Length` of 1022 nested `g[…]` around `f[]` is `TerminatedEvaluation["RecursionLimit"]` at the default 1024. WL 15.0.1 does not count that descent: under `Block[{$RecursionLimit = 20}, …]`, `ToExpression` of 100 nested `k[1 + …]`, of 100 nested `h[…]` with `h[x_] := {x}` firing at every level, and of 200 nested `g[…]` around `1 + 1` all evaluate with no message. What WL does count is not established; nesting of evaluations off the standard chain (§4.3) is the hypothesis to probe first, since the D30 rule already tracks it. A raw atom cannot be the first to reach the limit here: a node evaluates its head (step 2) at the depth its arguments would be, so the head trips first, except under a raw head such as `1[2]`. Not changed with the fidelity track, because a new depth rule moves which evaluation D30 replaces and would re-open regression cases 0010, 0011, 0077 and 0079 | a deep but finite input, from a corpus or a user, hitting `$RecursionLimit` where WL does not; or probes that settle what WL counts |
 | D48 | **Opened 2026-11-18, in the elementary-functions track's corpus triage.** WL features on the elementary pages that no track builds: an elementary function of an infinity (`ArcTan[Infinity] → π/2`, `Exp[-Infinity] → 0`), `ArcTan[x, y]`, `D` to a symbolic order (`D[Sin[x], {x, n}]`) or of a function of a list argument, `Expand`'s second argument, and `b^Log[b, x] → x`. The corpus lists each such case as D48 | a corpus measurement (§7.9) putting one of them among the most-wanted missing behaviours, or §4.15's infinity pass landing, which makes the first cheap |
 | D49 | **Opened 2026-11-18, in the elementary-functions track.** §4.15 step 2 splits a fraction's radical, `(2/3)^(1/2) → 2^(1/2)·3^(-1/2)`, and WL 15.0.1 does not: it keeps `Sqrt[2/3]` whole. D39 settled a like question for WL; this one is kept as designed for now, because the canonical form for prime radicands, and the inverse tables' one spelling per value, rest on the split, and nothing yet shows what WL's own rule for a fraction under a radical is | WL's rule read off its answers for a table of fractions under radicals (`Sqrt[2]/Sqrt[3]`, `Sqrt[3/8]`, `(2/3)^(3/2)`), as D39's was; or a corpus or oracle case that the split makes fail |
-| D50 | **Opened 2026-11-18, from the elementary-functions track's review.** WL 15.0.1 threads `Expand`, `TrigExpand`, `TrigReduce` and `Simplify` over equations, inequalities, rules and logic heads as well as lists, none of them `Listable`: `Expand[(1 + x)^2 == a]` is `1 + 2 x + x^2 == a`. Here they thread over a list only, through `Cassini.Builtins.Held.overList` (§4.12), so `Expand[(1 + x)^2 == a]` stays as it is. The three trigonometric ones reach an equation's sides anyway, because Cohen's procedures descend into every head (D51); `Expand` does not | `Equal` and the inequalities landing in the control-flow track (§4.14): widen `overList` to the heads WL threads over, for all four at once |
+| D50 | **Answered 2026-11-25, with the control-flow track:** `overList` threads over `List`, `Equal`, `Unequal`, the four orderings, `Rule`, `And`, `Or` and `Not`, for all four builtins at once, so `Expand[(1 + x)^2 == a]` is `1 + 2 x + x^2 == a` (§4.12). The row as it stood: **Opened 2026-11-18, from the elementary-functions track's review.** WL 15.0.1 threads `Expand`, `TrigExpand`, `TrigReduce` and `Simplify` over equations, inequalities, rules and logic heads as well as lists, none of them `Listable`: `Expand[(1 + x)^2 == a]` is `1 + 2 x + x^2 == a`. Here they thread over a list only, through `Cassini.Builtins.Held.overList` (§4.12), so `Expand[(1 + x)^2 == a]` stays as it is. The three trigonometric ones reach an equation's sides anyway, because Cohen's procedures descend into every head (D51); `Expand` does not | `Equal` and the inequalities landing in the control-flow track (§4.14): widen `overList` to the heads WL threads over, for all four at once |
 | D51 | **Opened 2026-11-18, from the elementary-functions track's review.** Cohen's `Expand_trig` and `Contract_trig` descend into every complete subexpression (§7.1 Exercise 8, §4.12), and WL 15.0.1's `TrigExpand` and `TrigReduce` do not descend into a head they do not know or into an exponent's base: `TrigExpand[f[Sin[2 x]]]`, `TrigExpand[E^Sin[2 x]]` and `TrigExpand[Sqrt[Sin[2 x]]]` stay as they are there, and expand here. `Simplify` agrees, giving `f[1]` for `f[Sin[x]^2 + Cos[x]^2]` in both. Kept as designed, because Definitions 7.4 and 7.11 and their property laws are stated over every subexpression | a corpus or oracle case that the descent makes fail, or WL's rule for which heads it enters read off a table of probes |
 | D52 | **Opened 2026-11-18, from the elementary-functions track's review.** `simplifyE`'s per-node `step` (§4.11) dispatches by head to the functions the builtins register for `Plus`, `Times`, `Power` and the elementary heads, and keeps its own list of the heads that propagate `Indeterminate` where the evaluator reads `NumericFunction`; the two agree only by being kept in step. The internal elementary rules also return their unchanged input as "no rule", which `simplifyElementary` turns back into `Nothing`. Deferred, because only those 23 heads reach `step` from evaluator output today. The intended change: one pure table of node rules, `Symbol → Vector Expr → Maybe (Either Undefined Expr)`, from which both the builtins' downvalues and `step` are drawn, the rules returning `Nothing` for no rule | the control-flow track's first new `NumericFunction` head, or §4.15's infinity pass, which `simplifyE` gains then |
+| D53 | **Opened 2026-11-25, in the control-flow track's triage.** WL forms and messages on the track's pages that it does not build: `Partition`'s padding and alignment, `Riffle`'s and `Thread`'s sequence specifications, `MapIndexed`'s and `MapThread`'s levels, `Array`'s origins and heads, `Join` at a level, `All` in `Extract` and `MapAt` positions, `ReplacePart` on heads and by negative-index patterns, `Table` over indexed variables (`Table[x[1]^2, {x[1], 3}]`), `Max`/`Min` dropping a dominated argument, `Binomial` and `Factorial` of symbolic or infinite arguments beyond the product form, `Round[-x] → -Round[x]`, symbolic `Mod`, a condition inside a `Module` on a rule's right-hand side, the argument-count messages (`Sin::argx`, `Log::argt`), built-in message text (`General::argx`'s), and `D` of `If` and of a pure function. The corpus lists each such case as D53 (83 at the track's end) | a corpus measurement (§7.9) putting one of them among the most-wanted missing behaviours; or D44's trigger, the triage showing one blocking more cases than a builtin of the first set |
 
 ### 11.3 Provenance
 

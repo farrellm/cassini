@@ -1,0 +1,8 @@
+(* §4.13: Block restores on a value, a Throw and a Break; a state change made before an unwind persists (effectful-core's catchError). *)
+Set[x, 5]
+Catch[Block[List[Set[x, 1]], Throw[x]]]
+x
+Do[Block[List[Set[x, 2]], Break[]], List[3]]
+x
+Catch[CompoundExpression[Set[y, 7], Throw[0]]]
+y

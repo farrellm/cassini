@@ -5,25 +5,31 @@
 -- | Assignment and attributes: @Set@, @SetDelayed@, @UpSet@,
 -- @UpSetDelayed@, @TagSet@, @TagSetDelayed@, @Unset@, @Attributes@,
 -- @SetAttributes@, @ClearAttributes@, @Protect@ and @Unprotect@
--- (DESIGN.md §2.2, §4.2).
+-- (DESIGN.md §2.2, §4.2); and @Clear@ and @ClearAll@ (§4.13, D41).
 --
 -- An assignment writes a user rule into one of the four tables (§4.2): an own
 -- value for a symbol, a downvalue for @f[…]@, a subvalue for @f[…][…]@ (keyed
 -- on the innermost head symbol), and upvalues for @UpSet@. The left-hand
--- side's arguments are evaluated, unless its head holds them or it is
--- wrapped in @HoldPattern@; its head is not. A protected tag refuses the
+-- side's head is evaluated, and its arguments too unless the head holds
+-- them, all unless it is wrapped in @HoldPattern@: after @A = T@,
+-- @A[x_] = x^2@ is a rule for @T@, as in WL 15.0.1. A protected tag refuses the
 -- write with WL's message: @Set::wrsym@ for a symbol, @Set::write@ for a
--- tag.
+-- tag. A message name on the left, @f::tag = "text"@, sets the message's
+-- text, which @Protected@ does not guard (§4.7).
 module Cassini.Builtins.Assign (definitions) where
 
 import Cassini.Attributes (Attribute (..), attributeFromName, attributeList, attributeName, holdsArgument, isLocked, isProtected)
 import Cassini.Attributes qualified as Attributes
 import Cassini.Builtins.Define (Definition, PartSpec (..), args, define, down, message, partSpec, sFailedE, sNullE)
+import Cassini.Builtins.Message (messageNameOf)
 import Cassini.Core.Expr (Expr, apply, exprArgs, mkApp, mkString, symbolOf, pattern App, pattern Call, pattern Str, pattern Sym)
 import Cassini.Core.Symbol (Symbol, globalSymbol, sBlank, sBlankNullSequence, sBlankSequence, sCondition, sHoldPattern, sList, sPattern, sPatternTest, symName, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, lookupAttributes, lookupSymbol, modifySymbol)
+import Cassini.Eval.Message (MessageTag (..))
 import Cassini.Pattern (unholdPattern)
 import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), hasRules, insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
+import Data.Map.Strict qualified as Map
+import Data.Text qualified as T
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 import Optics.Core ((%~))
@@ -41,6 +47,8 @@ definitions =
     define "Attributes" [HoldAll, Listable, Protected] [down attributes],
     define "SetAttributes" [HoldFirst, Protected] [down (changeAttributes Attributes.insert)],
     define "ClearAttributes" [HoldFirst, Protected] [down (changeAttributes Attributes.delete)],
+    define "Clear" [HoldAll, Protected] [down (clearing False)],
+    define "ClearAll" [HoldAll, Locked, Protected] [down (clearing True)],
     define "Protect" [HoldAll, Protected] [down (protection True)],
     define "Unprotect" [HoldAll, Protected] [down (protection False)],
     define "$Failed" [Protected] []
@@ -114,12 +122,16 @@ sPart, sAttributes :: Symbol
 sPart = systemSymbol "Part"
 sAttributes = systemSymbol "Attributes"
 
--- | Evaluate the left-hand side's arguments, as WL does, unless the head
--- holds them or the whole is in @HoldPattern@. The head is not evaluated.
+-- | Evaluate the left-hand side's head, and its arguments unless the head
+-- holds them, as WL does, unless the whole is in @HoldPattern@. A bare
+-- symbol is not evaluated: @x = 1@ assigns @x@.
 prepareLhs :: (Kernel :> es) => Expr -> Eff es Expr
 prepareLhs lhs = case lhs of
   App (Sym h) _ | h == sHoldPattern -> pure lhs
-  App h as -> do
+  -- a condition's pattern is prepared, and its test left held
+  Call c [p, t] | c == sCondition -> (\p' -> apply sCondition [p', t]) <$> prepareLhs p
+  App h0 as -> do
+    h <- evaluate h0
     attrs <- maybe (pure mempty) lookupAttributes (symbolOf h)
     let n = V.length as
     mkApp h <$> V.imapM (\i a -> if holdsArgument attrs (i + 1) n then pure a else evaluate a) as
@@ -153,6 +165,9 @@ writeUp name s lhs body = do
 -- elementwise, at every depth.
 assignment :: (Kernel :> es) => Timing -> Expr -> Eff es (Maybe Expr)
 assignment timing e = case args e of
+  [lhs, rhs]
+    | Just (f, MessageTag t) <- messageNameOf lhs ->
+        Just (timedResult timing rhs) <$ modifySymbol f (#siMessages %~ Map.insert t rhs)
   [Call p (Sym s : is@(_ : _)), rhs]
     | p == sPart,
       timing == Now ->
@@ -278,6 +293,12 @@ tagAssignment timing e = case args e of
 -- or @Unset::write@, as 'write' refuses, when the tag is protected.
 unset :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 unset e = case args e of
+  [lhs]
+    | Just (f, MessageTag t) <- messageNameOf lhs -> do
+        info <- lookupSymbol f
+        if Map.member t info.siMessages
+          then Just sNullE <$ modifySymbol f (#siMessages %~ Map.delete t)
+          else Just sFailedE <$ message "Unset" "norep" [lhs]
   [lhs] -> do
     lhs' <- prepareLhs lhs
     case target lhs' of
@@ -294,6 +315,50 @@ unset e = case args e of
               then Just sNullE <$ modifySymbol s (modifyRules k (const rules'))
               else Just sFailedE <$ message "Unset" "norep" [lhs']
   _ -> pure Nothing
+
+-- | @Clear[s₁, …]@ removes each symbol's user own, down, up and sub values,
+-- and leaves its attributes and message text; @ClearAll@ removes those too.
+-- Both are @Null@, and skip with a message a symbol they may not touch while
+-- clearing the rest: @Clear::wrsym@ (@ClearAll::wrsym@) for a @Protected@
+-- one, else @ClearAll::locked@ for a @Locked@ one, and @Clear::ssym@ for an
+-- argument that is not a symbol. A string is a name pattern in WL, which
+-- waits on D34: the call stays. Built-in rules are not the session's to
+-- clear, and stay (§4.13).
+clearing :: (Kernel :> es) => Bool -> Expr -> Eff es (Maybe Expr)
+clearing everything e
+  | any namePattern targets = pure Nothing
+  | otherwise = Just sNullE <$ traverse_ one targets
+  where
+    name = if everything then "ClearAll" else "Clear"
+    -- lists are flattened, as WL's Clear[{x, "y"}]
+    targets = concatMap flat (args e)
+    flat = \case
+      Call l xs | l == sList -> concatMap flat xs
+      x -> [x]
+    -- a string with a metacharacter is a name pattern (D34)
+    namePattern = \case
+      Str t -> T.any (`elem` ("*@" :: String)) t
+      _ -> False
+    one = \case
+      Sym s -> clearOne s
+      Str t -> named t >>= clearOne
+      x -> message "Clear" "ssym" [x]
+    clearOne s = do
+      attrs <- lookupAttributes s
+      if
+        -- Protected first: ClearAll[List] is ClearAll::wrsym (WL 15.0.1)
+        | isProtected attrs -> message name "wrsym" [Sym s]
+        | everything && isLocked attrs -> message "ClearAll" "locked" [Sym s]
+        | otherwise -> modifySymbol s (clearInfo everything)
+
+-- | A symbol's entry with its user rules removed, and with @ClearAll@, its
+-- attributes and message text too.
+clearInfo :: Bool -> SymbolInfo -> SymbolInfo
+clearInfo everything info =
+  let cleared = foldl' (\i k -> modifyRules k userless i) info [OwnValue, DownValue, UpValue, SubValue]
+   in if everything then cleared {siAttributes = mempty, siMessages = Map.empty} else cleared
+  where
+    userless rs = foldl' (\acc r -> snd (removeRule r.ruleLhs acc)) rs [r | r <- ruleSetToList rs, r.ruleOrigin == User]
 
 -- | @Attributes[s]@: the list of attribute names, in WL's order (by name).
 -- The symbol may be given by name, as @Attributes["Set"]@.

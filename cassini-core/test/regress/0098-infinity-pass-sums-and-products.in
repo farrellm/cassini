@@ -1,0 +1,20 @@
+(* §4.15: the extended-real and Riemann-sphere tables, each row checked against WL 15.0.1 through the Wolfram Cloud MCP. *)
+Plus[1, Infinity]
+Plus[1, ComplexInfinity]
+Plus[Infinity, Infinity]
+Plus[Infinity, Times[-1, Infinity]]
+Plus[ComplexInfinity, ComplexInfinity]
+Plus[ComplexInfinity, Infinity]
+Times[-2, Infinity]
+Times[2, ComplexInfinity]
+Times[Infinity, Times[-1, Infinity]]
+Times[Infinity, ComplexInfinity]
+Times[0, Infinity]
+(* Only numbers are absorbed (D25), and the other terms stay. *)
+Plus[2, x, Infinity]
+Times[2, x, Infinity]
+Times[0, x, Infinity]
+Plus[x, Infinity, Times[-1, Infinity]]
+(* Indeterminate in any NumericFunction is Indeterminate. *)
+Plus[Indeterminate, Times[-1, Indeterminate]]
+Sin[Indeterminate]

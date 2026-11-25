@@ -1,0 +1,6 @@
+(* §4.13: Module renames each local to x$n, n the session's $ModuleNumber, counted per use; a function of the initial state, not the intern table. Bad locals stay with Module::lvset. *)
+Module[List[x], x]
+Module[List[x, y], List[x, y]]
+$ModuleNumber
+Module[List[Set[x, 2]], Power[x, 2]]
+Module[List[Set[List[x, y], List[1, 2]]], x]

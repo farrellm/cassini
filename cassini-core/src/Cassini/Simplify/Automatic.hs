@@ -84,6 +84,9 @@ data Undefined
     ZeroDenominator
   | -- | numerator and denominator both contracted to 0 (§4.12)
     ZeroOverZero
+  | -- | an indeterminate form of infinities: @Infinity - Infinity@,
+    -- @0·Infinity@, @Infinity^0@ (§4.15)
+    InfinityIndeterminate
   deriving stock (Eq, Show)
 
 -- | Cohen's @Automatic_simplify@, recursive: simplify the operands, then the

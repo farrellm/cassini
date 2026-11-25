@@ -17,6 +17,7 @@
 module Cassini.Syntax.Pretty
   ( pretty,
     prettyMessage,
+    prettyEmitted,
   )
 where
 
@@ -43,7 +44,7 @@ import Cassini.Core.Symbol
     symName,
     systemSymbol,
   )
-import Cassini.Eval.Message (Message (..), MessageTag (..))
+import Cassini.Eval.Message (Emitted (..), Message (..), MessageTag (..))
 import Cassini.Number (Number (NInt, NRat))
 import Cassini.Syntax.Lexer (quoteString)
 import Cassini.Syntax.Parser (Fixity (..), Operator (..), operators)
@@ -295,17 +296,34 @@ isName = all isNamePart . T.splitOn "`"
 -- @`k`@ slots filled with the arguments printed in the infix syntax. A tag
 -- with no template shows its arguments.
 --
--- >>> prettyMessage (Message (systemSymbol "Power") "infy" [parsed "1/0"])
+-- >>> prettyMessage (Message (systemSymbol "Power") "infy" [parsed "1/0"] Nothing)
 -- "Power::infy: Infinite expression 1/0 encountered."
 prettyMessage :: Message -> Text
 prettyMessage m =
-  messageText <> ": " <> case HashMap.lookup messageText templates <|> HashMap.lookup tag templates of
+  messageText <> ": " <> case text of
     Just tmpl -> fill tmpl
-    Nothing -> T.intercalate ", " (map pretty m.msgArgs)
+    Nothing -> "-- Message text not found --" <> if null m.msgArgs then "" else " (" <> T.intercalate ", " (map pretty m.msgArgs) <> ")"
   where
     MessageTag tag = m.msgTag
     messageText = name m.msgSymbol <> "::" <> tag
+    -- The session's text, resolved when the message was emitted, else the
+    -- kernel's template (§4.7).
+    text = case m.msgText of
+      Just (Str t) -> Just t
+      Just x -> Just (pretty x)
+      Nothing -> HashMap.lookup messageText templates <|> HashMap.lookup tag templates
     fill tmpl = foldl' (\acc (k, a) -> T.replace ("`" <> show k <> "`") (pretty a) acc) tmpl (zip [1 :: Int ..] m.msgArgs)
+
+-- | One entry of the queue as the front end shows it: a message, or a
+-- @Print@'s arguments run together (§4.7).
+prettyEmitted :: Emitted -> Text
+prettyEmitted = \case
+  EmittedMessage m -> prettyMessage m
+  EmittedOutput xs -> foldMap printed xs
+  where
+    printed = \case
+      Str t -> t
+      x -> pretty x
 
 -- | The templates of the messages the kernel emits, by full name where the
 -- arguments differ between symbols, else by tag, as WL's @General@
@@ -340,5 +358,22 @@ templates =
       ("symname", "The string `1` cannot be used for a symbol name."),
       ("innf", "Non-negative integer or Infinity expected at position `1` in `2`."),
       ("fpct", "Too many parameters in `1` to be filled from `2`."),
-      ("nocatch", "Uncaught `1` returned to top level.")
+      ("nocatch", "Uncaught `1` returned to top level."),
+      ("stop", "Further output of `1` will be suppressed during this calculation."),
+      ("Message::name", "Message name `1` is not of the form symbol::name or symbol::name::language."),
+      ("argct", "`1` called with an odd number of arguments."),
+      ("iterb", "Iterator in `1` does not have appropriate bounds."),
+      ("nofirst", "`1` has zero length and no first element."),
+      ("nolast", "`1` has zero length and no last element."),
+      ("norest", "Cannot take Rest of expression `1` with length zero."),
+      ("nomost", "Cannot take Most of expression `1` with length zero."),
+      ("heads", "Heads `1` at positions in `2` are expected to be the same."),
+      ("take", "Cannot take positions in `1`."),
+      ("drop", "Cannot drop positions in `1`."),
+      ("mptc", "Incompatible dimensions of objects in `1`."),
+      ("ssym", "`1` is not a symbol."),
+      ("range", "Range specification in `1` does not have appropriate bounds."),
+      ("MapAt::partw", "Part `1` of `2` does not exist."),
+      ("Quotient::infy", "Infinite expression `1` encountered."),
+      ("Mod::indet", "Indeterminate expression `1` encountered.")
     ]

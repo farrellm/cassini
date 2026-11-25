@@ -1,0 +1,8 @@
+(* §4.7, D42: a message counts for every Check around it out to the nearest Quiet that covers it. WL 15.0.1, through the Wolfram Cloud MCP, 2026-11-11. *)
+Check[Quiet[Power[0, -1]], err]
+Quiet[Check[Power[0, -1], err]]
+Check[Check[Power[0, -1], inner], outer]
+Quiet[Power[0, -1], List[MessageName[Power, "infy"]]]
+Quiet[Power[0, 0], List[MessageName[Power, "infy"]]]
+Check[Power[0, 0], err, List[MessageName[Power, "infy"]]]
+Check[Power[0, -1], err, List[MessageName[Power, "infy"]]]
