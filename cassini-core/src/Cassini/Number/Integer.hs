@@ -102,10 +102,13 @@ primes = 2 : filter isPrime [3, 5 ..]
 
 -- | Trial division by the primes below a bound: the prime factors found,
 -- with their multiplicities, in increasing order, and the cofactor, which
--- has no prime factor below the bound (vzGG §19.2).
+-- has no prime factor below the bound. A cofactor below the square of the
+-- next prime is itself prime, and is listed, leaving 1 (vzGG §19.2).
 --
--- >>> trialFactor 100 (2 ^ 3 * 7 * 1009)
--- ([(2,3),(7,1)],1009)
+-- >>> trialFactor 100 (8 * 7 * 1009 * 1013)
+-- ([(2,3),(7,1)],1022117)
+-- >>> trialFactor 100 (8 * 7 * 1009)
+-- ([(2,3),(7,1),(1009,1)],1)
 trialFactor :: Integer -> Integer -> ([(Integer, Int)], Integer)
 trialFactor bound n0 = go (primesBelow bound) (abs n0) []
   where
@@ -146,7 +149,7 @@ powMod a0 e0 m = go (a0 `mod` m) e0 1
     go a e acc = go (a * a `mod` m) (e `div` 2) (if odd e then acc * a `mod` m else acc)
 
 -- | The complete factorization of @n ≠ 0@, ignoring its sign: each prime
--- (probable prime above 'isProbablePrime''s bound) with its multiplicity, in
+-- (probable prime above the bound of 'isProbablePrime') with its multiplicity, in
 -- increasing order. Trial division below 'trialBound', then Pollard's rho
 -- with Brent's cycle detection, seeded by a fixed sequence (vzGG §19.2,
 -- §19.4). Complete, so its time is unbounded on hard inputs.
