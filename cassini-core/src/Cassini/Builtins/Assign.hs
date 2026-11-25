@@ -320,7 +320,7 @@ unset e = case args e of
 -- and leaves its attributes and message text; @ClearAll@ removes those too.
 -- Both are @Null@, and skip with a message a symbol they may not touch while
 -- clearing the rest: @Clear::wrsym@ (@ClearAll::wrsym@) for a @Protected@
--- one, @ClearAll::locked@ for a @Locked@ one, and @Clear::ssym@ for an
+-- one, else @ClearAll::locked@ for a @Locked@ one, and @Clear::ssym@ for an
 -- argument that is not a symbol. A string is a name pattern in WL, which
 -- waits on D34: the call stays. Built-in rules are not the session's to
 -- clear, and stay (§4.13).
@@ -346,8 +346,9 @@ clearing everything e
     clearOne s = do
       attrs <- lookupAttributes s
       if
-        | everything && isLocked attrs -> message "ClearAll" "locked" [Sym s]
+        -- Protected first: ClearAll[List] is ClearAll::wrsym (WL 15.0.1)
         | isProtected attrs -> message name "wrsym" [Sym s]
+        | everything && isLocked attrs -> message "ClearAll" "locked" [Sym s]
         | otherwise -> modifySymbol s (clearInfo everything)
 
 -- | A symbol's entry with its user rules removed, and with @ClearAll@, its

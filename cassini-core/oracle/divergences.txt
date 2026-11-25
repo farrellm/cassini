@@ -196,3 +196,63 @@ elementary 38 Mathics3
 0089-trig-expand-and-reduce-thread-over-a-list-without-being-listable 2 Mathics3
 0089-trig-expand-and-reduce-thread-over-a-list-without-being-listable 3 Mathics3
 0089-trig-expand-and-reduce-thread-over-a-list-without-being-listable 4 Mathics3
+# --- The control-flow, logic, numbers and lists track (§4.13-§4.15) ---
+# Mathics3: it emits no message for these exponent rows; WL 15.0.1 emits
+# Infinity::indet for 1^Infinity, (-1)^Infinity, 2^ComplexInfinity and
+# 0^ComplexInfinity (through the Wolfram Cloud MCP; §4.15's table).
+0099-infinity-pass-powers 12 Mathics3
+0099-infinity-pass-powers 13 Mathics3
+0099-infinity-pass-powers 16 Mathics3
+0099-infinity-pass-powers 17 Mathics3
+# Mathics3: it has no General::stop; WL shows three Power::indet and then
+# General::stop (wolfram/Off/BasicExamples/2; §4.7, D42).
+0102-general-stop-after-the-third-repeat 1 Mathics3
+0102-general-stop-after-the-third-repeat 2 Mathics3
+# Mathics3: Message[f, 1] emits nothing; WL 15.0.1 emits Message::name
+# (through the Wolfram Cloud MCP; §4.7).
+0103-message-text-off-and-on 5 Mathics3
+# D9: Pi > 3 needs certified numerics.
+control 21 D9
+# §4.13: an uncaught Return is Hold[Return[x]]; WL 15.0.1 prints Return[3],
+# and Mathics3 strips it to 3.
+0093-uncaught-return-at-the-top-is-held 1 §4.13
+0093-uncaught-return-at-the-top-is-held 2 §4.13
+0093-uncaught-return-at-the-top-is-held 3 §4.13
+# Mathics3: FactorInteger[360] is {{2, 3}, {3, 2}, {5, 1}} in WL
+# (wolfram/FactorInteger/BasicExamples/1, which passes); Out[] is the last
+# output (§4.10); Throw[v, t, f] at the top is f[v, t]
+# (wolfram_ref_throw.html); Catch[expr] does not catch a tagged Throw
+# ("Throw[value, tag] is caught only by Catch[expr, form]",
+# wolfram_ref_throw.html); Catch[expr, form, f] gives f[value, tag]
+# (wolfram_ref_catch.html); Block[{Plus}, Attributes[Plus]] is {} in WL
+# 15.0.1; x + Infinity - Infinity, Infinity^0 and ComplexInfinity^0 are
+# Indeterminate and Infinity^Infinity is ComplexInfinity in WL 15.0.1
+# (§4.15's table, through the Wolfram Cloud MCP).
+control 41 Mathics3
+0094-uncaught-throw-is-held-with-nocatch 2 Mathics3
+0094-uncaught-throw-is-held-with-nocatch 4 Mathics3
+0094-uncaught-throw-is-held-with-nocatch 5 Mathics3
+0094-uncaught-throw-is-held-with-nocatch 8 Mathics3
+0095-block-localizes-attributes 1 Mathics3
+0098-infinity-pass-sums-and-products 15 Mathics3
+0099-infinity-pass-powers 6 Mathics3
+0099-infinity-pass-powers 7 Mathics3
+0099-infinity-pass-powers 18 Mathics3
+# Mathics3: it leaves TrigReduce and TrigExpand of Tan[π/2 Cot[x] Tan[x]]
+# unevaluated; the comparison agreed only because ComplexInfinity minus that
+# input's ComplexInfinity cancelled to 0, which §4.15 now refuses.
+0087-trig-substitution-reports-a-zero-denominator 2 Mathics3
+0087-trig-substitution-reports-a-zero-denominator 3 Mathics3
+# Mathics3: it cancels infinity-bearing terms; WL 15.0.1 absorbs x into
+# x + Infinity, so u - u, 2u - u, u/u and u^0 are Indeterminate there too
+# (§4.15, D25). Quiet[Check[1/0, err]] is err, Unprotect[Sin] is {"Sin"}
+# (WL 15.0.1, through the Wolfram Cloud MCP), and a Module with a local that
+# is not a symbol stays, with Module::lvset (wolfram/Module/PossibleIssues/3).
+0100-infinity-bearing-terms-do-not-cancel 3 Mathics3
+0100-infinity-bearing-terms-do-not-cancel 4 Mathics3
+0100-infinity-bearing-terms-do-not-cancel 5 Mathics3
+0100-infinity-bearing-terms-do-not-cancel 6 Mathics3
+0100-infinity-bearing-terms-do-not-cancel 7 Mathics3
+0101-quiet-and-check-nest 2 Mathics3
+0105-clear-and-clearall 12 Mathics3
+0107-module-names-follow-the-module-number 5 Mathics3

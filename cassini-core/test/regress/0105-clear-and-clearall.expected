@@ -8,10 +8,12 @@ Message[6]: Clear::wrsym
 Out[7]: -
 Message[7]: ClearAll::wrsym
 Out[8]: -
-Message[8]: ClearAll::locked
+Message[8]: ClearAll::wrsym
 Out[9]: -
-Message[9]: Clear::ssym
+Message[9]: ClearAll::locked
 Out[10]: -
-Out[11]: List["Sin"]
-Out[12]: -
-Out[13]: 0
+Message[10]: Clear::ssym
+Out[11]: -
+Out[12]: List["Sin"]
+Out[13]: -
+Out[14]: 0
