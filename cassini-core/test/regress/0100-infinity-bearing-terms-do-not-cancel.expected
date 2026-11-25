@@ -11,5 +11,7 @@ Out[6]: Indeterminate
 Message[6]: Infinity::indet
 Out[7]: Indeterminate
 Message[7]: Infinity::indet
-Out[8]: Plus[DirectedInfinity[1], Times[2, x]]
-Out[9]: Power[Plus[DirectedInfinity[1], x], 2]
+Out[8]: Indeterminate
+Message[8]: Infinity::indet
+Out[9]: Plus[DirectedInfinity[1], Times[2, x]]
+Out[10]: Power[Plus[DirectedInfinity[1], x], 2]

@@ -128,6 +128,9 @@ test-suite cassini-test
     Test.Cassini.Core.Order
     Test.Cassini.Core.Traversal
     Test.Cassini.Eval
+    Test.Cassini.Integer
+    Test.Cassini.Logic
+    Test.Cassini.Message
     Test.Cassini.Number
     Test.Cassini.Pattern
     Test.Cassini.Pattern.Commutative
@@ -137,6 +140,7 @@ test-suite cassini-test
     Test.Cassini.Simplify.Automatic
     Test.Cassini.Simplify.Elementary
     Test.Cassini.Simplify.ElementaryWL
+    Test.Cassini.Simplify.Infinity
     Test.Cassini.Simplify.Trig
     Test.Cassini.Structure
     Test.Cassini.Syntax

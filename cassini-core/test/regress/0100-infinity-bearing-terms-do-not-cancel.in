@@ -6,6 +6,7 @@ Times[u, Power[u, -1]]
 Power[u, 0]
 Plus[Times[y, u], Times[-1, y, u]]
 Power[Times[x, Infinity], 0]
+Plus[x, Times[y, Infinity], Times[-1, Plus[x, Times[y, Infinity]]]]
 (* Like terms of one sign still merge. *)
 Plus[u, u]
 Times[u, u]

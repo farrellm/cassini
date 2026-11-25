@@ -248,6 +248,7 @@ expandTerm c = \case
     | Just (Real d) <- infiniteOf u -> [infinite (Real (signum (numerator c) * d))]
     | Just Complex <- infiniteOf u -> [u]
     | Call t (Num k : fs) <- u, t == sTimes -> [apply sTimes (Num (fromRational' (c * toRational' k)) : fs)]
+    | Call t fs <- u, t == sTimes -> [apply sTimes (Num (fromRational' c) : fs)]
     | otherwise -> [apply sTimes [Num (fromRational' c), u]]
 
 -- | Two infinity-bearing terms with the same term part (Cohen's @Term@)
