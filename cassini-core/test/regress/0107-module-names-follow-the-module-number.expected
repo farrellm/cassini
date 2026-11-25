@@ -1,0 +1,6 @@
+Out[1]: x$1
+Out[2]: List[x$2, y$2]
+Out[3]: 3
+Out[4]: 4
+Out[5]: Module[List[Set[List[x, y], List[1, 2]]], x]
+Message[5]: Module::lvset

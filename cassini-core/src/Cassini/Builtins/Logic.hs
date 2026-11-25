@@ -21,7 +21,7 @@ module Cassini.Builtins.Logic (definitions) where
 import Cassini.Attributes (Attribute (..))
 import Cassini.Builtins.Define (Definition, args, define, down, isList, sFalseE, sTrueE)
 import Cassini.Core.Expr (Expr, apply, pattern App, pattern Call, pattern Int_, pattern Num, pattern Str, pattern Sym)
-import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sFalse, sPlus, sTimes, sTrue, systemSymbol)
+import Cassini.Core.Symbol (Symbol, sDirectedInfinity, sFalse, sIndeterminate, sPlus, sTimes, sTrue, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate, quietly)
 import Cassini.Number (toRational')
 import Cassini.Zero (isZero)
@@ -76,6 +76,9 @@ chain decide e = do
 -- own working, and @Infinity == -Infinity@ must not report @Infinity::indet@.
 equal :: (Kernel :> es) => Expr -> Expr -> Eff es (Maybe Bool)
 equal a b
+  -- Indeterminate is equal to nothing, itself included: WL leaves
+  -- Indeterminate == Indeterminate (wolfram/Indeterminate/PossibleIssues/4)
+  | a == indeterminate || b == indeterminate = pure Nothing
   | a == b = pure (Just True)
   | otherwise = case (a, b) of
       (Str _, Str _) -> pure (Just False)
@@ -106,6 +109,9 @@ equal a b
       Sym _ -> False
       App _ xs -> all closed xs
       _ -> True
+
+indeterminate :: Expr
+indeterminate = Sym sIndeterminate
 
 -- | @a != b@: 'True' when every pair is unequal, 'False' when some pair is
 -- equal, unevaluated otherwise.
@@ -154,7 +160,8 @@ trueQ e = pure $ case args e of
 
 -- | @And@ and @Or@: evaluate left to right, stopping at the first argument
 -- that decides (@False@ for @And@, @True@ for @Or@); arguments that evaluate
--- to the identity are dropped, and what remains is kept, evaluated.
+-- to the identity are dropped, and what remains is kept, evaluated, and not
+-- deduplicated: WL keeps @And[z, y, y, x]@ (wolfram/And/Scope/4).
 connective :: (Kernel :> es) => Symbol -> Symbol -> Text -> Expr -> Eff es (Maybe Expr)
 connective decider unit name e = go [] (args e)
   where

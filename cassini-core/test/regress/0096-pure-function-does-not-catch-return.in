@@ -1,0 +1,3 @@
+(* §4.13: a pure function is applied by a built-in rung and does not catch Return, so f[0] is 1, not 2. WL 15.0.1 gives 1 (through the Wolfram Cloud MCP). *)
+SetDelayed[f[Pattern[x, Blank[]]], CompoundExpression[Function[Return[1]][], 2]]
+f[0]

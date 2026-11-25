@@ -1,0 +1,13 @@
+Out[1]: Hold[Throw[1]]
+Message[1]: Throw::nocatch
+Out[2]: Hold[Throw[1]]
+Out[3]: Hold[Throw[1, t]]
+Message[3]: Throw::nocatch
+Out[4]: f[1, t]
+Message[4]: Throw::nocatch
+Out[5]: Hold[Throw[a, t]]
+Message[5]: Throw::nocatch
+Out[6]: a
+Out[7]: Hold[Throw[a, t]]
+Message[7]: Throw::nocatch
+Out[8]: f[a, t]

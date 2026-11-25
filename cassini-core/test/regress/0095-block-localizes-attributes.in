@@ -1,0 +1,10 @@
+(* §4.13: in WL 15.0.1 Block[{Plus}, Attributes[Plus]] is {}, and an attribute set inside a Block is undone on exit (through the Wolfram Cloud MCP). *)
+Block[List[Plus], Attributes[Plus]]
+Attributes[Plus]
+Block[List[h], CompoundExpression[SetAttributes[h, Listable], Attributes[h]]]
+Attributes[h]
+(* Down-values are saved and restored too, and message text is not localized (§4.7). *)
+SetDelayed[k[Pattern[x, Blank[]]], old]
+Set[MessageName[k, "m"], "text"]
+Block[List[k], CompoundExpression[SetDelayed[k[Pattern[x, Blank[]]], new], List[k[1], MessageName[k, "m"]]]]
+k[1]

@@ -10,8 +10,9 @@
 -- An assignment writes a user rule into one of the four tables (§4.2): an own
 -- value for a symbol, a downvalue for @f[…]@, a subvalue for @f[…][…]@ (keyed
 -- on the innermost head symbol), and upvalues for @UpSet@. The left-hand
--- side's arguments are evaluated, unless its head holds them or it is
--- wrapped in @HoldPattern@; its head is not. A protected tag refuses the
+-- side's head is evaluated, and its arguments too unless the head holds
+-- them, all unless it is wrapped in @HoldPattern@: after @A = T@,
+-- @A[x_] = x^2@ is a rule for @T@, as in WL 15.0.1. A protected tag refuses the
 -- write with WL's message: @Set::wrsym@ for a symbol, @Set::write@ for a
 -- tag. A message name on the left, @f::tag = "text"@, sets the message's
 -- text, which @Protected@ does not guard (§4.7).
@@ -28,6 +29,7 @@ import Cassini.Eval.Message (MessageTag (..))
 import Cassini.Pattern (unholdPattern)
 import Cassini.Rules (Origin (..), Rule (..), RuleBody (..), SymbolInfo (..), ValueKind (..), hasRules, insertRule, mkRule, modifyRules, removeRule, ruleSetToList, rulesOf)
 import Data.Map.Strict qualified as Map
+import Data.Text qualified as T
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
 import Optics.Core ((%~))
@@ -120,12 +122,16 @@ sPart, sAttributes :: Symbol
 sPart = systemSymbol "Part"
 sAttributes = systemSymbol "Attributes"
 
--- | Evaluate the left-hand side's arguments, as WL does, unless the head
--- holds them or the whole is in @HoldPattern@. The head is not evaluated.
+-- | Evaluate the left-hand side's head, and its arguments unless the head
+-- holds them, as WL does, unless the whole is in @HoldPattern@. A bare
+-- symbol is not evaluated: @x = 1@ assigns @x@.
 prepareLhs :: (Kernel :> es) => Expr -> Eff es Expr
 prepareLhs lhs = case lhs of
   App (Sym h) _ | h == sHoldPattern -> pure lhs
-  App h as -> do
+  -- a condition's pattern is prepared, and its test left held
+  Call c [p, t] | c == sCondition -> (\p' -> apply sCondition [p', t]) <$> prepareLhs p
+  App h0 as -> do
+    h <- evaluate h0
     attrs <- maybe (pure mempty) lookupAttributes (symbolOf h)
     let n = V.length as
     mkApp h <$> V.imapM (\i a -> if holdsArgument attrs (i + 1) n then pure a else evaluate a) as
@@ -320,21 +326,29 @@ unset e = case args e of
 -- clear, and stay (§4.13).
 clearing :: (Kernel :> es) => Bool -> Expr -> Eff es (Maybe Expr)
 clearing everything e
-  | any isString (args e) = pure Nothing
-  | otherwise = Just sNullE <$ traverse_ one (args e)
+  | any namePattern targets = pure Nothing
+  | otherwise = Just sNullE <$ traverse_ one targets
   where
     name = if everything then "ClearAll" else "Clear"
-    isString = \case
-      Str _ -> True
+    -- lists are flattened, as WL's Clear[{x, "y"}]
+    targets = concatMap flat (args e)
+    flat = \case
+      Call l xs | l == sList -> concatMap flat xs
+      x -> [x]
+    -- a string with a metacharacter is a name pattern (D34)
+    namePattern = \case
+      Str t -> T.any (`elem` ("*@" :: String)) t
       _ -> False
     one = \case
-      Sym s -> do
-        attrs <- lookupAttributes s
-        if
-          | everything && isLocked attrs -> message "ClearAll" "locked" [Sym s]
-          | isProtected attrs -> message name "wrsym" [Sym s]
-          | otherwise -> modifySymbol s (clearInfo everything)
+      Sym s -> clearOne s
+      Str t -> named t >>= clearOne
       x -> message "Clear" "ssym" [x]
+    clearOne s = do
+      attrs <- lookupAttributes s
+      if
+        | everything && isLocked attrs -> message "ClearAll" "locked" [Sym s]
+        | isProtected attrs -> message name "wrsym" [Sym s]
+        | otherwise -> modifySymbol s (clearInfo everything)
 
 -- | A symbol's entry with its user rules removed, and with @ClearAll@, its
 -- attributes and message text too.

@@ -1,0 +1,9 @@
+(* §4.7, D42: the third time one message is generated in an input, General::stop follows it and it is not shown again; Off[General::stop] turns this off (wolfram/Off/BasicExamples/2). *)
+Do[Power[0, 0], List[5]]
+Check[Do[Power[0, 0], List[5]], seen]
+Off[MessageName[General, "stop"]]
+Do[Power[0, 0], List[4]]
+On[MessageName[General, "stop"]]
+(* The count is per input. *)
+Do[Power[0, 0], List[2]]
+Do[Power[0, 0], List[2]]

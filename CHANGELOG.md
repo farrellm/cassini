@@ -4,6 +4,33 @@ The changelog is written as changes land, not at release (DESIGN.md §2.9).
 
 ## Unreleased
 
+* Control flow (DESIGN.md §4.13): `If`, `Which`, `Switch`, `Module`, `With`, `Block` (which
+  localizes attributes and restores on every exit), `Catch`, `Throw`, `Break`, `Continue`,
+  `Return`, `Abort`, `Do`, `While`, `For`, `Until`, `Scan`, `Table`, `Sum` and `Product` over
+  numeric iterators, `Nest`, `NestList`, `Fold`, `FoldList`, `FixedPoint`, `FixedPointList` and
+  `Print`. An uncaught `Throw`, `Return`, `Break` or `Continue` comes back `Hold`-wrapped.
+
+* Logic and comparison (§4.14): `Equal`, `Unequal`, `Less`, `Greater`, `LessEqual`,
+  `GreaterEqual`, `SameQ`, `UnsameQ`, `TrueQ`, `And`, `Or` and `Not`; a comparison that cannot be
+  decided exactly stays unevaluated. `Expand`, `TrigExpand`, `TrigReduce` and `Simplify` thread
+  over equations, inequalities, rules and logic heads as well as lists (D50).
+
+* Numbers (§4.15): the infinity tables in `Plus`, `Times` and `Power`, with infinity-bearing terms
+  guarded against cancelling (`x + Infinity - (x + Infinity)` is `Indeterminate`); and `Abs`,
+  `Sign`, `Floor`, `Ceiling`, `Round`, `Quotient`, `Mod`, `GCD`, `LCM`, `Binomial`, `Factorial`,
+  `Numerator`, `Denominator`, `Max`, `Min`, `PrimeQ` and `FactorInteger`.
+
+* Lists (D44): `Flatten`, `Partition`, `Array`, `ReplacePart`, `Range`, `MapAt`, `Extract`, `Take`,
+  `Drop`, `Thread`, `MapThread`, `Position`, `MapIndexed`, `Riffle`, `Select`, `Sort`, `First`,
+  `Last`, `Rest`, `Most`, `Join`, `Append`, `Prepend` and `Reverse`.
+
+* Messages (§4.7, D42): `Message`, `MessageName` and message text (`f::tag = "…"`), `Quiet`,
+  `Check`, `Off`, `On` and `General::stop`; `Clear` and `ClearAll` (D41).
+
+* An assignment evaluates the head of a compound left-hand side, as WL does, inside a condition
+  too: after `A = T`, `A[x_] = x^2` is a rule for `T`, where it had gone on `A`. `Head[expr, h]`
+  is `h[Head[expr]]`, where it had been `Head::argx`.
+
 * The elementary functions (DESIGN.md §4.11): `Sin` … `Csc`, `Sinh` … `Csch`, `ArcSin` …
   `ArcCsc`, `Exp` and `Log`, with `Pi` and `E`. Special values at multiples of π reduced to the
   first octant, parity, periodicity with a symbolic remainder as WL 15.0.1 does it (D39), inverses,

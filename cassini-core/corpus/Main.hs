@@ -120,15 +120,20 @@ idSet f = do
     else HashSet.fromList . mapMaybe (viaNonEmpty head . words) . filter (not . ("#" `T.isPrefixOf`)) . lines . decodeUtf8 <$> readFileBS f
 
 -- | Run one session in a fresh kernel, with five seconds to finish, and
--- judge each of its cases.
+-- judge each of its cases. The session runs only as far as its last input
+-- in scope: what follows cannot change an output compared, and an input
+-- beyond it that needs a builtin Cassini lacks can loop forever (an
+-- @i++@ in a @While[True, …]@), which would time out the cases before it.
 runSession :: Source -> FilePath -> [Case] -> IO [Outcome]
 runSession src session cs = do
   let base = src.srcDir </> session
   input <- decodeUtf8 <$> readFileBS (base <> ".in")
   expected <- decodeUtf8 <$> readFileBS (base <> ".expected")
-  let script = case src.srcSyntax of
-        FullFormInputs -> input
-        InfixInputs -> unlines (map toFullForm (lines input))
+  let needed = traverse (.caseInput) cs >>= viaNonEmpty (foldl' max 0)
+      upTo = maybe id (\n -> take (length (takeInputs n (lines input)))) needed
+      script = case src.srcSyntax of
+        FullFormInputs -> unlines (upTo (lines input))
+        InfixInputs -> unlines (map toFullForm (upTo (lines input)))
   timeout 5000000 (runScript script >>= \out -> T.length out `seq` pure out) >>= \case
     Nothing -> pure (map (const (Fail "  timed out after 5 s")) cs)
     Just actual -> pure (map (\c -> compareScripts src.srcMessages c.caseInput expected actual) cs)
@@ -136,6 +141,21 @@ runSession src session cs = do
     -- An input the parser cannot read is left as it is, which the FullForm
     -- reader cannot read either: $Failed, with Syntax::sntx.
     toFullForm line = either (const line) fullForm (parseExpr resolveName line)
+
+-- | The lines up to and including the @n@th input: script mode's inputs are
+-- the lines that are neither blank nor one comment (@Cassini.Script@).
+takeInputs :: Int -> [Text] -> [Text]
+takeInputs = go
+  where
+    go k = \case
+      [] -> []
+      l : ls
+        | k <= 0 -> []
+        | isInput l -> l : go (k - 1) ls
+        | otherwise -> l : go k ls
+    isInput line =
+      let t = T.strip line
+       in not (T.null t || ("(*" `T.isPrefixOf` t && "*)" `T.isSuffixOf` t))
 
 -- | Compare by input number, every input or one: each usable expected
 -- output with the actual one, structurally up to Orderless order, and the

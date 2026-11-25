@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiWayIf #-}
+
 -- | Integer roots, trial division, strong pseudoprimality and integer
 -- factorization (DESIGN.md §4.15). No 'Cassini.Core.Expr'.
 --
@@ -166,17 +168,32 @@ factorInteger n0 =
       | otherwise = let d = rho m 1 in split d <> split (m `div` d)
 
 -- | A nontrivial factor of a composite @m@ with no small prime factor, by
--- Pollard's rho on @x ↦ x² + c@, trying @c = 1, 2, …@ in turn.
+-- Pollard's rho on @x ↦ x² + c@ with Brent's cycle detection, trying
+-- @c = 1, 2, …@ in turn. The differences are multiplied together a batch at
+-- a time and one gcd taken per batch; a batch whose gcd is @m@ is walked
+-- again a step at a time (vzGG §19.4; Brent's batching).
 rho :: Integer -> Integer -> Integer
-rho m c = fromMaybe (rho m (c + 1)) (brent 2 2 (1 :: Integer))
+rho m c = fromMaybe (rho m (c + 1)) (search 2 1)
   where
     f x = (x * x + c) `mod` m
-    -- Brent's variant: y runs ahead in powers of two.
-    brent x y r = go x y r 0
-    go x y r k
-      | k >= r = brent' y y (2 * r)
+    batch = 64 :: Integer
+    -- y is the checkpoint, r the length of the stretch walked from it.
+    search y r
+      | r > 2 ^ (40 :: Int) = Nothing
+      | otherwise = stretch y y r 0
+    -- Walk r steps from the checkpoint y, a batch at a time.
+    stretch y x r k
+      | k >= r = search x (2 * r)
       | otherwise =
-          let y' = f y
-              d = gcd (abs (x - y')) m
-           in if d == 1 then go x y' r (k + 1) else (if d == m then Nothing else Just d)
-    brent' x y r = if r > 2 ^ (64 :: Int) then Nothing else go x y r 0
+          let n = min batch (r - k)
+              xs = take (fromInteger n) (drop 1 (iterate f x))
+              q = foldl' (\acc x' -> acc * abs (y - x') `mod` m) 1 xs
+              d = gcd q m
+           in if
+                | d == 1 -> stretch y (fromMaybe x (viaNonEmpty last xs)) r (k + n)
+                | d /= m -> Just d
+                | otherwise -> single y xs
+    -- The batch overshot: find its factor one step at a time.
+    single y = \case
+      [] -> Nothing
+      x : rest -> let d = gcd (abs (y - x)) m in if d == 1 then single y rest else (if d == m then Nothing else Just d)

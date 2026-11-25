@@ -1,0 +1,7 @@
+(* Fixed bug: Set and SetDelayed left the head of a compound left-hand side unevaluated, so after A = T, A[x_] = x^2 went on A. WL 15.0.1 puts it on T, also under a condition (through the Wolfram Cloud MCP); a bare symbol is not evaluated. *)
+CompoundExpression[Set[A, T], Set[A[Pattern[x, Blank[]]], Power[x, 2]], Null]
+List[A[u], T[u]]
+CompoundExpression[Set[B, S], Set[y, 3], SetDelayed[Condition[B[Pattern[y, Blank[]]], Greater[y, 2]], Power[y, 2]], Null]
+List[S[4], S[1]]
+Set[A, 2]
+A

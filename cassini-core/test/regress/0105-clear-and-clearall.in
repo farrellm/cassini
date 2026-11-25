@@ -1,0 +1,15 @@
+(* §4.13, D41: Clear removes values and keeps attributes; ClearAll removes both; each skips a symbol it may not touch with WL 15.0.1's messages (through the Wolfram Cloud MCP). *)
+CompoundExpression[SetDelayed[a[Pattern[x, Blank[]]], x], Set[a, 1], SetAttributes[a, Listable], Null]
+Clear[a]
+List[a, a[2], Attributes[a]]
+ClearAll[a]
+Attributes[a]
+Clear[Plus]
+ClearAll[Plus]
+ClearAll[List]
+Clear[1]
+Clear[List[b, "c"]]
+(* Built-in rules are not the session's to clear. *)
+Unprotect[Sin]
+Clear[Sin]
+Sin[0]

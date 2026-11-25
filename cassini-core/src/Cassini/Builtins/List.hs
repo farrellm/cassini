@@ -15,12 +15,13 @@
 module Cassini.Builtins.List (definitions) where
 
 import Cassini.Attributes (Attribute (..))
-import Cassini.Builtins.Define (Definition, args, define, down, inLevel, isList, levelSpec, message, sTrueE)
+import Cassini.Builtins.Define (Definition, args, curried, define, down, inLevel, isList, levelSpec, message, sTrueE, sub)
 import Cassini.Core.Expr (Expr, apply, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
 import Cassini.Core.Order (compareCanonical)
-import Cassini.Core.Symbol (sList, sRule, sRuleDelayed, systemSymbol)
+import Cassini.Core.Symbol (sList, sRule, sRuleDelayed, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Kernel, evaluate)
 import Cassini.Number (fromRational', toRational')
+import Cassini.Pattern (applySubst)
 import Cassini.Pattern.Match (matchOne)
 import Data.Vector qualified as V
 import Effectful (Eff, (:>))
@@ -42,17 +43,31 @@ definitions =
     define "Flatten" [Protected] [down flattenRule],
     define "Partition" [Protected] [down partitionRule],
     define "Array" [Protected] [down arrayRule],
-    define "ReplacePart" [Protected] [down replacePartRule],
-    define "MapAt" [Protected] [down mapAtRule],
-    define "Extract" [NHoldRest, Protected] [down extractRule],
+    define "ReplacePart" [Protected] [down replacePartRule, sub (curried after1)],
+    define "MapAt" [Protected] [down mapAtRule, sub (curried split1)],
+    define "Extract" [NHoldRest, Protected] [down extractRule, sub (curried after1)],
     define "Thread" [Protected] [down threadRule],
-    define "MapThread" [Protected] [down mapThreadRule],
-    define "Position" [Protected] [down positionRule],
-    define "MapIndexed" [Protected] [down mapIndexedRule],
+    define "MapThread" [Protected] [down mapThreadRule, sub (curried before1)],
+    define "Position" [Protected] [down positionRule, sub (curried after1)],
+    define "MapIndexed" [Protected] [down mapIndexedRule, sub (curried before1)],
     define "Riffle" [Protected] [down riffleRule],
-    define "Select" [Protected] [down selectRule],
+    define "Select" [Protected] [down selectRule, sub (curried after1)],
     define "Sort" [Protected] [down sortRule]
   ]
+
+-- | Where an operator form's arguments go: after the one argument it is
+-- applied to (@Select[crit][list]@), before it (@MapIndexed[f][expr]@), or
+-- around it (@MapAt[f, pos][expr]@).
+after1, before1, split1 :: [Expr] -> [Expr] -> Maybe [Expr]
+after1 as = \case
+  [x] | not (null as) -> Just (x : as)
+  _ -> Nothing
+before1 as = \case
+  [x] | [_] <- as -> Just (as <> [x])
+  _ -> Nothing
+split1 as = \case
+  [x] | [f, p] <- as -> Just [f, x, p]
+  _ -> Nothing
 
 -- | The arguments of an expression, if it is not an atom.
 partsOf :: Expr -> Maybe (Expr, V.Vector Expr)
@@ -65,10 +80,13 @@ list :: [Expr] -> Expr
 list = apply sList
 
 -- | @First@ and @Last@: the part at that end; an expression with none stays,
--- with @First::nofirst@ (@Last::nolast@).
+-- with @First::nofirst@ (@Last::nolast@), or with a second argument gives
+-- that.
 end :: (Kernel :> es) => Text -> Text -> (V.Vector Expr -> Expr) -> Expr -> Eff es (Maybe Expr)
 end name tag pick e = case args e of
   [x] | Just (_, as) <- partsOf x -> if V.null as then Nothing <$ message name tag [x] else pure (Just (pick as))
+  -- a default for an expression with no parts
+  [x, d] -> pure (Just (maybe d (\(_, as) -> if V.null as then d else pick as) (partsOf x)))
   [x] -> Nothing <$ message name tag [x]
   _ -> pure Nothing
 
@@ -102,15 +120,26 @@ reverseRule e = pure $ case args e of
   [x] | Just (h, as) <- partsOf x -> Just (mkApp h (V.reverse as))
   _ -> Nothing
 
--- | @Range[n]@, @Range[a, b]@ and @Range[a, b, d]@ over rationals.
+-- | @Range[n]@, @Range[a, b]@ and @Range[a, b, d]@ over rationals; with
+-- symbolic bounds, wherever @(b - a)/d@ evaluates to a rational, the list
+-- @a, a + d, …@, each element evaluated.
 rangeRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 rangeRule e = case traverse rational (args e) of
   Just [n] -> pure (Just (steps 1 n 1))
   Just [a, b] -> pure (Just (steps a b 1))
   Just [_, _, 0] -> Nothing <$ message "Range" "range" [e]
   Just [a, b, d] -> pure (Just (steps a b d))
-  _ -> pure Nothing
+  _ -> case args e of
+    [a, b] -> symbolic a b (Int_ 1)
+    [a, b, d] -> symbolic a b d
+    _ -> pure Nothing
   where
+    symbolic a b d =
+      evaluate (apply (systemSymbol "Times") [apply (systemSymbol "Plus") [b, apply (systemSymbol "Times") [Int_ (-1), a]], apply (systemSymbol "Power") [d, Int_ (-1)]]) >>= \case
+        Num r
+          | toRational' r >= 0 ->
+              Just . list <$> traverse (\k -> evaluate (apply (systemSymbol "Plus") [a, apply (systemSymbol "Times") [Int_ k, d]])) [0 .. floor (toRational' r)]
+        _ -> pure Nothing
     steps a b d =
       let k = floor ((b - a) / d) :: Integer
        in list [number (a + fromInteger i * d) | i <- [0 .. k]]
@@ -232,6 +261,8 @@ position = \case
 -- | Several positions: one position, or a list of them @{{i, …}, …}@.
 positions :: Expr -> Maybe [[Integer]]
 positions = \case
+  -- {} is no position at all, and {{}} the whole expression
+  Call l [] | l == sList -> Just []
   Call l ps@(Call l' _ : _) | l == sList, l' == sList -> traverse position ps
   p -> pure <$> position p
 
@@ -264,18 +295,44 @@ modifyAt f = \case
     Nothing -> Nothing
 
 -- | @ReplacePart[expr, pos -> new]@, or a list of such rules: each part
--- replaced, @:>@'s right-hand side as written. A position that does not
--- exist is skipped, as WL skips it.
-replacePartRule :: Expr -> Eff es (Maybe Expr)
-replacePartRule e = pure $ case args e of
-  [x, Call l rs] | l == sList, Just rules <- traverse rule rs -> Just (foldl' apply1 x rules)
-  [x, r] | Just ru <- rule r -> Just (apply1 x ru)
-  _ -> Nothing
+-- replaced. A position that does not exist is skipped, as WL skips it. A
+-- rule whose left-hand side is a pattern rather than a position applies at
+-- every part whose position it matches — a list pattern against the
+-- position as a list, @{i_, i_}@, anything else against its indices as a
+-- sequence, @i_@ or @i__@ — trying the parts from the top down and not
+-- descending into a part once replaced; its right-hand side takes the
+-- pattern's bindings.
+replacePartRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
+replacePartRule e = case args e of
+  [x, Call l rs] | l == sList, Just rules <- traverse rule rs -> replaceAll x rules
+  [x, r] | Just ru <- rule r -> replaceAll x [ru]
+  _ -> pure Nothing
   where
     rule = \case
-      Call r [p, v] | r == sRule || r == sRuleDelayed -> (,v) <$> positions p
+      Call r [p, v] | r == sRule || r == sRuleDelayed -> Just (p, v)
       _ -> Nothing
+    replaceAll x rules = case traverse (\(p, v) -> (,v) <$> positions p) rules of
+      Just explicit -> pure (Just (foldl' apply1 x explicit))
+      Nothing -> Just <$> walk rules [] x
     apply1 x (ps, v) = foldl' (\acc p -> fromMaybe acc (modifyAt (const v) p acc)) x ps
+    walk rules path x = do
+      hit <- if null path then pure Nothing else firstHit rules (reverse path)
+      case hit of
+        Just v -> pure v
+        Nothing -> case partsOf x of
+          Just (h, as) -> mkApp h <$> V.imapM (\i a -> walk rules (toInteger i + 1 : path) a) as
+          Nothing -> pure x
+    firstHit rules path = case rules of
+      [] -> pure Nothing
+      (p, v) : rest ->
+        matchPosition p path >>= \case
+          Just sigma -> pure (Just (applySubst sigma v))
+          Nothing -> firstHit rest path
+    matchPosition p path = case (p, positions p) of
+      (_, Just ps) -> pure (if path `elem` ps then Just mempty else Nothing)
+      (Call l _, _) | l == sList -> matchOne p (list (map Int_ path))
+      _ -> matchOne (apply sIndices [p]) (apply sIndices (map Int_ path))
+    sIndices = symbol "Cassini`" "Indices"
 
 -- | @MapAt[f, expr, pos]@: @f@ applied to the part at each position given.
 -- A position that does not exist leaves the call, with @MapAt::partw@.
@@ -295,6 +352,7 @@ extractRule e = case args e of
   _ -> pure Nothing
   where
     pick x p wrap = case p of
+      Call l [] | l == sList -> Just (list [])
       Call l ps@(Call l' _ : _) | l == sList, l' == sList -> list <$> traverse (position >=> (fmap wrap . (`partAt` x))) ps
       _ -> position p >>= fmap wrap . (`partAt` x)
 
@@ -311,7 +369,8 @@ threadRule e = case args e of
       Just (f, as) -> case ordNub [V.length bs | a <- V.toList as, Just (h', bs) <- [partsOf a], h' == h] of
         [] -> pure (Just x)
         [k] -> pure (Just (mkApp h (V.fromList [mkApp f (V.map (nth h i) as) | i <- [0 .. k - 1]])))
-        _ -> Nothing <$ message "Thread" "tdlen" [x]
+        -- unequal lengths: the expression itself, with Thread::tdlen (WL 15.0.1)
+        _ -> Just x <$ message "Thread" "tdlen" [x]
       Nothing -> pure (Just x)
     nth h i a = case partsOf a of
       Just (h', bs) | h' == h, Just b <- bs V.!? i -> b
@@ -337,6 +396,7 @@ positionRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 positionRule e = case args e of
   [x, p] -> Just <$> found p (\_ _ -> True) x
   [x, p, spec] | Just ls <- levelSpec spec -> Just <$> found p (inLevel ls) x
+  [x, p, spec, Int_ n] | Just ls <- levelSpec spec, n >= 0 -> Just . list . take (fromInteger n) . args <$> found p (inLevel ls) x
   _ -> pure Nothing
   where
     found p keep x = list . map (list . map Int_) <$> go p keep (0 :: Integer) [] x
@@ -394,8 +454,9 @@ selectRule e = case args e of
       _ -> pure []
 
 -- | @Sort[list]@ in canonical order, the order @Orderless@ sorts by
--- (§3.5); @Sort[list, p]@ puts @a@ before @b@ when @p[a, b]@ is @True@, by
--- a stable merge sort.
+-- (§3.5); @Sort[list, p]@ by a merge sort that keeps @a@ before a later @b@
+-- exactly when @p[a, b]@ is @True@, as WL's does: @Sort[{4, 7, 9, 3, 1},
+-- #1 > 2 &]@ is the list unchanged (WL 15.0.1).
 sortRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 sortRule e = case args e of
   [x] | Just (h, as) <- partsOf x -> pure (Just (mkApp h (V.fromList (sortBy compareCanonical (V.toList as)))))
@@ -414,7 +475,5 @@ sortRule e = case args e of
       ([], _) -> pure r
       (_, []) -> pure l
       (a : as, b : bs) -> do
-        -- b goes first only when it must: p[b, a] is True and p[a, b] not.
-        ba <- evaluate (mkApp p (V.fromList [b, a]))
-        ab <- if ba == sTrueE then evaluate (mkApp p (V.fromList [a, b])) else pure sTrueE
-        if ba == sTrueE && ab /= sTrueE then (b :) <$> merge p l bs else (a :) <$> merge p as r
+        ab <- evaluate (mkApp p (V.fromList [a, b]))
+        if ab == sTrueE then (a :) <$> merge p as r else (b :) <$> merge p l bs

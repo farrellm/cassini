@@ -1,0 +1,10 @@
+(* §4.13: Throw[1] at the top is Hold[Throw[1]] with Throw::nocatch (WL 15.0.1, through the Wolfram Cloud MCP). Throw[v, t, f] gives f[v, t]. *)
+Throw[1]
+Out[]
+Throw[1, t]
+Throw[1, t, f]
+(* Catch[expr] catches only an untagged throw; Catch[expr, form] a tagged one that matches. *)
+Catch[Throw[a, t]]
+Catch[Throw[a, t], t]
+Catch[Throw[a, t], u]
+Catch[Throw[a, t], Blank[], f]

@@ -28,7 +28,7 @@ module Cassini.Builtins.Control (definitions) where
 
 import Cassini.Attributes (Attribute (..))
 import Cassini.Attributes qualified as Attributes
-import Cassini.Builtins.Define (Definition, args, define, down, inLevel, levelParts, levelSpec, message, own, sNullE, sTrueE, settled, sub)
+import Cassini.Builtins.Define (Definition, args, curried, define, down, inLevel, levelParts, levelSpec, message, own, sNullE, sTrueE, settled, sub)
 import Cassini.Core.Expr (Expr, apply, mkApp, mkNumber, pattern App, pattern Call, pattern Int_, pattern Num, pattern Sym)
 import Cassini.Core.Symbol (Symbol, sFunction, sList, sPlus, sSet, sSetDelayed, sSlot, sSlotSequence, sTimes, symContext, symName, symbol, systemSymbol)
 import Cassini.Eval.Kernel (Abort (..), EvalConfig (..), Kernel, Unwind (..), catchUnwind, emitMessage, emitOutput, evaluate, kernelConfig, lookupSymbol, modifySymbol, unwind)
@@ -66,14 +66,14 @@ definitions =
     define "While" [HoldAll, Protected] [down whileRule],
     define "For" [HoldAll, Protected] [down forRule],
     define "Until" [HoldAll, Protected] [down untilRule],
-    define "Scan" [Protected] [down scanRule],
+    define "Scan" [Protected] [down scanRule, sub (curried (\as xs -> if length as == 1 && length xs == 1 then Just (as <> xs) else Nothing))],
     define "Table" [HoldAll, Protected] [down tableRule],
     define "Sum" [HoldAll, Protected, ReadProtected] [down (accumulate sPlus)],
     define "Product" [HoldAll, Protected, ReadProtected] [down (accumulate sTimes)],
     define "Nest" [Protected] [down (nest False)],
     define "NestList" [Protected] [down (nest True)],
-    define "Fold" [Protected] [down (folding False)],
-    define "FoldList" [Protected] [down (folding True)],
+    define "Fold" [Protected] [down (folding False), sub (curried foldForm)],
+    define "FoldList" [Protected] [down (folding True), sub (curried foldForm)],
     define "FixedPoint" [Protected] [down (fixedPoint False)],
     define "FixedPointList" [Protected] [down (fixedPoint True)],
     define "Print" [Protected] [down printRule]
@@ -127,6 +127,13 @@ compoundRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 compoundRule e = case unsnoc (args e) of
   Nothing -> pure (Just sNullE)
   Just (before, lastE) -> Just lastE <$ traverse_ evaluate before
+
+-- | @Fold[f][list]@ and @Fold[f][x, list]@ are @Fold[f, list]@ and
+-- @Fold[f, x, list]@.
+foldForm :: [Expr] -> [Expr] -> Maybe [Expr]
+foldForm as xs
+  | [_] <- as, length xs `elem` [1, 2] = Just (as <> xs)
+  | otherwise = Nothing
 
 -- * Conditionals
 
@@ -187,18 +194,32 @@ switchRule e = case args e of
 -- value, @x = v@ (evaluated) or @x := v@ (not), if it has one.
 data Local = Local !Symbol !(Maybe (Bool, Expr))
 
--- | Read @{x, y = v, z := w, …}@; 'Nothing' if it is not a list of locals.
-locals :: Expr -> Maybe [Local]
+-- | Read @{x, y = v, z := w, …}@: 'Nothing' if it is not a list, and
+-- 'Left' the first entry that is not a local.
+locals :: Expr -> Maybe (Either Expr [Local])
 locals = \case
-  Call l xs | l == sList -> traverse one xs
+  Call l xs | l == sList -> Just (traverse one xs)
   _ -> Nothing
   where
     one = \case
-      Sym x -> Just (Local x Nothing)
+      Sym x -> Right (Local x Nothing)
       Call s [Sym x, v]
-        | s == sSet -> Just (Local x (Just (True, v)))
-        | s == sSetDelayed -> Just (Local x (Just (False, v)))
-      _ -> Nothing
+        | s == sSet -> Right (Local x (Just (True, v)))
+        | s == sSetDelayed -> Right (Local x (Just (False, v)))
+      x -> Left x
+
+-- | A scoping construct's locals, or its message for the first entry that
+-- is not one: @lvset@ for an assignment to something other than a symbol,
+-- @lvsym@ otherwise, and the construct stays (wolfram/Module/PossibleIssues/3).
+scoping :: (Kernel :> es) => Text -> Expr -> Expr -> ([Local] -> Eff es (Maybe Expr)) -> Eff es (Maybe Expr)
+scoping name e spec k = case locals spec of
+  Just (Right ls) -> k ls
+  Just (Left x) -> Nothing <$ message name (if isAssignment x then "lvset" else "lvsym") [x, e]
+  Nothing -> Nothing <$ message name "lvlist" [spec]
+  where
+    isAssignment = \case
+      Call s [_, _] -> s == sSet || s == sSetDelayed
+      _ -> False
 
 -- | A local's initial value: @x = v@'s evaluated, @x := v@'s as written.
 initial :: (Kernel :> es) => Local -> Eff es (Maybe Expr)
@@ -216,7 +237,7 @@ initial (Local _ v) = case v of
 -- state (§4.13).
 moduleRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 moduleRule e = case args e of
-  [spec, body] | Just ls <- locals spec -> do
+  [spec, body] -> scoping "Module" e spec $ \ls -> do
     n <-
       evaluate (Sym sModuleNumber) <&> \case
         Int_ k -> k
@@ -246,7 +267,7 @@ setOwn s v = modifySymbol s (modifyRules OwnValue (insertRule (mkRule User (Sym 
 -- @With[d₁, d₂, body]@ is @With[d₁, With[d₂, body]]@.
 withRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 withRule e = case args e of
-  [spec, body] | Just ls <- locals spec -> do
+  [spec, body] -> scoping "With" e spec $ \ls -> do
     vs <- forM ls $ \l@(Local x _) -> fmap (\v -> (x, BOne v)) <$> initial l
     case sequence vs of
       Just bound -> pure (Just (substituteFree Shielding (Map.fromList bound) Nothing body))
@@ -261,7 +282,7 @@ withRule e = case args e of
 -- (§4.13).
 blockRule :: (Kernel :> es) => Expr -> Eff es (Maybe Expr)
 blockRule e = case args e of
-  [spec, body] | Just ls <- locals spec -> do
+  [spec, body] -> scoping "Block" e spec $ \ls -> do
     vs <- traverse initial ls
     Just <$> localized [(x, v) | (Local x _, v) <- zip ls vs] (evaluate body)
   _ -> pure Nothing
@@ -410,7 +431,10 @@ scanRule e = case args e of
 
 -- | An iterator, read and its bounds evaluated: how many times, and for a
 -- variable, the values it takes in turn.
-data Iterator = Iterator !(Maybe Symbol) ![Expr]
+--
+-- An iterator to @Infinity@ has an endless list of values, which only
+-- @Do@ takes, to be left by @Break[]@ or @Return[v]@.
+data Iterator = Iterator !(Maybe Symbol) ![Expr] !Bool
 
 -- | Read and evaluate an iterator specification (§4.13): @{n}@, @{i, imax}@,
 -- @{i, imin, imax}@, @{i, imin, imax, di}@ and @{i, list}@. The bounds are
@@ -423,13 +447,13 @@ iterator spec = case spec of
   Call l [n]
     | l == sList ->
         evaluate n <&> \case
-          Int_ k -> Just (Iterator Nothing (replicate (fromInteger (max 0 k)) sNullE))
-          Num r -> Just (Iterator Nothing (replicate (max 0 (floor (toRational' r))) sNullE))
+          Int_ k -> Just (Iterator Nothing (replicate (fromInteger (max 0 k)) sNullE) False)
+          Num r -> Just (Iterator Nothing (replicate (max 0 (floor (toRational' r))) sNullE) False)
           _ -> Nothing
   Call l [Sym i, xs]
     | l == sList ->
         localized [(i, Nothing)] (evaluate xs) >>= \case
-          Call l' vs | l' == sList -> pure (Just (Iterator (Just i) vs))
+          Call l' vs | l' == sList -> pure (Just (Iterator (Just i) vs False))
           imax -> range i (Int_ 1) imax (Int_ 1)
   Call l [Sym i, lo, hi]
     | l == sList ->
@@ -441,7 +465,12 @@ iterator spec = case spec of
         bounds i [lo, hi, d] >>= \case
           [lo', hi', d'] -> range i lo' hi' d'
           _ -> pure Nothing
-  _ -> pure Nothing
+  -- a bare count, Table[x, 10]; anything else is not an iterator
+  Call l _ | l == sList -> pure Nothing
+  n ->
+    evaluate n <&> \case
+      Int_ k -> Just (Iterator Nothing (replicate (fromInteger (max 0 k)) sNullE) False)
+      _ -> Nothing
   where
     bounds i = localized [(i, Nothing)] . traverse evaluate
     range i lo hi d = do
@@ -453,11 +482,16 @@ iterator spec = case spec of
             toRational' r >= 0 ->
               let lo' = numberOf lo
                   d' = numberOf d
-               in pure (Just (Iterator (Just i) [mkNumber (fromRational' (lo' + fromInteger k * d')) | k <- [0 .. floor (toRational' r)]]))
+               in pure (Just (Iterator (Just i) [mkNumber (fromRational' (lo' + fromInteger k * d')) | k <- [0 .. floor (toRational' r)]] False))
           | toRational' r >= 0 -> do
               vs <- traverse (\k -> evaluate (apply sPlus [lo, apply sTimes [Int_ k, d]])) [0 .. floor (toRational' r)]
-              pure (Just (Iterator (Just i) vs))
-          | otherwise -> pure (Just (Iterator (Just i) []))
+              pure (Just (Iterator (Just i) vs False))
+          | otherwise -> pure (Just (Iterator (Just i) [] False))
+        Call di [Int_ 1]
+          | di == systemSymbol "DirectedInfinity",
+            Num _ <- lo,
+            Num _ <- d ->
+              pure (Just (Iterator (Just i) [mkNumber (fromRational' (numberOf lo + fromInteger k * numberOf d)) | k <- [0 ..]] True))
         _ -> pure Nothing
     numberOf = \case
       Num n -> toRational' n
@@ -466,7 +500,7 @@ iterator spec = case spec of
 -- | Run over an iterator's values, with its variable localized as @Block@
 -- localizes it, given the way to set it to each value in turn.
 iterate' :: (Kernel :> es) => Iterator -> ((Expr -> Eff es ()) -> Eff es b) -> Eff es b
-iterate' (Iterator v _) go = case v of
+iterate' (Iterator v _ _) go = case v of
   Nothing -> go (const pass)
   Just i -> localized [(i, Nothing)] (go (setOwn i))
 
@@ -479,7 +513,8 @@ nested specs f b = case specs of
   spec : rest ->
     iterator spec >>= \case
       Nothing -> pure Nothing
-      Just it@(Iterator _ vs) ->
+      Just (Iterator _ _ True) -> pure Nothing
+      Just it@(Iterator _ vs _) ->
         iterate' it $ \set ->
           fmap (fmap Node . sequence) . forM vs $ \v -> set v >> nested rest f b
 
@@ -494,9 +529,17 @@ tableRule e = case args e of
   b : specs@(_ : _) ->
     nested specs evaluate b >>= \case
       Just t -> pure (Just (toList' t))
-      Nothing -> Nothing <$ message "Table" "iterb" [e]
+      Nothing
+        -- an iterator that is not a list: Table[x^2, p] does not evaluate p
+        -- into one (wolfram/Table/PossibleIssues/2)
+        | i : _ <- [i | (i, sp) <- zip [2 :: Integer ..] specs, not (isListE sp)] -> Nothing <$ message "Table" "nliter" [specs `at` (i - 2), Int_ i, e]
+        | otherwise -> Nothing <$ message "Table" "iterb" [e]
   _ -> pure Nothing
   where
+    at xs k = fromMaybe e (viaNonEmpty head (drop (fromInteger k) xs))
+    isListE = \case
+      Call l _ -> l == sList
+      _ -> False
     toList' = \case
       Leaf x -> x
       Node ts -> apply sList (map toList' ts)
@@ -519,7 +562,7 @@ doRule e = case args e of
       spec : rest ->
         iterator spec >>= \case
           Nothing -> pure Nothing
-          Just it@(Iterator _ vs) ->
+          Just it@(Iterator _ vs _) ->
             iterate' it $ \set ->
               let loop = \case
                     [] -> pure (Just Next)

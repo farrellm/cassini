@@ -1,0 +1,11 @@
+(* §4.15, D25: an unabsorbed infinite term is guarded against Cohen's cancellations: u - u, 2u - u, u/u and u^0 are Indeterminate. *)
+Set[u, Plus[x, Infinity]]
+Plus[u, Times[-1, u]]
+Plus[Times[2, u], Times[-1, u]]
+Times[u, Power[u, -1]]
+Power[u, 0]
+Plus[Times[y, u], Times[-1, y, u]]
+Power[Times[x, Infinity], 0]
+(* Like terms of one sign still merge. *)
+Plus[u, u]
+Times[u, u]
