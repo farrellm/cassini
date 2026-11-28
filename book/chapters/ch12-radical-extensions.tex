@@ -314,16 +314,16 @@ After a partial fraction decomposition of $R$, three reductions apply.
   \[
     \Bigl( 1 - k - \frac{e_j}{n} \Bigr)\, W'\, \frac{\phi}{W}\, B \equiv C \pmod W
   \]
-  lowers $k$ in the same way, and this is solvable for every $k \ge 1$
-  because $e_j < n$. So the factors of $P$ are removed from the denominator
-  altogether.
+  and subtracting $D(B \phi / (W^k y))$ lowers $k$ by one, and this is
+  solvable for every $k \ge 1$ because $e_j < n$. So the factors of $P$ are
+  removed from the denominator altogether.
 \item For a term $C/y$ with $C \in K[x]$: subtracting $D(b\, x^j \phi / y)$
   for a suitable constant $b$ lowers the degree of $C$, as long as $\deg(C)
   \ge \deg(\phi) - 1$.
 \end{enumerate}
 The outcome~\cite[\S A.3]{trager1984}: every integral $\int R\,dx/y$ is
 reduced to an algebraic function plus $\int A\,dx/(B y)$ with $B$ squarefree
-and $\deg(A) - \deg(B) < \deg(\phi) - 1$. The first two reductions are the
+and coprime with $\phi$, and $\deg(A) - \deg(B) < \deg(\phi) - 1$. The first two reductions are the
 Hermite reduction of Section~\ref{sec:radical-hermite} in other notation.
 The third is a reduction at infinity, which the general algorithm replaces by
 the change of variable of Chapter~\ref{ch:algebraic-part}, and which the

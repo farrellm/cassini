@@ -61,8 +61,9 @@ so $[M : K] = 1$.
 This is Theorem~3.4 of~\cite{trager1984}, with his proof.
 
 \begin{corollary}\label{cor:exact-field}\standing{proved}{}
-Let $F$ be irreducible over $K(x)$, $E = K(x)[y]/(F)$, and $K_0$ the exact
-constant field of $E$. Then:
+Let $F \in K[x, y]$ be irreducible over $K$ (equivalently, primitive in $y$
+and irreducible over $K(x)$), $E = K(x)[y]/(F)$, and $K_0$ the exact constant
+field of $E$. Then:
 \begin{enumerate}[label=\textup{(\roman*)}]
 \item the minimal polynomial $F_0$ of $y$ over $K_0(x)$ is absolutely
   irreducible, $E = K_0(x)[y]/(F_0)$, and $F_0$ is a factor of $F$ over
@@ -75,8 +76,11 @@ constant field of $E$. Then:
 \begin{proof}
 (i) $K_0$ is algebraically closed in $E = K_0(x)(y)$, so
 Theorem~\ref{thm:absolute-irreducibility} applies over $K_0$. (ii) By the
-degree count above with $M = K_0$, $[E : K(x)] = [K_0 : K]\, [E : K_0(x)]$,
-and the same holds with the roles of $x$ and $y$ exchanged.
+degree count above with $M = K_0$, $[E : K(x)] = [K_0 : K]\, [E : K_0(x)]$.
+If $\deg_x(F) = 0$ then $[K_0 : K]$ divides $0$ trivially; otherwise $y$ is
+transcendental over $K$, and since $F$ is primitive in $y$, the same degree
+count with the roles of $x$ and $y$ exchanged shows that $[K_0 : K]$ divides
+$[E : K(y)] = \deg_x(F)$.
 \end{proof}
 
 So the assumption of Part~II is arranged by replacing $K$ by $K_0$ and $F$ by
@@ -111,6 +115,11 @@ absolutely irreducible.}
 
 This is the algorithm of~\cite[\S3.2]{trager1984}; its correctness is argued
 there, and we have not reproduced the argument beyond the paragraph above.
+Taking a factor of least degree is necessary when $K_0$ is not Galois over
+$K$: $M$ contains at least one embedding of $K_0$, so $F$ has an absolutely
+irreducible factor over $M(x)$ of degree $\deg_y(F)/[K_0 : K]$, whereas other
+irreducible factors over $M(x)$ may have larger degree and still split over
+$\Kbar$.
 The exact constant field is then generated over $K$ by the coefficients of
 the factor returned. The last step needs factorisation of polynomials over an
 algebraic number field, for which Trager refers to his own earlier algorithm.

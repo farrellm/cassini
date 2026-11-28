@@ -169,7 +169,7 @@ procedure with one test in characteristic $0$.
 number field $K$, return $(N, u)$ with $N \ge 1$ least such that $N\delta$ is
 principal and $N\delta = (u)$; or ``infinite'' if no multiple of $\delta$ is
 principal.}
-\State choose primes $\mathfrak p$, $\mathfrak q$ of $K$ of different residue characteristics $p$, $q$ at which $E$ and $\delta$ have good reduction
+\State choose primes $\mathfrak p$, $\mathfrak q$ of $K$ of different residue characteristics $p, q > [E : K(x)]$ at which $E$ and $\delta$ have good reduction
 \State $o_{\mathfrak p} \gets$ the order of the class of $\tilde\delta$ in the reduction at $\mathfrak p$ \Comment{\seealg{PrincipalMultiple}, with the bound of Theorem~\ref{thm:class-number}}
 \State $o_{\mathfrak q} \gets$ the same at $\mathfrak q$
 \State $o_{\mathfrak p}' \gets$ the part of $o_{\mathfrak p}$ prime to $p$, \ $o_{\mathfrak q}' \gets$ the part of $o_{\mathfrak q}$ prime to $q$
@@ -275,7 +275,8 @@ one point on each curve.
 \seealg{FiniteOrder} reaches the same verdict with less insight. Modulo $5$
 the points $P$ and $P'$ both reduce to $(3, 0)$, so $\tilde\delta = 0$ and
 $o_5 = 1$. Modulo $7$, $\tilde P = (3, 5)$ is a nonzero point in a group of
-order $7$, so $o_7 = 7$. The parts prime to $35$ are both $1$, and $N = 1
+order $7$, so $\tilde\delta = \tilde P - \tilde P' \sim 2(\tilde P - \infty)$
+is also nonzero (since $7$ is odd) and $o_7 = 7$. The parts prime to $35$ are both $1$, and $N = 1
 \cdot 1 = 1$; the test of $\delta$ itself for principality fails, and the
 answer is ``infinite''. A prime such as $5$, at which the support of the
 divisor collapses, is excluded by Trager's conditions on the reduction of the

@@ -270,7 +270,7 @@ logarithmic derivatives $(du/dz)/u$.}
 \State $b \gets$ a basis of $E$ over $K(x)$ made of integral elements
 \State $N \gets$ an element of $K$ that is a root neither of the denominator of $f$ with respect to $b$ nor of the discriminant of $F$
 \State $z \gets 1/(x - N)$, \ $\tilde f \gets -f / z^2$ \Comment{Lemma~\ref{lem:change-variable}}
-\State $w \gets$ an integral basis of $E$ over $K(z)$, normal at infinity \Comment{Chapter~\ref{ch:integral-bases}}
+\State $(w, \tau) \gets$ an integral basis of $E$ over $K(z)$, normal at infinity, with its exponents~\eqref{eq:tau} \Comment{Chapter~\ref{ch:integral-bases}}
 \State $(g, h) \gets \alg{HermiteReduce}(\tilde f, w)$ \Comment{with $D = d/dz$}
 \State $(h_1, \dots, h_n) \gets$ the coordinates of $h$ in the basis $w$
 \If{$h_i \ne 0$ and $\deg(h_i) > -\tau_i - 2$ for some $i$} \Comment{Lemma~\ref{lem:pole-test}}
