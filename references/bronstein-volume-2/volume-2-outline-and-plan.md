@@ -333,7 +333,8 @@ pamphlets and the remaining held sources. It found and fixed:
   which would leave `R` in the old model with roots `residue/r_P` instead of residues; it now runs
   first. In Theorem 13.4.1, `R₀` lies in `C[Z]` with `c₀ ∈ k*` (not merely `C̄[Z]`, `c₀ ∈ k`).
 - *Incomplete.* `MakeSuitable` had no worked example exercising its extension loop, against §4;
-  Example 7.7.1 (`y³ + xy² − x⁴ = 0`) is added and verified in SymPy. `AlgebraicPart` (§8.4) used
+  Example 7.7.1 (`y³ + xy² − x⁴ = 0`) is added and verified in SymPy, and every number in it re-checked in the Wolfram evaluator,
+  which corrected the `w̄₃` coefficient of `Dw̄₂` to `−2/(x(27x − 4))`. `AlgebraicPart` (§8.4) used
   `τ_i` without binding `τ` from the normal integral basis step. `FiniteOrder` (§10.3) omitted the
   characteristic condition `p, q > [E : K(x)]` stated in §10.1.
 - *Unclear or imprecise.* A variable clash (`l` used for both `b₁, …, b_l` and `[L : K']`) in the
